@@ -1,0 +1,17 @@
+{
+  "name": "hyperframes-studio-pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A flywheel-driven Studio pipeline that compiles case materials into HyperFrames-ready video project packages.",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run build && node scripts/run-tests.mjs",
+    "test:watch": "npm run build && node --watch scripts/run-tests.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "typescript": "^5.9.3"
+  }
+}
