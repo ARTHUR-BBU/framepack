@@ -20,13 +20,33 @@ This repository contains the first-version Studio pipeline that turns case mater
 
 ## CLI
 
-After `npm run build`, you can generate a package with:
+After `npm run build`, the product exposes three CLI commands:
+
+### `init`
+
+Create a starter project directory with a config file and Markdown input template.
 
 ```bash
-node dist/cli.js --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+node dist/cli.js init --output-dir out --project-name starter --format 9:16
 ```
 
-Optional flags:
+### `generate`
+
+Generate a reusable package from a Markdown source file.
+
+```bash
+node dist/cli.js generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+```
+
+### `validate`
+
+Validate the input and planning path without writing the output package.
+
+```bash
+node dist/cli.js validate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+```
+
+Optional flags for `generate` and `validate`:
 
 - `--project-name <name>`
 - `--format 16:9|9:16`

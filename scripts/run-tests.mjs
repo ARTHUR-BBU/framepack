@@ -291,6 +291,7 @@ const tests = [
 
         const exitCode = runCli(
           [
+            "generate",
             "--input",
             fixturePath,
             "--output-dir",
@@ -326,7 +327,7 @@ const tests = [
       const stdout = [];
       const stderr = [];
 
-      const exitCode = runCli([], {
+      const exitCode = runCli(["generate"], {
         stdout: (message) => stdout.push(message),
         stderr: (message) => stderr.push(message),
       });
@@ -334,6 +335,66 @@ const tests = [
       assert.equal(exitCode, 1);
       assert.equal(stdout.length, 0);
       assert.match(stderr.join("\n"), /Missing required argument: --input/);
+    },
+  },
+  {
+    name: "initialize a CLI project template",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-init-"));
+
+      try {
+        const stdout = [];
+        const stderr = [];
+
+        const exitCode = runCli(
+          ["init", "--output-dir", tempRoot, "--project-name", "starter", "--format", "9:16"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const projectDir = join(tempRoot, "starter");
+
+        assert.equal(exitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Initialized project template/);
+        assert.match(readFileSync(join(projectDir, "hyperframes-studio.json"), "utf8"), /"format": "9:16"/);
+        assert.match(readFileSync(join(projectDir, "input.md"), "utf8"), /# Problem/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "validate CLI input without writing a package",
+    run: () => {
+      const stdout = [];
+      const stderr = [];
+
+      const exitCode = runCli(
+        [
+          "validate",
+          "--input",
+          fixturePath,
+          "--output-dir",
+          dirname(fixturePath),
+          "--goal",
+          "Explain the case",
+          "--audience",
+          "Founders",
+          "--project-name",
+          "validated-case",
+        ],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+
+      assert.equal(exitCode, 0);
+      assert.equal(stderr.length, 0);
+      assert.match(stdout.join("\n"), /Validation passed/);
     },
   },
 ];
