@@ -18,6 +18,19 @@ This repository contains the first-version Studio pipeline that turns case mater
 - `npm test`
 - `npm run build`
 
+## CLI
+
+After `npm run build`, you can generate a package with:
+
+```bash
+node dist/cli.js --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+```
+
+Optional flags:
+
+- `--project-name <name>`
+- `--format 16:9|9:16`
+
 ## Current scope
 
 The current implementation supports:

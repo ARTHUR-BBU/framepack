@@ -3,6 +3,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runCli } from "../dist/cli.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
 import { parseMarkdownSourceMaterials } from "../dist/video/brief/markdown.js";
 import { compileCompositionSpec } from "../dist/video/compile/composition-spec.js";
@@ -277,6 +278,62 @@ const tests = [
       assert.equal(result.scenePlan.scenes.length, 6);
       assert.equal(result.spec.width, 1920);
       assert.match(result.package.files["composition.html"], /data-composition-id/);
+    },
+  },
+  {
+    name: "generate a package from the CLI",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-cli-"));
+
+      try {
+        const stdout = [];
+        const stderr = [];
+
+        const exitCode = runCli(
+          [
+            "--input",
+            fixturePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the case",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "cli-case-video",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const packageDir = join(tempRoot, "cli-case-video");
+
+        assert.equal(exitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Generated video project package/);
+        assert.match(readFileSync(join(packageDir, "VIDEO_BRIEF.json"), "utf8"), /"goal": "Explain the case"/);
+        assert.match(readFileSync(join(packageDir, "composition.html"), "utf8"), /data-composition-id/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail the CLI when required arguments are missing",
+    run: () => {
+      const stdout = [];
+      const stderr = [];
+
+      const exitCode = runCli([], {
+        stdout: (message) => stdout.push(message),
+        stderr: (message) => stderr.push(message),
+      });
+
+      assert.equal(exitCode, 1);
+      assert.equal(stdout.length, 0);
+      assert.match(stderr.join("\n"), /Missing required argument: --input/);
     },
   },
 ];
