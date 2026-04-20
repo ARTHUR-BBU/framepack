@@ -334,7 +334,7 @@ const tests = [
 
       assert.equal(exitCode, 1);
       assert.equal(stdout.length, 0);
-      assert.match(stderr.join("\n"), /Missing required argument: --input/);
+      assert.match(stderr.join("\n"), /Missing required argument: --output-dir/);
     },
   },
   {
@@ -395,6 +395,86 @@ const tests = [
       assert.equal(exitCode, 0);
       assert.equal(stderr.length, 0);
       assert.match(stdout.join("\n"), /Validation passed/);
+    },
+  },
+  {
+    name: "generate from a project config file",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-generate-"));
+
+      try {
+        const initExitCode = runCli(
+          ["init", "--output-dir", tempRoot, "--project-name", "config-project"],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(initExitCode, 0);
+
+        const projectDir = join(tempRoot, "config-project");
+        const stdout = [];
+        const stderr = [];
+
+        const generateExitCode = runCli(
+          ["generate", "--config", join(projectDir, "hyperframes-studio.json"), "--output-dir", tempRoot],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Generated video project package/);
+        assert.match(
+          readFileSync(join(tempRoot, "config-project", "VIDEO_BRIEF.json"), "utf8"),
+          /"audience": "Founders"/,
+        );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "validate from a project config file",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-validate-"));
+
+      try {
+        const initExitCode = runCli(
+          ["init", "--output-dir", tempRoot, "--project-name", "config-validate"],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(initExitCode, 0);
+
+        const projectDir = join(tempRoot, "config-validate");
+        const stdout = [];
+        const stderr = [];
+
+        const validateExitCode = runCli(
+          ["validate", "--config", join(projectDir, "hyperframes-studio.json"), "--output-dir", tempRoot],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(validateExitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Validation passed/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
     },
   },
 ];

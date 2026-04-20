@@ -51,6 +51,13 @@ Optional flags for `generate` and `validate`:
 - `--project-name <name>`
 - `--format 16:9|9:16`
 
+You can also use a project config produced by `init`:
+
+```bash
+node dist/cli.js generate --config out/starter/hyperframes-studio.json --output-dir out
+node dist/cli.js validate --config out/starter/hyperframes-studio.json --output-dir out
+```
+
 ## Current scope
 
 The current implementation supports:

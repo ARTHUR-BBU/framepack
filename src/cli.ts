@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, extname, resolve } from "node:path";
+import { basename, dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCaseExplainerVideoProject } from "./video/index.js";
 import { writeVideoProjectPackage } from "./video/package/project-package.js";
@@ -10,6 +10,7 @@ interface CliIo {
 }
 
 interface CliOptions {
+  configPath?: string;
   input: string;
   outputDir: string;
   goal: string;
@@ -19,6 +20,15 @@ interface CliOptions {
 }
 
 type CliCommandName = "init" | "generate" | "validate";
+
+interface CliConfigFile {
+  projectName: string;
+  goal: string;
+  audience: string;
+  format: "16:9" | "9:16";
+  outputType: "case-explainer";
+  input: string;
+}
 
 const DEFAULT_IO: CliIo = {
   stdout: (message) => console.log(message),
@@ -72,8 +82,26 @@ function getCommandArgs(args: string[]): string[] {
 
 export function parseCliArgs(args: string[]): CliOptions {
   const commandArgs = getCommandArgs(args);
-  const input = getRequiredArg(commandArgs, "--input");
   const outputDir = getRequiredArg(commandArgs, "--output-dir");
+  const configPath = getOptionalArg(commandArgs, "--config");
+
+  if (configPath) {
+    const config = JSON.parse(readFileSync(configPath, "utf8")) as CliConfigFile;
+    const configDir = dirname(configPath);
+    const input = resolve(configDir, config.input);
+
+    return {
+      configPath,
+      input,
+      outputDir,
+      goal: config.goal,
+      audience: config.audience,
+      projectName: config.projectName,
+      format: config.format,
+    };
+  }
+
+  const input = getRequiredArg(commandArgs, "--input");
   const goal = getRequiredArg(commandArgs, "--goal");
   const audience = getRequiredArg(commandArgs, "--audience");
   const format = (getOptionalArg(commandArgs, "--format") ?? "16:9") as "16:9" | "9:16";
@@ -83,6 +111,7 @@ export function parseCliArgs(args: string[]): CliOptions {
   }
 
   return {
+    configPath,
     input,
     outputDir,
     goal,
