@@ -17,6 +17,14 @@ interface CliOptions {
   audience: string;
   projectName: string;
   format: "16:9" | "9:16";
+  style: {
+    tone: string;
+    pacing: "slow" | "medium" | "fast";
+    brandName: string;
+  };
+  theme: {
+    palette: string;
+  };
 }
 
 type CliCommandName = "init" | "generate" | "validate";
@@ -28,6 +36,14 @@ interface CliConfigFile {
   format: "16:9" | "9:16";
   outputType: "case-explainer";
   input: string;
+  style?: {
+    tone?: string;
+    pacing?: "slow" | "medium" | "fast";
+    brandName?: string;
+  };
+  theme?: {
+    palette?: string;
+  };
 }
 
 const DEFAULT_IO: CliIo = {
@@ -60,6 +76,24 @@ function deriveProjectName(inputPath: string): string {
   return basename(inputPath, extension);
 }
 
+function stripUtf8Bom(value: string): string {
+  return value.replace(/^\uFEFF/, "");
+}
+
+function createDefaultStyle() {
+  return {
+    tone: "direct" as const,
+    pacing: "medium" as const,
+    brandName: "Studio",
+  };
+}
+
+function createDefaultTheme() {
+  return {
+    palette: "default",
+  };
+}
+
 function getCommandName(args: string[]): CliCommandName {
   const [command] = args;
 
@@ -86,9 +120,18 @@ export function parseCliArgs(args: string[]): CliOptions {
   const configPath = getOptionalArg(commandArgs, "--config");
 
   if (configPath) {
-    const config = JSON.parse(readFileSync(configPath, "utf8")) as CliConfigFile;
+    const rawConfig = stripUtf8Bom(readFileSync(configPath, "utf8"));
+    const config = JSON.parse(rawConfig) as CliConfigFile;
     const configDir = dirname(configPath);
     const input = resolve(configDir, config.input);
+    const style = {
+      ...createDefaultStyle(),
+      ...(config.style ?? {}),
+    };
+    const theme = {
+      ...createDefaultTheme(),
+      ...(config.theme ?? {}),
+    };
 
     return {
       configPath,
@@ -98,6 +141,8 @@ export function parseCliArgs(args: string[]): CliOptions {
       audience: config.audience,
       projectName: config.projectName,
       format: config.format,
+      style,
+      theme,
     };
   }
 
@@ -118,6 +163,16 @@ export function parseCliArgs(args: string[]): CliOptions {
     audience,
     projectName: getOptionalArg(commandArgs, "--project-name") ?? deriveProjectName(input),
     format,
+    style: {
+      ...createDefaultStyle(),
+      tone: getOptionalArg(commandArgs, "--tone") ?? "direct",
+      pacing: (getOptionalArg(commandArgs, "--pacing") ?? "medium") as "slow" | "medium" | "fast",
+      brandName: getOptionalArg(commandArgs, "--brand-name") ?? "Studio",
+    },
+    theme: {
+      ...createDefaultTheme(),
+      palette: getOptionalArg(commandArgs, "--palette") ?? "default",
+    },
   };
 }
 
@@ -133,6 +188,8 @@ function runGenerateCommand(args: string[], io: CliIo): number {
       audience: options.audience,
       format: options.format,
       outputType: "case-explainer",
+      style: options.style,
+      theme: options.theme,
     },
     projectName: options.projectName,
   });
@@ -155,6 +212,8 @@ function runValidateCommand(args: string[], io: CliIo): number {
       audience: options.audience,
       format: options.format,
       outputType: "case-explainer",
+      style: options.style,
+      theme: options.theme,
     },
     projectName: options.projectName,
   });
@@ -189,6 +248,12 @@ function runInitCommand(args: string[], io: CliIo): number {
         format,
         outputType: "case-explainer",
         input: "input.md",
+        style: {
+          ...createDefaultStyle(),
+        },
+        theme: {
+          ...createDefaultTheme(),
+        },
       },
       null,
       2,

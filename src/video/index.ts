@@ -8,12 +8,20 @@ import { emitHyperframesComposition } from "./render/hyperframes-adapter.js";
 export function buildCaseExplainerVideoProject(input: {
   inputType: "markdown";
   markdown: string;
-  defaults: {
-    goal: string;
-    audience: string;
-    format: "16:9" | "9:16";
-    outputType: "case-explainer";
-  };
+    defaults: {
+      goal: string;
+      audience: string;
+      format: "16:9" | "9:16";
+      outputType: "case-explainer";
+      style?: {
+        tone?: string;
+        pacing?: "slow" | "medium" | "fast";
+        brandName?: string;
+      };
+      theme?: {
+        palette: string;
+      };
+    };
   projectName: string;
 }) {
   const brief = normalizeVideoBriefInput(input);
@@ -24,7 +32,11 @@ export function buildCaseExplainerVideoProject(input: {
     throw new Error(`Scene plan validation failed: ${reviewIssues.join(", ")}`);
   }
 
-  const spec = compileCompositionSpec({ ...scenePlan, format: brief.format });
+  const spec = compileCompositionSpec({
+    ...scenePlan,
+    format: brief.format,
+    themePalette: input.defaults.theme?.palette,
+  });
   const composition = emitHyperframesComposition(spec);
   const projectPackage = createVideoProjectPackage({
     projectName: input.projectName,

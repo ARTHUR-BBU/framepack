@@ -22,6 +22,13 @@ function createDefaultVideoStyle(): VideoBrief["style"] {
   };
 }
 
+function createVideoStyle(overrides?: Partial<VideoBrief["style"]>): VideoBrief["style"] {
+  return {
+    ...createDefaultVideoStyle(),
+    ...overrides,
+  };
+}
+
 function createDefaultVideoConstraints(): VideoBrief["constraints"] {
   return {
     maxDurationSec: DEFAULT_VIDEO_CONSTRAINTS.maxDurationSec,
@@ -41,7 +48,7 @@ export function normalizeVideoBriefInput(input: VideoBriefInput): VideoBrief {
         goal: input.defaults.goal,
         audience: input.defaults.audience,
         format: input.defaults.format,
-        style: createDefaultVideoStyle(),
+        style: createVideoStyle(input.defaults.style),
         sourceMaterials: parseMarkdownSourceMaterials(input.markdown),
         constraints: createDefaultVideoConstraints(),
         outputType: input.defaults.outputType,

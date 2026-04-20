@@ -2,7 +2,7 @@ import type { CompositionScene, CompositionSpec } from "../types.js";
 
 export function emitHyperframesComposition(spec: CompositionSpec) {
   const html = [
-    `<div id="stage" data-composition-id="case-explainer" data-width="${spec.width}" data-height="${spec.height}">`,
+    `<div id="stage" data-composition-id="case-explainer" data-width="${spec.width}" data-height="${spec.height}" data-palette="${spec.theme.palette}">`,
     ...spec.scenes.map((scene: CompositionScene) => scene.htmlTemplate),
     "</div>",
   ].join("");

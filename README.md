@@ -50,6 +50,10 @@ Optional flags for `generate` and `validate`:
 
 - `--project-name <name>`
 - `--format 16:9|9:16`
+- `--brand-name <name>`
+- `--tone <tone>`
+- `--pacing slow|medium|fast`
+- `--palette <palette>`
 
 You can also use a project config produced by `init`:
 
@@ -57,6 +61,13 @@ You can also use a project config produced by `init`:
 node dist/cli.js generate --config out/starter/hyperframes-studio.json --output-dir out
 node dist/cli.js validate --config out/starter/hyperframes-studio.json --output-dir out
 ```
+
+The config file can carry brand and theme settings through generation, including:
+
+- `style.brandName`
+- `style.tone`
+- `style.pacing`
+- `theme.palette`
 
 ## Current scope
 

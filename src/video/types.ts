@@ -6,6 +6,10 @@ export interface VideoBriefDefaults {
   audience: string;
   format: VideoFormat;
   outputType: OutputType;
+  style?: Partial<VideoStyle>;
+  theme?: {
+    palette: string;
+  };
 }
 
 export interface MarkdownVideoBriefInput {

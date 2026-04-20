@@ -9,7 +9,7 @@ function getCompositionDimensions(format: VideoFormat) {
 }
 
 export function compileCompositionSpec(
-  input: ScenePlan & { format: VideoFormat },
+  input: ScenePlan & { format: VideoFormat; themePalette?: string },
 ): CompositionSpec {
   const dimensions = getCompositionDimensions(input.format);
 
@@ -24,7 +24,7 @@ export function compileCompositionSpec(
       assetRefs: scene.assets,
     })),
     theme: {
-      palette: "default",
+      palette: input.themePalette ?? "default",
     },
   };
 }

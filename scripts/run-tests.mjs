@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -360,6 +360,14 @@ const tests = [
         assert.equal(stderr.length, 0);
         assert.match(stdout.join("\n"), /Initialized project template/);
         assert.match(readFileSync(join(projectDir, "hyperframes-studio.json"), "utf8"), /"format": "9:16"/);
+        assert.match(
+          readFileSync(join(projectDir, "hyperframes-studio.json"), "utf8"),
+          /"brandName": "Studio"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "hyperframes-studio.json"), "utf8"),
+          /"palette": "default"/,
+        );
         assert.match(readFileSync(join(projectDir, "input.md"), "utf8"), /# Problem/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
@@ -434,6 +442,14 @@ const tests = [
           readFileSync(join(tempRoot, "config-project", "VIDEO_BRIEF.json"), "utf8"),
           /"audience": "Founders"/,
         );
+        assert.match(
+          readFileSync(join(tempRoot, "config-project", "VIDEO_BRIEF.json"), "utf8"),
+          /"brandName": "Studio"/,
+        );
+        assert.match(
+          readFileSync(join(tempRoot, "config-project", "composition.html"), "utf8"),
+          /data-palette="default"/,
+        );
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -472,6 +488,114 @@ const tests = [
         assert.equal(validateExitCode, 0);
         assert.equal(stderr.length, 0);
         assert.match(stdout.join("\n"), /Validation passed/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "carry custom brand and palette values from config into output",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-brand-"));
+
+      try {
+        const initExitCode = runCli(
+          ["init", "--output-dir", tempRoot, "--project-name", "brand-project"],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(initExitCode, 0);
+
+        const projectDir = join(tempRoot, "brand-project");
+        const configPath = join(projectDir, "hyperframes-studio.json");
+        const config = JSON.parse(readFileSync(configPath, "utf8"));
+
+        config.style.brandName = "HyperBrand";
+        config.style.tone = "bold";
+        config.style.pacing = "fast";
+        config.theme.palette = "sunset";
+
+        writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+
+        const generateExitCode = runCli(
+          ["generate", "--config", configPath, "--output-dir", tempRoot],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.match(
+          readFileSync(join(projectDir, "VIDEO_BRIEF.json"), "utf8"),
+          /"brandName": "HyperBrand"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "VIDEO_BRIEF.json"), "utf8"),
+          /"tone": "bold"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "composition.html"), "utf8"),
+          /data-palette="sunset"/,
+        );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "apply default style and theme when config omits them",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-defaults-"));
+
+      try {
+        const initExitCode = runCli(
+          ["init", "--output-dir", tempRoot, "--project-name", "legacy-project"],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(initExitCode, 0);
+
+        const projectDir = join(tempRoot, "legacy-project");
+        const configPath = join(projectDir, "hyperframes-studio.json");
+        const config = JSON.parse(readFileSync(configPath, "utf8"));
+
+        delete config.style;
+        delete config.theme;
+
+        writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+
+        const generateExitCode = runCli(
+          ["generate", "--config", configPath, "--output-dir", tempRoot],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.match(
+          readFileSync(join(projectDir, "VIDEO_BRIEF.json"), "utf8"),
+          /"brandName": "Studio"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "composition.html"), "utf8"),
+          /data-palette="default"/,
+        );
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
