@@ -1,4 +1,7 @@
 import { normalizeVideoBriefInput } from "./brief/normalize.js";
+import { buildAssetPlan } from "../planning/assets/index.js";
+import { buildScript } from "../planning/script/index.js";
+import { buildStoryboard } from "../planning/storyboard/index.js";
 import { compileCompositionSpec } from "./compile/composition-spec.js";
 import { createVideoProjectPackage } from "./package/project-package.js";
 import { planCaseExplainerScenes } from "./planning/scene-planner.js";
@@ -32,6 +35,9 @@ export function buildCaseExplainerVideoProject(input: {
 }) {
   const brief = normalizeVideoBriefInput(input);
   const scenePlan = planCaseExplainerScenes(brief);
+  const script = buildScript({ scenePlan });
+  const storyboard = buildStoryboard({ scenePlan });
+  const assetPlan = buildAssetPlan({ scenePlan });
   const reviewIssues = validateScenePlan(scenePlan, brief.constraints);
   const validationReport = createValidationReport({
     projectName: input.projectName,
@@ -55,6 +61,9 @@ export function buildCaseExplainerVideoProject(input: {
   return {
     brief,
     scenePlan,
+    script,
+    storyboard,
+    assetPlan,
     validationReport,
     spec,
     composition,

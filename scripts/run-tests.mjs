@@ -6,7 +6,10 @@ import { fileURLToPath } from "node:url";
 import { runCli } from "../dist/cli.js";
 import { compileMarkdownSourceBundle } from "../dist/ingest/markdown/index.js";
 import { compileVideoBrief } from "../dist/planning/brief/index.js";
+import { buildAssetPlan } from "../dist/planning/assets/index.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
+import { buildScript } from "../dist/planning/script/index.js";
+import { buildStoryboard } from "../dist/planning/storyboard/index.js";
 import { parseMarkdownSourceMaterials } from "../dist/video/brief/markdown.js";
 import { compileCompositionSpec } from "../dist/video/compile/composition-spec.js";
 import {
@@ -163,6 +166,29 @@ const tests = [
         "highlights",
         "ending",
       ]);
+    },
+  },
+  {
+    name: "build script, storyboard, and asset plan from a scene plan",
+    run: () => {
+      const scenePlan = planCaseExplainerScenes({
+        goal: "Explain the case",
+        audience: "Founders",
+        format: "16:9",
+        style: { tone: "direct", pacing: "medium", brandName: "Studio" },
+        sourceMaterials: [{ kind: "markdown", title: "Case", body: "# Problem\nA\n# Solution\nB" }],
+        constraints: { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] },
+        outputType: "case-explainer",
+      });
+
+      const script = buildScript({ scenePlan });
+      const storyboard = buildStoryboard({ scenePlan });
+      const assetPlan = buildAssetPlan({ scenePlan });
+
+      assert.equal(script.scenes.length, scenePlan.scenes.length);
+      assert.equal(storyboard.scenes.length, scenePlan.scenes.length);
+      assert.equal(assetPlan.availableAssets.length, 0);
+      assert.equal(assetPlan.placeholderAssets.length, scenePlan.scenes.length);
     },
   },
   {
@@ -328,6 +354,9 @@ const tests = [
       });
 
       assert.equal(result.scenePlan.scenes.length, 6);
+      assert.equal(result.script.scenes.length, 6);
+      assert.equal(result.storyboard.scenes.length, 6);
+      assert.equal(result.assetPlan.placeholderAssets.length, 6);
       assert.equal(result.spec.width, 1920);
       assert.equal(result.validationReport.status, "passed");
       assert.match(result.package.files["composition.html"], /data-composition-id/);
