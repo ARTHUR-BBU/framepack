@@ -76,6 +76,8 @@ describe("createVideoProjectPackage", () => {
       "composition.html",
     ]);
     assert.equal(result.projectName, "case-video");
+    assert.match(result.files["GUARDRAILS.md"], /Max duration: 60s/);
+    assert.match(result.files["GUARDRAILS.md"], /Latest validation: passed/);
   });
 
   it("writes the generated project package to disk", () => {
@@ -108,11 +110,47 @@ describe("createVideoProjectPackage", () => {
       const writtenDir = writeVideoProjectPackage(tempRoot, result);
 
       assert.match(readFileSync(join(writtenDir, "FLYWHEEL.md"), "utf8"), /Intake -> Plan/);
+      assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Banned terms:\n- None/);
       assert.match(readFileSync(join(writtenDir, "VALIDATION_REPORT.md"), "utf8"), /Validation passed/);
       assert.equal(readFileSync(join(writtenDir, "composition.html"), "utf8"), "<div></div>");
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }
+  });
+
+  it("renders configured constraints and failed validation state into GUARDRAILS.md", () => {
+    const result = createVideoProjectPackage({
+      projectName: "case-video",
+      brief: {
+        goal: "Explain the case",
+        audience: "Founders",
+        format: "16:9",
+        style: { tone: "direct", pacing: "medium", brandName: "Studio" },
+        sourceMaterials: [],
+        constraints: {
+          maxDurationSec: 45,
+          requiredPoints: ["repeatable"],
+          bannedTerms: ["cheap"],
+        },
+        outputType: "case-explainer",
+      },
+      scenePlan: { totalDurationSec: 45, scenes: [] },
+      validationReport: {
+        projectName: "case-video",
+        status: "failed",
+        sceneCount: 0,
+        totalDurationSec: 45,
+        issues: ["required point missing: repeatable"],
+        generatedAt: "2026-04-21T00:00:00.000Z",
+      },
+      compositionHtml: "<div></div>",
+    });
+
+    assert.match(result.files["GUARDRAILS.md"], /Max duration: 45s/);
+    assert.match(result.files["GUARDRAILS.md"], /Required points:\n- repeatable/);
+    assert.match(result.files["GUARDRAILS.md"], /Banned terms:\n- cheap/);
+    assert.match(result.files["GUARDRAILS.md"], /Latest validation: failed/);
+    assert.match(result.files["GUARDRAILS.md"], /Latest issues:\n- required point missing: repeatable/);
   });
 });
 

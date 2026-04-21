@@ -8,6 +8,33 @@ export interface VideoProjectPackage {
   files: Record<string, string>;
 }
 
+function formatList(items: string[]): string {
+  return items.length === 0 ? "- None" : items.map((item) => `- ${item}`).join("\n");
+}
+
+function formatGuardrailsMarkdown(input: {
+  brief: VideoBrief;
+  validationReport: ValidationReport;
+}): string {
+  return [
+    "# Guardrails",
+    "",
+    `Max duration: ${input.brief.constraints.maxDurationSec}s`,
+    "",
+    "Required points:",
+    formatList(input.brief.constraints.requiredPoints),
+    "",
+    "Banned terms:",
+    formatList(input.brief.constraints.bannedTerms),
+    "",
+    `Latest validation: ${input.validationReport.status}`,
+    "",
+    "Latest issues:",
+    formatList(input.validationReport.issues),
+    "",
+  ].join("\n");
+}
+
 export function createVideoProjectPackage(input: {
   projectName: string;
   brief: VideoBrief;
@@ -23,7 +50,7 @@ export function createVideoProjectPackage(input: {
       "SCENE_PLAN.json": JSON.stringify(input.scenePlan, null, 2),
       "COMMANDS.md":
         "npx hyperframes preview\nnpx hyperframes lint\nnpx hyperframes validate\nnpx hyperframes render\n",
-      "GUARDRAILS.md": "# Guardrails\n\nReview ScenePlan before render.\n",
+      "GUARDRAILS.md": formatGuardrailsMarkdown(input),
       "VALIDATION_REPORT.json": JSON.stringify(input.validationReport, null, 2),
       "VALIDATION_REPORT.md": formatValidationReportMarkdown(input.validationReport),
       "RETRO_LOG.md": "# Retro Log\n\n- Initial generation\n",

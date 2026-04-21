@@ -262,6 +262,8 @@ const tests = [
 
         assert.equal(projectPackage.projectName, "case-video");
         assert.match(readFileSync(join(writtenDir, "FLYWHEEL.md"), "utf8"), /Intake -> Plan/);
+        assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Max duration: 60s/);
+        assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Latest validation: passed/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
