@@ -54,6 +54,9 @@ export function buildCaseExplainerVideoProject(input: {
     projectName: input.projectName,
     brief,
     scenePlan,
+    script,
+    storyboard,
+    assetPlan,
     validationReport,
     compositionHtml: composition.html,
   });

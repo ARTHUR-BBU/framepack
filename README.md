@@ -114,4 +114,4 @@ The generated package contains:
 - `COMMANDS.md`
 - `GUARDRAILS.md`
 - `RETRO_LOG.md`
-- `composition.html`
+- `index.html`

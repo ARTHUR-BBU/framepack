@@ -315,6 +315,9 @@ const tests = [
             outputType: "case-explainer",
           },
           scenePlan: { totalDurationSec: 60, scenes: [] },
+          script: { scenes: [] },
+          storyboard: { scenes: [] },
+          assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [] },
           validationReport: {
             projectName: "case-video",
             status: "passed",
@@ -330,6 +333,12 @@ const tests = [
 
         assert.equal(projectPackage.projectName, "case-video");
         assert.match(readFileSync(join(writtenDir, "FLYWHEEL.md"), "utf8"), /Intake -> Plan/);
+        assert.match(readFileSync(join(writtenDir, "SCRIPT.md"), "utf8"), /# Script/);
+        assert.match(readFileSync(join(writtenDir, "STORYBOARD.md"), "utf8"), /# Storyboard/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Validation status: passed/);
+        assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"rootEntry": "index.html"/);
+        assert.equal(existsSync(join(writtenDir, "assets")), true);
+        assert.equal(existsSync(join(writtenDir, "compositions")), true);
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Max duration: 60s/);
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Latest validation: passed/);
       } finally {
@@ -359,7 +368,7 @@ const tests = [
       assert.equal(result.assetPlan.placeholderAssets.length, 6);
       assert.equal(result.spec.width, 1920);
       assert.equal(result.validationReport.status, "passed");
-      assert.match(result.package.files["composition.html"], /data-composition-id/);
+      assert.match(result.package.files["index.html"], /data-composition-id/);
       assert.match(result.package.files["VALIDATION_REPORT.json"], /"status": "passed"/);
     },
   },
@@ -398,7 +407,7 @@ const tests = [
         assert.equal(stderr.length, 0);
         assert.match(stdout.join("\n"), /Generated video project package/);
         assert.match(readFileSync(join(packageDir, "VIDEO_BRIEF.json"), "utf8"), /"goal": "Explain the case"/);
-        assert.match(readFileSync(join(packageDir, "composition.html"), "utf8"), /data-composition-id/);
+        assert.match(readFileSync(join(packageDir, "index.html"), "utf8"), /data-composition-id/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -554,7 +563,7 @@ const tests = [
           /"maxDurationSec": 60/,
         );
         assert.match(
-          readFileSync(join(tempRoot, "config-project", "composition.html"), "utf8"),
+          readFileSync(join(tempRoot, "config-project", "index.html"), "utf8"),
           /data-palette="default"/,
         );
       } finally {
@@ -799,7 +808,7 @@ const tests = [
           /"tone": "bold"/,
         );
         assert.match(
-          readFileSync(join(projectDir, "composition.html"), "utf8"),
+          readFileSync(join(projectDir, "index.html"), "utf8"),
           /data-palette="sunset"/,
         );
       } finally {
@@ -850,7 +859,7 @@ const tests = [
           /"brandName": "Studio"/,
         );
         assert.match(
-          readFileSync(join(projectDir, "composition.html"), "utf8"),
+          readFileSync(join(projectDir, "index.html"), "utf8"),
           /data-palette="default"/,
         );
       } finally {

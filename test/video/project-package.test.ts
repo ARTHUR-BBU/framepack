@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
@@ -129,6 +129,9 @@ describe("createVideoProjectPackage", () => {
         outputType: "case-explainer",
       },
       scenePlan: { totalDurationSec: 60, scenes: [] },
+      script: { scenes: [] },
+      storyboard: { scenes: [] },
+      assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [] },
       validationReport: {
         projectName: "case-video",
         status: "passed",
@@ -140,20 +143,28 @@ describe("createVideoProjectPackage", () => {
       compositionHtml: "<div></div>",
     });
 
-    assert.deepEqual(Object.keys(result.files).sort(), [
-      "COMMANDS.md",
-      "FLYWHEEL.md",
-      "GUARDRAILS.md",
+      assert.deepEqual(Object.keys(result.files).sort(), [
+        "ASSET_PLAN.json",
+        "COMMANDS.md",
+        "FLYWHEEL.md",
+        "GUARDRAILS.md",
+      "HANDOFF.md",
       "RETRO_LOG.md",
       "SCENE_PLAN.json",
-      "VALIDATION_REPORT.json",
-      "VALIDATION_REPORT.md",
-      "VIDEO_BRIEF.json",
-      "composition.html",
-    ]);
+      "SCRIPT.md",
+        "VALIDATION_REPORT.json",
+        "VALIDATION_REPORT.md",
+        "VIDEO_BRIEF.json",
+        "compositions/scene-root.html",
+        "STORYBOARD.md",
+        "index.html",
+        "meta.json",
+      ]);
+    assert.deepEqual(result.directories.sort(), ["assets", "compositions"]);
     assert.equal(result.projectName, "case-video");
     assert.match(result.files["GUARDRAILS.md"], /Max duration: 60s/);
     assert.match(result.files["GUARDRAILS.md"], /Latest validation: passed/);
+    assert.match(result.files["HANDOFF.md"], /Validation status: passed/);
   });
 
   it("writes the generated project package to disk", () => {
@@ -172,6 +183,9 @@ describe("createVideoProjectPackage", () => {
           outputType: "case-explainer",
         },
         scenePlan: { totalDurationSec: 60, scenes: [] },
+        script: { scenes: [] },
+        storyboard: { scenes: [] },
+        assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [] },
         validationReport: {
           projectName: "case-video",
           status: "passed",
@@ -188,7 +202,10 @@ describe("createVideoProjectPackage", () => {
       assert.match(readFileSync(join(writtenDir, "FLYWHEEL.md"), "utf8"), /Intake -> Plan/);
       assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Banned terms:\n- None/);
       assert.match(readFileSync(join(writtenDir, "VALIDATION_REPORT.md"), "utf8"), /Validation passed/);
-      assert.equal(readFileSync(join(writtenDir, "composition.html"), "utf8"), "<div></div>");
+      assert.equal(readFileSync(join(writtenDir, "index.html"), "utf8"), "<div></div>");
+      assert.equal(existsSync(join(writtenDir, "assets")), true);
+      assert.equal(existsSync(join(writtenDir, "compositions")), true);
+      assert.equal(existsSync(join(writtenDir, "compositions", "scene-root.html")), true);
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
     }
@@ -211,6 +228,9 @@ describe("createVideoProjectPackage", () => {
         outputType: "case-explainer",
       },
       scenePlan: { totalDurationSec: 45, scenes: [] },
+      script: { scenes: [] },
+      storyboard: { scenes: [] },
+      assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [] },
       validationReport: {
         projectName: "case-video",
         status: "failed",
@@ -247,7 +267,7 @@ describe("buildCaseExplainerVideoProject", () => {
 
     assert.match(result.package.files["VIDEO_BRIEF.json"], /"goal": "Explain the system"/);
     assert.match(result.package.files["VALIDATION_REPORT.json"], /"status": "passed"/);
-    assert.match(result.package.files["composition.html"], /data-composition-id/);
+    assert.match(result.package.files["index.html"], /data-composition-id/);
     assert.equal(result.scenePlan.scenes.length, 6);
     assert.equal(result.spec.width, 1920);
   });
