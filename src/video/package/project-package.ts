@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { ScenePlan, VideoBrief } from "../types.js";
+import type { ScenePlan, ValidationReport, VideoBrief } from "../types.js";
+import { formatValidationReportMarkdown } from "../validation/validation-report.js";
 
 export interface VideoProjectPackage {
   projectName: string;
@@ -11,6 +12,7 @@ export function createVideoProjectPackage(input: {
   projectName: string;
   brief: VideoBrief;
   scenePlan: ScenePlan;
+  validationReport: ValidationReport;
   compositionHtml: string;
 }): VideoProjectPackage {
   return {
@@ -22,6 +24,8 @@ export function createVideoProjectPackage(input: {
       "COMMANDS.md":
         "npx hyperframes preview\nnpx hyperframes lint\nnpx hyperframes validate\nnpx hyperframes render\n",
       "GUARDRAILS.md": "# Guardrails\n\nReview ScenePlan before render.\n",
+      "VALIDATION_REPORT.json": JSON.stringify(input.validationReport, null, 2),
+      "VALIDATION_REPORT.md": formatValidationReportMarkdown(input.validationReport),
       "RETRO_LOG.md": "# Retro Log\n\n- Initial generation\n",
       "composition.html": input.compositionHtml,
     },

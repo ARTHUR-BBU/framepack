@@ -3,6 +3,7 @@ import { basename, dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildCaseExplainerVideoProject } from "./video/index.js";
 import { writeVideoProjectPackage } from "./video/package/project-package.js";
+import { writeValidationReport } from "./video/validation/validation-report.js";
 
 interface CliIo {
   stdout: (message: string) => void;
@@ -217,9 +218,10 @@ function runValidateCommand(args: string[], io: CliIo): number {
     },
     projectName: options.projectName,
   });
+  const writtenDir = writeValidationReport(options.outputDir, result.validationReport);
 
   io.stdout(
-    `Validation passed for ${options.projectName} with ${result.scenePlan.scenes.length} scenes.`,
+    `Validation passed for ${options.projectName} with ${result.scenePlan.scenes.length} scenes. Report written to ${writtenDir}`,
   );
   return 0;
 }

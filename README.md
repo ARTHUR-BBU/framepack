@@ -40,11 +40,16 @@ node dist/cli.js generate --input examples/case-explainer-input.md --output-dir 
 
 ### `validate`
 
-Validate the input and planning path without writing the output package.
+Validate the input and planning path and write a structured report without generating the full package.
 
 ```bash
 node dist/cli.js validate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 ```
+
+`validate` writes:
+
+- `VALIDATION_REPORT.json`
+- `VALIDATION_REPORT.md`
 
 Optional flags for `generate` and `validate`:
 
@@ -84,6 +89,8 @@ The generated package contains:
 - `FLYWHEEL.md`
 - `VIDEO_BRIEF.json`
 - `SCENE_PLAN.json`
+- `VALIDATION_REPORT.json`
+- `VALIDATION_REPORT.md`
 - `COMMANDS.md`
 - `GUARDRAILS.md`
 - `RETRO_LOG.md`

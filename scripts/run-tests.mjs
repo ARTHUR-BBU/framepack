@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -247,6 +247,14 @@ const tests = [
             outputType: "case-explainer",
           },
           scenePlan: { totalDurationSec: 60, scenes: [] },
+          validationReport: {
+            projectName: "case-video",
+            status: "passed",
+            sceneCount: 0,
+            totalDurationSec: 60,
+            issues: [],
+            generatedAt: "2026-04-21T00:00:00.000Z",
+          },
           compositionHtml: "<div></div>",
         });
 
@@ -277,7 +285,9 @@ const tests = [
 
       assert.equal(result.scenePlan.scenes.length, 6);
       assert.equal(result.spec.width, 1920);
+      assert.equal(result.validationReport.status, "passed");
       assert.match(result.package.files["composition.html"], /data-composition-id/);
+      assert.match(result.package.files["VALIDATION_REPORT.json"], /"status": "passed"/);
     },
   },
   {
@@ -377,32 +387,48 @@ const tests = [
   {
     name: "validate CLI input without writing a package",
     run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-validate-"));
       const stdout = [];
       const stderr = [];
 
-      const exitCode = runCli(
-        [
-          "validate",
-          "--input",
-          fixturePath,
-          "--output-dir",
-          dirname(fixturePath),
-          "--goal",
-          "Explain the case",
-          "--audience",
-          "Founders",
-          "--project-name",
-          "validated-case",
-        ],
-        {
-          stdout: (message) => stdout.push(message),
-          stderr: (message) => stderr.push(message),
-        },
-      );
+      try {
+        const exitCode = runCli(
+          [
+            "validate",
+            "--input",
+            fixturePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the case",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "validated-case",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
 
-      assert.equal(exitCode, 0);
-      assert.equal(stderr.length, 0);
-      assert.match(stdout.join("\n"), /Validation passed/);
+        const reportDir = join(tempRoot, "validated-case");
+
+        assert.equal(exitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Validation passed/);
+        assert.equal(existsSync(join(reportDir, "VIDEO_BRIEF.json")), false);
+        assert.match(
+          readFileSync(join(reportDir, "VALIDATION_REPORT.json"), "utf8"),
+          /"status": "passed"/,
+        );
+        assert.match(
+          readFileSync(join(reportDir, "VALIDATION_REPORT.md"), "utf8"),
+          /# Validation Report/,
+        );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
     },
   },
   {
@@ -488,6 +514,14 @@ const tests = [
         assert.equal(validateExitCode, 0);
         assert.equal(stderr.length, 0);
         assert.match(stdout.join("\n"), /Validation passed/);
+        assert.match(
+          readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"),
+          /"sceneCount": 6/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "VALIDATION_REPORT.md"), "utf8"),
+          /Validation passed for config-validate/,
+        );
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

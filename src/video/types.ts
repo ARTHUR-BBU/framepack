@@ -74,6 +74,15 @@ export interface ScenePlan {
   scenes: Scene[];
 }
 
+export interface ValidationReport {
+  projectName: string;
+  status: "passed" | "failed";
+  sceneCount: number;
+  totalDurationSec: number;
+  issues: string[];
+  generatedAt: string;
+}
+
 export interface CompositionScene {
   sceneId: string;
   htmlTemplate: string;

@@ -53,6 +53,14 @@ describe("createVideoProjectPackage", () => {
         outputType: "case-explainer",
       },
       scenePlan: { totalDurationSec: 60, scenes: [] },
+      validationReport: {
+        projectName: "case-video",
+        status: "passed",
+        sceneCount: 0,
+        totalDurationSec: 60,
+        issues: [],
+        generatedAt: "2026-04-21T00:00:00.000Z",
+      },
       compositionHtml: "<div></div>",
     });
 
@@ -62,6 +70,8 @@ describe("createVideoProjectPackage", () => {
       "GUARDRAILS.md",
       "RETRO_LOG.md",
       "SCENE_PLAN.json",
+      "VALIDATION_REPORT.json",
+      "VALIDATION_REPORT.md",
       "VIDEO_BRIEF.json",
       "composition.html",
     ]);
@@ -84,12 +94,21 @@ describe("createVideoProjectPackage", () => {
           outputType: "case-explainer",
         },
         scenePlan: { totalDurationSec: 60, scenes: [] },
+        validationReport: {
+          projectName: "case-video",
+          status: "passed",
+          sceneCount: 0,
+          totalDurationSec: 60,
+          issues: [],
+          generatedAt: "2026-04-21T00:00:00.000Z",
+        },
         compositionHtml: "<div></div>",
       });
 
       const writtenDir = writeVideoProjectPackage(tempRoot, result);
 
       assert.match(readFileSync(join(writtenDir, "FLYWHEEL.md"), "utf8"), /Intake -> Plan/);
+      assert.match(readFileSync(join(writtenDir, "VALIDATION_REPORT.md"), "utf8"), /Validation passed/);
       assert.equal(readFileSync(join(writtenDir, "composition.html"), "utf8"), "<div></div>");
     } finally {
       rmSync(tempRoot, { recursive: true, force: true });
@@ -113,6 +132,7 @@ describe("buildCaseExplainerVideoProject", () => {
     });
 
     assert.match(result.package.files["VIDEO_BRIEF.json"], /"goal": "Explain the system"/);
+    assert.match(result.package.files["VALIDATION_REPORT.json"], /"status": "passed"/);
     assert.match(result.package.files["composition.html"], /data-composition-id/);
     assert.equal(result.scenePlan.scenes.length, 6);
     assert.equal(result.spec.width, 1920);

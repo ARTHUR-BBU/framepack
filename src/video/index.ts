@@ -4,6 +4,7 @@ import { createVideoProjectPackage } from "./package/project-package.js";
 import { planCaseExplainerScenes } from "./planning/scene-planner.js";
 import { validateScenePlan } from "./planning/scene-validators.js";
 import { emitHyperframesComposition } from "./render/hyperframes-adapter.js";
+import { createValidationReport } from "./validation/validation-report.js";
 
 export function buildCaseExplainerVideoProject(input: {
   inputType: "markdown";
@@ -27,6 +28,11 @@ export function buildCaseExplainerVideoProject(input: {
   const brief = normalizeVideoBriefInput(input);
   const scenePlan = planCaseExplainerScenes(brief);
   const reviewIssues = validateScenePlan(scenePlan, brief.constraints);
+  const validationReport = createValidationReport({
+    projectName: input.projectName,
+    scenePlan,
+    issues: reviewIssues,
+  });
 
   if (reviewIssues.length > 0) {
     throw new Error(`Scene plan validation failed: ${reviewIssues.join(", ")}`);
@@ -42,12 +48,14 @@ export function buildCaseExplainerVideoProject(input: {
     projectName: input.projectName,
     brief,
     scenePlan,
+    validationReport,
     compositionHtml: composition.html,
   });
 
   return {
     brief,
     scenePlan,
+    validationReport,
     spec,
     composition,
     package: projectPackage,
