@@ -1,0 +1,155 @@
+export type VideoFormat = "16:9" | "9:16";
+export type OutputType = "case-explainer" | "product-demo" | "social-short";
+
+export interface VideoStyle {
+  tone: string;
+  pacing: "slow" | "medium" | "fast";
+  brandName: string;
+}
+
+export interface VideoConstraintSet {
+  maxDurationSec: number;
+  requiredPoints: string[];
+  bannedTerms: string[];
+}
+
+export interface SourceMaterial {
+  kind: "markdown" | "structured";
+  title: string;
+  body: string;
+}
+
+export interface VideoBriefDefaults {
+  goal: string;
+  audience: string;
+  format: VideoFormat;
+  outputType: OutputType;
+  style?: Partial<VideoStyle>;
+  constraints?: Partial<VideoConstraintSet>;
+  theme?: {
+    palette: string;
+  };
+}
+
+export interface MarkdownVideoBriefInput {
+  inputType: "markdown";
+  markdown: string;
+  defaults: VideoBriefDefaults;
+}
+
+export type VideoBriefInput = MarkdownVideoBriefInput;
+
+export interface SourceBundle {
+  sourceType: "markdown" | "website" | "prd" | "case";
+  rawInputs: Record<string, string>;
+  collectedArtifacts: Array<Record<string, string>>;
+  ingestMetadata: {
+    collectedAt: string;
+  };
+}
+
+export interface VideoBrief {
+  goal: string;
+  audience: string;
+  format: VideoFormat;
+  style: VideoStyle;
+  sourceMaterials: SourceMaterial[];
+  constraints: VideoConstraintSet;
+  outputType: OutputType;
+}
+
+export type SceneVisualType =
+  | "cover"
+  | "problem"
+  | "solution"
+  | "workflow"
+  | "highlights"
+  | "ending";
+
+export interface Scene {
+  sceneId: string;
+  purpose: string;
+  startTimeSec: number;
+  durationSec: number;
+  narration: string;
+  onScreenText: string[];
+  visualType: SceneVisualType;
+  assets: string[];
+  transition: string;
+  validationNotes: string[];
+}
+
+export interface ScenePlan {
+  totalDurationSec: number;
+  scenes: Scene[];
+}
+
+export interface ScriptScene {
+  sceneId: string;
+  voiceoverLines: string[];
+  captionLines: string[];
+}
+
+export interface Script {
+  scenes: ScriptScene[];
+}
+
+export interface StoryboardScene {
+  sceneId: string;
+  visualIntent: string;
+  motionNote: string;
+  transitionNote: string;
+}
+
+export interface Storyboard {
+  scenes: StoryboardScene[];
+}
+
+export interface AssetPlan {
+  availableAssets: string[];
+  placeholderAssets: string[];
+  missingAssets: string[];
+}
+
+export interface ValidationReport {
+  projectName: string;
+  status: "passed" | "failed";
+  sceneCount: number;
+  totalDurationSec: number;
+  issues: string[];
+  generatedAt: string;
+}
+
+export interface CompositionScene {
+  sceneId: string;
+  htmlTemplate: string;
+  cssClassNames: string[];
+  assetRefs: string[];
+}
+
+export interface CompositionSpec {
+  width: number;
+  height: number;
+  fps: number;
+  durationSec: number;
+  scenes: CompositionScene[];
+  theme: {
+    palette: string;
+  };
+}
+
+export interface RuntimeCapabilities {
+  version: string;
+  supportedCommands: string[];
+  supportedCatalogFeatures: string[];
+  supportedRenderOptions: string[];
+  fallbackNotes: string[];
+}
+
+export interface RuntimeExecutionResult {
+  action: string;
+  success: boolean;
+  outputPaths: string[];
+  warnings: string[];
+  summary: string;
+}

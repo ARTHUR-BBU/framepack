@@ -3,12 +3,88 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
+import type {
+  AssetPlan,
+  RuntimeCapabilities,
+  ScenePlan as CompilerScenePlan,
+  Script,
+  SourceBundle,
+  Storyboard,
+  ValidationReport as CompilerValidationReport,
+  VideoBrief as CompilerVideoBrief,
+} from "../../src/core/types.js";
 import { buildCaseExplainerVideoProject } from "../../src/video/index.js";
 import {
   createVideoProjectPackage,
   writeVideoProjectPackage,
 } from "../../src/video/package/project-package.js";
 import { emitHyperframesComposition } from "../../src/video/render/hyperframes-adapter.js";
+
+describe("compiler types", () => {
+  it("exposes compiler-level source, planning, and runtime contracts", () => {
+    const sourceBundle: SourceBundle = {
+      sourceType: "markdown",
+      rawInputs: { markdown: "# Problem\nA" },
+      collectedArtifacts: [],
+      ingestMetadata: { collectedAt: "2026-04-21T00:00:00.000Z" },
+    };
+
+    const brief: CompilerVideoBrief = {
+      goal: "Explain the case",
+      audience: "Founders",
+      format: "16:9",
+      style: { tone: "direct", pacing: "medium", brandName: "Studio" },
+      sourceMaterials: [],
+      constraints: { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] },
+      outputType: "case-explainer",
+    };
+
+    const scenePlan: CompilerScenePlan = {
+      totalDurationSec: 60,
+      scenes: [],
+    };
+
+    const script: Script = {
+      scenes: [],
+    };
+
+    const storyboard: Storyboard = {
+      scenes: [],
+    };
+
+    const assetPlan: AssetPlan = {
+      availableAssets: [],
+      placeholderAssets: [],
+      missingAssets: [],
+    };
+
+    const validationReport: CompilerValidationReport = {
+      projectName: "case-video",
+      status: "passed",
+      sceneCount: 0,
+      totalDurationSec: 60,
+      issues: [],
+      generatedAt: "2026-04-21T00:00:00.000Z",
+    };
+
+    const runtimeCapabilities: RuntimeCapabilities = {
+      version: "0.0.0",
+      supportedCommands: [],
+      supportedCatalogFeatures: [],
+      supportedRenderOptions: [],
+      fallbackNotes: [],
+    };
+
+    assert.equal(sourceBundle.sourceType, "markdown");
+    assert.equal(brief.outputType, "case-explainer");
+    assert.equal(scenePlan.scenes.length, 0);
+    assert.equal(script.scenes.length, 0);
+    assert.equal(storyboard.scenes.length, 0);
+    assert.equal(assetPlan.missingAssets.length, 0);
+    assert.equal(validationReport.status, "passed");
+    assert.equal(runtimeCapabilities.version, "0.0.0");
+  });
+});
 
 describe("emitHyperframesComposition", () => {
   it("emits a composition HTML string with the composition root attributes", () => {
