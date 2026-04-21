@@ -73,6 +73,26 @@ The config file can carry brand and theme settings through generation, including
 - `style.tone`
 - `style.pacing`
 - `theme.palette`
+- `constraints.maxDurationSec`
+- `constraints.requiredPoints`
+- `constraints.bannedTerms`
+
+Example guardrails in `hyperframes-studio.json`:
+
+```json
+{
+  "constraints": {
+    "maxDurationSec": 60,
+    "requiredPoints": ["repeatable", "renderable"],
+    "bannedTerms": ["cheap"]
+  }
+}
+```
+
+Behavior:
+
+- `validate` writes a passed or failed validation report based on these constraints
+- `generate` fails fast when validation issues are present and does not write the full package
 
 ## Current scope
 

@@ -9,20 +9,25 @@ import { createValidationReport } from "./validation/validation-report.js";
 export function buildCaseExplainerVideoProject(input: {
   inputType: "markdown";
   markdown: string;
-    defaults: {
-      goal: string;
-      audience: string;
-      format: "16:9" | "9:16";
-      outputType: "case-explainer";
-      style?: {
-        tone?: string;
-        pacing?: "slow" | "medium" | "fast";
-        brandName?: string;
-      };
-      theme?: {
-        palette: string;
-      };
+  defaults: {
+    goal: string;
+    audience: string;
+    format: "16:9" | "9:16";
+    outputType: "case-explainer";
+    style?: {
+      tone?: string;
+      pacing?: "slow" | "medium" | "fast";
+      brandName?: string;
     };
+    constraints?: {
+      maxDurationSec?: number;
+      requiredPoints?: string[];
+      bannedTerms?: string[];
+    };
+    theme?: {
+      palette: string;
+    };
+  };
   projectName: string;
 }) {
   const brief = normalizeVideoBriefInput(input);
@@ -33,11 +38,6 @@ export function buildCaseExplainerVideoProject(input: {
     scenePlan,
     issues: reviewIssues,
   });
-
-  if (reviewIssues.length > 0) {
-    throw new Error(`Scene plan validation failed: ${reviewIssues.join(", ")}`);
-  }
-
   const spec = compileCompositionSpec({
     ...scenePlan,
     format: brief.format,
@@ -60,4 +60,10 @@ export function buildCaseExplainerVideoProject(input: {
     composition,
     package: projectPackage,
   };
+}
+
+export function ensureValidationPassed(validationReport: { issues: string[] }) {
+  if (validationReport.issues.length > 0) {
+    throw new Error(`Validation failed: ${validationReport.issues.join(", ")}`);
+  }
 }

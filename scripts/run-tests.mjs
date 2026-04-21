@@ -378,6 +378,10 @@ const tests = [
           readFileSync(join(projectDir, "hyperframes-studio.json"), "utf8"),
           /"palette": "default"/,
         );
+        assert.match(
+          readFileSync(join(projectDir, "hyperframes-studio.json"), "utf8"),
+          /"maxDurationSec": 60/,
+        );
         assert.match(readFileSync(join(projectDir, "input.md"), "utf8"), /# Problem/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
@@ -473,6 +477,10 @@ const tests = [
           /"brandName": "Studio"/,
         );
         assert.match(
+          readFileSync(join(tempRoot, "config-project", "VIDEO_BRIEF.json"), "utf8"),
+          /"maxDurationSec": 60/,
+        );
+        assert.match(
           readFileSync(join(tempRoot, "config-project", "composition.html"), "utf8"),
           /data-palette="default"/,
         );
@@ -522,6 +530,148 @@ const tests = [
           readFileSync(join(projectDir, "VALIDATION_REPORT.md"), "utf8"),
           /Validation passed for config-validate/,
         );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail validation from config when required points are missing",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-required-"));
+
+      try {
+        const initExitCode = runCli(
+          ["init", "--output-dir", tempRoot, "--project-name", "required-points"],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(initExitCode, 0);
+
+        const projectDir = join(tempRoot, "required-points");
+        const configPath = join(projectDir, "hyperframes-studio.json");
+        const config = JSON.parse(readFileSync(configPath, "utf8"));
+        config.constraints ??= { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] };
+        config.constraints.requiredPoints = ["Nonexistent proof point"];
+        writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+
+        const stdout = [];
+        const stderr = [];
+        const validateExitCode = runCli(
+          ["validate", "--config", configPath, "--output-dir", tempRoot],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(validateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /Validation failed/);
+        assert.match(
+          readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"),
+          /"status": "failed"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"),
+          /required point missing: Nonexistent proof point/,
+        );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail validation from config when banned terms are present",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-banned-"));
+
+      try {
+        const initExitCode = runCli(
+          ["init", "--output-dir", tempRoot, "--project-name", "banned-terms"],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(initExitCode, 0);
+
+        const projectDir = join(tempRoot, "banned-terms");
+        const configPath = join(projectDir, "hyperframes-studio.json");
+        const config = JSON.parse(readFileSync(configPath, "utf8"));
+        config.constraints ??= { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] };
+        config.constraints.bannedTerms = ["solution"];
+        writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+
+        const stdout = [];
+        const stderr = [];
+        const validateExitCode = runCli(
+          ["validate", "--config", configPath, "--output-dir", tempRoot],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(validateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /Validation failed/);
+        assert.match(
+          readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"),
+          /banned term present: solution/,
+        );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "block generate when config max duration is too small",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-duration-"));
+
+      try {
+        const initExitCode = runCli(
+          ["init", "--output-dir", tempRoot, "--project-name", "duration-limit"],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(initExitCode, 0);
+
+        const projectDir = join(tempRoot, "duration-limit");
+        const configPath = join(projectDir, "hyperframes-studio.json");
+        const config = JSON.parse(readFileSync(configPath, "utf8"));
+        config.constraints ??= { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] };
+        config.constraints.maxDurationSec = 5;
+        writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
+
+        const stdout = [];
+        const stderr = [];
+        const generateExitCode = runCli(
+          ["generate", "--config", configPath, "--output-dir", tempRoot],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /case explainer scene plan requires at least 1 second per scene/);
+        assert.equal(existsSync(join(projectDir, "VIDEO_BRIEF.json")), false);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

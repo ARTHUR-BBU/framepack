@@ -7,6 +7,7 @@ export interface VideoBriefDefaults {
   format: VideoFormat;
   outputType: OutputType;
   style?: Partial<VideoStyle>;
+  constraints?: Partial<VideoConstraintSet>;
   theme?: {
     palette: string;
   };

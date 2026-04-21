@@ -37,6 +37,17 @@ function createDefaultVideoConstraints(): VideoBrief["constraints"] {
   };
 }
 
+function createVideoConstraints(
+  overrides?: Partial<VideoBrief["constraints"]>,
+): VideoBrief["constraints"] {
+  return {
+    ...createDefaultVideoConstraints(),
+    ...overrides,
+    requiredPoints: [...(overrides?.requiredPoints ?? DEFAULT_VIDEO_CONSTRAINTS.requiredPoints)],
+    bannedTerms: [...(overrides?.bannedTerms ?? DEFAULT_VIDEO_CONSTRAINTS.bannedTerms)],
+  };
+}
+
 export function normalizeVideoBriefInput(input: VideoBriefInput): VideoBrief {
   switch (input.inputType) {
     case "markdown":
@@ -50,7 +61,7 @@ export function normalizeVideoBriefInput(input: VideoBriefInput): VideoBrief {
         format: input.defaults.format,
         style: createVideoStyle(input.defaults.style),
         sourceMaterials: parseMarkdownSourceMaterials(input.markdown),
-        constraints: createDefaultVideoConstraints(),
+        constraints: createVideoConstraints(input.defaults.constraints),
         outputType: input.defaults.outputType,
       };
     default:

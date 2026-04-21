@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildCaseExplainerVideoProject } from "./video/index.js";
+import { buildCaseExplainerVideoProject, ensureValidationPassed } from "./video/index.js";
 import { writeVideoProjectPackage } from "./video/package/project-package.js";
 import { writeValidationReport } from "./video/validation/validation-report.js";
 
@@ -26,6 +26,11 @@ interface CliOptions {
   theme: {
     palette: string;
   };
+  constraints: {
+    maxDurationSec: number;
+    requiredPoints: string[];
+    bannedTerms: string[];
+  };
 }
 
 type CliCommandName = "init" | "generate" | "validate";
@@ -44,6 +49,11 @@ interface CliConfigFile {
   };
   theme?: {
     palette?: string;
+  };
+  constraints?: {
+    maxDurationSec?: number;
+    requiredPoints?: string[];
+    bannedTerms?: string[];
   };
 }
 
@@ -95,6 +105,14 @@ function createDefaultTheme() {
   };
 }
 
+function createDefaultConstraints() {
+  return {
+    maxDurationSec: 60,
+    requiredPoints: [] as string[],
+    bannedTerms: [] as string[],
+  };
+}
+
 function getCommandName(args: string[]): CliCommandName {
   const [command] = args;
 
@@ -133,6 +151,12 @@ export function parseCliArgs(args: string[]): CliOptions {
       ...createDefaultTheme(),
       ...(config.theme ?? {}),
     };
+    const constraints = {
+      ...createDefaultConstraints(),
+      ...(config.constraints ?? {}),
+      requiredPoints: [...(config.constraints?.requiredPoints ?? [])],
+      bannedTerms: [...(config.constraints?.bannedTerms ?? [])],
+    };
 
     return {
       configPath,
@@ -144,6 +168,7 @@ export function parseCliArgs(args: string[]): CliOptions {
       format: config.format,
       style,
       theme,
+      constraints,
     };
   }
 
@@ -174,6 +199,7 @@ export function parseCliArgs(args: string[]): CliOptions {
       ...createDefaultTheme(),
       palette: getOptionalArg(commandArgs, "--palette") ?? "default",
     },
+    constraints: createDefaultConstraints(),
   };
 }
 
@@ -190,10 +216,12 @@ function runGenerateCommand(args: string[], io: CliIo): number {
       format: options.format,
       outputType: "case-explainer",
       style: options.style,
+      constraints: options.constraints,
       theme: options.theme,
     },
     projectName: options.projectName,
   });
+  ensureValidationPassed(result.validationReport);
 
   const writtenDir = writeVideoProjectPackage(options.outputDir, result.package);
 
@@ -214,11 +242,19 @@ function runValidateCommand(args: string[], io: CliIo): number {
       format: options.format,
       outputType: "case-explainer",
       style: options.style,
+      constraints: options.constraints,
       theme: options.theme,
     },
     projectName: options.projectName,
   });
   const writtenDir = writeValidationReport(options.outputDir, result.validationReport);
+
+  if (result.validationReport.status === "failed") {
+    io.stderr(
+      `Validation failed for ${options.projectName}: ${result.validationReport.issues.join(", ")}`,
+    );
+    return 1;
+  }
 
   io.stdout(
     `Validation passed for ${options.projectName} with ${result.scenePlan.scenes.length} scenes. Report written to ${writtenDir}`,
@@ -252,6 +288,9 @@ function runInitCommand(args: string[], io: CliIo): number {
         input: "input.md",
         style: {
           ...createDefaultStyle(),
+        },
+        constraints: {
+          ...createDefaultConstraints(),
         },
         theme: {
           ...createDefaultTheme(),

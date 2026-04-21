@@ -19,5 +19,22 @@ export function validateScenePlan(plan: ScenePlan, constraints: VideoConstraintS
     issues.push("total duration does not match sum of scene durations");
   }
 
+  const searchableSceneText = plan.scenes
+    .flatMap((scene) => [scene.narration, ...scene.onScreenText])
+    .join(" ")
+    .toLowerCase();
+
+  for (const requiredPoint of constraints.requiredPoints) {
+    if (!searchableSceneText.includes(requiredPoint.toLowerCase())) {
+      issues.push(`required point missing: ${requiredPoint}`);
+    }
+  }
+
+  for (const bannedTerm of constraints.bannedTerms) {
+    if (searchableSceneText.includes(bannedTerm.toLowerCase())) {
+      issues.push(`banned term present: ${bannedTerm}`);
+    }
+  }
+
   return issues;
 }
