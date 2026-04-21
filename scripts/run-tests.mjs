@@ -4,6 +4,8 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runCli } from "../dist/cli.js";
+import { compileMarkdownSourceBundle } from "../dist/ingest/markdown/index.js";
+import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
 import { parseMarkdownSourceMaterials } from "../dist/video/brief/markdown.js";
 import { compileCompositionSpec } from "../dist/video/compile/composition-spec.js";
@@ -22,6 +24,46 @@ const fixturePath = resolve(
 );
 
 const tests = [
+  {
+    name: "compile markdown into a SourceBundle",
+    run: () => {
+      const sourceBundle = compileMarkdownSourceBundle({
+        markdown: "# Problem\nTeams need reusable video output.",
+      });
+
+      assert.equal(sourceBundle.sourceType, "markdown");
+      assert.equal(sourceBundle.rawInputs.markdown, "# Problem\nTeams need reusable video output.");
+      assert.equal(sourceBundle.collectedArtifacts.length, 1);
+    },
+  },
+  {
+    name: "compile a VideoBrief from a SourceBundle",
+    run: () => {
+      const sourceBundle = compileMarkdownSourceBundle({
+        markdown:
+          "# Problem\nTeams need reusable video output.\n\n# Solution\nUse Studio plus HyperFrames.",
+      });
+
+      const brief = compileVideoBrief({
+        sourceBundle,
+        defaults: {
+          goal: "Explain the solution",
+          audience: "Internal team",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+      });
+
+      assert.equal(brief.goal, "Explain the solution");
+      assert.equal(brief.outputType, "case-explainer");
+      assert.equal(brief.sourceMaterials.length, 2);
+      assert.deepEqual(brief.constraints, {
+        maxDurationSec: 60,
+        requiredPoints: [],
+        bannedTerms: [],
+      });
+    },
+  },
   {
     name: "normalize markdown into a case-explainer VideoBrief",
     run: () => {
