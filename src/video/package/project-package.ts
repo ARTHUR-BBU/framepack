@@ -14,6 +14,10 @@ import {
   formatScriptMarkdown,
   formatStoryboardMarkdown,
 } from "../../packaging/documents.js";
+import {
+  createHyperframesRuntimeAdapter,
+  detectHyperframesCapabilities,
+} from "../../runtime/hyperframes/adapter.js";
 import { formatValidationReportMarkdown } from "../validation/validation-report.js";
 
 export interface VideoProjectPackage {
@@ -32,6 +36,12 @@ export function createVideoProjectPackage(input: {
   validationReport: ValidationReport;
   compositionHtml: string;
 }): VideoProjectPackage {
+  const capabilities = detectHyperframesCapabilities();
+  const runtimeAdapter = createHyperframesRuntimeAdapter();
+  const runtimeInfo = runtimeAdapter.describePackage({
+    projectName: input.projectName,
+  });
+
   return {
     directories: ["assets", "compositions"],
     projectName: input.projectName,
@@ -45,10 +55,12 @@ export function createVideoProjectPackage(input: {
       "HANDOFF.md": formatHandoffMarkdown(input),
       "meta.json": JSON.stringify(
         {
-          rootEntry: "index.html",
+          rootEntry: runtimeInfo.rootEntry,
           runtime: "hyperframes",
-          compositionDirectory: "compositions",
-          assetDirectory: "assets",
+          compositionDirectory: runtimeInfo.compositionDirectory,
+          assetDirectory: runtimeInfo.assetDirectory,
+          supportedCommands: capabilities.supportedCommands,
+          fallbackNotes: capabilities.fallbackNotes,
         },
         null,
         2,

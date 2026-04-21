@@ -16,6 +16,10 @@ import {
   createVideoProjectPackage,
   writeVideoProjectPackage,
 } from "../dist/video/package/project-package.js";
+import {
+  createHyperframesRuntimeAdapter,
+  detectHyperframesCapabilities,
+} from "../dist/runtime/hyperframes/adapter.js";
 import { planCaseExplainerScenes } from "../dist/video/planning/scene-planner.js";
 import { validateScenePlan } from "../dist/video/planning/scene-validators.js";
 import { emitHyperframesComposition } from "../dist/video/render/hyperframes-adapter.js";
@@ -298,6 +302,22 @@ const tests = [
     },
   },
   {
+    name: "detect runtime capabilities and map package metadata",
+    run: () => {
+      const capabilities = detectHyperframesCapabilities();
+      const adapter = createHyperframesRuntimeAdapter();
+      const runtimeInfo = adapter.describePackage({
+        projectName: "case-video",
+      });
+
+      assert.equal(capabilities.version, "unknown");
+      assert.ok(capabilities.supportedCommands.includes("preview"));
+      assert.equal(runtimeInfo.rootEntry, "index.html");
+      assert.equal(runtimeInfo.compositionDirectory, "compositions");
+      assert.equal(runtimeInfo.assetDirectory, "assets");
+    },
+  },
+  {
     name: "create and write the video project package",
     run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-"));
@@ -337,6 +357,8 @@ const tests = [
         assert.match(readFileSync(join(writtenDir, "STORYBOARD.md"), "utf8"), /# Storyboard/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Validation status: passed/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"rootEntry": "index.html"/);
+        assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"runtime": "hyperframes"/);
+        assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"supportedCommands": \[/);
         assert.equal(existsSync(join(writtenDir, "assets")), true);
         assert.equal(existsSync(join(writtenDir, "compositions")), true);
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Max duration: 60s/);
