@@ -137,6 +137,8 @@ export interface CaptureTarget {
   sectionTitle: string;
   sectionBody: string;
   suggestedAsset: string;
+  recommendedSceneIds: string[];
+  rationale: string;
 }
 
 export interface AssetPlan {

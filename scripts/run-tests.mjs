@@ -355,6 +355,7 @@ const tests = [
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"url": "https:\/\/example.com\/product"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"captureTargets": \[/);
       assert.match(result.package.files["HANDOFF.md"], /Capture targets:/);
+      assert.match(result.package.files["HANDOFF.md"], /scene-1, scene-2/);
     },
   },
   {
@@ -599,6 +600,9 @@ const tests = [
       assert.equal(assetPlan.captureTargets.length, 2);
       assert.equal(assetPlan.captureTargets[0]?.sourceUrl, "https://example.com/product");
       assert.match(assetPlan.captureTargets[0]?.suggestedAsset ?? "", /hero/i);
+      assert.deepEqual(assetPlan.captureTargets[0]?.recommendedSceneIds, ["scene-1", "scene-2"]);
+      assert.match(assetPlan.captureTargets[0]?.rationale ?? "", /early story beats/i);
+      assert.deepEqual(assetPlan.captureTargets[1]?.recommendedSceneIds, ["scene-3", "scene-4", "scene-5"]);
       assert.ok(assetPlan.missingAssets.some((item) => item.includes("capture:hero")));
     },
   },
