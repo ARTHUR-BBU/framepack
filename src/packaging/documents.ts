@@ -1,4 +1,5 @@
 import type { AssetPlan, Script, Storyboard, ValidationReport, VideoBrief } from "../core/types.js";
+import type { HyperframesCommandSpec, RuntimeCapabilities } from "../runtime/hyperframes/types.js";
 
 function formatList(items: string[]): string {
   return items.length === 0 ? "- None" : items.map((item) => `- ${item}`).join("\n");
@@ -74,6 +75,38 @@ export function formatHandoffMarkdown(input: {
     "",
     "Missing assets:",
     formatList(input.assetPlan.missingAssets),
+    "",
+  ].join("\n");
+}
+
+export function formatRuntimeCommandsMarkdown(input: {
+  capabilities: RuntimeCapabilities;
+  commands: HyperframesCommandSpec[];
+}): string {
+  const commandLines =
+    input.commands.length === 0
+      ? ["- None"]
+      : input.commands.flatMap((command) => [
+          `## ${command.action}`,
+          "",
+          `- Executable: ${command.executable}`,
+          `- CWD: ${command.cwd}`,
+          `- Command: ${command.summary}`,
+          "",
+        ]);
+
+  return [
+    "# Runtime Commands",
+    "",
+    `Runtime available: ${input.capabilities.available}`,
+    `Binary: ${input.capabilities.binary}`,
+    `Detected at: ${input.capabilities.detectedAt}`,
+    `Version: ${input.capabilities.version}`,
+    "",
+    "Fallback notes:",
+    formatList(input.capabilities.fallbackNotes),
+    "",
+    ...commandLines,
     "",
   ].join("\n");
 }

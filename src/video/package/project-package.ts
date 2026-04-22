@@ -11,6 +11,7 @@ import type {
 import {
   formatGuardrailsMarkdown,
   formatHandoffMarkdown,
+  formatRuntimeCommandsMarkdown,
   formatScriptMarkdown,
   formatStoryboardMarkdown,
 } from "../../packaging/documents.js";
@@ -41,6 +42,15 @@ export function createVideoProjectPackage(input: {
   const runtimeInfo = runtimeAdapter.describePackage({
     projectName: input.projectName,
   });
+  const packageDirectory = input.projectName;
+  const runtimeCommands = capabilities.supportedCommands.map((action) =>
+    runtimeAdapter.buildCommand({
+      action: action as "preview" | "lint" | "validate" | "render",
+      packageDirectory,
+      packageRuntimeInfo: runtimeInfo,
+      capabilities,
+    }),
+  );
 
   return {
     directories: ["assets", "compositions"],
@@ -57,16 +67,23 @@ export function createVideoProjectPackage(input: {
         {
           rootEntry: runtimeInfo.rootEntry,
           runtime: "hyperframes",
+          available: capabilities.available,
+          binary: capabilities.binary,
+          detectedAt: capabilities.detectedAt,
+          version: capabilities.version,
           compositionDirectory: runtimeInfo.compositionDirectory,
           assetDirectory: runtimeInfo.assetDirectory,
           supportedCommands: capabilities.supportedCommands,
           fallbackNotes: capabilities.fallbackNotes,
+          commands: runtimeCommands,
         },
         null,
         2,
       ),
-      "COMMANDS.md":
-        "npx hyperframes preview\nnpx hyperframes lint\nnpx hyperframes validate\nnpx hyperframes render\n",
+      "COMMANDS.md": formatRuntimeCommandsMarkdown({
+        capabilities,
+        commands: runtimeCommands,
+      }),
       "GUARDRAILS.md": formatGuardrailsMarkdown(input),
       "VALIDATION_REPORT.json": JSON.stringify(input.validationReport, null, 2),
       "VALIDATION_REPORT.md": formatValidationReportMarkdown(input.validationReport),

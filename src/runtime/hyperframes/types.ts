@@ -1,3 +1,5 @@
+export type HyperframesRuntimeAction = "doctor" | "preview" | "lint" | "validate" | "render";
+
 export interface RuntimeCapabilities {
   available: boolean;
   binary: string;
@@ -21,4 +23,12 @@ export interface HyperframesPackageRuntimeInfo {
   rootEntry: string;
   compositionDirectory: string;
   assetDirectory: string;
+}
+
+export interface HyperframesCommandSpec {
+  action: HyperframesRuntimeAction;
+  executable: string;
+  args: string[];
+  cwd: string;
+  summary: string;
 }

@@ -20,6 +20,7 @@ import {
   createHyperframesRuntimeAdapter,
   detectHyperframesCapabilities,
 } from "../dist/runtime/hyperframes/adapter.js";
+import { buildHyperframesCommandSpec } from "../dist/runtime/hyperframes/commands.js";
 import {
   createMissingHyperframesCapabilities,
   detectLocalHyperframesCapabilities,
@@ -368,6 +369,35 @@ const tests = [
     },
   },
   {
+    name: "build runtime command specs from package metadata",
+    run: () => {
+      const commandSpec = buildHyperframesCommandSpec({
+        action: "preview",
+        packageDirectory: "/tmp/case-video",
+        packageRuntimeInfo: {
+          rootEntry: "index.html",
+          compositionDirectory: "compositions",
+          assetDirectory: "assets",
+        },
+        capabilities: {
+          available: true,
+          binary: "hyperframes",
+          detectedAt: "2026-04-22T09:00:00.000Z",
+          version: "0.4.11",
+          supportedCommands: ["preview", "lint", "validate", "render"],
+          supportedCatalogFeatures: [],
+          supportedRenderOptions: [],
+          fallbackNotes: [],
+        },
+      });
+
+      assert.equal(commandSpec.executable, "hyperframes");
+      assert.deepEqual(commandSpec.args, ["preview", "index.html"]);
+      assert.equal(commandSpec.cwd, "/tmp/case-video");
+      assert.match(commandSpec.summary, /hyperframes preview index.html/);
+    },
+  },
+  {
     name: "create and write the video project package",
     run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-"));
@@ -409,10 +439,13 @@ const tests = [
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"rootEntry": "index.html"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"runtime": "hyperframes"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"supportedCommands": \[/);
+        assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"binary": "hyperframes"/);
         assert.equal(existsSync(join(writtenDir, "assets")), true);
         assert.equal(existsSync(join(writtenDir, "compositions")), true);
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Max duration: 60s/);
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Latest validation: passed/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /# Runtime Commands/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /hyperframes preview index.html/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
