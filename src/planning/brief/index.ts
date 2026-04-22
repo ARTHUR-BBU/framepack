@@ -74,7 +74,7 @@ export function compileVideoBrief(input: {
   defaults: VideoBriefDefaults;
 }): VideoBrief {
   if (input.defaults.outputType !== SUPPORTED_MARKDOWN_OUTPUT_TYPE) {
-    throw new Error("Markdown normalization only supports case-explainer outputType");
+    throw new Error("Video brief compilation only supports case-explainer outputType");
   }
 
   return {

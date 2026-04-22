@@ -458,7 +458,30 @@ const tests = [
               outputType: "product-demo",
             },
           }),
-        /Markdown normalization only supports case-explainer outputType/,
+        /Video brief compilation only supports case-explainer outputType/,
+      );
+    },
+  },
+  {
+    name: "reject unsupported output types in website brief compilation",
+    run: () => {
+      assert.throws(
+        () =>
+          compileWebsiteVideoBrief({
+            url: "https://example.com/product",
+            title: "Example Product",
+            summary: "A product landing page for founders.",
+            sections: [
+              { title: "Hero", body: "Launch faster with a reusable workflow." },
+            ],
+            defaults: {
+              goal: "Explain the product",
+              audience: "Founders",
+              format: "16:9",
+              outputType: "product-demo",
+            },
+          }),
+        /Video brief compilation only supports case-explainer outputType/,
       );
     },
   },
