@@ -5,7 +5,11 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runCli } from "../dist/interfaces/cli/index.js";
 import { compileMarkdownSourceBundle } from "../dist/ingest/markdown/index.js";
-import { compileWebsiteSourceBundle } from "../dist/ingest/website/index.js";
+import {
+  compileWebsiteSourceBundle,
+  extractWebsiteContent,
+  fetchWebsiteSourceBundle,
+} from "../dist/ingest/website/index.js";
 import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { buildAssetPlan } from "../dist/planning/assets/index.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
@@ -136,6 +140,69 @@ const tests = [
       assert.match(capabilities.binary, /hyperframes(\.cmd)?$/);
       assert.ok(capabilities.available === true || capabilities.available === false);
       assert.ok(capabilities.version === "0.4.12" || capabilities.version === "unknown");
+    },
+  },
+  {
+    name: "extract structured website content from HTML",
+    run: () => {
+      const extracted = extractWebsiteContent({
+        url: "https://example.com/product",
+        html: `
+          <!doctype html>
+          <html>
+            <head>
+              <title>Example Product</title>
+              <meta name="description" content="A product landing page for founders." />
+            </head>
+            <body>
+              <h1>Launch faster</h1>
+              <p>Ship reusable video workflows.</p>
+              <h2>Review gates</h2>
+              <p>Keep output quality stable.</p>
+            </body>
+          </html>
+        `,
+      });
+
+      assert.equal(extracted.title, "Example Product");
+      assert.equal(extracted.summary, "A product landing page for founders.");
+      assert.equal(extracted.sections.length, 2);
+      assert.equal(extracted.sections[0]?.title, "Launch faster");
+      assert.match(extracted.sections[0]?.body ?? "", /Ship reusable video workflows/);
+    },
+  },
+  {
+    name: "fetch and compile website input from a URL",
+    run: async () => {
+      const sourceBundle = await fetchWebsiteSourceBundle({
+        url: "https://example.com/product",
+        fetchImpl: async () =>
+          new Response(
+            `
+              <!doctype html>
+              <html>
+                <head>
+                  <title>Example Product</title>
+                  <meta name="description" content="A product landing page for founders." />
+                </head>
+                <body>
+                  <h1>Launch faster</h1>
+                  <p>Ship reusable video workflows.</p>
+                  <h2>Review gates</h2>
+                  <p>Keep output quality stable.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html" },
+            },
+          ),
+      });
+
+      assert.equal(sourceBundle.sourceType, "website");
+      assert.equal(sourceBundle.rawInputs.title, "Example Product");
+      assert.equal(sourceBundle.collectedArtifacts.length, 2);
     },
   },
   {
@@ -1302,7 +1369,7 @@ const tests = [
 let passed = 0;
 
 for (const test of tests) {
-  test.run();
+  await test.run();
   passed += 1;
   console.log(`PASS ${test.name}`);
 }
