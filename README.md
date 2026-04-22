@@ -1,15 +1,27 @@
-# HyperFrames Studio Pipeline
+# Framepack
 
-This repository contains the first-version Studio pipeline that turns case materials into a reusable video project package for HyperFrames.
+Framepack turns content into executable video projects.
 
-## What it does
+Today this repository provides the Phase 1 compiler path for markdown-driven case explainer videos. It produces a video engineering package with planning artifacts, validation artifacts, and HyperFrames-ready runtime structure.
 
-- normalizes Markdown input into a `VideoBrief`
-- plans a fixed first-version `ScenePlan`
-- validates review-stage issues before render
-- compiles the plan into a `CompositionSpec`
-- emits HyperFrames-ready HTML
-- generates a reusable package with flywheel files
+## User Flow
+
+1. Provide a source
+   - Markdown today
+   - websites, PRDs, and case packages later
+2. Generate a video engineering package
+   - brief
+   - scene plan
+   - script
+   - storyboard
+   - asset plan
+   - guardrails
+   - validation report
+   - runtime entry files
+3. Continue work
+   - inspect and edit the package directly
+   - hand the package to Codex or Claude Code
+   - use runtime commands once the runtime layer is integrated
 
 ## Commands
 
@@ -20,7 +32,7 @@ This repository contains the first-version Studio pipeline that turns case mater
 
 ## CLI
 
-After `npm run build`, the product exposes three CLI commands:
+After `npm run build`, Framepack exposes three commands:
 
 ### `init`
 
@@ -32,7 +44,7 @@ node dist/cli.js init --output-dir out --project-name starter --format 9:16
 
 ### `generate`
 
-Generate a reusable package from a Markdown source file.
+Generate a video engineering package from a Markdown source file.
 
 ```bash
 node dist/cli.js generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
@@ -51,15 +63,6 @@ node dist/cli.js validate --input examples/case-explainer-input.md --output-dir 
 - `VALIDATION_REPORT.json`
 - `VALIDATION_REPORT.md`
 
-Optional flags for `generate` and `validate`:
-
-- `--project-name <name>`
-- `--format 16:9|9:16`
-- `--brand-name <name>`
-- `--tone <tone>`
-- `--pacing slow|medium|fast`
-- `--palette <palette>`
-
 You can also use a project config produced by `init`:
 
 ```bash
@@ -67,51 +70,31 @@ node dist/cli.js generate --config out/starter/hyperframes-studio.json --output-
 node dist/cli.js validate --config out/starter/hyperframes-studio.json --output-dir out
 ```
 
-The config file can carry brand and theme settings through generation, including:
-
-- `style.brandName`
-- `style.tone`
-- `style.pacing`
-- `theme.palette`
-- `constraints.maxDurationSec`
-- `constraints.requiredPoints`
-- `constraints.bannedTerms`
-
-Example guardrails in `hyperframes-studio.json`:
-
-```json
-{
-  "constraints": {
-    "maxDurationSec": 60,
-    "requiredPoints": ["repeatable", "renderable"],
-    "bannedTerms": ["cheap"]
-  }
-}
-```
-
-Behavior:
-
-- `validate` writes a passed or failed validation report based on these constraints
-- `generate` fails fast when validation issues are present and does not write the full package
-
-## Current scope
+## Current Scope
 
 The current implementation supports:
 
 - Markdown input
 - `case-explainer` output type
 - `16:9` and `9:16` formats
+- engineering package generation
+- guardrail validation
 
-## Output package
+## Output Package
 
-The generated package contains:
+The generated package includes:
 
-- `FLYWHEEL.md`
 - `VIDEO_BRIEF.json`
 - `SCENE_PLAN.json`
+- `SCRIPT.md`
+- `STORYBOARD.md`
+- `ASSET_PLAN.json`
 - `VALIDATION_REPORT.json`
 - `VALIDATION_REPORT.md`
-- `COMMANDS.md`
 - `GUARDRAILS.md`
-- `RETRO_LOG.md`
+- `HANDOFF.md`
+- `COMMANDS.md`
+- `meta.json`
 - `index.html`
+- `assets/`
+- `compositions/`

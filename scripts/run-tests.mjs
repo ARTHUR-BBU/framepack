@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "no
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { runCli } from "../dist/cli.js";
+import { runCli } from "../dist/interfaces/cli/index.js";
 import { compileMarkdownSourceBundle } from "../dist/ingest/markdown/index.js";
 import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { buildAssetPlan } from "../dist/planning/assets/index.js";
