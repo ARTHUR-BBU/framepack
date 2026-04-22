@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runCli } from "../dist/interfaces/cli/index.js";
 import { compileMarkdownSourceBundle } from "../dist/ingest/markdown/index.js";
+import { compileWebsiteSourceBundle } from "../dist/ingest/website/index.js";
 import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { buildAssetPlan } from "../dist/planning/assets/index.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
@@ -32,6 +33,7 @@ import { planCaseExplainerScenes } from "../dist/video/planning/scene-planner.js
 import { validateScenePlan } from "../dist/video/planning/scene-validators.js";
 import { emitHyperframesComposition } from "../dist/video/render/hyperframes-adapter.js";
 import { buildCaseExplainerVideoProject } from "../dist/video/index.js";
+import { compileWebsiteVideoBrief } from "../dist/compiler/index.js";
 
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -134,6 +136,77 @@ const tests = [
       assert.match(capabilities.binary, /hyperframes(\.cmd)?$/);
       assert.ok(capabilities.available === true || capabilities.available === false);
       assert.ok(capabilities.version === "0.4.12" || capabilities.version === "unknown");
+    },
+  },
+  {
+    name: "compile website input into a SourceBundle",
+    run: () => {
+      const sourceBundle = compileWebsiteSourceBundle({
+        url: "https://example.com/product",
+        title: "Example Product",
+        summary: "A product landing page for founders.",
+        sections: [
+          { title: "Hero", body: "Launch faster with a reusable workflow." },
+          { title: "Features", body: "Templates, video output, and review gates." },
+        ],
+      });
+
+      assert.equal(sourceBundle.sourceType, "website");
+      assert.equal(sourceBundle.rawInputs.url, "https://example.com/product");
+      assert.equal(sourceBundle.collectedArtifacts.length, 2);
+      assert.equal(sourceBundle.collectedArtifacts[0]?.title, "Hero");
+    },
+  },
+  {
+    name: "compile a VideoBrief from a website SourceBundle",
+    run: () => {
+      const sourceBundle = compileWebsiteSourceBundle({
+        url: "https://example.com/product",
+        title: "Example Product",
+        summary: "A product landing page for founders.",
+        sections: [
+          { title: "Hero", body: "Launch faster with a reusable workflow." },
+          { title: "Features", body: "Templates, video output, and review gates." },
+        ],
+      });
+
+      const brief = compileVideoBrief({
+        sourceBundle,
+        defaults: {
+          goal: "Explain the product",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+      });
+
+      assert.equal(brief.goal, "Explain the product");
+      assert.equal(brief.sourceMaterials.length, 2);
+      assert.equal(brief.sourceMaterials[0]?.kind, "structured");
+      assert.match(brief.sourceMaterials[0]?.body ?? "", /https:\/\/example\.com\/product/);
+    },
+  },
+  {
+    name: "compile website input through the compiler entrypoint",
+    run: () => {
+      const result = compileWebsiteVideoBrief({
+        url: "https://example.com/product",
+        title: "Example Product",
+        summary: "A product landing page for founders.",
+        sections: [
+          { title: "Hero", body: "Launch faster with a reusable workflow." },
+        ],
+        defaults: {
+          goal: "Explain the product",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+      });
+
+      assert.equal(result.sourceBundle.sourceType, "website");
+      assert.equal(result.brief.goal, "Explain the product");
+      assert.equal(result.brief.sourceMaterials.length, 1);
     },
   },
   {

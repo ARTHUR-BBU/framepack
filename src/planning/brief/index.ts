@@ -56,6 +56,16 @@ function compileMarkdownSourceMaterials(
   }));
 }
 
+function compileWebsiteSourceMaterials(
+  collectedArtifacts: Array<Record<string, string>>,
+): SourceMaterial[] {
+  return collectedArtifacts.map((artifact) => ({
+    kind: "structured",
+    title: artifact.title ?? artifact.pageTitle ?? "Imported Website",
+    body: [artifact.pageSummary, artifact.body, artifact.url].filter(Boolean).join("\n\n"),
+  }));
+}
+
 export function compileVideoBrief(input: {
   sourceBundle: {
     sourceType: "markdown" | "website" | "prd" | "case";
@@ -63,10 +73,6 @@ export function compileVideoBrief(input: {
   };
   defaults: VideoBriefDefaults;
 }): VideoBrief {
-  if (input.sourceBundle.sourceType !== "markdown") {
-    throw new Error(`Unsupported source bundle type: ${input.sourceBundle.sourceType}`);
-  }
-
   if (input.defaults.outputType !== SUPPORTED_MARKDOWN_OUTPUT_TYPE) {
     throw new Error("Markdown normalization only supports case-explainer outputType");
   }
@@ -76,7 +82,14 @@ export function compileVideoBrief(input: {
     audience: input.defaults.audience,
     format: input.defaults.format,
     style: createVideoStyle(input.defaults.style),
-    sourceMaterials: compileMarkdownSourceMaterials(input.sourceBundle.collectedArtifacts),
+    sourceMaterials:
+      input.sourceBundle.sourceType === "markdown"
+        ? compileMarkdownSourceMaterials(input.sourceBundle.collectedArtifacts)
+        : input.sourceBundle.sourceType === "website"
+          ? compileWebsiteSourceMaterials(input.sourceBundle.collectedArtifacts)
+          : (() => {
+              throw new Error(`Unsupported source bundle type: ${input.sourceBundle.sourceType}`);
+            })(),
     constraints: createVideoConstraints(input.defaults.constraints),
     outputType: input.defaults.outputType,
   };

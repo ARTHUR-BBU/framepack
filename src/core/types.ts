@@ -37,7 +37,19 @@ export interface MarkdownVideoBriefInput {
   defaults: VideoBriefDefaults;
 }
 
-export type VideoBriefInput = MarkdownVideoBriefInput;
+export interface WebsiteVideoBriefInput {
+  inputType: "website";
+  url: string;
+  title?: string;
+  summary?: string;
+  sections?: Array<{
+    title: string;
+    body: string;
+  }>;
+  defaults: VideoBriefDefaults;
+}
+
+export type VideoBriefInput = MarkdownVideoBriefInput | WebsiteVideoBriefInput;
 
 export interface SourceBundle {
   sourceType: "markdown" | "website" | "prd" | "case";

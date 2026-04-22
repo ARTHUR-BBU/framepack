@@ -3,6 +3,7 @@ import type {
   VideoBriefDefaults,
 } from "../core/types.js";
 import { compileMarkdownSourceBundle } from "../ingest/markdown/index.js";
+import { compileWebsiteSourceBundle } from "../ingest/website/index.js";
 import { compileVideoBrief } from "../planning/brief/index.js";
 import { buildCaseExplainerVideoProject } from "../video/index.js";
 
@@ -12,6 +13,33 @@ export function compileMarkdownVideoBrief(input: {
 }) {
   const sourceBundle = compileMarkdownSourceBundle({
     markdown: input.markdown,
+  });
+  const brief = compileVideoBrief({
+    sourceBundle,
+    defaults: input.defaults,
+  });
+
+  return {
+    sourceBundle,
+    brief,
+  };
+}
+
+export function compileWebsiteVideoBrief(input: {
+  url: string;
+  title?: string;
+  summary?: string;
+  sections?: Array<{
+    title: string;
+    body: string;
+  }>;
+  defaults: VideoBriefDefaults;
+}) {
+  const sourceBundle = compileWebsiteSourceBundle({
+    url: input.url,
+    title: input.title,
+    summary: input.summary,
+    sections: input.sections,
   });
   const brief = compileVideoBrief({
     sourceBundle,
