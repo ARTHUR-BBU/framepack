@@ -20,6 +20,11 @@ import {
   createHyperframesRuntimeAdapter,
   detectHyperframesCapabilities,
 } from "../dist/runtime/hyperframes/adapter.js";
+import {
+  createMissingHyperframesCapabilities,
+  detectLocalHyperframesCapabilities,
+  parseHyperframesVersion,
+} from "../dist/runtime/hyperframes/discovery.js";
 import { planCaseExplainerScenes } from "../dist/video/planning/scene-planner.js";
 import { validateScenePlan } from "../dist/video/planning/scene-validators.js";
 import { emitHyperframesComposition } from "../dist/video/render/hyperframes-adapter.js";
@@ -31,6 +36,48 @@ const fixturePath = resolve(
 );
 
 const tests = [
+  {
+    name: "parse and normalize detected HyperFrames versions",
+    run: () => {
+      assert.equal(parseHyperframesVersion("hyperframes/0.4.11\n"), "0.4.11");
+      assert.equal(parseHyperframesVersion("0.4.12"), "0.4.12");
+      assert.equal(parseHyperframesVersion(""), "unknown");
+    },
+  },
+  {
+    name: "create missing runtime capabilities with actionable fallback notes",
+    run: () => {
+      const capabilities = createMissingHyperframesCapabilities({
+        binary: "hyperframes",
+      });
+
+      assert.equal(capabilities.available, false);
+      assert.equal(capabilities.binary, "hyperframes");
+      assert.equal(capabilities.version, "unknown");
+      assert.ok(capabilities.fallbackNotes.some((note) => note.includes("not installed")));
+      assert.ok(capabilities.detectedAt.length > 0);
+    },
+  },
+  {
+    name: "detect local runtime capabilities from a version probe",
+    run: () => {
+      const capabilities = detectLocalHyperframesCapabilities({
+        binary: "hyperframes",
+        now: () => "2026-04-22T09:00:00.000Z",
+        runner: () => ({
+          status: 0,
+          stdout: "hyperframes/0.4.11\n",
+          stderr: "",
+        }),
+      });
+
+      assert.equal(capabilities.available, true);
+      assert.equal(capabilities.binary, "hyperframes");
+      assert.equal(capabilities.version, "0.4.11");
+      assert.equal(capabilities.detectedAt, "2026-04-22T09:00:00.000Z");
+      assert.ok(capabilities.supportedCommands.includes("preview"));
+    },
+  },
   {
     name: "compile markdown into a SourceBundle",
     run: () => {
@@ -311,6 +358,9 @@ const tests = [
       });
 
       assert.equal(capabilities.version, "unknown");
+      assert.equal(capabilities.available, false);
+      assert.equal(capabilities.binary, "hyperframes");
+      assert.ok(capabilities.detectedAt.length > 0);
       assert.ok(capabilities.supportedCommands.includes("preview"));
       assert.equal(runtimeInfo.rootEntry, "index.html");
       assert.equal(runtimeInfo.compositionDirectory, "compositions");

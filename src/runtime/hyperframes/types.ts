@@ -1,4 +1,7 @@
 export interface RuntimeCapabilities {
+  available: boolean;
+  binary: string;
+  detectedAt: string;
   version: string;
   supportedCommands: string[];
   supportedCatalogFeatures: string[];

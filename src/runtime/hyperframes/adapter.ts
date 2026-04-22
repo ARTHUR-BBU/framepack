@@ -2,15 +2,10 @@ import type {
   HyperframesPackageRuntimeInfo,
   RuntimeCapabilities,
 } from "./types.js";
+import { detectLocalHyperframesCapabilities } from "./discovery.js";
 
 export function detectHyperframesCapabilities(): RuntimeCapabilities {
-  return {
-    version: "unknown",
-    supportedCommands: ["preview", "lint", "validate", "render"],
-    supportedCatalogFeatures: [],
-    supportedRenderOptions: [],
-    fallbackNotes: ["Runtime execution is not enabled in Phase 1."],
-  };
+  return detectLocalHyperframesCapabilities();
 }
 
 export function createHyperframesRuntimeAdapter() {
