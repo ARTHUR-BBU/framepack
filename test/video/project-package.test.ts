@@ -146,6 +146,7 @@ describe("createVideoProjectPackage", () => {
 
       assert.deepEqual(Object.keys(result.files).sort(), [
         "ASSET_PLAN.json",
+        "CAPTURE_EXECUTION_PLAN.json",
         "COMMANDS.md",
         "FLYWHEEL.md",
         "GUARDRAILS.md",
@@ -162,12 +163,13 @@ describe("createVideoProjectPackage", () => {
         "index.html",
         "meta.json",
       ]);
-    assert.deepEqual(result.directories.sort(), ["assets", "compositions"]);
+    assert.deepEqual(result.directories.sort(), ["assets", "assets/captures", "compositions"]);
     assert.equal(result.projectName, "case-video");
     assert.match(result.files["GUARDRAILS.md"], /Max duration: 60s/);
     assert.match(result.files["GUARDRAILS.md"], /Latest validation: passed/);
     assert.match(result.files["HANDOFF.md"], /Validation status: passed/);
     assert.match(result.files["SCENE_ASSET_MAP.json"], /"scenes": \[/);
+    assert.match(result.files["CAPTURE_EXECUTION_PLAN.json"], /"items": \[/);
   });
 
   it("writes the generated project package to disk", () => {
@@ -206,8 +208,10 @@ describe("createVideoProjectPackage", () => {
       assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Banned terms:\n- None/);
       assert.match(readFileSync(join(writtenDir, "VALIDATION_REPORT.md"), "utf8"), /Validation passed/);
       assert.match(readFileSync(join(writtenDir, "SCENE_ASSET_MAP.json"), "utf8"), /"captures": \[/);
+      assert.match(readFileSync(join(writtenDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"), /"items": \[/);
       assert.equal(readFileSync(join(writtenDir, "index.html"), "utf8"), "<div></div>");
       assert.equal(existsSync(join(writtenDir, "assets")), true);
+      assert.equal(existsSync(join(writtenDir, "assets", "captures")), true);
       assert.equal(existsSync(join(writtenDir, "compositions")), true);
       assert.equal(existsSync(join(writtenDir, "compositions", "scene-root.html")), true);
     } finally {
@@ -301,6 +305,7 @@ describe("createVideoProjectPackage", () => {
     assert.match(result.files["HANDOFF.md"], /scene-1, scene-2/);
     assert.match(result.files["HANDOFF.md"], /\[hero \/ screenshot\]/);
     assert.match(result.files["HANDOFF.md"], /SCENE_ASSET_MAP.json/);
+    assert.match(result.files["HANDOFF.md"], /CAPTURE_EXECUTION_PLAN.json/);
   });
 });
 

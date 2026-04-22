@@ -175,6 +175,24 @@ export interface SceneAssetMap {
   captures: SceneAssetMapCaptureEntry[];
 }
 
+export interface CaptureExecutionPlanItem {
+  suggestedAsset: string;
+  sourceUrl: string;
+  sectionTitle: string;
+  sectionBody: string;
+  purposeTag: CaptureTarget["purposeTag"];
+  assetForm: CaptureTarget["assetForm"];
+  recommendedSceneIds: string[];
+  outputPath: string;
+  metadataPath: string;
+  status: "pending" | "available";
+}
+
+export interface CaptureExecutionPlan {
+  generatedAt: string;
+  items: CaptureExecutionPlanItem[];
+}
+
 export interface ValidationReport {
   projectName: string;
   status: "passed" | "failed";

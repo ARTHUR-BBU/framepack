@@ -92,6 +92,9 @@ export function formatHandoffMarkdown(input: {
     "Scene asset map:",
     "- See `SCENE_ASSET_MAP.json` for scene-first and capture-first lookup.",
     "",
+    "Capture execution:",
+    "- See `CAPTURE_EXECUTION_PLAN.json` for expected output paths and sync status.",
+    "",
     "Runtime guidance:",
     formatList(
       input.runtimeAvailable

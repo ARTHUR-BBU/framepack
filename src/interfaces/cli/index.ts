@@ -1,5 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
+import { captureWebsiteProject } from "../../capture/website/executor.js";
+import { syncCaptureExecutionProject } from "../../packaging/capture-execution.js";
 import {
   compileMarkdownCaseExplainerProject,
   compileWebsiteCaseExplainerProject,
@@ -42,7 +44,19 @@ interface CliOptions {
   };
 }
 
-type CliCommandName = "init" | "generate" | "validate" | "preview" | "render" | "runtime-doctor";
+type CliCommandName =
+  | "init"
+  | "generate"
+  | "validate"
+  | "capture"
+  | "preview"
+  | "render"
+  | "runtime-doctor"
+  | "sync-captures";
+
+interface CliDependencies {
+  captureProject?: typeof captureWebsiteProject;
+}
 
 interface CliConfigFile {
   projectName: string;
@@ -141,13 +155,15 @@ function getCommandName(args: string[]): CliCommandName {
     command === "init" ||
     command === "generate" ||
     command === "validate" ||
+    command === "capture" ||
     command === "preview" ||
-    command === "render"
+    command === "render" ||
+    command === "sync-captures"
   ) {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, generate, validate, runtime doctor, preview, or render.");
+  throw new Error("Missing or invalid command. Use init, generate, validate, capture, runtime doctor, preview, render, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -161,8 +177,10 @@ function getCommandArgs(args: string[]): string[] {
     first === "init" ||
     first === "generate" ||
     first === "validate" ||
+    first === "capture" ||
     first === "preview" ||
-    first === "render"
+    first === "render" ||
+    first === "sync-captures"
   ) {
     return args.slice(1);
   }
@@ -455,7 +473,40 @@ function runRuntimeActionCommand(
   return 0;
 }
 
-export async function runCli(args: string[], io: CliIo = DEFAULT_IO): Promise<number> {
+function runSyncCapturesCommand(args: string[], io: CliIo): number {
+  const projectDir = getRequiredProjectDir(args);
+  const result = syncCaptureExecutionProject({
+    projectDir,
+  });
+
+  io.stdout(
+    `Capture sync updated ${result.projectDir}: ${result.availableCount} available, ${result.pendingCount} pending`,
+  );
+  return 0;
+}
+
+async function runCaptureCommand(
+  args: string[],
+  io: CliIo,
+  dependencies: CliDependencies,
+): Promise<number> {
+  const projectDir = getRequiredProjectDir(args);
+  const captureProject = dependencies.captureProject ?? captureWebsiteProject;
+  const result = await captureProject({
+    projectDir,
+  });
+
+  io.stdout(
+    `Captured ${result.capturedCount} website assets for ${result.projectDir}: ${result.availableCount} available, ${result.pendingCount} pending`,
+  );
+  return 0;
+}
+
+export async function runCli(
+  args: string[],
+  io: CliIo = DEFAULT_IO,
+  dependencies: CliDependencies = {},
+): Promise<number> {
   try {
     const command = getCommandName(args);
 
@@ -469,6 +520,14 @@ export async function runCli(args: string[], io: CliIo = DEFAULT_IO): Promise<nu
 
     if (command === "runtime-doctor") {
       return runRuntimeDoctorCommand(io);
+    }
+
+    if (command === "capture") {
+      return await runCaptureCommand(args.slice(1), io, dependencies);
+    }
+
+    if (command === "sync-captures") {
+      return runSyncCapturesCommand(args.slice(1), io);
     }
 
     if (command === "preview" || command === "render") {

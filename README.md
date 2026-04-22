@@ -29,7 +29,7 @@ HyperFrames is required for runtime execution, but not for package generation. F
 3. Continue work
    - inspect and edit the package directly
    - hand the package to Codex or Claude Code
-   - use runtime commands once the runtime layer is integrated
+   - use runtime and capture commands to preview, render, and fill assets
 
 ## Commands
 
@@ -40,7 +40,7 @@ HyperFrames is required for runtime execution, but not for package generation. F
 
 ## CLI
 
-After `npm run build`, Framepack exposes three commands:
+After `npm run build`, Framepack exposes package, runtime, and capture commands:
 
 ### `init`
 
@@ -87,12 +87,33 @@ node dist/cli.js validate --config out/starter/hyperframes-studio.json --output-
 
 For the first version, `--config`, `--input`, and `--url` are mutually exclusive. Use exactly one source input per command.
 
+### `capture`
+
+Capture pending website assets into `assets/captures/` and sync the project package.
+
+```bash
+node dist/cli.js capture --project-dir out/website-case
+```
+
+Playwright is required for automated website capture:
+
+```bash
+npm install playwright
+npx playwright install chromium
+```
+
 ### Runtime workflow
 
 Check runtime availability:
 
 ```bash
 node dist/cli.js runtime doctor
+```
+
+Sync capture execution state after screenshot or asset generation work:
+
+```bash
+node dist/cli.js sync-captures --project-dir out/website-case
 ```
 
 Run a generated package:
@@ -122,9 +143,10 @@ Current website-route limits:
 - public pages only
 - single page only
 - HTML fetch plus lightweight `title` / `meta description` / `h1/h2 + p` extraction
+- automated capture targets the first matching heading and falls back to full-page screenshots
 - no login flows
 - no multi-page crawling
-- no screenshots or browser capture
+- no section-perfect DOM segmentation yet
 
 ## Output Package
 
@@ -141,6 +163,7 @@ The generated package includes:
 - website `ASSET_PLAN.json` entries now include `captureTargets` so follow-on agents know which sections to capture or rebuild
 - website `captureTargets` also include `recommendedSceneIds` so follow-on agents know which scenes each capture best supports
 - website `captureTargets` now also include `purposeTag` and `assetForm`, so downstream agents know both the storytelling role and the likely visual treatment
+- `CAPTURE_EXECUTION_PLAN.json` with expected output paths and pending/available sync state for capture work
 - `VALIDATION_REPORT.json`
 - `VALIDATION_REPORT.md`
 - `GUARDRAILS.md`

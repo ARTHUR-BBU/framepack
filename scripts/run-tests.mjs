@@ -41,6 +41,7 @@ import {
   compileWebsiteCaseExplainerProject,
   compileWebsiteVideoBrief,
 } from "../dist/compiler/index.js";
+import { captureWebsiteProject } from "../dist/capture/website/executor.js";
 
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -356,11 +357,14 @@ const tests = [
       assert.match(result.package.files["ASSET_PLAN.json"], /"captureTargets": \[/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"purposeTag": "hero"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"assetForm": "screenshot"/);
+      assert.match(result.package.files["CAPTURE_EXECUTION_PLAN.json"], /"items": \[/);
+      assert.match(result.package.files["CAPTURE_EXECUTION_PLAN.json"], /assets[\\/]+captures[\\/]+launch-faster-capture\.png/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"scenes": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"captures": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"sceneId": "scene-1"/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"suggestedAsset": "launch-faster-capture"/);
       assert.match(result.package.files["HANDOFF.md"], /Capture targets:/);
+      assert.match(result.package.files["HANDOFF.md"], /CAPTURE_EXECUTION_PLAN.json/);
       assert.match(result.package.files["HANDOFF.md"], /SCENE_ASSET_MAP.json/);
       assert.match(result.package.files["HANDOFF.md"], /scene-1, scene-2/);
       assert.match(result.package.files["HANDOFF.md"], /hero/);
@@ -985,12 +989,16 @@ const tests = [
 
       assert.match(readme, /HyperFrames is required for runtime execution/);
       assert.match(readme, /runtime doctor/);
+      assert.match(readme, /capture --project-dir/);
+      assert.match(readme, /sync-captures/);
       assert.match(readme, /preview/);
       assert.match(readme, /render/);
       assert.match(readme, /generate --url/);
       assert.match(readme, /validate --url/);
       assert.match(readme, /SOURCE_MANIFEST\.json/);
       assert.match(readme, /captureTargets/);
+      assert.match(readme, /CAPTURE_EXECUTION_PLAN\.json/);
+      assert.match(readme, /Playwright is required for automated website capture/);
     },
   },
   {
@@ -1111,10 +1119,212 @@ const tests = [
         assert.match(stdout.join("\n"), /Generated video project package/);
         assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"sourceType": "website"/);
         assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"Website Product"/);
+        assert.match(readFileSync(join(packageDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"), /"status": "pending"/);
       } finally {
         globalThis.fetch = originalFetch;
         rmSync(tempRoot, { recursive: true, force: true });
       }
+    },
+  },
+  {
+    name: "sync capture execution state from generated files",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-sync-captures-"));
+      const originalFetch = globalThis.fetch;
+
+      try {
+        globalThis.fetch = async () =>
+          new Response(
+            `
+              <!doctype html>
+              <html>
+                <head>
+                  <title>Website Product</title>
+                  <meta name="description" content="A product landing page for founders." />
+                </head>
+                <body>
+                  <h1>Launch faster</h1>
+                  <p>Ship reusable video workflows.</p>
+                  <h2>Review gates</h2>
+                  <p>Keep output quality stable.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html" },
+            },
+          );
+
+        const projectName = "sync-website-video";
+        const projectDir = join(tempRoot, projectName);
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--url",
+            "https://example.com/product",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the site",
+            "--audience",
+            "Founders",
+            "--project-name",
+            projectName,
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        writeFileSync(join(projectDir, "assets", "captures", "launch-faster-capture.png"), "fake", "utf8");
+
+        const stdout = [];
+        const stderr = [];
+        const syncExitCode = await runCli(
+          ["sync-captures", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(syncExitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /1 available, 1 pending/);
+        assert.match(readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"), /"availableAssets": \[\s*"launch-faster-capture"/);
+        assert.match(readFileSync(join(projectDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"), /"status": "available"/);
+        assert.match(readFileSync(join(projectDir, "HANDOFF.md"), "utf8"), /CAPTURE_EXECUTION_PLAN.json/);
+      } finally {
+        globalThis.fetch = originalFetch;
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "capture website project assets and write metadata",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-capture-project-"));
+      const originalFetch = globalThis.fetch;
+
+      try {
+        globalThis.fetch = async () =>
+          new Response(
+            `
+              <!doctype html>
+              <html>
+                <head>
+                  <title>Website Product</title>
+                  <meta name="description" content="A product landing page for founders." />
+                </head>
+                <body>
+                  <h1>Launch faster</h1>
+                  <p>Ship reusable video workflows.</p>
+                  <h2>Review gates</h2>
+                  <p>Keep output quality stable.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html" },
+            },
+          );
+
+        const projectName = "captured-website-video";
+        const projectDir = join(tempRoot, projectName);
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--url",
+            "https://example.com/product",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the site",
+            "--audience",
+            "Founders",
+            "--project-name",
+            projectName,
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+
+        const result = await captureWebsiteProject({
+          projectDir,
+          now: () => "2026-04-23T00:00:00.000Z",
+          captureScreenshot: async ({ suggestedAsset, sectionTitle }) => ({
+            image: Buffer.from(`capture:${suggestedAsset}:${sectionTitle}`),
+            captureMode: "section-clip",
+          }),
+        });
+
+        assert.equal(result.capturedCount, 2);
+        assert.equal(result.availableCount, 2);
+        assert.equal(result.pendingCount, 0);
+        assert.match(
+          readFileSync(join(projectDir, "assets", "captures", "launch-faster-capture.png"), "utf8"),
+          /capture:launch-faster-capture:Launch faster/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "assets", "captures", "launch-faster-capture.json"), "utf8"),
+          /"captureMode": "section-clip"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "assets", "captures", "launch-faster-capture.json"), "utf8"),
+          /"capturedAt": "2026-04-23T00:00:00.000Z"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"),
+          /"status": "available"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"),
+          /"availableAssets": \[\s*"launch-faster-capture",\s*"review-gates-capture"/,
+        );
+      } finally {
+        globalThis.fetch = originalFetch;
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "capture website project assets from the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+
+      const exitCode = await runCli(
+        ["capture", "--project-dir", "F:/repo/out/demo-project"],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+        {
+          captureProject: async ({ projectDir }) => ({
+            projectDir,
+            capturedCount: 2,
+            availableCount: 3,
+            pendingCount: 0,
+          }),
+        },
+      );
+
+      assert.equal(exitCode, 0);
+      assert.equal(stderr.length, 0);
+      assert.match(stdout.join("\n"), /Captured 2 website assets/);
+      assert.match(stdout.join("\n"), /3 available, 0 pending/);
     },
   },
   {
