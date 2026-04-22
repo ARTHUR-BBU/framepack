@@ -555,6 +555,34 @@ const tests = [
     },
   },
   {
+    name: "plan website-aware scene details from structured source materials",
+    run: () => {
+      const plan = planCaseExplainerScenes({
+        goal: "Explain the site",
+        audience: "Founders",
+        format: "16:9",
+        style: { tone: "direct", pacing: "medium", brandName: "Studio" },
+        sourceMaterials: [
+          { kind: "structured", title: "Launch faster", body: "Hero section for the landing page." },
+          { kind: "structured", title: "How it works", body: "A clear workflow with steps and process." },
+          { kind: "structured", title: "Customer proof", body: "Review evidence and customer result." },
+          { kind: "structured", title: "Big result", body: "Highlight the final impact." },
+        ],
+        constraints: { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] },
+        outputType: "case-explainer",
+      });
+
+      assert.match(plan.scenes[0]?.narration ?? "", /Launch faster/);
+      assert.match((plan.scenes[0]?.onScreenText ?? []).join(" "), /Launch faster/);
+      assert.ok((plan.scenes[0]?.assets ?? []).includes("launch-faster-capture"));
+      assert.match(plan.scenes[3]?.narration ?? "", /How it works/);
+      assert.ok((plan.scenes[3]?.assets ?? []).includes("how-it-works-capture"));
+      assert.match(plan.scenes[4]?.narration ?? "", /Customer proof|Big result/);
+      assert.ok((plan.scenes[4]?.assets ?? []).length > 0);
+      assert.match((plan.scenes[0]?.validationNotes ?? []).join(" "), /source material/i);
+    },
+  },
+  {
     name: "build script, storyboard, and asset plan from a scene plan",
     run: () => {
       const scenePlan = planCaseExplainerScenes({
