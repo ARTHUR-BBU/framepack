@@ -62,7 +62,12 @@ export function createVideoProjectPackage(input: {
       "SCENE_PLAN.json": JSON.stringify(input.scenePlan, null, 2),
       "SCRIPT.md": formatScriptMarkdown(input.script),
       "STORYBOARD.md": formatStoryboardMarkdown(input.storyboard),
-      "HANDOFF.md": formatHandoffMarkdown(input),
+      "HANDOFF.md": formatHandoffMarkdown({
+        ...input,
+        runtimeAvailable: capabilities.available,
+        runtimeBinary: capabilities.binary,
+        runtimeFallbackNotes: capabilities.fallbackNotes,
+      }),
       "meta.json": JSON.stringify(
         {
           rootEntry: runtimeInfo.rootEntry,

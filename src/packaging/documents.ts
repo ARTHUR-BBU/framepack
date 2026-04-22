@@ -66,15 +66,27 @@ export function formatHandoffMarkdown(input: {
   brief: VideoBrief;
   validationReport: ValidationReport;
   assetPlan: AssetPlan;
+  runtimeAvailable: boolean;
+  runtimeBinary: string;
+  runtimeFallbackNotes: string[];
 }): string {
   return [
     "# Handoff",
     "",
     `Audience: ${input.brief.audience}`,
     `Validation status: ${input.validationReport.status}`,
+    `Runtime available: ${input.runtimeAvailable}`,
+    `Runtime binary: ${input.runtimeBinary}`,
     "",
     "Missing assets:",
     formatList(input.assetPlan.missingAssets),
+    "",
+    "Runtime guidance:",
+    formatList(
+      input.runtimeAvailable
+        ? ["Run `framepack preview --project-dir <path>` or `framepack render --project-dir <path>`."]
+        : input.runtimeFallbackNotes,
+    ),
     "",
   ].join("\n");
 }

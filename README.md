@@ -4,6 +4,8 @@ Framepack turns content into executable video projects.
 
 Today this repository provides the Phase 1 compiler path for markdown-driven case explainer videos. It produces a video engineering package with planning artifacts, validation artifacts, and HyperFrames-ready runtime structure.
 
+HyperFrames is required for runtime execution, but not for package generation. Framepack can generate, inspect, and validate project packages before HyperFrames is installed.
+
 ## User Flow
 
 1. Provide a source
@@ -69,6 +71,23 @@ You can also use a project config produced by `init`:
 node dist/cli.js generate --config out/starter/hyperframes-studio.json --output-dir out
 node dist/cli.js validate --config out/starter/hyperframes-studio.json --output-dir out
 ```
+
+### Runtime workflow
+
+Check runtime availability:
+
+```bash
+node dist/cli.js runtime doctor
+```
+
+Run a generated package:
+
+```bash
+node dist/cli.js preview --project-dir out/starter
+node dist/cli.js render --project-dir out/starter
+```
+
+If HyperFrames is not installed, Framepack reports that state and keeps package generation available.
 
 ## Current Scope
 

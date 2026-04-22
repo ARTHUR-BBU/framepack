@@ -17,6 +17,9 @@ export interface RuntimeExecutionResult {
   outputPaths: string[];
   warnings: string[];
   summary: string;
+  exitCode: number;
+  stdout: string;
+  stderr: string;
 }
 
 export interface HyperframesPackageRuntimeInfo {

@@ -21,6 +21,7 @@ import {
   detectHyperframesCapabilities,
 } from "../dist/runtime/hyperframes/adapter.js";
 import { buildHyperframesCommandSpec } from "../dist/runtime/hyperframes/commands.js";
+import { executeHyperframesCommand } from "../dist/runtime/hyperframes/execution.js";
 import {
   createMissingHyperframesCapabilities,
   detectLocalHyperframesCapabilities,
@@ -34,6 +35,10 @@ import { buildCaseExplainerVideoProject } from "../dist/video/index.js";
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../examples/case-explainer-input.md",
+);
+const readmePath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../README.md",
 );
 
 const tests = [
@@ -398,6 +403,31 @@ const tests = [
     },
   },
   {
+    name: "normalize runtime execution results",
+    run: () => {
+      const result = executeHyperframesCommand({
+        command: {
+          action: "render",
+          executable: "hyperframes",
+          args: ["render", "index.html"],
+          cwd: "/tmp/case-video",
+          summary: "hyperframes render index.html",
+        },
+        runner: () => ({
+          status: 0,
+          stdout: "render complete",
+          stderr: "",
+        }),
+      });
+
+      assert.equal(result.action, "render");
+      assert.equal(result.success, true);
+      assert.equal(result.exitCode, 0);
+      assert.equal(result.summary, "hyperframes render index.html");
+      assert.equal(result.stdout, "render complete");
+    },
+  },
+  {
     name: "create and write the video project package",
     run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-"));
@@ -436,6 +466,7 @@ const tests = [
         assert.match(readFileSync(join(writtenDir, "SCRIPT.md"), "utf8"), /# Script/);
         assert.match(readFileSync(join(writtenDir, "STORYBOARD.md"), "utf8"), /# Storyboard/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Validation status: passed/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Runtime available: false/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"rootEntry": "index.html"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"runtime": "hyperframes"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"supportedCommands": \[/);
@@ -478,6 +509,34 @@ const tests = [
     },
   },
   {
+    name: "document runtime prerequisites in the README",
+    run: () => {
+      const readme = readFileSync(readmePath, "utf8");
+
+      assert.match(readme, /HyperFrames is required for runtime execution/);
+      assert.match(readme, /runtime doctor/);
+      assert.match(readme, /preview/);
+      assert.match(readme, /render/);
+    },
+  },
+  {
+    name: "report runtime availability from the CLI doctor command",
+    run: () => {
+      const stdout = [];
+      const stderr = [];
+
+      const exitCode = runCli(["runtime", "doctor"], {
+        stdout: (message) => stdout.push(message),
+        stderr: (message) => stderr.push(message),
+      });
+
+      assert.equal(exitCode, 0);
+      assert.equal(stderr.length, 0);
+      assert.match(stdout.join("\n"), /HyperFrames runtime/);
+      assert.match(stdout.join("\n"), /available: false/);
+    },
+  },
+  {
     name: "generate a package from the CLI",
     run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-cli-"));
@@ -513,6 +572,102 @@ const tests = [
         assert.match(stdout.join("\n"), /Generated video project package/);
         assert.match(readFileSync(join(packageDir, "VIDEO_BRIEF.json"), "utf8"), /"goal": "Explain the case"/);
         assert.match(readFileSync(join(packageDir, "index.html"), "utf8"), /data-composition-id/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail preview when runtime is unavailable",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-preview-"));
+
+      try {
+        const generateExitCode = runCli(
+          [
+            "generate",
+            "--input",
+            fixturePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the case",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "preview-case",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+
+        const stdout = [];
+        const stderr = [];
+        const previewExitCode = runCli(
+          ["preview", "--project-dir", join(tempRoot, "preview-case")],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(previewExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /HyperFrames runtime is unavailable/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail render when runtime is unavailable",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-render-"));
+
+      try {
+        const generateExitCode = runCli(
+          [
+            "generate",
+            "--input",
+            fixturePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the case",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "render-case",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+
+        const stdout = [];
+        const stderr = [];
+        const renderExitCode = runCli(
+          ["render", "--project-dir", join(tempRoot, "render-case")],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(renderExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /HyperFrames runtime is unavailable/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

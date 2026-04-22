@@ -4,6 +4,11 @@ import {
   compileMarkdownCaseExplainerProject,
   ensureProjectValidationPassed,
 } from "../../compiler/index.js";
+import {
+  createHyperframesRuntimeAdapter,
+  detectHyperframesCapabilities,
+} from "../../runtime/hyperframes/adapter.js";
+import { executeHyperframesCommand } from "../../runtime/hyperframes/execution.js";
 import { writeVideoProjectPackage } from "../../video/package/project-package.js";
 import { writeValidationReport } from "../../video/validation/validation-report.js";
 
@@ -35,7 +40,7 @@ interface CliOptions {
   };
 }
 
-type CliCommandName = "init" | "generate" | "validate";
+type CliCommandName = "init" | "generate" | "validate" | "preview" | "render" | "runtime-doctor";
 
 interface CliConfigFile {
   projectName: string;
@@ -116,19 +121,39 @@ function createDefaultConstraints() {
 }
 
 function getCommandName(args: string[]): CliCommandName {
-  const [command] = args;
+  const [command, subcommand] = args;
 
-  if (command === "init" || command === "generate" || command === "validate") {
+  if (command === "runtime" && subcommand === "doctor") {
+    return "runtime-doctor";
+  }
+
+  if (
+    command === "init" ||
+    command === "generate" ||
+    command === "validate" ||
+    command === "preview" ||
+    command === "render"
+  ) {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, generate, or validate.");
+  throw new Error("Missing or invalid command. Use init, generate, validate, runtime doctor, preview, or render.");
 }
 
 function getCommandArgs(args: string[]): string[] {
-  const [first] = args;
+  const [first, second] = args;
 
-  if (first === "init" || first === "generate" || first === "validate") {
+  if (first === "runtime" && second === "doctor") {
+    return args.slice(2);
+  }
+
+  if (
+    first === "init" ||
+    first === "generate" ||
+    first === "validate" ||
+    first === "preview" ||
+    first === "render"
+  ) {
     return args.slice(1);
   }
 
@@ -311,6 +336,76 @@ function runInitCommand(args: string[], io: CliIo): number {
   return 0;
 }
 
+function getRequiredProjectDir(args: string[]): string {
+  return resolve(getRequiredArg(args, "--project-dir"));
+}
+
+function loadProjectRuntimeInfo(projectDir: string) {
+  const metaPath = resolve(projectDir, "meta.json");
+  const rawMeta = stripUtf8Bom(readFileSync(metaPath, "utf8"));
+  const meta = JSON.parse(rawMeta) as {
+    rootEntry: string;
+    compositionDirectory: string;
+    assetDirectory: string;
+  };
+
+  return {
+    rootEntry: meta.rootEntry,
+    compositionDirectory: meta.compositionDirectory,
+    assetDirectory: meta.assetDirectory,
+  };
+}
+
+function runRuntimeDoctorCommand(io: CliIo): number {
+  const capabilities = detectHyperframesCapabilities();
+  io.stdout(
+    [
+      "HyperFrames runtime",
+      `available: ${capabilities.available}`,
+      `binary: ${capabilities.binary}`,
+      `version: ${capabilities.version}`,
+      `detectedAt: ${capabilities.detectedAt}`,
+      `fallbackNotes: ${capabilities.fallbackNotes.join(" | ") || "none"}`,
+    ].join("\n"),
+  );
+
+  return 0;
+}
+
+function runRuntimeActionCommand(
+  action: "preview" | "render",
+  args: string[],
+  io: CliIo,
+): number {
+  const projectDir = getRequiredProjectDir(args);
+  const capabilities = detectHyperframesCapabilities();
+
+  if (!capabilities.available) {
+    io.stderr(`HyperFrames runtime is unavailable: ${capabilities.fallbackNotes.join(" | ")}`);
+    return 1;
+  }
+
+  const runtimeAdapter = createHyperframesRuntimeAdapter();
+  const runtimeInfo = loadProjectRuntimeInfo(projectDir);
+  const command = runtimeAdapter.buildCommand({
+    action,
+    packageDirectory: projectDir,
+    packageRuntimeInfo: runtimeInfo,
+    capabilities,
+  });
+  const result = executeHyperframesCommand({
+    command,
+  });
+
+  if (!result.success) {
+    io.stderr(result.stderr.length > 0 ? result.stderr : `${action} failed: ${result.summary}`);
+    return result.exitCode || 1;
+  }
+
+  io.stdout(result.stdout.length > 0 ? result.stdout : `${action} completed: ${result.summary}`);
+  return 0;
+}
+
 export function runCli(args: string[], io: CliIo = DEFAULT_IO): number {
   try {
     const command = getCommandName(args);
@@ -321,6 +416,14 @@ export function runCli(args: string[], io: CliIo = DEFAULT_IO): number {
 
     if (command === "validate") {
       return runValidateCommand(args, io);
+    }
+
+    if (command === "runtime-doctor") {
+      return runRuntimeDoctorCommand(io);
+    }
+
+    if (command === "preview" || command === "render") {
+      return runRuntimeActionCommand(command, args.slice(1), io);
     }
 
     return runGenerateCommand(args, io);
