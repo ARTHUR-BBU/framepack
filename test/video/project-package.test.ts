@@ -56,6 +56,7 @@ describe("compiler types", () => {
       availableAssets: [],
       placeholderAssets: [],
       missingAssets: [],
+      captureTargets: [],
     };
 
     const validationReport: CompilerValidationReport = {
@@ -131,7 +132,7 @@ describe("createVideoProjectPackage", () => {
       scenePlan: { totalDurationSec: 60, scenes: [] },
       script: { scenes: [] },
       storyboard: { scenes: [] },
-      assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [] },
+      assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [], captureTargets: [] },
       validationReport: {
         projectName: "case-video",
         status: "passed",
@@ -185,7 +186,7 @@ describe("createVideoProjectPackage", () => {
         scenePlan: { totalDurationSec: 60, scenes: [] },
         script: { scenes: [] },
         storyboard: { scenes: [] },
-        assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [] },
+        assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [], captureTargets: [] },
         validationReport: {
           projectName: "case-video",
           status: "passed",
@@ -230,7 +231,7 @@ describe("createVideoProjectPackage", () => {
       scenePlan: { totalDurationSec: 45, scenes: [] },
       script: { scenes: [] },
       storyboard: { scenes: [] },
-      assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [] },
+      assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [], captureTargets: [] },
       validationReport: {
         projectName: "case-video",
         status: "failed",

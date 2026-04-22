@@ -40,7 +40,10 @@ function buildCaseExplainerVideoProjectFromBrief(input: {
   const scenePlan = planCaseExplainerScenes(brief);
   const script = buildScript({ scenePlan });
   const storyboard = buildStoryboard({ scenePlan });
-  const assetPlan = buildAssetPlan({ scenePlan });
+  const assetPlan = buildAssetPlan({
+    scenePlan,
+    sourceManifest: input.sourceManifest,
+  });
   const reviewIssues = validateScenePlan(scenePlan, brief.constraints);
   const validationReport = createValidationReport({
     projectName: input.projectName,

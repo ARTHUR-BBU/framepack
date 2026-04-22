@@ -563,6 +563,41 @@ const tests = [
       assert.equal(storyboard.scenes.length, scenePlan.scenes.length);
       assert.equal(assetPlan.availableAssets.length, 0);
       assert.equal(assetPlan.placeholderAssets.length, scenePlan.scenes.length);
+      assert.equal(assetPlan.captureTargets.length, 0);
+    },
+  },
+  {
+    name: "build website asset plan with capture targets from source manifest",
+    run: () => {
+      const scenePlan = planCaseExplainerScenes({
+        goal: "Explain the site",
+        audience: "Founders",
+        format: "16:9",
+        style: { tone: "direct", pacing: "medium", brandName: "Studio" },
+        sourceMaterials: [{ kind: "structured", title: "Hero", body: "Launch faster" }],
+        constraints: { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] },
+        outputType: "case-explainer",
+      });
+
+      const assetPlan = buildAssetPlan({
+        scenePlan,
+        sourceManifest: {
+          sourceType: "website",
+          url: "https://example.com/product",
+          title: "Example Product",
+          summary: "A product landing page for founders.",
+          sections: [
+            { title: "Hero", body: "Launch faster with reusable workflows." },
+            { title: "Review gates", body: "Keep output quality stable." },
+          ],
+          collectedAt: "2026-04-22T12:00:00.000Z",
+        },
+      });
+
+      assert.equal(assetPlan.captureTargets.length, 2);
+      assert.equal(assetPlan.captureTargets[0]?.sourceUrl, "https://example.com/product");
+      assert.match(assetPlan.captureTargets[0]?.suggestedAsset ?? "", /hero/i);
+      assert.ok(assetPlan.missingAssets.some((item) => item.includes("capture:hero")));
     },
   },
   {
@@ -798,7 +833,7 @@ const tests = [
           scenePlan: { totalDurationSec: 60, scenes: [] },
           script: { scenes: [] },
           storyboard: { scenes: [] },
-          assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [] },
+          assetPlan: { availableAssets: [], placeholderAssets: [], missingAssets: [], captureTargets: [] },
           validationReport: {
             projectName: "case-video",
             status: "passed",

@@ -131,10 +131,19 @@ export interface Storyboard {
   scenes: StoryboardScene[];
 }
 
+export interface CaptureTarget {
+  sourceType: "website";
+  sourceUrl: string;
+  sectionTitle: string;
+  sectionBody: string;
+  suggestedAsset: string;
+}
+
 export interface AssetPlan {
   availableAssets: string[];
   placeholderAssets: string[];
   missingAssets: string[];
+  captureTargets: CaptureTarget[];
 }
 
 export interface ValidationReport {
