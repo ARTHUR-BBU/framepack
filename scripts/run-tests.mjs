@@ -353,6 +353,8 @@ const tests = [
       assert.equal(result.validationReport.status, "passed");
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "website"/);
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"url": "https:\/\/example.com\/product"/);
+      assert.match(result.package.files["ASSET_PLAN.json"], /"captureTargets": \[/);
+      assert.match(result.package.files["HANDOFF.md"], /Capture targets:/);
     },
   },
   {
@@ -910,6 +912,7 @@ const tests = [
       assert.match(readme, /generate --url/);
       assert.match(readme, /validate --url/);
       assert.match(readme, /SOURCE_MANIFEST\.json/);
+      assert.match(readme, /captureTargets/);
     },
   },
   {

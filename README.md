@@ -136,6 +136,7 @@ The generated package includes:
 - `SCRIPT.md`
 - `STORYBOARD.md`
 - `ASSET_PLAN.json`
+- website `ASSET_PLAN.json` entries now include `captureTargets` so follow-on agents know which sections to capture or rebuild
 - `VALIDATION_REPORT.json`
 - `VALIDATION_REPORT.md`
 - `GUARDRAILS.md`
