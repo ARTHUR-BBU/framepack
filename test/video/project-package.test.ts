@@ -151,6 +151,7 @@ describe("createVideoProjectPackage", () => {
         "GUARDRAILS.md",
       "HANDOFF.md",
       "RETRO_LOG.md",
+      "SCENE_ASSET_MAP.json",
       "SCENE_PLAN.json",
       "SCRIPT.md",
         "VALIDATION_REPORT.json",
@@ -166,6 +167,7 @@ describe("createVideoProjectPackage", () => {
     assert.match(result.files["GUARDRAILS.md"], /Max duration: 60s/);
     assert.match(result.files["GUARDRAILS.md"], /Latest validation: passed/);
     assert.match(result.files["HANDOFF.md"], /Validation status: passed/);
+    assert.match(result.files["SCENE_ASSET_MAP.json"], /"scenes": \[/);
   });
 
   it("writes the generated project package to disk", () => {
@@ -203,6 +205,7 @@ describe("createVideoProjectPackage", () => {
       assert.match(readFileSync(join(writtenDir, "FLYWHEEL.md"), "utf8"), /Intake -> Plan/);
       assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Banned terms:\n- None/);
       assert.match(readFileSync(join(writtenDir, "VALIDATION_REPORT.md"), "utf8"), /Validation passed/);
+      assert.match(readFileSync(join(writtenDir, "SCENE_ASSET_MAP.json"), "utf8"), /"captures": \[/);
       assert.equal(readFileSync(join(writtenDir, "index.html"), "utf8"), "<div></div>");
       assert.equal(existsSync(join(writtenDir, "assets")), true);
       assert.equal(existsSync(join(writtenDir, "compositions")), true);
@@ -297,6 +300,7 @@ describe("createVideoProjectPackage", () => {
     assert.match(result.files["HANDOFF.md"], /Hero -> hero-capture/);
     assert.match(result.files["HANDOFF.md"], /scene-1, scene-2/);
     assert.match(result.files["HANDOFF.md"], /\[hero \/ screenshot\]/);
+    assert.match(result.files["HANDOFF.md"], /SCENE_ASSET_MAP.json/);
   });
 });
 

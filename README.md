@@ -133,6 +133,7 @@ The generated package includes:
 - `VIDEO_BRIEF.json`
 - `SOURCE_MANIFEST.json` for website-generated packages
 - `SCENE_PLAN.json`
+- `SCENE_ASSET_MAP.json` with scene-first and capture-first lookup for website-derived asset recommendations
 - `SCRIPT.md`
 - `STORYBOARD.md`
 - `ASSET_PLAN.json`

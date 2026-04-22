@@ -150,6 +150,31 @@ export interface AssetPlan {
   captureTargets: CaptureTarget[];
 }
 
+export interface SceneAssetMapSceneEntry {
+  sceneId: string;
+  recommendedCaptures: Array<{
+    suggestedAsset: string;
+    purposeTag: CaptureTarget["purposeTag"];
+    assetForm: CaptureTarget["assetForm"];
+    sourceSectionTitle: string;
+    rationale: string;
+  }>;
+}
+
+export interface SceneAssetMapCaptureEntry {
+  suggestedAsset: string;
+  purposeTag: CaptureTarget["purposeTag"];
+  assetForm: CaptureTarget["assetForm"];
+  sourceSectionTitle: string;
+  recommendedSceneIds: string[];
+  rationale: string;
+}
+
+export interface SceneAssetMap {
+  scenes: SceneAssetMapSceneEntry[];
+  captures: SceneAssetMapCaptureEntry[];
+}
+
 export interface ValidationReport {
   projectName: string;
   status: "passed" | "failed";

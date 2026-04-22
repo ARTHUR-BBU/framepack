@@ -356,7 +356,12 @@ const tests = [
       assert.match(result.package.files["ASSET_PLAN.json"], /"captureTargets": \[/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"purposeTag": "hero"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"assetForm": "screenshot"/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"scenes": \[/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"captures": \[/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"sceneId": "scene-1"/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"suggestedAsset": "launch-faster-capture"/);
       assert.match(result.package.files["HANDOFF.md"], /Capture targets:/);
+      assert.match(result.package.files["HANDOFF.md"], /SCENE_ASSET_MAP.json/);
       assert.match(result.package.files["HANDOFF.md"], /scene-1, scene-2/);
       assert.match(result.package.files["HANDOFF.md"], /hero/);
       assert.match(result.package.files["HANDOFF.md"], /screenshot/);

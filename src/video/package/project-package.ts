@@ -16,6 +16,7 @@ import {
   formatScriptMarkdown,
   formatStoryboardMarkdown,
 } from "../../packaging/documents.js";
+import { buildSceneAssetMap } from "../../packaging/scene-asset-map.js";
 import {
   createHyperframesRuntimeAdapter,
   detectHyperframesCapabilities,
@@ -41,6 +42,10 @@ export function createVideoProjectPackage(input: {
 }): VideoProjectPackage {
   const capabilities = detectHyperframesCapabilities();
   const runtimeAdapter = createHyperframesRuntimeAdapter();
+  const sceneAssetMap = buildSceneAssetMap({
+    scenePlan: input.scenePlan,
+    assetPlan: input.assetPlan,
+  });
   const runtimeInfo = runtimeAdapter.describePackage({
     projectName: input.projectName,
   });
@@ -64,6 +69,7 @@ export function createVideoProjectPackage(input: {
           }
         : {}),
       "ASSET_PLAN.json": JSON.stringify(input.assetPlan, null, 2),
+      "SCENE_ASSET_MAP.json": JSON.stringify(sceneAssetMap, null, 2),
       "FLYWHEEL.md": "# Flywheel\n\nIntake -> Plan -> Review -> Compose -> Render -> Retro\n",
       "hyperframes.json": JSON.stringify(
         {

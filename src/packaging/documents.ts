@@ -89,6 +89,9 @@ export function formatHandoffMarkdown(input: {
       ),
     ),
     "",
+    "Scene asset map:",
+    "- See `SCENE_ASSET_MAP.json` for scene-first and capture-first lookup.",
+    "",
     "Runtime guidance:",
     formatList(
       input.runtimeAvailable
