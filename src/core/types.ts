@@ -51,6 +51,20 @@ export interface WebsiteVideoBriefInput {
 
 export type VideoBriefInput = MarkdownVideoBriefInput | WebsiteVideoBriefInput;
 
+export interface WebsiteSection {
+  title: string;
+  body: string;
+}
+
+export interface SourceManifest {
+  sourceType: "website";
+  url: string;
+  title: string;
+  summary: string;
+  sections: WebsiteSection[];
+  collectedAt: string;
+}
+
 export interface SourceBundle {
   sourceType: "markdown" | "website" | "prd" | "case";
   rawInputs: Record<string, string>;

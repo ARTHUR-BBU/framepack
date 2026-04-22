@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 import {
   compileMarkdownCaseExplainerProject,
+  compileWebsiteCaseExplainerProject,
   ensureProjectValidationPassed,
 } from "../../compiler/index.js";
 import {
@@ -19,7 +20,8 @@ export interface CliIo {
 
 interface CliOptions {
   configPath?: string;
-  input: string;
+  input?: string;
+  url?: string;
   outputDir: string;
   goal: string;
   audience: string;
@@ -87,6 +89,14 @@ function getOptionalArg(args: string[], name: string): string | undefined {
   }
 
   return args[index + 1];
+}
+
+function countDefinedSources(input: {
+  configPath?: string;
+  input?: string;
+  url?: string;
+}) {
+  return [input.configPath, input.input, input.url].filter((value) => value !== undefined).length;
 }
 
 function deriveProjectName(inputPath: string): string {
@@ -164,6 +174,12 @@ export function parseCliArgs(args: string[]): CliOptions {
   const commandArgs = getCommandArgs(args);
   const outputDir = getRequiredArg(commandArgs, "--output-dir");
   const configPath = getOptionalArg(commandArgs, "--config");
+  const input = getOptionalArg(commandArgs, "--input");
+  const url = getOptionalArg(commandArgs, "--url");
+
+  if (countDefinedSources({ configPath, input, url }) !== 1) {
+    throw new Error("Use exactly one source input: --config, --input, or --url.");
+  }
 
   if (configPath) {
     const rawConfig = stripUtf8Bom(readFileSync(configPath, "utf8"));
@@ -188,6 +204,7 @@ export function parseCliArgs(args: string[]): CliOptions {
     return {
       configPath,
       input,
+      url: undefined,
       outputDir,
       goal: config.goal,
       audience: config.audience,
@@ -199,7 +216,6 @@ export function parseCliArgs(args: string[]): CliOptions {
     };
   }
 
-  const input = getRequiredArg(commandArgs, "--input");
   const goal = getRequiredArg(commandArgs, "--goal");
   const audience = getRequiredArg(commandArgs, "--audience");
   const format = (getOptionalArg(commandArgs, "--format") ?? "16:9") as "16:9" | "9:16";
@@ -211,10 +227,13 @@ export function parseCliArgs(args: string[]): CliOptions {
   return {
     configPath,
     input,
+    url,
     outputDir,
     goal,
     audience,
-    projectName: getOptionalArg(commandArgs, "--project-name") ?? deriveProjectName(input),
+    projectName:
+      getOptionalArg(commandArgs, "--project-name") ??
+      (input ? deriveProjectName(input) : "website-case-video"),
     format,
     style: {
       ...createDefaultStyle(),
@@ -230,23 +249,28 @@ export function parseCliArgs(args: string[]): CliOptions {
   };
 }
 
-function runGenerateCommand(args: string[], io: CliIo): number {
+async function runGenerateCommand(args: string[], io: CliIo): Promise<number> {
   const options = parseCliArgs(args);
-  const markdown = readFileSync(options.input, "utf8");
-
-  const result = compileMarkdownCaseExplainerProject({
-    markdown,
-    defaults: {
-      goal: options.goal,
-      audience: options.audience,
-      format: options.format,
-      outputType: "case-explainer",
-      style: options.style,
-      constraints: options.constraints,
-      theme: options.theme,
-    },
-    projectName: options.projectName,
-  });
+  const defaults = {
+    goal: options.goal,
+    audience: options.audience,
+    format: options.format,
+    outputType: "case-explainer" as const,
+    style: options.style,
+    constraints: options.constraints,
+    theme: options.theme,
+  };
+  const result = options.url
+    ? await compileWebsiteCaseExplainerProject({
+        url: options.url,
+        defaults,
+        projectName: options.projectName,
+      })
+    : compileMarkdownCaseExplainerProject({
+        markdown: readFileSync(options.input!, "utf8"),
+        defaults,
+        projectName: options.projectName,
+      });
   ensureProjectValidationPassed(result.validationReport);
 
   const writtenDir = writeVideoProjectPackage(options.outputDir, result.package);
@@ -255,23 +279,28 @@ function runGenerateCommand(args: string[], io: CliIo): number {
   return 0;
 }
 
-function runValidateCommand(args: string[], io: CliIo): number {
+async function runValidateCommand(args: string[], io: CliIo): Promise<number> {
   const options = parseCliArgs(args);
-  const markdown = readFileSync(options.input, "utf8");
-
-  const result = compileMarkdownCaseExplainerProject({
-    markdown,
-    defaults: {
-      goal: options.goal,
-      audience: options.audience,
-      format: options.format,
-      outputType: "case-explainer",
-      style: options.style,
-      constraints: options.constraints,
-      theme: options.theme,
-    },
-    projectName: options.projectName,
-  });
+  const defaults = {
+    goal: options.goal,
+    audience: options.audience,
+    format: options.format,
+    outputType: "case-explainer" as const,
+    style: options.style,
+    constraints: options.constraints,
+    theme: options.theme,
+  };
+  const result = options.url
+    ? await compileWebsiteCaseExplainerProject({
+        url: options.url,
+        defaults,
+        projectName: options.projectName,
+      })
+    : compileMarkdownCaseExplainerProject({
+        markdown: readFileSync(options.input!, "utf8"),
+        defaults,
+        projectName: options.projectName,
+      });
   const writtenDir = writeValidationReport(options.outputDir, result.validationReport);
 
   if (result.validationReport.status === "failed") {
@@ -426,7 +455,7 @@ function runRuntimeActionCommand(
   return 0;
 }
 
-export function runCli(args: string[], io: CliIo = DEFAULT_IO): number {
+export async function runCli(args: string[], io: CliIo = DEFAULT_IO): Promise<number> {
   try {
     const command = getCommandName(args);
 
@@ -435,7 +464,7 @@ export function runCli(args: string[], io: CliIo = DEFAULT_IO): number {
     }
 
     if (command === "validate") {
-      return runValidateCommand(args, io);
+      return await runValidateCommand(args, io);
     }
 
     if (command === "runtime-doctor") {
@@ -446,7 +475,7 @@ export function runCli(args: string[], io: CliIo = DEFAULT_IO): number {
       return runRuntimeActionCommand(command, args.slice(1), io);
     }
 
-    return runGenerateCommand(args, io);
+    return await runGenerateCommand(args, io);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     io.stderr(message);

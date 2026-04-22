@@ -7,5 +7,12 @@ const isDirectExecution =
   process.argv[1] !== undefined && fileURLToPath(import.meta.url) === process.argv[1];
 
 if (isDirectExecution) {
-  process.exitCode = runCli(process.argv.slice(2));
+  runCli(process.argv.slice(2))
+    .then((exitCode) => {
+      process.exitCode = exitCode;
+    })
+    .catch((error) => {
+      console.error(error instanceof Error ? error.message : String(error));
+      process.exitCode = 1;
+    });
 }

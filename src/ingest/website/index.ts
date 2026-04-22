@@ -1,9 +1,4 @@
-import type { SourceBundle } from "../../core/types.js";
-
-interface WebsiteSection {
-  title: string;
-  body: string;
-}
+import type { SourceBundle, WebsiteSection } from "../../core/types.js";
 
 function decodeHtml(value: string): string {
   return value
@@ -112,6 +107,14 @@ export async function fetchWebsiteSourceBundle(input: {
     url: input.url,
     html,
   });
+
+  if (
+    (extracted.title.trim().length === 0 || extracted.title === input.url) &&
+    extracted.summary.trim().length === 0 &&
+    extracted.sections.length === 0
+  ) {
+    throw new Error(`Extracted website content is empty: ${input.url}`);
+  }
 
   return compileWebsiteSourceBundle(extracted);
 }

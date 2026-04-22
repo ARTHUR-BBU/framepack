@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import type {
   AssetPlan,
   ScenePlan,
+  SourceManifest,
   Script,
   Storyboard,
   ValidationReport,
@@ -36,6 +37,7 @@ export function createVideoProjectPackage(input: {
   assetPlan: AssetPlan;
   validationReport: ValidationReport;
   compositionHtml: string;
+  sourceManifest?: SourceManifest;
 }): VideoProjectPackage {
   const capabilities = detectHyperframesCapabilities();
   const runtimeAdapter = createHyperframesRuntimeAdapter();
@@ -56,6 +58,11 @@ export function createVideoProjectPackage(input: {
     directories: ["assets", "compositions"],
     projectName: input.projectName,
     files: {
+      ...(input.sourceManifest
+        ? {
+            "SOURCE_MANIFEST.json": JSON.stringify(input.sourceManifest, null, 2),
+          }
+        : {}),
       "ASSET_PLAN.json": JSON.stringify(input.assetPlan, null, 2),
       "FLYWHEEL.md": "# Flywheel\n\nIntake -> Plan -> Review -> Compose -> Render -> Retro\n",
       "hyperframes.json": JSON.stringify(

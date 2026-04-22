@@ -2,7 +2,12 @@
 
 Framepack turns content into executable video projects.
 
-Today this repository provides the Phase 1 compiler path for markdown-driven case explainer videos. It produces a video engineering package with planning artifacts, validation artifacts, and HyperFrames-ready runtime structure.
+Today this repository provides compiler paths for:
+
+- markdown-driven case explainer videos
+- first-version public website URL to case-explainer packages
+
+It produces a video engineering package with planning artifacts, validation artifacts, and HyperFrames-ready runtime structure.
 
 HyperFrames is required for runtime execution, but not for package generation. Framepack can generate, inspect, and validate project packages before HyperFrames is installed.
 
@@ -10,7 +15,8 @@ HyperFrames is required for runtime execution, but not for package generation. F
 
 1. Provide a source
    - Markdown today
-   - websites, PRDs, and case packages later
+   - public website URLs today
+   - PRDs and case packages later
 2. Generate a video engineering package
    - brief
    - scene plan
@@ -52,12 +58,19 @@ Generate a video engineering package from a Markdown source file.
 node dist/cli.js generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 ```
 
+Generate a video engineering package from a public single-page URL.
+
+```bash
+node dist/cli.js generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
+```
+
 ### `validate`
 
 Validate the input and planning path and write a structured report without generating the full package.
 
 ```bash
 node dist/cli.js validate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+node dist/cli.js validate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
 ```
 
 `validate` writes:
@@ -71,6 +84,8 @@ You can also use a project config produced by `init`:
 node dist/cli.js generate --config out/starter/hyperframes-studio.json --output-dir out
 node dist/cli.js validate --config out/starter/hyperframes-studio.json --output-dir out
 ```
+
+For the first version, `--config`, `--input`, and `--url` are mutually exclusive. Use exactly one source input per command.
 
 ### Runtime workflow
 
@@ -96,16 +111,27 @@ If HyperFrames is not installed, Framepack reports that state and keeps package 
 The current implementation supports:
 
 - Markdown input
+- public single-page website URLs
 - `case-explainer` output type
 - `16:9` and `9:16` formats
 - engineering package generation
 - guardrail validation
+
+Current website-route limits:
+
+- public pages only
+- single page only
+- HTML fetch plus lightweight `title` / `meta description` / `h1/h2 + p` extraction
+- no login flows
+- no multi-page crawling
+- no screenshots or browser capture
 
 ## Output Package
 
 The generated package includes:
 
 - `VIDEO_BRIEF.json`
+- `SOURCE_MANIFEST.json` for website-generated packages
 - `SCENE_PLAN.json`
 - `SCRIPT.md`
 - `STORYBOARD.md`

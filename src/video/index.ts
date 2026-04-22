@@ -1,3 +1,4 @@
+import type { SourceManifest, VideoBrief } from "../core/types.js";
 import { normalizeVideoBriefInput } from "./brief/normalize.js";
 import { buildAssetPlan } from "../planning/assets/index.js";
 import { buildScript } from "../planning/script/index.js";
@@ -9,31 +10,33 @@ import { validateScenePlan } from "./planning/scene-validators.js";
 import { emitHyperframesComposition } from "./render/hyperframes-adapter.js";
 import { createValidationReport } from "./validation/validation-report.js";
 
-export function buildCaseExplainerVideoProject(input: {
-  inputType: "markdown";
-  markdown: string;
-  defaults: {
-    goal: string;
-    audience: string;
-    format: "16:9" | "9:16";
-    outputType: "case-explainer";
-    style?: {
-      tone?: string;
-      pacing?: "slow" | "medium" | "fast";
-      brandName?: string;
-    };
-    constraints?: {
-      maxDurationSec?: number;
-      requiredPoints?: string[];
-      bannedTerms?: string[];
-    };
-    theme?: {
-      palette: string;
-    };
+interface CaseExplainerDefaults {
+  goal: string;
+  audience: string;
+  format: "16:9" | "9:16";
+  outputType: "case-explainer";
+  style?: {
+    tone?: string;
+    pacing?: "slow" | "medium" | "fast";
+    brandName?: string;
   };
+  constraints?: {
+    maxDurationSec?: number;
+    requiredPoints?: string[];
+    bannedTerms?: string[];
+  };
+  theme?: {
+    palette: string;
+  };
+}
+
+function buildCaseExplainerVideoProjectFromBrief(input: {
+  brief: VideoBrief;
   projectName: string;
+  defaults: CaseExplainerDefaults;
+  sourceManifest?: SourceManifest;
 }) {
-  const brief = normalizeVideoBriefInput(input);
+  const brief = input.brief;
   const scenePlan = planCaseExplainerScenes(brief);
   const script = buildScript({ scenePlan });
   const storyboard = buildStoryboard({ scenePlan });
@@ -59,6 +62,7 @@ export function buildCaseExplainerVideoProject(input: {
     assetPlan,
     validationReport,
     compositionHtml: composition.html,
+    sourceManifest: input.sourceManifest,
   });
 
   return {
@@ -72,6 +76,30 @@ export function buildCaseExplainerVideoProject(input: {
     composition,
     package: projectPackage,
   };
+}
+
+export function buildCaseExplainerVideoProject(input: {
+  inputType: "markdown";
+  markdown: string;
+  defaults: CaseExplainerDefaults;
+  projectName: string;
+}) {
+  const brief = normalizeVideoBriefInput(input);
+
+  return buildCaseExplainerVideoProjectFromBrief({
+    brief,
+    projectName: input.projectName,
+    defaults: input.defaults,
+  });
+}
+
+export function buildCaseExplainerVideoProjectFromCompiledBrief(input: {
+  brief: VideoBrief;
+  defaults: CaseExplainerDefaults;
+  projectName: string;
+  sourceManifest?: SourceManifest;
+}) {
+  return buildCaseExplainerVideoProjectFromBrief(input);
 }
 
 export function ensureValidationPassed(validationReport: { issues: string[] }) {

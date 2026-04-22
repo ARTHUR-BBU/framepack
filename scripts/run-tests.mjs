@@ -37,7 +37,10 @@ import { planCaseExplainerScenes } from "../dist/video/planning/scene-planner.js
 import { validateScenePlan } from "../dist/video/planning/scene-validators.js";
 import { emitHyperframesComposition } from "../dist/video/render/hyperframes-adapter.js";
 import { buildCaseExplainerVideoProject } from "../dist/video/index.js";
-import { compileWebsiteVideoBrief } from "../dist/compiler/index.js";
+import {
+  compileWebsiteCaseExplainerProject,
+  compileWebsiteVideoBrief,
+} from "../dist/compiler/index.js";
 
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -206,6 +209,23 @@ const tests = [
     },
   },
   {
+    name: "fail website fetch when extracted content is empty",
+    run: async () => {
+      await assert.rejects(
+        () =>
+          fetchWebsiteSourceBundle({
+            url: "https://example.com/empty",
+            fetchImpl: async () =>
+              new Response("<html><head></head><body></body></html>", {
+                status: 200,
+                headers: { "Content-Type": "text/html" },
+              }),
+          }),
+        /Extracted website content is empty/,
+      );
+    },
+  },
+  {
     name: "compile website input into a SourceBundle",
     run: () => {
       const sourceBundle = compileWebsiteSourceBundle({
@@ -274,6 +294,71 @@ const tests = [
       assert.equal(result.sourceBundle.sourceType, "website");
       assert.equal(result.brief.goal, "Explain the product");
       assert.equal(result.brief.sourceMaterials.length, 1);
+    },
+  },
+  {
+    name: "compile website input into a case-explainer project package",
+    run: async () => {
+      const result = await compileWebsiteCaseExplainerProject({
+        url: "https://example.com/product",
+        projectName: "website-case-video",
+        defaults: {
+          goal: "Explain the product",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+        fetchImpl: async () =>
+          new Response(
+            `
+              <!doctype html>
+              <html>
+                <head>
+                  <title>Example Product</title>
+                  <meta name="description" content="A product landing page for founders." />
+                </head>
+                <body>
+                  <h1>Launch faster</h1>
+                  <p>Ship reusable video workflows.</p>
+                  <h2>Review gates</h2>
+                  <p>Keep output quality stable.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html" },
+            },
+          ),
+      });
+
+      assert.equal(result.brief.goal, "Explain the product");
+      assert.equal(result.validationReport.status, "passed");
+      assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "website"/);
+      assert.match(result.package.files["SOURCE_MANIFEST.json"], /"url": "https:\/\/example.com\/product"/);
+    },
+  },
+  {
+    name: "fail website project compilation when fetch fails",
+    run: async () => {
+      await assert.rejects(
+        () =>
+          compileWebsiteCaseExplainerProject({
+            url: "https://example.com/missing",
+            projectName: "website-case-video",
+            defaults: {
+              goal: "Explain the product",
+              audience: "Founders",
+              format: "16:9",
+              outputType: "case-explainer",
+            },
+            fetchImpl: async () =>
+              new Response("nope", {
+                status: 404,
+              }),
+          }),
+        /Failed to fetch website/,
+      );
     },
   },
   {
@@ -747,15 +832,18 @@ const tests = [
       assert.match(readme, /runtime doctor/);
       assert.match(readme, /preview/);
       assert.match(readme, /render/);
+      assert.match(readme, /generate --url/);
+      assert.match(readme, /validate --url/);
+      assert.match(readme, /SOURCE_MANIFEST\.json/);
     },
   },
   {
     name: "report runtime availability from the CLI doctor command",
-    run: () => {
+    run: async () => {
       const stdout = [];
       const stderr = [];
 
-      const exitCode = runCli(["runtime", "doctor"], {
+      const exitCode = await runCli(["runtime", "doctor"], {
         stdout: (message) => stdout.push(message),
         stderr: (message) => stderr.push(message),
       });
@@ -769,14 +857,14 @@ const tests = [
   },
   {
     name: "generate a package from the CLI",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-cli-"));
 
       try {
         const stdout = [];
         const stderr = [];
 
-        const exitCode = runCli(
+        const exitCode = await runCli(
           [
             "generate",
             "--input",
@@ -809,13 +897,78 @@ const tests = [
     },
   },
   {
+    name: "generate a website package from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-cli-url-"));
+      const originalFetch = globalThis.fetch;
+
+      try {
+        globalThis.fetch = async () =>
+          new Response(
+            `
+              <!doctype html>
+              <html>
+                <head>
+                  <title>Website Product</title>
+                  <meta name="description" content="A product landing page for founders." />
+                </head>
+                <body>
+                  <h1>Launch faster</h1>
+                  <p>Ship reusable video workflows.</p>
+                  <h2>Review gates</h2>
+                  <p>Keep output quality stable.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html" },
+            },
+          );
+
+        const stdout = [];
+        const stderr = [];
+        const exitCode = await runCli(
+          [
+            "generate",
+            "--url",
+            "https://example.com/product",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the site",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "cli-website-video",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const packageDir = join(tempRoot, "cli-website-video");
+
+        assert.equal(exitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Generated video project package/);
+        assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"sourceType": "website"/);
+        assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"Website Product"/);
+      } finally {
+        globalThis.fetch = originalFetch;
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "fail preview when runtime is unavailable",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-preview-"));
       const previousCwd = process.cwd();
 
       try {
-        const generateExitCode = runCli(
+        const generateExitCode = await runCli(
           [
             "generate",
             "--input",
@@ -842,7 +995,7 @@ const tests = [
         const stdout = [];
         const stderr = [];
         process.chdir(tempRoot);
-        const previewExitCode = runCli(
+        const previewExitCode = await runCli(
           ["preview", "--project-dir", join(tempRoot, "preview-case")],
           {
             stdout: (message) => stdout.push(message),
@@ -861,12 +1014,12 @@ const tests = [
   },
   {
     name: "fail render when runtime is unavailable",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-render-"));
       const previousCwd = process.cwd();
 
       try {
-        const generateExitCode = runCli(
+        const generateExitCode = await runCli(
           [
             "generate",
             "--input",
@@ -893,7 +1046,7 @@ const tests = [
         const stdout = [];
         const stderr = [];
         process.chdir(tempRoot);
-        const renderExitCode = runCli(
+        const renderExitCode = await runCli(
           ["render", "--project-dir", join(tempRoot, "render-case")],
           {
             stdout: (message) => stdout.push(message),
@@ -912,11 +1065,11 @@ const tests = [
   },
   {
     name: "fail the CLI when required arguments are missing",
-    run: () => {
+    run: async () => {
       const stdout = [];
       const stderr = [];
 
-      const exitCode = runCli(["generate"], {
+      const exitCode = await runCli(["generate"], {
         stdout: (message) => stdout.push(message),
         stderr: (message) => stderr.push(message),
       });
@@ -928,14 +1081,14 @@ const tests = [
   },
   {
     name: "initialize a CLI project template",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-init-"));
 
       try {
         const stdout = [];
         const stderr = [];
 
-        const exitCode = runCli(
+        const exitCode = await runCli(
           ["init", "--output-dir", tempRoot, "--project-name", "starter", "--format", "9:16"],
           {
             stdout: (message) => stdout.push(message),
@@ -969,13 +1122,13 @@ const tests = [
   },
   {
     name: "validate CLI input without writing a package",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-validate-"));
       const stdout = [];
       const stderr = [];
 
       try {
-        const exitCode = runCli(
+        const exitCode = await runCli(
           [
             "validate",
             "--input",
@@ -1015,12 +1168,107 @@ const tests = [
     },
   },
   {
+    name: "validate website CLI input without writing a package",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-validate-url-"));
+      const originalFetch = globalThis.fetch;
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        globalThis.fetch = async () =>
+          new Response(
+            `
+              <!doctype html>
+              <html>
+                <head>
+                  <title>Website Product</title>
+                  <meta name="description" content="A product landing page for founders." />
+                </head>
+                <body>
+                  <h1>Launch faster</h1>
+                  <p>Ship reusable video workflows.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html" },
+            },
+          );
+
+        const exitCode = await runCli(
+          [
+            "validate",
+            "--url",
+            "https://example.com/product",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the site",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "validated-website",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const reportDir = join(tempRoot, "validated-website");
+
+        assert.equal(exitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Validation passed/);
+        assert.equal(existsSync(join(reportDir, "VIDEO_BRIEF.json")), false);
+        assert.equal(existsSync(join(reportDir, "SOURCE_MANIFEST.json")), false);
+        assert.match(readFileSync(join(reportDir, "VALIDATION_REPORT.json"), "utf8"), /"status": "passed"/);
+      } finally {
+        globalThis.fetch = originalFetch;
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "reject conflicting CLI source arguments",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+
+      const exitCode = await runCli(
+        [
+          "generate",
+          "--input",
+          fixturePath,
+          "--url",
+          "https://example.com/product",
+          "--output-dir",
+          "out",
+          "--goal",
+          "Explain the site",
+          "--audience",
+          "Founders",
+        ],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+
+      assert.equal(exitCode, 1);
+      assert.equal(stdout.length, 0);
+      assert.match(stderr.join("\n"), /Use exactly one source input: --config, --input, or --url/);
+    },
+  },
+  {
     name: "generate from a project config file",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-generate-"));
 
       try {
-        const initExitCode = runCli(
+        const initExitCode = await runCli(
           ["init", "--output-dir", tempRoot, "--project-name", "config-project"],
           {
             stdout: () => {},
@@ -1036,7 +1284,7 @@ const tests = [
         const stdout = [];
         const stderr = [];
 
-        const generateExitCode = runCli(
+        const generateExitCode = await runCli(
           ["generate", "--config", join(projectDir, "hyperframes-studio.json"), "--output-dir", tempRoot],
           {
             stdout: (message) => stdout.push(message),
@@ -1070,11 +1318,11 @@ const tests = [
   },
   {
     name: "validate from a project config file",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-validate-"));
 
       try {
-        const initExitCode = runCli(
+        const initExitCode = await runCli(
           ["init", "--output-dir", tempRoot, "--project-name", "config-validate"],
           {
             stdout: () => {},
@@ -1090,7 +1338,7 @@ const tests = [
         const stdout = [];
         const stderr = [];
 
-        const validateExitCode = runCli(
+        const validateExitCode = await runCli(
           ["validate", "--config", join(projectDir, "hyperframes-studio.json"), "--output-dir", tempRoot],
           {
             stdout: (message) => stdout.push(message),
@@ -1116,11 +1364,11 @@ const tests = [
   },
   {
     name: "fail validation from config when required points are missing",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-required-"));
 
       try {
-        const initExitCode = runCli(
+        const initExitCode = await runCli(
           ["init", "--output-dir", tempRoot, "--project-name", "required-points"],
           {
             stdout: () => {},
@@ -1141,7 +1389,7 @@ const tests = [
 
         const stdout = [];
         const stderr = [];
-        const validateExitCode = runCli(
+        const validateExitCode = await runCli(
           ["validate", "--config", configPath, "--output-dir", tempRoot],
           {
             stdout: (message) => stdout.push(message),
@@ -1167,11 +1415,11 @@ const tests = [
   },
   {
     name: "fail validation from config when banned terms are present",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-banned-"));
 
       try {
-        const initExitCode = runCli(
+        const initExitCode = await runCli(
           ["init", "--output-dir", tempRoot, "--project-name", "banned-terms"],
           {
             stdout: () => {},
@@ -1192,7 +1440,7 @@ const tests = [
 
         const stdout = [];
         const stderr = [];
-        const validateExitCode = runCli(
+        const validateExitCode = await runCli(
           ["validate", "--config", configPath, "--output-dir", tempRoot],
           {
             stdout: (message) => stdout.push(message),
@@ -1214,11 +1462,11 @@ const tests = [
   },
   {
     name: "block generate when config max duration is too small",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-duration-"));
 
       try {
-        const initExitCode = runCli(
+        const initExitCode = await runCli(
           ["init", "--output-dir", tempRoot, "--project-name", "duration-limit"],
           {
             stdout: () => {},
@@ -1239,7 +1487,7 @@ const tests = [
 
         const stdout = [];
         const stderr = [];
-        const generateExitCode = runCli(
+        const generateExitCode = await runCli(
           ["generate", "--config", configPath, "--output-dir", tempRoot],
           {
             stdout: (message) => stdout.push(message),
@@ -1258,11 +1506,11 @@ const tests = [
   },
   {
     name: "carry custom brand and palette values from config into output",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-brand-"));
 
       try {
-        const initExitCode = runCli(
+        const initExitCode = await runCli(
           ["init", "--output-dir", tempRoot, "--project-name", "brand-project"],
           {
             stdout: () => {},
@@ -1285,7 +1533,7 @@ const tests = [
 
         writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
 
-        const generateExitCode = runCli(
+        const generateExitCode = await runCli(
           ["generate", "--config", configPath, "--output-dir", tempRoot],
           {
             stdout: () => {},
@@ -1315,11 +1563,11 @@ const tests = [
   },
   {
     name: "apply default style and theme when config omits them",
-    run: () => {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-defaults-"));
 
       try {
-        const initExitCode = runCli(
+        const initExitCode = await runCli(
           ["init", "--output-dir", tempRoot, "--project-name", "legacy-project"],
           {
             stdout: () => {},
@@ -1340,7 +1588,7 @@ const tests = [
 
         writeFileSync(configPath, JSON.stringify(config, null, 2), "utf8");
 
-        const generateExitCode = runCli(
+        const generateExitCode = await runCli(
           ["generate", "--config", configPath, "--output-dir", tempRoot],
           {
             stdout: () => {},
