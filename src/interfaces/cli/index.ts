@@ -340,6 +340,25 @@ function getRequiredProjectDir(args: string[]): string {
   return resolve(getRequiredArg(args, "--project-dir"));
 }
 
+function collectRuntimePassthroughArgs(
+  action: "preview" | "render",
+  args: string[],
+): string[] {
+  const passthroughArgs: string[] = [];
+  const port = getOptionalArg(args, "--port");
+  const output = getOptionalArg(args, "--output");
+
+  if (action === "preview" && port) {
+    passthroughArgs.push("--port", port);
+  }
+
+  if (action === "render" && output) {
+    passthroughArgs.push("--output", output);
+  }
+
+  return passthroughArgs;
+}
+
 function loadProjectRuntimeInfo(projectDir: string) {
   const metaPath = resolve(projectDir, "meta.json");
   const rawMeta = stripUtf8Bom(readFileSync(metaPath, "utf8"));
@@ -392,6 +411,7 @@ function runRuntimeActionCommand(
     packageDirectory: projectDir,
     packageRuntimeInfo: runtimeInfo,
     capabilities,
+    passthroughArgs: collectRuntimePassthroughArgs(action, args),
   });
   const result = executeHyperframesCommand({
     command,

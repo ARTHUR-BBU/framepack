@@ -34,4 +34,5 @@ export interface HyperframesCommandSpec {
   args: string[];
   cwd: string;
   summary: string;
+  passthroughArgs?: string[];
 }

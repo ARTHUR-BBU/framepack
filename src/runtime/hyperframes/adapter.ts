@@ -26,6 +26,7 @@ export function createHyperframesRuntimeAdapter() {
       packageDirectory: string;
       packageRuntimeInfo: HyperframesPackageRuntimeInfo;
       capabilities: RuntimeCapabilities;
+      passthroughArgs?: string[];
     }): HyperframesCommandSpec {
       return buildHyperframesCommandSpec(input);
     },

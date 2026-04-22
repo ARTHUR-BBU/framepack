@@ -84,7 +84,9 @@ Run a generated package:
 
 ```bash
 node dist/cli.js preview --project-dir out/starter
+node dist/cli.js preview --project-dir out/starter --port 3010
 node dist/cli.js render --project-dir out/starter
+node dist/cli.js render --project-dir out/starter --output renders/custom.mp4
 ```
 
 If HyperFrames is not installed, Framepack reports that state and keeps package generation available.

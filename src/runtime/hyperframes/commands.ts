@@ -10,9 +10,14 @@ export function buildHyperframesCommandSpec(input: {
   packageDirectory: string;
   packageRuntimeInfo: HyperframesPackageRuntimeInfo;
   capabilities: RuntimeCapabilities;
+  passthroughArgs?: string[];
 }): HyperframesCommandSpec {
   void input.packageRuntimeInfo;
-  const args = input.action === "doctor" ? ["doctor"] : [input.action, input.packageDirectory];
+  const passthroughArgs = input.passthroughArgs ?? [];
+  const args =
+    input.action === "doctor"
+      ? ["doctor", ...passthroughArgs]
+      : [input.action, ...passthroughArgs, input.packageDirectory];
 
   return {
     action: input.action,
@@ -20,5 +25,6 @@ export function buildHyperframesCommandSpec(input: {
     args,
     cwd: input.packageDirectory,
     summary: `${input.capabilities.binary} ${args.join(" ")}`,
+    passthroughArgs,
   };
 }
