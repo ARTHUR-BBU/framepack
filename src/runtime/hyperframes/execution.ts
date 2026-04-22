@@ -12,9 +12,11 @@ function runCommand(
   command: HyperframesCommandSpec,
   args: string[],
 ): ExecutionProbeResult {
+  const isWindowsCmd = process.platform === "win32" && command.executable.toLowerCase().endsWith(".cmd");
   const result = spawnSync(command.executable, args, {
     cwd: command.cwd,
     encoding: "utf8",
+    shell: isWindowsCmd,
   });
 
   return {

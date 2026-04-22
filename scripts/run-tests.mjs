@@ -26,6 +26,7 @@ import {
   createMissingHyperframesCapabilities,
   detectLocalHyperframesCapabilities,
   parseHyperframesVersion,
+  resolveHyperframesBinary,
 } from "../dist/runtime/hyperframes/discovery.js";
 import { planCaseExplainerScenes } from "../dist/video/planning/scene-planner.js";
 import { validateScenePlan } from "../dist/video/planning/scene-validators.js";
@@ -47,6 +48,7 @@ const tests = [
     run: () => {
       assert.equal(parseHyperframesVersion("hyperframes/0.4.11\n"), "0.4.11");
       assert.equal(parseHyperframesVersion("0.4.12"), "0.4.12");
+      assert.equal(parseHyperframesVersion("F:/repo/node_modules/.bin/hyperframes.cmd 0.4.11\n"), "0.4.11");
       assert.equal(parseHyperframesVersion(""), "unknown");
     },
   },
@@ -65,23 +67,73 @@ const tests = [
     },
   },
   {
+    name: "resolve local HyperFrames binary from node_modules bin directory",
+    run: () => {
+      const binary = resolveHyperframesBinary({
+        cwd: "F:/repo",
+        platform: "win32",
+        exists: (candidate) =>
+          candidate.replaceAll("\\", "/") === "F:/repo/node_modules/.bin/hyperframes.cmd",
+      });
+
+      assert.match(binary.replaceAll("\\", "/"), /F:\/repo\/node_modules\/\.bin\/hyperframes\.cmd$/);
+    },
+  },
+  {
     name: "detect local runtime capabilities from a version probe",
     run: () => {
       const capabilities = detectLocalHyperframesCapabilities({
-        binary: "hyperframes",
+        cwd: "F:/repo",
         now: () => "2026-04-22T09:00:00.000Z",
-        runner: () => ({
+        exists: (candidate) =>
+          candidate.replaceAll("\\", "/") === "F:/repo/node_modules/.bin/hyperframes.cmd",
+        runner: (binary) => ({
           status: 0,
-          stdout: "hyperframes/0.4.11\n",
+          stdout: `${binary} 0.4.11\n`,
+          stderr: "",
+        }),
+      });
+
+      assert.equal(capabilities.available, true);
+      assert.match(
+        capabilities.binary.replaceAll("\\", "/"),
+        /F:\/repo\/node_modules\/\.bin\/hyperframes\.cmd$/,
+      );
+      assert.equal(capabilities.version, "0.4.11");
+      assert.equal(capabilities.detectedAt, "2026-04-22T09:00:00.000Z");
+      assert.ok(capabilities.supportedCommands.includes("preview"));
+    },
+  },
+  {
+    name: "fallback to plain hyperframes binary when no local install exists",
+    run: () => {
+      const capabilities = detectLocalHyperframesCapabilities({
+        binary: "hyperframes",
+        cwd: "F:/repo",
+        now: () => "2026-04-22T09:00:00.000Z",
+        exists: () => false,
+        runner: (binary) => ({
+          status: 0,
+          stdout: `${binary} 0.4.12\n`,
           stderr: "",
         }),
       });
 
       assert.equal(capabilities.available, true);
       assert.equal(capabilities.binary, "hyperframes");
-      assert.equal(capabilities.version, "0.4.11");
-      assert.equal(capabilities.detectedAt, "2026-04-22T09:00:00.000Z");
-      assert.ok(capabilities.supportedCommands.includes("preview"));
+      assert.equal(capabilities.version, "0.4.12");
+    },
+  },
+  {
+    name: "detect runtime capabilities from the real local install",
+    run: () => {
+      const capabilities = detectLocalHyperframesCapabilities({
+        cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."),
+      });
+
+      assert.equal(capabilities.available, true);
+      assert.match(capabilities.binary, /hyperframes(\.cmd)?$/);
+      assert.equal(capabilities.version, "0.4.12");
     },
   },
   {
@@ -345,7 +397,12 @@ const tests = [
         theme: { palette: "default" },
       });
 
+      assert.match(output.html, /<!doctype html>/i);
       assert.match(output.html, /data-composition-id="case-explainer"/);
+      assert.match(output.html, /data-start="0"/);
+      assert.match(output.html, /data-duration="60"/);
+      assert.match(output.html, /window\.__timelines/);
+      assert.match(output.html, /window\.__timelines\["case-explainer"\]/);
       assert.deepEqual(output.commands, {
         preview: "npx hyperframes preview",
         lint: "npx hyperframes lint",
@@ -363,9 +420,9 @@ const tests = [
         projectName: "case-video",
       });
 
-      assert.equal(capabilities.version, "unknown");
-      assert.equal(capabilities.available, false);
-      assert.equal(capabilities.binary, "hyperframes");
+      assert.equal(capabilities.available, true);
+      assert.match(capabilities.binary, /hyperframes(\.cmd)?$/);
+      assert.equal(capabilities.version, "0.4.12");
       assert.ok(capabilities.detectedAt.length > 0);
       assert.ok(capabilities.supportedCommands.includes("preview"));
       assert.equal(runtimeInfo.rootEntry, "index.html");
@@ -397,9 +454,9 @@ const tests = [
       });
 
       assert.equal(commandSpec.executable, "hyperframes");
-      assert.deepEqual(commandSpec.args, ["preview", "index.html"]);
+      assert.deepEqual(commandSpec.args, ["preview", "/tmp/case-video"]);
       assert.equal(commandSpec.cwd, "/tmp/case-video");
-      assert.match(commandSpec.summary, /hyperframes preview index.html/);
+      assert.match(commandSpec.summary, /hyperframes preview \/tmp\/case-video/);
     },
   },
   {
@@ -466,17 +523,21 @@ const tests = [
         assert.match(readFileSync(join(writtenDir, "SCRIPT.md"), "utf8"), /# Script/);
         assert.match(readFileSync(join(writtenDir, "STORYBOARD.md"), "utf8"), /# Storyboard/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Validation status: passed/);
-        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Runtime available: false/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Runtime available: true/);
+        assert.match(readFileSync(join(writtenDir, "hyperframes.json"), "utf8"), /"assets": "assets"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"rootEntry": "index.html"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"runtime": "hyperframes"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"supportedCommands": \[/);
-        assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"binary": "hyperframes"/);
+        assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"binary": ".*hyperframes(\.cmd)?"/);
         assert.equal(existsSync(join(writtenDir, "assets")), true);
         assert.equal(existsSync(join(writtenDir, "compositions")), true);
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Max duration: 60s/);
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Latest validation: passed/);
         assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /# Runtime Commands/);
-        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /hyperframes preview index.html/);
+        assert.match(
+          readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"),
+          /hyperframes(\.cmd)? preview case-video/,
+        );
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -533,7 +594,8 @@ const tests = [
       assert.equal(exitCode, 0);
       assert.equal(stderr.length, 0);
       assert.match(stdout.join("\n"), /HyperFrames runtime/);
-      assert.match(stdout.join("\n"), /available: false/);
+      assert.match(stdout.join("\n"), /available: true/);
+      assert.match(stdout.join("\n"), /version: 0\.4\.12/);
     },
   },
   {
@@ -581,6 +643,7 @@ const tests = [
     name: "fail preview when runtime is unavailable",
     run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-preview-"));
+      const previousCwd = process.cwd();
 
       try {
         const generateExitCode = runCli(
@@ -609,6 +672,7 @@ const tests = [
 
         const stdout = [];
         const stderr = [];
+        process.chdir(tempRoot);
         const previewExitCode = runCli(
           ["preview", "--project-dir", join(tempRoot, "preview-case")],
           {
@@ -621,6 +685,7 @@ const tests = [
         assert.equal(stdout.length, 0);
         assert.match(stderr.join("\n"), /HyperFrames runtime is unavailable/);
       } finally {
+        process.chdir(previousCwd);
         rmSync(tempRoot, { recursive: true, force: true });
       }
     },
@@ -629,6 +694,7 @@ const tests = [
     name: "fail render when runtime is unavailable",
     run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-render-"));
+      const previousCwd = process.cwd();
 
       try {
         const generateExitCode = runCli(
@@ -657,6 +723,7 @@ const tests = [
 
         const stdout = [];
         const stderr = [];
+        process.chdir(tempRoot);
         const renderExitCode = runCli(
           ["render", "--project-dir", join(tempRoot, "render-case")],
           {
@@ -669,6 +736,7 @@ const tests = [
         assert.equal(stdout.length, 0);
         assert.match(stderr.join("\n"), /HyperFrames runtime is unavailable/);
       } finally {
+        process.chdir(previousCwd);
         rmSync(tempRoot, { recursive: true, force: true });
       }
     },

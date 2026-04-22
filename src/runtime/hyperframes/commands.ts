@@ -11,10 +11,8 @@ export function buildHyperframesCommandSpec(input: {
   packageRuntimeInfo: HyperframesPackageRuntimeInfo;
   capabilities: RuntimeCapabilities;
 }): HyperframesCommandSpec {
-  const args =
-    input.action === "doctor"
-      ? ["--version"]
-      : [input.action, input.packageRuntimeInfo.rootEntry];
+  void input.packageRuntimeInfo;
+  const args = input.action === "doctor" ? ["doctor"] : [input.action, input.packageDirectory];
 
   return {
     action: input.action,

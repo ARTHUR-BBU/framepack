@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { RuntimeCapabilities } from "./types.js";
 
 interface VersionProbeResult {
@@ -10,16 +12,43 @@ interface VersionProbeResult {
 
 interface DetectLocalHyperframesCapabilitiesInput {
   binary?: string;
+  cwd?: string;
   now?: () => string;
+  exists?: (candidate: string) => boolean;
+  platform?: NodeJS.Platform;
   runner?: (binary: string, args: string[]) => VersionProbeResult;
 }
 
 const DEFAULT_BINARY = "hyperframes";
 const DEFAULT_SUPPORTED_COMMANDS = ["preview", "lint", "validate", "render"];
 
+export function resolveHyperframesBinary(input?: {
+  binary?: string;
+  cwd?: string;
+  exists?: (candidate: string) => boolean;
+  platform?: NodeJS.Platform;
+}): string {
+  const binary = input?.binary ?? DEFAULT_BINARY;
+  const cwd = input?.cwd ?? process.cwd();
+  const exists = input?.exists ?? existsSync;
+  const platform = input?.platform ?? process.platform;
+  const candidates =
+    platform === "win32"
+      ? [
+          join(cwd, "node_modules", ".bin", `${binary}.cmd`),
+          join(cwd, "node_modules", ".bin", `${binary}.ps1`),
+          join(cwd, "node_modules", ".bin", binary),
+        ]
+      : [join(cwd, "node_modules", ".bin", binary)];
+
+  return candidates.find((candidate) => exists(candidate)) ?? binary;
+}
+
 function runVersionProbe(binary: string, args: string[]): VersionProbeResult {
+  const isWindowsCmd = process.platform === "win32" && binary.toLowerCase().endsWith(".cmd");
   const result = spawnSync(binary, args, {
     encoding: "utf8",
+    shell: isWindowsCmd,
   });
 
   return {
@@ -65,7 +94,12 @@ export function createMissingHyperframesCapabilities(input?: {
 export function detectLocalHyperframesCapabilities(
   input?: DetectLocalHyperframesCapabilitiesInput,
 ): RuntimeCapabilities {
-  const binary = input?.binary ?? DEFAULT_BINARY;
+  const binary = resolveHyperframesBinary({
+    binary: input?.binary,
+    cwd: input?.cwd,
+    exists: input?.exists,
+    platform: input?.platform,
+  });
   const now = input?.now ?? (() => new Date().toISOString());
   const runner = input?.runner ?? runVersionProbe;
   const probeResult = runner(binary, ["--version"]);

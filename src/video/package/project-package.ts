@@ -58,6 +58,19 @@ export function createVideoProjectPackage(input: {
     files: {
       "ASSET_PLAN.json": JSON.stringify(input.assetPlan, null, 2),
       "FLYWHEEL.md": "# Flywheel\n\nIntake -> Plan -> Review -> Compose -> Render -> Retro\n",
+      "hyperframes.json": JSON.stringify(
+        {
+          $schema: "https://hyperframes.heygen.com/schema/hyperframes.json",
+          registry: "https://raw.githubusercontent.com/heygen-com/hyperframes/main/registry",
+          paths: {
+            blocks: "compositions",
+            components: "compositions/components",
+            assets: "assets",
+          },
+        },
+        null,
+        2,
+      ),
       "VIDEO_BRIEF.json": JSON.stringify(input.brief, null, 2),
       "SCENE_PLAN.json": JSON.stringify(input.scenePlan, null, 2),
       "SCRIPT.md": formatScriptMarkdown(input.script),
@@ -94,7 +107,24 @@ export function createVideoProjectPackage(input: {
       "VALIDATION_REPORT.md": formatValidationReportMarkdown(input.validationReport),
       "RETRO_LOG.md": "# Retro Log\n\n- Initial generation\n",
       "index.html": input.compositionHtml,
-      "compositions/scene-root.html": "<div data-subcomposition-id=\"scene-root\"></div>\n",
+      "compositions/scene-root.html": [
+        "<!doctype html>",
+        '<html lang="en">',
+        "<head>",
+        '  <meta charset="UTF-8" />',
+        '  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>',
+        "</head>",
+        "<body>",
+        '  <div data-composition-id="scene-root" data-start="0" data-duration="1" data-width="1920" data-height="1080"></div>',
+        "  <script>",
+        "    window.__timelines = window.__timelines || {};",
+        "    const tl = gsap.timeline({ paused: true });",
+        '    window.__timelines["scene-root"] = tl;',
+        "  </script>",
+        "</body>",
+        "</html>",
+        "",
+      ].join("\n"),
     },
   };
 }
