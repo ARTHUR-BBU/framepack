@@ -138,6 +138,7 @@ The generated package includes:
 - `ASSET_PLAN.json`
 - website `ASSET_PLAN.json` entries now include `captureTargets` so follow-on agents know which sections to capture or rebuild
 - website `captureTargets` also include `recommendedSceneIds` so follow-on agents know which scenes each capture best supports
+- website `captureTargets` now also include `purposeTag` and `assetForm`, so downstream agents know both the storytelling role and the likely visual treatment
 - `VALIDATION_REPORT.json`
 - `VALIDATION_REPORT.md`
 - `GUARDRAILS.md`

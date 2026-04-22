@@ -85,7 +85,7 @@ export function formatHandoffMarkdown(input: {
     formatList(
       (input.assetPlan.captureTargets ?? []).map(
         (target) =>
-          `${target.sectionTitle} -> ${target.suggestedAsset} (${target.recommendedSceneIds.join(", ")})`,
+          `${target.sectionTitle} -> ${target.suggestedAsset} (${target.recommendedSceneIds.join(", ")}) [${target.purposeTag} / ${target.assetForm}]`,
       ),
     ),
     "",

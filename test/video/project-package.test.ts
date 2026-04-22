@@ -249,6 +249,55 @@ describe("createVideoProjectPackage", () => {
     assert.match(result.files["GUARDRAILS.md"], /Latest validation: failed/);
     assert.match(result.files["GUARDRAILS.md"], /Latest issues:\n- required point missing: repeatable/);
   });
+
+  it("renders capture-target planning hints into HANDOFF.md", () => {
+    const result = createVideoProjectPackage({
+      projectName: "case-video",
+      brief: {
+        goal: "Explain the case",
+        audience: "Founders",
+        format: "16:9",
+        style: { tone: "direct", pacing: "medium", brandName: "Studio" },
+        sourceMaterials: [],
+        constraints: { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] },
+        outputType: "case-explainer",
+      },
+      scenePlan: { totalDurationSec: 60, scenes: [] },
+      script: { scenes: [] },
+      storyboard: { scenes: [] },
+      assetPlan: {
+        availableAssets: [],
+        placeholderAssets: [],
+        missingAssets: ["capture:hero-capture"],
+        captureTargets: [
+          {
+            sourceType: "website",
+            sourceUrl: "https://example.com/product",
+            sectionTitle: "Hero",
+            sectionBody: "Launch faster.",
+            suggestedAsset: "hero-capture",
+            purposeTag: "hero",
+            assetForm: "screenshot",
+            recommendedSceneIds: ["scene-1", "scene-2"],
+            rationale: "Use this capture for early story beats.",
+          },
+        ],
+      },
+      validationReport: {
+        projectName: "case-video",
+        status: "passed",
+        sceneCount: 0,
+        totalDurationSec: 60,
+        issues: [],
+        generatedAt: "2026-04-21T00:00:00.000Z",
+      },
+      compositionHtml: "<div></div>",
+    });
+
+    assert.match(result.files["HANDOFF.md"], /Hero -> hero-capture/);
+    assert.match(result.files["HANDOFF.md"], /scene-1, scene-2/);
+    assert.match(result.files["HANDOFF.md"], /\[hero \/ screenshot\]/);
+  });
 });
 
 describe("buildCaseExplainerVideoProject", () => {

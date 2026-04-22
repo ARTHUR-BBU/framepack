@@ -137,6 +137,8 @@ export interface CaptureTarget {
   sectionTitle: string;
   sectionBody: string;
   suggestedAsset: string;
+  purposeTag: "hero" | "proof" | "workflow" | "highlight";
+  assetForm: "screenshot" | "section-card" | "text-overlay";
   recommendedSceneIds: string[];
   rationale: string;
 }

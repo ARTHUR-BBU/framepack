@@ -354,8 +354,12 @@ const tests = [
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "website"/);
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"url": "https:\/\/example.com\/product"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"captureTargets": \[/);
+      assert.match(result.package.files["ASSET_PLAN.json"], /"purposeTag": "hero"/);
+      assert.match(result.package.files["ASSET_PLAN.json"], /"assetForm": "screenshot"/);
       assert.match(result.package.files["HANDOFF.md"], /Capture targets:/);
       assert.match(result.package.files["HANDOFF.md"], /scene-1, scene-2/);
+      assert.match(result.package.files["HANDOFF.md"], /hero/);
+      assert.match(result.package.files["HANDOFF.md"], /screenshot/);
     },
   },
   {
@@ -600,10 +604,47 @@ const tests = [
       assert.equal(assetPlan.captureTargets.length, 2);
       assert.equal(assetPlan.captureTargets[0]?.sourceUrl, "https://example.com/product");
       assert.match(assetPlan.captureTargets[0]?.suggestedAsset ?? "", /hero/i);
+      assert.equal(assetPlan.captureTargets[0]?.purposeTag, "hero");
+      assert.equal(assetPlan.captureTargets[0]?.assetForm, "screenshot");
       assert.deepEqual(assetPlan.captureTargets[0]?.recommendedSceneIds, ["scene-1", "scene-2"]);
       assert.match(assetPlan.captureTargets[0]?.rationale ?? "", /early story beats/i);
+      assert.equal(assetPlan.captureTargets[1]?.purposeTag, "proof");
+      assert.equal(assetPlan.captureTargets[1]?.assetForm, "text-overlay");
       assert.deepEqual(assetPlan.captureTargets[1]?.recommendedSceneIds, ["scene-3", "scene-4", "scene-5"]);
       assert.ok(assetPlan.missingAssets.some((item) => item.includes("capture:hero")));
+    },
+  },
+  {
+    name: "fall back website capture tags conservatively when no strong rule matches",
+    run: () => {
+      const scenePlan = planCaseExplainerScenes({
+        goal: "Explain the site",
+        audience: "Founders",
+        format: "16:9",
+        style: { tone: "direct", pacing: "medium", brandName: "Studio" },
+        sourceMaterials: [{ kind: "structured", title: "Overview", body: "General overview" }],
+        constraints: { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] },
+        outputType: "case-explainer",
+      });
+
+      const assetPlan = buildAssetPlan({
+        scenePlan,
+        sourceManifest: {
+          sourceType: "website",
+          url: "https://example.com/product",
+          title: "Example Product",
+          summary: "A product landing page for founders.",
+          sections: [
+            { title: "Overview", body: "General overview and positioning." },
+            { title: "More details", body: "Additional information without special signals." },
+            { title: "Closing note", body: "A general closing section." },
+          ],
+          collectedAt: "2026-04-22T12:00:00.000Z",
+        },
+      });
+
+      assert.equal(assetPlan.captureTargets[1]?.purposeTag, "highlight");
+      assert.equal(assetPlan.captureTargets[1]?.assetForm, "section-card");
     },
   },
   {

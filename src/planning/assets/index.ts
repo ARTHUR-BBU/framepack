@@ -32,21 +32,66 @@ function getCaptureRationale(sectionIndex: number, sectionCount: number): string
   return "Use this capture for middle story beats where the workflow or core proof needs support.";
 }
 
+function inferPurposeTag(input: { sectionIndex: number; sectionCount: number; title: string; body: string }) {
+  const normalized = `${input.title} ${input.body}`.toLowerCase();
+
+  if (input.sectionCount <= 1 || input.sectionIndex === 0) {
+    return "hero" as const;
+  }
+
+  if (/\b(how|process|steps|workflow|flow)\b/.test(normalized)) {
+    return "workflow" as const;
+  }
+
+  if (/\b(proof|result|metric|review|customer|evidence|testimonial)\b/.test(normalized)) {
+    return "proof" as const;
+  }
+
+  return "highlight" as const;
+}
+
+function inferAssetForm(purposeTag: "hero" | "proof" | "workflow" | "highlight") {
+  if (purposeTag === "hero") {
+    return "screenshot" as const;
+  }
+
+  if (purposeTag === "workflow") {
+    return "section-card" as const;
+  }
+
+  if (purposeTag === "proof") {
+    return "text-overlay" as const;
+  }
+
+  return "section-card" as const;
+}
+
 export function buildAssetPlan(input: {
   scenePlan: ScenePlan;
   sourceManifest?: SourceManifest;
 }): AssetPlan {
   const captureTargets =
     input.sourceManifest?.sourceType === "website"
-      ? input.sourceManifest.sections.map((section, index, sections) => ({
-          sourceType: "website" as const,
-          sourceUrl: input.sourceManifest!.url,
-          sectionTitle: section.title,
-          sectionBody: section.body,
-          suggestedAsset: `${slugifyAssetName(section.title)}-capture`,
-          recommendedSceneIds: getRecommendedSceneIds(index, sections.length),
-          rationale: getCaptureRationale(index, sections.length),
-        }))
+      ? input.sourceManifest.sections.map((section, index, sections) => {
+          const purposeTag = inferPurposeTag({
+            sectionIndex: index,
+            sectionCount: sections.length,
+            title: section.title,
+            body: section.body,
+          });
+
+          return {
+            sourceType: "website" as const,
+            sourceUrl: input.sourceManifest!.url,
+            sectionTitle: section.title,
+            sectionBody: section.body,
+            suggestedAsset: `${slugifyAssetName(section.title)}-capture`,
+            purposeTag,
+            assetForm: inferAssetForm(purposeTag),
+            recommendedSceneIds: getRecommendedSceneIds(index, sections.length),
+            rationale: getCaptureRationale(index, sections.length),
+          };
+        })
       : [];
 
   return {
