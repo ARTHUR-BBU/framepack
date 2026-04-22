@@ -226,6 +226,23 @@ const tests = [
     },
   },
   {
+    name: "fail website fetch when response is not HTML",
+    run: async () => {
+      await assert.rejects(
+        () =>
+          fetchWebsiteSourceBundle({
+            url: "https://example.com/data.json",
+            fetchImpl: async () =>
+              new Response('{"ok":true}', {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              }),
+          }),
+        /Expected HTML content/,
+      );
+    },
+  },
+  {
     name: "compile website input into a SourceBundle",
     run: () => {
       const sourceBundle = compileWebsiteSourceBundle({

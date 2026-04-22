@@ -102,6 +102,16 @@ export async function fetchWebsiteSourceBundle(input: {
     throw new Error(`Failed to fetch website: ${input.url} (${response.status})`);
   }
 
+  const contentType = response.headers.get("content-type") ?? "";
+
+  if (
+    contentType.length > 0 &&
+    !contentType.toLowerCase().includes("text/html") &&
+    !contentType.toLowerCase().includes("application/xhtml+xml")
+  ) {
+    throw new Error(`Expected HTML content for website source: ${input.url} (${contentType})`);
+  }
+
   const html = await response.text();
   const extracted = extractWebsiteContent({
     url: input.url,
