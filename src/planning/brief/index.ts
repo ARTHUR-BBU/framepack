@@ -66,9 +66,19 @@ function compileWebsiteSourceMaterials(
   }));
 }
 
+function compileThreadSourceMaterials(
+  collectedArtifacts: Array<Record<string, string>>,
+): SourceMaterial[] {
+  return collectedArtifacts.map((artifact) => ({
+    kind: "structured",
+    title: artifact.title ?? "Imported Post",
+    body: artifact.body ?? "",
+  }));
+}
+
 export function compileVideoBrief(input: {
   sourceBundle: {
-    sourceType: "markdown" | "website" | "prd" | "case";
+    sourceType: "markdown" | "website" | "thread" | "prd" | "case";
     collectedArtifacts: Array<Record<string, string>>;
   };
   defaults: VideoBriefDefaults;
@@ -87,6 +97,8 @@ export function compileVideoBrief(input: {
         ? compileMarkdownSourceMaterials(input.sourceBundle.collectedArtifacts)
         : input.sourceBundle.sourceType === "website"
           ? compileWebsiteSourceMaterials(input.sourceBundle.collectedArtifacts)
+          : input.sourceBundle.sourceType === "thread"
+            ? compileThreadSourceMaterials(input.sourceBundle.collectedArtifacts)
           : (() => {
               throw new Error(`Unsupported source bundle type: ${input.sourceBundle.sourceType}`);
             })(),

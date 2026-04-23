@@ -5,6 +5,7 @@ Framepack turns content into executable video projects.
 Today this repository provides compiler paths for:
 
 - markdown-driven case explainer videos
+- local thread/post text files
 - first-version public website URL to case-explainer packages
 
 It produces a video engineering package with planning artifacts, validation artifacts, and HyperFrames-ready runtime structure.
@@ -15,6 +16,7 @@ HyperFrames is required for runtime execution, but not for package generation. F
 
 1. Provide a source
    - Markdown today
+   - thread/post text files today
    - public website URLs today
    - PRDs and case packages later
 2. Generate a video engineering package
@@ -64,12 +66,19 @@ Generate a video engineering package from a public single-page URL.
 node dist/cli.js generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
 ```
 
+Generate a video engineering package from a local thread/post text file.
+
+```bash
+node dist/cli.js generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
+```
+
 ### `validate`
 
 Validate the input and planning path and write a structured report without generating the full package.
 
 ```bash
 node dist/cli.js validate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+node dist/cli.js validate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
 node dist/cli.js validate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
 ```
 
@@ -85,7 +94,7 @@ node dist/cli.js generate --config out/starter/hyperframes-studio.json --output-
 node dist/cli.js validate --config out/starter/hyperframes-studio.json --output-dir out
 ```
 
-For the first version, `--config`, `--input`, and `--url` are mutually exclusive. Use exactly one source input per command.
+For the first version, `--config`, `--input`, `--thread-file`, and `--url` are mutually exclusive. Use exactly one source input per command.
 
 ### `capture`
 
@@ -132,6 +141,7 @@ If HyperFrames is not installed, Framepack reports that state and keeps package 
 The current implementation supports:
 
 - Markdown input
+- local thread/post text files
 - public single-page website URLs
 - `case-explainer` output type
 - `16:9` and `9:16` formats
@@ -153,7 +163,7 @@ Current website-route limits:
 The generated package includes:
 
 - `VIDEO_BRIEF.json`
-- `SOURCE_MANIFEST.json` for website-generated packages
+- `SOURCE_MANIFEST.json` for website-generated and thread-generated packages
 - `SCENE_PLAN.json`
 - website `SCENE_PLAN.json` now carries scene-level asset hints derived from structured website sections
 - `SCENE_ASSET_MAP.json` with scene-first and capture-first lookup for website-derived asset recommendations

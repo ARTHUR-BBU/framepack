@@ -56,7 +56,12 @@ export interface WebsiteSection {
   body: string;
 }
 
-export interface SourceManifest {
+export interface ThreadPost {
+  index: number;
+  text: string;
+}
+
+export interface WebsiteSourceManifest {
   sourceType: "website";
   url: string;
   title: string;
@@ -65,8 +70,18 @@ export interface SourceManifest {
   collectedAt: string;
 }
 
+export interface ThreadSourceManifest {
+  sourceType: "thread";
+  title: string;
+  summary: string;
+  posts: ThreadPost[];
+  collectedAt: string;
+}
+
+export type SourceManifest = WebsiteSourceManifest | ThreadSourceManifest;
+
 export interface SourceBundle {
-  sourceType: "markdown" | "website" | "prd" | "case";
+  sourceType: "markdown" | "website" | "thread" | "prd" | "case";
   rawInputs: Record<string, string>;
   collectedArtifacts: Array<Record<string, string>>;
   ingestMetadata: {

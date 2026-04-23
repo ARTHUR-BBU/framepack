@@ -4,6 +4,7 @@ import { captureWebsiteProject } from "../../capture/website/executor.js";
 import { syncCaptureExecutionProject } from "../../packaging/capture-execution.js";
 import {
   compileMarkdownCaseExplainerProject,
+  compileThreadCaseExplainerProject,
   compileWebsiteCaseExplainerProject,
   ensureProjectValidationPassed,
 } from "../../compiler/index.js";
@@ -23,6 +24,7 @@ export interface CliIo {
 interface CliOptions {
   configPath?: string;
   input?: string;
+  threadFile?: string;
   url?: string;
   outputDir: string;
   goal: string;
@@ -108,9 +110,10 @@ function getOptionalArg(args: string[], name: string): string | undefined {
 function countDefinedSources(input: {
   configPath?: string;
   input?: string;
+  threadFile?: string;
   url?: string;
 }) {
-  return [input.configPath, input.input, input.url].filter((value) => value !== undefined).length;
+  return [input.configPath, input.input, input.threadFile, input.url].filter((value) => value !== undefined).length;
 }
 
 function deriveProjectName(inputPath: string): string {
@@ -193,10 +196,11 @@ export function parseCliArgs(args: string[]): CliOptions {
   const outputDir = getRequiredArg(commandArgs, "--output-dir");
   const configPath = getOptionalArg(commandArgs, "--config");
   const input = getOptionalArg(commandArgs, "--input");
+  const threadFile = getOptionalArg(commandArgs, "--thread-file");
   const url = getOptionalArg(commandArgs, "--url");
 
-  if (countDefinedSources({ configPath, input, url }) !== 1) {
-    throw new Error("Use exactly one source input: --config, --input, or --url.");
+  if (countDefinedSources({ configPath, input, threadFile, url }) !== 1) {
+    throw new Error("Use exactly one source input: --config, --input, --thread-file, or --url.");
   }
 
   if (configPath) {
@@ -222,6 +226,7 @@ export function parseCliArgs(args: string[]): CliOptions {
     return {
       configPath,
       input,
+      threadFile: undefined,
       url: undefined,
       outputDir,
       goal: config.goal,
@@ -245,13 +250,14 @@ export function parseCliArgs(args: string[]): CliOptions {
   return {
     configPath,
     input,
+    threadFile,
     url,
     outputDir,
     goal,
     audience,
     projectName:
       getOptionalArg(commandArgs, "--project-name") ??
-      (input ? deriveProjectName(input) : "website-case-video"),
+      (input ? deriveProjectName(input) : threadFile ? deriveProjectName(threadFile) : "website-case-video"),
     format,
     style: {
       ...createDefaultStyle(),
@@ -284,6 +290,12 @@ async function runGenerateCommand(args: string[], io: CliIo): Promise<number> {
         defaults,
         projectName: options.projectName,
       })
+    : options.threadFile
+      ? compileThreadCaseExplainerProject({
+          text: readFileSync(options.threadFile, "utf8"),
+          defaults,
+          projectName: options.projectName,
+        })
     : compileMarkdownCaseExplainerProject({
         markdown: readFileSync(options.input!, "utf8"),
         defaults,
@@ -314,6 +326,12 @@ async function runValidateCommand(args: string[], io: CliIo): Promise<number> {
         defaults,
         projectName: options.projectName,
       })
+    : options.threadFile
+      ? compileThreadCaseExplainerProject({
+          text: readFileSync(options.threadFile, "utf8"),
+          defaults,
+          projectName: options.projectName,
+        })
     : compileMarkdownCaseExplainerProject({
         markdown: readFileSync(options.input!, "utf8"),
         defaults,

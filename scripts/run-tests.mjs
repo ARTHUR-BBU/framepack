@@ -5,6 +5,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runCli } from "../dist/interfaces/cli/index.js";
 import { compileMarkdownSourceBundle } from "../dist/ingest/markdown/index.js";
+import { compileThreadSourceBundle } from "../dist/ingest/thread/index.js";
 import {
   compileWebsiteSourceBundle,
   extractWebsiteContent,
@@ -39,6 +40,8 @@ import { emitHyperframesComposition } from "../dist/video/render/hyperframes-ada
 import { buildCaseExplainerVideoProject } from "../dist/video/index.js";
 import {
   compileWebsiteCaseExplainerProject,
+  compileThreadCaseExplainerProject,
+  compileThreadVideoBrief,
   compileWebsiteVideoBrief,
 } from "../dist/compiler/index.js";
 import { captureWebsiteProject } from "../dist/capture/website/executor.js";
@@ -241,6 +244,88 @@ const tests = [
           }),
         /Expected HTML content/,
       );
+    },
+  },
+  {
+    name: "compile thread input into a SourceBundle",
+    run: () => {
+      const sourceBundle = compileThreadSourceBundle({
+        text: `
+1. Teams keep shipping one-off launch videos.
+
+2. We need reusable production systems instead of ad hoc editing.
+
+3. Framepack compiles content into executable video projects.
+        `,
+      });
+
+      assert.equal(sourceBundle.sourceType, "thread");
+      assert.equal(sourceBundle.collectedArtifacts.length, 3);
+      assert.equal(sourceBundle.collectedArtifacts[0]?.title, "Post 1");
+      assert.match(sourceBundle.collectedArtifacts[2]?.body ?? "", /Framepack compiles content/);
+    },
+  },
+  {
+    name: "reject empty thread input during ingest",
+    run: () => {
+      assert.throws(
+        () =>
+          compileThreadSourceBundle({
+            text: " \n\n ",
+          }),
+        /Thread input is empty/,
+      );
+    },
+  },
+  {
+    name: "compile a VideoBrief from a thread SourceBundle",
+    run: () => {
+      const result = compileThreadVideoBrief({
+        text: `
+Teams keep shipping one-off launch videos.
+
+We need reusable production systems instead of ad hoc editing.
+
+Framepack compiles content into executable video projects.
+        `,
+        defaults: {
+          goal: "Explain the thread",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+      });
+
+      assert.equal(result.sourceBundle.sourceType, "thread");
+      assert.equal(result.brief.goal, "Explain the thread");
+      assert.equal(result.brief.sourceMaterials.length, 3);
+      assert.equal(result.brief.sourceMaterials[0]?.kind, "structured");
+    },
+  },
+  {
+    name: "compile thread input into a case-explainer project package",
+    run: () => {
+      const result = compileThreadCaseExplainerProject({
+        text: `
+Teams keep shipping one-off launch videos.
+
+We need reusable production systems instead of ad hoc editing.
+
+Framepack compiles content into executable video projects.
+        `,
+        projectName: "thread-case-video",
+        defaults: {
+          goal: "Explain the thread",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+      });
+
+      assert.equal(result.validationReport.status, "passed");
+      assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "thread"/);
+      assert.match(result.package.files["SOURCE_MANIFEST.json"], /"posts": \[/);
+      assert.match(result.package.files["VIDEO_BRIEF.json"], /"goal": "Explain the thread"/);
     },
   },
   {
@@ -995,6 +1080,7 @@ const tests = [
       assert.match(readme, /render/);
       assert.match(readme, /generate --url/);
       assert.match(readme, /validate --url/);
+      assert.match(readme, /thread-file/);
       assert.match(readme, /SOURCE_MANIFEST\.json/);
       assert.match(readme, /captureTargets/);
       assert.match(readme, /CAPTURE_EXECUTION_PLAN\.json/);
@@ -1598,6 +1684,114 @@ const tests = [
     },
   },
   {
+    name: "generate a thread package from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-thread-generate-"));
+      const threadPath = join(tempRoot, "thread.txt");
+
+      try {
+        writeFileSync(
+          threadPath,
+          [
+            "Teams keep shipping one-off launch videos.",
+            "",
+            "We need reusable production systems instead of ad hoc editing.",
+            "",
+            "Framepack compiles content into executable video projects.",
+          ].join("\n"),
+          "utf8",
+        );
+
+        const stdout = [];
+        const stderr = [];
+
+        const exitCode = await runCli(
+          [
+            "generate",
+            "--thread-file",
+            threadPath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the thread",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "thread-case",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const packageDir = join(tempRoot, "thread-case");
+
+        assert.equal(exitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Generated video project package/);
+        assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"sourceType": "thread"/);
+        assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"posts": \[/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "validate thread CLI input without writing a package",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-thread-validate-"));
+      const threadPath = join(tempRoot, "thread.txt");
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        writeFileSync(
+          threadPath,
+          [
+            "Teams keep shipping one-off launch videos.",
+            "",
+            "We need reusable production systems instead of ad hoc editing.",
+            "",
+            "Framepack compiles content into executable video projects.",
+          ].join("\n"),
+          "utf8",
+        );
+
+        const exitCode = await runCli(
+          [
+            "validate",
+            "--thread-file",
+            threadPath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the thread",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "thread-validated",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const reportDir = join(tempRoot, "thread-validated");
+
+        assert.equal(exitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Validation passed/);
+        assert.equal(existsSync(join(reportDir, "VIDEO_BRIEF.json")), false);
+        assert.equal(existsSync(join(reportDir, "SOURCE_MANIFEST.json")), false);
+        assert.match(readFileSync(join(reportDir, "VALIDATION_REPORT.json"), "utf8"), /"status": "passed"/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "reject conflicting CLI source arguments",
     run: async () => {
       const stdout = [];
@@ -1605,12 +1799,14 @@ const tests = [
 
       const exitCode = await runCli(
         [
-          "generate",
-          "--input",
-          fixturePath,
-          "--url",
-          "https://example.com/product",
-          "--output-dir",
+            "generate",
+            "--input",
+            fixturePath,
+            "--thread-file",
+            fixturePath,
+            "--url",
+            "https://example.com/product",
+            "--output-dir",
           "out",
           "--goal",
           "Explain the site",
@@ -1625,7 +1821,7 @@ const tests = [
 
       assert.equal(exitCode, 1);
       assert.equal(stdout.length, 0);
-      assert.match(stderr.join("\n"), /Use exactly one source input: --config, --input, or --url/);
+      assert.match(stderr.join("\n"), /Use exactly one source input: --config, --input, --thread-file, or --url/);
     },
   },
   {

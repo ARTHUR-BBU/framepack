@@ -70,9 +70,12 @@ export function buildAssetPlan(input: {
   scenePlan: ScenePlan;
   sourceManifest?: SourceManifest;
 }): AssetPlan {
+  const websiteSourceManifest =
+    input.sourceManifest?.sourceType === "website" ? input.sourceManifest : undefined;
+
   const captureTargets =
-    input.sourceManifest?.sourceType === "website"
-      ? input.sourceManifest.sections.map((section, index, sections) => {
+    websiteSourceManifest
+      ? websiteSourceManifest.sections.map((section, index, sections) => {
           const purposeTag = inferPurposeTag({
             sectionIndex: index,
             sectionCount: sections.length,
@@ -82,7 +85,7 @@ export function buildAssetPlan(input: {
 
           return {
             sourceType: "website" as const,
-            sourceUrl: input.sourceManifest!.url,
+            sourceUrl: websiteSourceManifest.url,
             sectionTitle: section.title,
             sectionBody: section.body,
             suggestedAsset: `${slugifyAssetName(section.title)}-capture`,
