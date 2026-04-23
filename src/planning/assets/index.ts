@@ -97,10 +97,26 @@ export function buildAssetPlan(input: {
         })
       : [];
 
+  const threadPlaceholderAssets =
+    input.sourceManifest?.sourceType === "thread"
+      ? input.sourceManifest.posts.map((post) => `post-${post.index}-card`)
+      : [];
+
+  const threadMissingAssets =
+    input.sourceManifest?.sourceType === "thread"
+      ? input.sourceManifest.posts.map((post) => `compose:post-${post.index}-card`)
+      : [];
+
   return {
     availableAssets: [],
-    placeholderAssets: input.scenePlan.scenes.map((scene) => `${scene.sceneId}-placeholder`),
-    missingAssets: captureTargets.map((target) => `capture:${target.suggestedAsset}`),
+    placeholderAssets:
+      threadPlaceholderAssets.length > 0
+        ? threadPlaceholderAssets
+        : input.scenePlan.scenes.map((scene) => `${scene.sceneId}-placeholder`),
+    missingAssets:
+      threadMissingAssets.length > 0
+        ? threadMissingAssets
+        : captureTargets.map((target) => `capture:${target.suggestedAsset}`),
     captureTargets,
   };
 }

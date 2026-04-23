@@ -152,6 +152,7 @@ describe("createVideoProjectPackage", () => {
         "GUARDRAILS.md",
       "HANDOFF.md",
       "RETRO_LOG.md",
+      "SOURCE_SCENE_MAP.json",
       "SCENE_ASSET_MAP.json",
       "SCENE_PLAN.json",
       "SCRIPT.md",
@@ -169,6 +170,7 @@ describe("createVideoProjectPackage", () => {
     assert.match(result.files["GUARDRAILS.md"], /Latest validation: passed/);
     assert.match(result.files["HANDOFF.md"], /Validation status: passed/);
     assert.match(result.files["SCENE_ASSET_MAP.json"], /"scenes": \[/);
+    assert.match(result.files["SOURCE_SCENE_MAP.json"], /"scenes": \[/);
     assert.match(result.files["CAPTURE_EXECUTION_PLAN.json"], /"items": \[/);
   });
 
@@ -208,6 +210,7 @@ describe("createVideoProjectPackage", () => {
       assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Banned terms:\n- None/);
       assert.match(readFileSync(join(writtenDir, "VALIDATION_REPORT.md"), "utf8"), /Validation passed/);
       assert.match(readFileSync(join(writtenDir, "SCENE_ASSET_MAP.json"), "utf8"), /"captures": \[/);
+      assert.match(readFileSync(join(writtenDir, "SOURCE_SCENE_MAP.json"), "utf8"), /"sources": \[/);
       assert.match(readFileSync(join(writtenDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"), /"items": \[/);
       assert.equal(readFileSync(join(writtenDir, "index.html"), "utf8"), "<div></div>");
       assert.equal(existsSync(join(writtenDir, "assets")), true);

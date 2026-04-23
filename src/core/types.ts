@@ -190,6 +190,32 @@ export interface SceneAssetMap {
   captures: SceneAssetMapCaptureEntry[];
 }
 
+export interface SourceSceneMapSceneEntry {
+  sceneId: string;
+  linkedSources: Array<{
+    sourceType: "website" | "thread";
+    sourceLabel: string;
+    suggestedAsset: string;
+    assetForm: string;
+    rationale: string;
+  }>;
+}
+
+export interface SourceSceneMapSourceEntry {
+  sourceType: "website" | "thread";
+  sourceLabel: string;
+  sourceText: string;
+  suggestedAsset: string;
+  assetForm: string;
+  recommendedSceneIds: string[];
+  rationale: string;
+}
+
+export interface SourceSceneMap {
+  scenes: SourceSceneMapSceneEntry[];
+  sources: SourceSceneMapSourceEntry[];
+}
+
 export interface CaptureExecutionPlanItem {
   suggestedAsset: string;
   sourceUrl: string;

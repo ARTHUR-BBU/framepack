@@ -326,6 +326,10 @@ Framepack compiles content into executable video projects.
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "thread"/);
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"posts": \[/);
       assert.match(result.package.files["VIDEO_BRIEF.json"], /"goal": "Explain the thread"/);
+      assert.match(result.package.files["SCENE_PLAN.json"], /post-1-card/);
+      assert.match(result.package.files["ASSET_PLAN.json"], /compose:post-1-card/);
+      assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceType": "thread"/);
+      assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceLabel": "Post 1"/);
     },
   },
   {
@@ -448,9 +452,12 @@ Framepack compiles content into executable video projects.
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"captures": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"sceneId": "scene-1"/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"suggestedAsset": "launch-faster-capture"/);
+      assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceType": "website"/);
+      assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceLabel": "Launch faster"/);
       assert.match(result.package.files["HANDOFF.md"], /Capture targets:/);
       assert.match(result.package.files["HANDOFF.md"], /CAPTURE_EXECUTION_PLAN.json/);
       assert.match(result.package.files["HANDOFF.md"], /SCENE_ASSET_MAP.json/);
+      assert.match(result.package.files["HANDOFF.md"], /SOURCE_SCENE_MAP.json/);
       assert.match(result.package.files["HANDOFF.md"], /scene-1, scene-2/);
       assert.match(result.package.files["HANDOFF.md"], /hero/);
       assert.match(result.package.files["HANDOFF.md"], /screenshot/);

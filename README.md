@@ -167,10 +167,12 @@ The generated package includes:
 - `SCENE_PLAN.json`
 - website `SCENE_PLAN.json` now carries scene-level asset hints derived from structured website sections
 - `SCENE_ASSET_MAP.json` with scene-first and capture-first lookup for website-derived asset recommendations
+- `SOURCE_SCENE_MAP.json` with scene-first and source-first lookup across website sections and thread posts
 - `SCRIPT.md`
 - `STORYBOARD.md`
 - `ASSET_PLAN.json`
 - website `ASSET_PLAN.json` entries now include `captureTargets` so follow-on agents know which sections to capture or rebuild
+- thread packages now populate `ASSET_PLAN.json` with `compose:post-N-card` missing assets for text-card production
 - website `captureTargets` also include `recommendedSceneIds` so follow-on agents know which scenes each capture best supports
 - website `captureTargets` now also include `purposeTag` and `assetForm`, so downstream agents know both the storytelling role and the likely visual treatment
 - `CAPTURE_EXECUTION_PLAN.json` with expected output paths and pending/available sync state for capture work

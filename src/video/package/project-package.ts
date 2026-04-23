@@ -18,6 +18,7 @@ import {
 } from "../../packaging/documents.js";
 import { buildCaptureExecutionPlan } from "../../packaging/capture-execution.js";
 import { buildSceneAssetMap } from "../../packaging/scene-asset-map.js";
+import { buildSourceSceneMap } from "../../packaging/source-scene-map.js";
 import {
   createHyperframesRuntimeAdapter,
   detectHyperframesCapabilities,
@@ -47,6 +48,11 @@ export function createVideoProjectPackage(input: {
     scenePlan: input.scenePlan,
     assetPlan: input.assetPlan,
   });
+  const sourceSceneMap = buildSourceSceneMap({
+    scenePlan: input.scenePlan,
+    assetPlan: input.assetPlan,
+    sourceManifest: input.sourceManifest,
+  });
   const captureExecutionPlan = buildCaptureExecutionPlan({
     assetPlan: input.assetPlan,
   });
@@ -75,6 +81,7 @@ export function createVideoProjectPackage(input: {
       "ASSET_PLAN.json": JSON.stringify(input.assetPlan, null, 2),
       "CAPTURE_EXECUTION_PLAN.json": JSON.stringify(captureExecutionPlan, null, 2),
       "SCENE_ASSET_MAP.json": JSON.stringify(sceneAssetMap, null, 2),
+      "SOURCE_SCENE_MAP.json": JSON.stringify(sourceSceneMap, null, 2),
       "FLYWHEEL.md": "# Flywheel\n\nIntake -> Plan -> Review -> Compose -> Render -> Retro\n",
       "hyperframes.json": JSON.stringify(
         {

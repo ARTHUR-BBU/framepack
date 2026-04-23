@@ -69,6 +69,35 @@ function getStructuredMaterialForScene(brief: VideoBrief, visualType: SceneVisua
   return structuredMaterials[0]?.material;
 }
 
+function getSupportingAssetName(input: {
+  title?: string;
+  sourceBody?: string;
+}) {
+  if (!input.title) {
+    return undefined;
+  }
+
+  const postMatch = input.title.match(/^Post\s+(\d+)$/i);
+
+  if (postMatch) {
+    return `post-${postMatch[1]}-card`;
+  }
+
+  return `${slugifyAssetName(input.title)}-capture`;
+}
+
+function getSupportingLabel(input: { title?: string; body?: string }) {
+  if (!input.title) {
+    return undefined;
+  }
+
+  if (/^Post\s+\d+$/i.test(input.title)) {
+    return input.body?.slice(0, 80) ?? input.title;
+  }
+
+  return input.title;
+}
+
 export function planCaseExplainerScenes(brief: VideoBrief): ScenePlan {
   if (brief.outputType !== "case-explainer") {
     throw new Error("planCaseExplainerScenes only supports case-explainer briefs");
@@ -85,15 +114,22 @@ export function planCaseExplainerScenes(brief: VideoBrief): ScenePlan {
   const scenes = CASE_EXPLAINER_SCENE_SEQUENCE.map((visualType: SceneVisualType, index: number): Scene => {
       const supportingMaterial = getStructuredMaterialForScene(brief, visualType);
       const supportingTitle = supportingMaterial?.title;
-      const supportingAsset = supportingTitle ? `${slugifyAssetName(supportingTitle)}-capture` : undefined;
+      const supportingLabel = getSupportingLabel({
+        title: supportingTitle,
+        body: supportingMaterial?.body,
+      });
+      const supportingAsset = getSupportingAssetName({
+        title: supportingTitle,
+        sourceBody: supportingMaterial?.body,
+      });
 
       return ({
       sceneId: `scene-${index + 1}`,
       purpose: visualType,
       startTimeSec: index * durationPerScene,
       durationSec: durationPerScene,
-      narration: supportingTitle ? `${brief.goal} - ${supportingTitle}` : `${brief.goal} - ${visualType}`,
-      onScreenText: supportingTitle ? [brief.goal, supportingTitle] : [brief.goal, visualType],
+      narration: supportingLabel ? `${brief.goal} - ${supportingLabel}` : `${brief.goal} - ${visualType}`,
+      onScreenText: supportingLabel ? [brief.goal, supportingLabel] : [brief.goal, visualType],
       visualType,
       assets: supportingAsset ? [supportingAsset] : [],
       transition: "fade",
