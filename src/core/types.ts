@@ -237,6 +237,40 @@ export interface AssetExecutionPlan {
   items: AssetExecutionPlanItem[];
 }
 
+export interface PackageManifest {
+  protocol: "framepack.project-package";
+  protocolVersion: 1;
+  projectName: string;
+  generatedAt: string;
+  sourceType: SourceManifest["sourceType"] | "none";
+  outputType: OutputType;
+  format: VideoFormat;
+  entrypoints: {
+    rootComposition: string;
+    runtimeMeta: string;
+    runtimeConfig: string;
+    handoff: string;
+    commands: string;
+  };
+  artifacts: {
+    source: string[];
+    planning: string[];
+    assets: string[];
+    execution: string[];
+    validation: string[];
+    runtime: string[];
+    docs: string[];
+  };
+  capabilities: {
+    sourceTypes: Array<SourceManifest["sourceType"]>;
+    executionKinds: AssetExecutionPlanItem["executionKind"][];
+    runtimeBackend: "hyperframes";
+  };
+  compatibility: {
+    legacyFiles: string[];
+  };
+}
+
 export interface ValidationReport {
   projectName: string;
   status: "passed" | "failed";

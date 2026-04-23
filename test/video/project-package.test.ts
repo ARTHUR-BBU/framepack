@@ -152,6 +152,7 @@ describe("createVideoProjectPackage", () => {
         "FLYWHEEL.md",
         "GUARDRAILS.md",
       "HANDOFF.md",
+      "PACKAGE_MANIFEST.json",
       "RETRO_LOG.md",
       "SOURCE_SCENE_MAP.json",
       "SCENE_ASSET_MAP.json",
@@ -174,6 +175,11 @@ describe("createVideoProjectPackage", () => {
     assert.match(result.files["SOURCE_SCENE_MAP.json"], /"scenes": \[/);
     assert.match(result.files["ASSET_EXECUTION_PLAN.json"], /"items": \[/);
     assert.match(result.files["CAPTURE_EXECUTION_PLAN.json"], /"items": \[/);
+    assert.match(result.files["PACKAGE_MANIFEST.json"], /"protocol": "framepack.project-package"/);
+    assert.match(result.files["PACKAGE_MANIFEST.json"], /"protocolVersion": 1/);
+    assert.match(result.files["PACKAGE_MANIFEST.json"], /"entrypoints":/);
+    assert.match(result.files["PACKAGE_MANIFEST.json"], /"VIDEO_BRIEF.json"/);
+    assert.match(result.files["PACKAGE_MANIFEST.json"], /"ASSET_EXECUTION_PLAN.json"/);
   });
 
   it("writes the generated project package to disk", () => {
@@ -215,6 +221,7 @@ describe("createVideoProjectPackage", () => {
       assert.match(readFileSync(join(writtenDir, "SOURCE_SCENE_MAP.json"), "utf8"), /"sources": \[/);
       assert.match(readFileSync(join(writtenDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"items": \[/);
       assert.match(readFileSync(join(writtenDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"), /"items": \[/);
+      assert.match(readFileSync(join(writtenDir, "PACKAGE_MANIFEST.json"), "utf8"), /"projectName": "case-video"/);
       assert.equal(readFileSync(join(writtenDir, "index.html"), "utf8"), "<div></div>");
       assert.equal(existsSync(join(writtenDir, "assets")), true);
       assert.equal(existsSync(join(writtenDir, "assets", "captures")), true);

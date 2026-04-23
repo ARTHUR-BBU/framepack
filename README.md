@@ -6,6 +6,8 @@ In practice, that output is a production-ready intermediate, not usually the fin
 
 Framepack prepares the video engineering package. HyperFrames and an agent finish preview, asset materialization, and rendering.
 
+Agents should start with [AGENTS.md](./AGENTS.md).
+
 Today this repository provides compiler paths for:
 
 - markdown-driven case explainer videos
@@ -181,6 +183,7 @@ Current website-route limits:
 The generated package includes:
 
 - `VIDEO_BRIEF.json`
+- `PACKAGE_MANIFEST.json` as the machine-readable package protocol index
 - `SOURCE_MANIFEST.json` for website-generated and thread-generated packages
 - `SCENE_PLAN.json`
 - website `SCENE_PLAN.json` now carries scene-level asset hints derived from structured website sections

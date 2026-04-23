@@ -17,6 +17,7 @@ import {
   formatStoryboardMarkdown,
 } from "../../packaging/documents.js";
 import { buildAssetExecutionPlan } from "../../packaging/asset-execution.js";
+import { buildPackageManifest } from "../../packaging/package-manifest.js";
 import { buildSceneAssetMap } from "../../packaging/scene-asset-map.js";
 import { buildSourceSceneMap } from "../../packaging/source-scene-map.js";
 import {
@@ -58,6 +59,13 @@ export function createVideoProjectPackage(input: {
     sourceManifest: input.sourceManifest,
     sourceSceneMap,
   });
+  const packageManifest = buildPackageManifest({
+    projectName: input.projectName,
+    brief: input.brief,
+    sourceManifest: input.sourceManifest,
+    assetExecutionPlan,
+    validationReport: input.validationReport,
+  });
   const runtimeInfo = runtimeAdapter.describePackage({
     projectName: input.projectName,
   });
@@ -83,6 +91,7 @@ export function createVideoProjectPackage(input: {
       "ASSET_PLAN.json": JSON.stringify(input.assetPlan, null, 2),
       "ASSET_EXECUTION_PLAN.json": JSON.stringify(assetExecutionPlan, null, 2),
       "CAPTURE_EXECUTION_PLAN.json": JSON.stringify(assetExecutionPlan, null, 2),
+      "PACKAGE_MANIFEST.json": JSON.stringify(packageManifest, null, 2),
       "SCENE_ASSET_MAP.json": JSON.stringify(sceneAssetMap, null, 2),
       "SOURCE_SCENE_MAP.json": JSON.stringify(sourceSceneMap, null, 2),
       "FLYWHEEL.md": "# Flywheel\n\nIntake -> Plan -> Review -> Compose -> Render -> Retro\n",

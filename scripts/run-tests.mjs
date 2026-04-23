@@ -326,6 +326,8 @@ Framepack compiles content into executable video projects.
       assert.equal(result.validationReport.status, "passed");
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "thread"/);
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"posts": \[/);
+      assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"sourceType": "thread"/);
+      assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"compose-text-card"/);
       assert.match(result.package.files["VIDEO_BRIEF.json"], /"goal": "Explain the thread"/);
       assert.match(result.package.files["SCENE_PLAN.json"], /post-1-card/);
       assert.match(result.package.files["ASSET_PLAN.json"], /compose:post-1-card/);
@@ -444,6 +446,9 @@ Framepack compiles content into executable video projects.
       assert.equal(result.validationReport.status, "passed");
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "website"/);
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"url": "https:\/\/example.com\/product"/);
+      assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"sourceType": "website"/);
+      assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"ASSET_EXECUTION_PLAN.json"/);
+      assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"capture-screenshot"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"captureTargets": \[/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"purposeTag": "hero"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"assetForm": "screenshot"/);
@@ -1217,6 +1222,7 @@ Framepack compiles content into executable video projects.
         assert.match(stdout.join("\n"), /Generated video project package/);
         assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"sourceType": "website"/);
         assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"Website Product"/);
+        assert.match(readFileSync(join(packageDir, "PACKAGE_MANIFEST.json"), "utf8"), /"protocol": "framepack.project-package"/);
         assert.match(readFileSync(join(packageDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"status": "pending"/);
       } finally {
         globalThis.fetch = originalFetch;
