@@ -17,6 +17,7 @@ Framepack is:
 - a compiler for video engineering projects
 - a packaging system for reusable video work
 - a planning and validation layer above a rendering runtime
+- an execution-oriented middleware layer between content sources and final video rendering
 
 Framepack takes content inputs such as:
 
@@ -36,6 +37,29 @@ And produces a video project package containing:
 - validation reports
 - runtime entry files
 
+### What Framepack outputs
+
+Framepack outputs a project package for agents and runtimes to continue executing.
+
+That package is not usually the final human-facing video asset.
+
+It is the production-ready intermediate that contains:
+
+- the source inputs
+- the planned dish, meaning what video should be made
+- the preparation notes, meaning how to make it
+- the ingredient list, meaning what assets exist and what assets are still missing
+- the runtime entry points needed for HyperFrames to finish preview and render work
+
+The intended execution chain is:
+
+- content source into Framepack
+- Framepack project package into an agent workflow
+- agent workflow into HyperFrames runtime execution
+- HyperFrames runtime into preview and final video output
+
+Framepack should therefore be described as a high-value video production middleware layer, not as a final renderer.
+
 ### What Framepack is not
 
 Framepack is not:
@@ -43,6 +67,7 @@ Framepack is not:
 - a drag-and-drop video editor
 - a thin wrapper around one render command
 - a replacement for the rendering runtime
+- a low-value format conversion shim
 
 ## Input Positioning
 
@@ -101,6 +126,27 @@ The stable ownership split is:
 
 - Framepack owns ingest, planning, packaging, validation, and project structure
 - HyperFrames owns rendering runtime behavior
+
+### Practical mental model
+
+The most accurate practical mental model is:
+
+- raw ingredients: websites, threads, Markdown, PRDs, case materials
+- prep and dish plan: Framepack
+- kitchen equipment: HyperFrames runtime
+- cook: the agent
+- finished dish: the rendered video
+
+Framepack is the layer that gets the work to the point where the kitchen can start.
+
+It is not a thin middleware layer because it performs high-value production judgments:
+
+- what should be explained
+- how the material should be decomposed into scenes
+- which source units should become assets
+- which assets support which scenes
+- what is still missing before rendering can finish
+- what the next agent step should be
 
 ## Animation And Runtime Capabilities
 

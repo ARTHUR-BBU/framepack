@@ -2,6 +2,10 @@
 
 Framepack turns content into executable video projects.
 
+In practice, that output is a production-ready intermediate, not usually the final human-facing video.
+
+Framepack prepares the video engineering package. HyperFrames and an agent finish preview, asset materialization, and rendering.
+
 Today this repository provides compiler paths for:
 
 - markdown-driven case explainer videos
@@ -11,6 +15,14 @@ Today this repository provides compiler paths for:
 It produces a video engineering package with planning artifacts, validation artifacts, and HyperFrames-ready runtime structure.
 
 HyperFrames is required for runtime execution, but not for package generation. Framepack can generate, inspect, and validate project packages before HyperFrames is installed.
+
+You can think about the stack like this:
+
+- raw ingredients: websites, threads, Markdown, PRDs
+- prep and dish plan: Framepack
+- kitchen equipment: HyperFrames
+- cook: the agent
+- finished dish: the rendered video
 
 ## User Flow
 
