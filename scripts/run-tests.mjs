@@ -450,6 +450,8 @@ Framepack compiles content into executable video projects.
       assert.match(result.package.files["ASSET_EXECUTION_PLAN.json"], /"items": \[/);
       assert.match(result.package.files["ASSET_EXECUTION_PLAN.json"], /"executionKind": "capture-screenshot"/);
       assert.match(result.package.files["ASSET_EXECUTION_PLAN.json"], /assets[\\/]+captures[\\/]+launch-faster-capture\.png/);
+      assert.match(result.package.files["ASSET_EXECUTION_PLAN.json"], /"recommendedSceneIds": \[/);
+      assert.match(result.package.files["ASSET_EXECUTION_PLAN.json"], /"rationale": /);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"scenes": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"captures": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"sceneId": "scene-1"/);
@@ -1084,7 +1086,8 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /HyperFrames is required for runtime execution/);
       assert.match(readme, /runtime doctor/);
       assert.match(readme, /capture --project-dir/);
-      assert.match(readme, /sync-captures/);
+      assert.match(readme, /sync-assets/);
+      assert.match(readme, /sync-captures` remains available as a compatibility alias/);
       assert.match(readme, /preview/);
       assert.match(readme, /render/);
       assert.match(readme, /generate --url/);
@@ -1281,7 +1284,7 @@ Framepack compiles content into executable video projects.
         const stdout = [];
         const stderr = [];
         const syncExitCode = await runCli(
-          ["sync-captures", "--project-dir", projectDir],
+          ["sync-assets", "--project-dir", projectDir],
           {
             stdout: (message) => stdout.push(message),
             stderr: (message) => stderr.push(message),
@@ -1290,6 +1293,7 @@ Framepack compiles content into executable video projects.
 
         assert.equal(syncExitCode, 0);
         assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Asset sync updated/);
         assert.match(stdout.join("\n"), /1 available, 1 pending/);
         assert.match(readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"), /"availableAssets": \[\s*"launch-faster-capture"/);
         assert.match(readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"status": "available"/);
@@ -1387,6 +1391,10 @@ Framepack compiles content into executable video projects.
         assert.match(
           readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"),
           /"executionKind": "capture-screenshot"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"),
+          /"recommendedSceneIds": \[\s*"scene-1",\s*"scene-2"/,
         );
         assert.match(
           readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"),
@@ -1507,9 +1515,36 @@ Framepack compiles content into executable video projects.
           readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"),
           /"executionKind": "compose-text-card"/,
         );
+        assert.match(
+          readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"),
+          /"recommendedSceneIds": \[\s*"scene-1",\s*"scene-2"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "assets", "generated", "post-1-card.json"), "utf8"),
+          /"recommendedSceneIds": \[\s*"scene-1",\s*"scene-2"/,
+        );
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
+    },
+  },
+  {
+    name: "keep sync-captures as a compatibility alias",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+
+      const exitCode = await runCli(
+        ["sync-captures", "--project-dir", "F:/repo/out/demo-project"],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+
+      assert.equal(exitCode, 1);
+      assert.equal(stdout.length, 0);
+      assert.match(stderr.join("\n"), /ENOENT|no such file/i);
     },
   },
   {

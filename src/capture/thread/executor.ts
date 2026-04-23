@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import type {
+  AssetExecutionPlan,
   AssetPlan,
   SourceManifest,
 } from "../../core/types.js";
@@ -11,6 +12,8 @@ interface ThreadCardMetadata {
   suggestedAsset: string;
   sourceLabel: string;
   sourceText: string;
+  recommendedSceneIds: string[];
+  rationale?: string;
   outputPath: string;
   metadataPath: string;
   composedAt: string;
@@ -148,6 +151,8 @@ function writeThreadArtifact(input: {
   suggestedAsset: string;
   sourceLabel: string;
   sourceText: string;
+  recommendedSceneIds: string[];
+  rationale?: string;
   image: Uint8Array;
   renderMode: "text-card";
   composedAt: string;
@@ -160,6 +165,8 @@ function writeThreadArtifact(input: {
     suggestedAsset: input.suggestedAsset,
     sourceLabel: input.sourceLabel,
     sourceText: input.sourceText,
+    recommendedSceneIds: [...input.recommendedSceneIds],
+    rationale: input.rationale,
     outputPath,
     metadataPath,
     composedAt: input.composedAt,
@@ -186,6 +193,13 @@ export async function composeThreadProject(input: {
 
   const now = input.now ?? (() => new Date().toISOString());
   const renderCard = input.renderCard ?? createDefaultThreadCardRenderer;
+  const assetExecutionPlan = readJsonFile<AssetExecutionPlan>(
+    projectDir,
+    "ASSET_EXECUTION_PLAN.json",
+  );
+  const executionEntries = new Map(
+    assetExecutionPlan.items.map((item) => [item.suggestedAsset, item] as const),
+  );
   const pendingPosts = sourceManifest.posts.filter((post) =>
     assetPlan.missingAssets.includes(`compose:post-${post.index}-card`),
   );
@@ -204,6 +218,8 @@ export async function composeThreadProject(input: {
       suggestedAsset,
       sourceLabel: `Post ${post.index}`,
       sourceText: post.text,
+      recommendedSceneIds: [...(executionEntries.get(suggestedAsset)?.recommendedSceneIds ?? [])],
+      rationale: executionEntries.get(suggestedAsset)?.rationale,
       image: result.image,
       renderMode: result.renderMode,
       composedAt: now(),

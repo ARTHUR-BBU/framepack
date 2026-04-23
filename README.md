@@ -138,8 +138,10 @@ node dist/cli.js runtime doctor
 Sync asset execution state after screenshot or asset generation work:
 
 ```bash
-node dist/cli.js sync-captures --project-dir out/website-case
+node dist/cli.js sync-assets --project-dir out/website-case
 ```
+
+`sync-captures` remains available as a compatibility alias.
 
 Run a generated package:
 

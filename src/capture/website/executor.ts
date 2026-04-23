@@ -11,12 +11,15 @@ import { loadChromium } from "../playwright.js";
 
 interface CaptureArtifactMetadata {
   suggestedAsset: string;
+  sourceType: "website";
   sourceUrl: string;
   sectionTitle: string;
   sectionBody: string;
   purposeTag: CaptureTarget["purposeTag"];
+  executionKind: "capture-screenshot";
   assetForm: CaptureTarget["assetForm"];
   recommendedSceneIds: string[];
+  rationale: string;
   outputPath: string;
   metadataPath: string;
   capturedAt: string;
@@ -114,12 +117,15 @@ function writeCaptureArtifact(input: {
   const metadataFile = resolve(input.projectDir, input.item.metadataPath);
   const metadata: CaptureArtifactMetadata = {
     suggestedAsset: input.item.suggestedAsset,
+    sourceType: "website",
     sourceUrl: input.target.sourceUrl,
     sectionTitle: input.target.sectionTitle,
     sectionBody: input.target.sectionBody,
     purposeTag: input.target.purposeTag,
+    executionKind: "capture-screenshot",
     assetForm: input.target.assetForm,
     recommendedSceneIds: [...input.target.recommendedSceneIds],
+    rationale: input.target.rationale,
     outputPath: input.item.outputPath,
     metadataPath: input.item.metadataPath,
     capturedAt: input.capturedAt,

@@ -226,6 +226,7 @@ export interface AssetExecutionPlanItem {
   executionKind: "capture-screenshot" | "compose-text-card";
   assetForm: CaptureTarget["assetForm"] | "text-card";
   recommendedSceneIds: string[];
+  rationale?: string;
   outputPath: string;
   metadataPath: string;
   status: "pending" | "available";

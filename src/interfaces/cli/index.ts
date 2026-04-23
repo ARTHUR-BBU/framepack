@@ -1,7 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 import { materializeProjectAssets } from "../../capture/index.js";
-import { syncCaptureExecutionProject } from "../../packaging/capture-execution.js";
+import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
 import {
   compileMarkdownCaseExplainerProject,
   compileThreadCaseExplainerProject,
@@ -54,7 +54,8 @@ type CliCommandName =
   | "preview"
   | "render"
   | "runtime-doctor"
-  | "sync-captures";
+  | "sync-captures"
+  | "sync-assets";
 
 interface CliDependencies {
   captureProject?: typeof materializeProjectAssets;
@@ -161,12 +162,13 @@ function getCommandName(args: string[]): CliCommandName {
     command === "capture" ||
     command === "preview" ||
     command === "render" ||
-    command === "sync-captures"
+    command === "sync-captures" ||
+    command === "sync-assets"
   ) {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, generate, validate, capture, runtime doctor, preview, render, or sync-captures.");
+  throw new Error("Missing or invalid command. Use init, generate, validate, capture, runtime doctor, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -183,7 +185,8 @@ function getCommandArgs(args: string[]): string[] {
     first === "capture" ||
     first === "preview" ||
     first === "render" ||
-    first === "sync-captures"
+    first === "sync-captures" ||
+    first === "sync-assets"
   ) {
     return args.slice(1);
   }
@@ -491,14 +494,14 @@ function runRuntimeActionCommand(
   return 0;
 }
 
-function runSyncCapturesCommand(args: string[], io: CliIo): number {
+function runSyncAssetsCommand(args: string[], io: CliIo): number {
   const projectDir = getRequiredProjectDir(args);
-  const result = syncCaptureExecutionProject({
+  const result = syncAssetExecutionProject({
     projectDir,
   });
 
   io.stdout(
-    `Capture sync updated ${result.projectDir}: ${result.availableCount} available, ${result.pendingCount} pending`,
+    `Asset sync updated ${result.projectDir}: ${result.availableCount} available, ${result.pendingCount} pending`,
   );
   return 0;
 }
@@ -544,8 +547,8 @@ export async function runCli(
       return await runCaptureCommand(args.slice(1), io, dependencies);
     }
 
-    if (command === "sync-captures") {
-      return runSyncCapturesCommand(args.slice(1), io);
+    if (command === "sync-captures" || command === "sync-assets") {
+      return runSyncAssetsCommand(args.slice(1), io);
     }
 
     if (command === "preview" || command === "render") {

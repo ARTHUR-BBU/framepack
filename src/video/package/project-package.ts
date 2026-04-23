@@ -56,6 +56,7 @@ export function createVideoProjectPackage(input: {
   const assetExecutionPlan = buildAssetExecutionPlan({
     assetPlan: input.assetPlan,
     sourceManifest: input.sourceManifest,
+    sourceSceneMap,
   });
   const runtimeInfo = runtimeAdapter.describePackage({
     projectName: input.projectName,
