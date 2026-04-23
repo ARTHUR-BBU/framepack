@@ -3,12 +3,8 @@ import { dirname, join, resolve } from "node:path";
 import type {
   AssetPlan,
   SourceManifest,
-  ThreadSourceManifest,
-  ValidationReport,
-  VideoBrief,
 } from "../../core/types.js";
-import { formatHandoffMarkdown } from "../../packaging/documents.js";
-import { detectHyperframesCapabilities } from "../../runtime/hyperframes/adapter.js";
+import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
 import { loadChromium } from "../playwright.js";
 
 interface ThreadCardMetadata {
@@ -175,30 +171,6 @@ function writeThreadArtifact(input: {
   writeFileSync(metadataFile, JSON.stringify(metadata, null, 2), "utf8");
 }
 
-function syncThreadProjectFiles(input: {
-  projectDir: string;
-  sourceManifest: ThreadSourceManifest;
-  assetPlan: AssetPlan;
-  brief: VideoBrief;
-  validationReport: ValidationReport;
-}) {
-  const capabilities = detectHyperframesCapabilities();
-
-  writeFileSync(resolve(input.projectDir, "ASSET_PLAN.json"), JSON.stringify(input.assetPlan, null, 2), "utf8");
-  writeFileSync(
-    resolve(input.projectDir, "HANDOFF.md"),
-    formatHandoffMarkdown({
-      brief: input.brief,
-      validationReport: input.validationReport,
-      assetPlan: input.assetPlan,
-      runtimeAvailable: capabilities.available,
-      runtimeBinary: capabilities.binary,
-      runtimeFallbackNotes: capabilities.fallbackNotes,
-    }),
-    "utf8",
-  );
-}
-
 export async function composeThreadProject(input: {
   projectDir: string;
   now?: () => string;
@@ -207,8 +179,6 @@ export async function composeThreadProject(input: {
   const projectDir = resolve(input.projectDir);
   const sourceManifest = readJsonFile<SourceManifest>(projectDir, "SOURCE_MANIFEST.json");
   const assetPlan = readJsonFile<AssetPlan>(projectDir, "ASSET_PLAN.json");
-  const brief = readJsonFile<VideoBrief>(projectDir, "VIDEO_BRIEF.json");
-  const validationReport = readJsonFile<ValidationReport>(projectDir, "VALIDATION_REPORT.json");
 
   if (sourceManifest.sourceType !== "thread") {
     throw new Error("Thread composition only supports thread project packages.");
@@ -249,24 +219,31 @@ export async function composeThreadProject(input: {
     ]),
   );
 
-  const nextAssetPlan: AssetPlan = {
-    ...assetPlan,
-    availableAssets,
-    missingAssets: assetPlan.missingAssets.filter((entry) => !availableAssets.some((asset) => entry === `compose:${asset}`)),
-  };
+  writeFileSync(
+    resolve(projectDir, "ASSET_PLAN.json"),
+    JSON.stringify(
+      {
+        ...assetPlan,
+        availableAssets,
+        missingAssets: assetPlan.missingAssets.filter(
+          (entry) => !availableAssets.some((asset) => entry === `compose:${asset}`),
+        ),
+      } satisfies AssetPlan,
+      null,
+      2,
+    ),
+    "utf8",
+  );
 
-  syncThreadProjectFiles({
+  const syncResult = syncAssetExecutionProject({
     projectDir,
-    sourceManifest,
-    assetPlan: nextAssetPlan,
-    brief,
-    validationReport,
+    now,
   });
 
   return {
     projectDir,
     composedCount: pendingPosts.length,
-    availableCount: nextAssetPlan.availableAssets.length,
-    pendingCount: nextAssetPlan.missingAssets.filter((entry) => entry.startsWith("compose:")).length,
+    availableCount: syncResult.availableCount,
+    pendingCount: syncResult.pendingCount,
   };
 }

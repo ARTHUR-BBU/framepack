@@ -1,13 +1,13 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type {
+  AssetExecutionPlan,
   AssetPlan,
-  CaptureExecutionPlan,
   CaptureTarget,
   SourceManifest,
 } from "../../core/types.js";
-import { syncCaptureExecutionProject } from "../../packaging/capture-execution.js";
-import { createMissingPlaywrightError, loadChromium } from "../playwright.js";
+import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
+import { loadChromium } from "../playwright.js";
 
 interface CaptureArtifactMetadata {
   suggestedAsset: string;
@@ -105,7 +105,7 @@ async function createDefaultCaptureScreenshot(
 
 function writeCaptureArtifact(input: {
   projectDir: string;
-  item: CaptureExecutionPlan["items"][number];
+  item: AssetExecutionPlan["items"][number];
   target: CaptureTarget;
   screenshot: CaptureScreenshotResult;
   capturedAt: string;
@@ -114,7 +114,7 @@ function writeCaptureArtifact(input: {
   const metadataFile = resolve(input.projectDir, input.item.metadataPath);
   const metadata: CaptureArtifactMetadata = {
     suggestedAsset: input.item.suggestedAsset,
-    sourceUrl: input.item.sourceUrl,
+    sourceUrl: input.target.sourceUrl,
     sectionTitle: input.target.sectionTitle,
     sectionBody: input.target.sectionBody,
     purposeTag: input.target.purposeTag,
@@ -139,9 +139,9 @@ export async function captureWebsiteProject(input: {
   const projectDir = resolve(input.projectDir);
   const sourceManifest = readJsonFile<SourceManifest>(projectDir, "SOURCE_MANIFEST.json");
   const assetPlan = readJsonFile<AssetPlan>(projectDir, "ASSET_PLAN.json");
-  const captureExecutionPlan = readJsonFile<CaptureExecutionPlan>(
+  const assetExecutionPlan = readJsonFile<AssetExecutionPlan>(
     projectDir,
-    "CAPTURE_EXECUTION_PLAN.json",
+    "ASSET_EXECUTION_PLAN.json",
   );
 
   if (sourceManifest.sourceType !== "website") {
@@ -153,7 +153,9 @@ export async function captureWebsiteProject(input: {
   const captureTargetsByAsset = new Map(
     assetPlan.captureTargets.map((target) => [target.suggestedAsset, target] as const),
   );
-  const pendingItems = captureExecutionPlan.items.filter((item) => item.status === "pending");
+  const pendingItems = assetExecutionPlan.items.filter(
+    (item) => item.status === "pending" && item.executionKind === "capture-screenshot",
+  );
 
   for (const item of pendingItems) {
     const target = captureTargetsByAsset.get(item.suggestedAsset);
@@ -178,7 +180,7 @@ export async function captureWebsiteProject(input: {
     });
   }
 
-  const syncResult = syncCaptureExecutionProject({
+  const syncResult = syncAssetExecutionProject({
     projectDir,
     now,
   });

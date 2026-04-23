@@ -447,8 +447,9 @@ Framepack compiles content into executable video projects.
       assert.match(result.package.files["ASSET_PLAN.json"], /"captureTargets": \[/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"purposeTag": "hero"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"assetForm": "screenshot"/);
-      assert.match(result.package.files["CAPTURE_EXECUTION_PLAN.json"], /"items": \[/);
-      assert.match(result.package.files["CAPTURE_EXECUTION_PLAN.json"], /assets[\\/]+captures[\\/]+launch-faster-capture\.png/);
+      assert.match(result.package.files["ASSET_EXECUTION_PLAN.json"], /"items": \[/);
+      assert.match(result.package.files["ASSET_EXECUTION_PLAN.json"], /"executionKind": "capture-screenshot"/);
+      assert.match(result.package.files["ASSET_EXECUTION_PLAN.json"], /assets[\\/]+captures[\\/]+launch-faster-capture\.png/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"scenes": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"captures": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"sceneId": "scene-1"/);
@@ -456,7 +457,7 @@ Framepack compiles content into executable video projects.
       assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceType": "website"/);
       assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceLabel": "Launch faster"/);
       assert.match(result.package.files["HANDOFF.md"], /Capture targets:/);
-      assert.match(result.package.files["HANDOFF.md"], /CAPTURE_EXECUTION_PLAN.json/);
+      assert.match(result.package.files["HANDOFF.md"], /ASSET_EXECUTION_PLAN.json/);
       assert.match(result.package.files["HANDOFF.md"], /SCENE_ASSET_MAP.json/);
       assert.match(result.package.files["HANDOFF.md"], /SOURCE_SCENE_MAP.json/);
       assert.match(result.package.files["HANDOFF.md"], /scene-1, scene-2/);
@@ -1091,7 +1092,7 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /thread-file/);
       assert.match(readme, /SOURCE_MANIFEST\.json/);
       assert.match(readme, /captureTargets/);
-      assert.match(readme, /CAPTURE_EXECUTION_PLAN\.json/);
+      assert.match(readme, /ASSET_EXECUTION_PLAN\.json/);
       assert.match(readme, /Playwright is required for automated asset materialization/);
     },
   },
@@ -1213,7 +1214,7 @@ Framepack compiles content into executable video projects.
         assert.match(stdout.join("\n"), /Generated video project package/);
         assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"sourceType": "website"/);
         assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"Website Product"/);
-        assert.match(readFileSync(join(packageDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"), /"status": "pending"/);
+        assert.match(readFileSync(join(packageDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"status": "pending"/);
       } finally {
         globalThis.fetch = originalFetch;
         rmSync(tempRoot, { recursive: true, force: true });
@@ -1221,7 +1222,7 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "sync capture execution state from generated files",
+    name: "sync asset execution state from generated files",
     run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-sync-captures-"));
       const originalFetch = globalThis.fetch;
@@ -1291,8 +1292,8 @@ Framepack compiles content into executable video projects.
         assert.equal(stderr.length, 0);
         assert.match(stdout.join("\n"), /1 available, 1 pending/);
         assert.match(readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"), /"availableAssets": \[\s*"launch-faster-capture"/);
-        assert.match(readFileSync(join(projectDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"), /"status": "available"/);
-        assert.match(readFileSync(join(projectDir, "HANDOFF.md"), "utf8"), /CAPTURE_EXECUTION_PLAN.json/);
+        assert.match(readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"status": "available"/);
+        assert.match(readFileSync(join(projectDir, "HANDOFF.md"), "utf8"), /ASSET_EXECUTION_PLAN.json/);
       } finally {
         globalThis.fetch = originalFetch;
         rmSync(tempRoot, { recursive: true, force: true });
@@ -1380,8 +1381,12 @@ Framepack compiles content into executable video projects.
           /"capturedAt": "2026-04-23T00:00:00.000Z"/,
         );
         assert.match(
-          readFileSync(join(projectDir, "CAPTURE_EXECUTION_PLAN.json"), "utf8"),
+          readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"),
           /"status": "available"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"),
+          /"executionKind": "capture-screenshot"/,
         );
         assert.match(
           readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"),
@@ -1497,6 +1502,10 @@ Framepack compiles content into executable video projects.
         assert.doesNotMatch(
           readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"),
           /compose:post-1-card/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"),
+          /"executionKind": "compose-text-card"/,
         );
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });

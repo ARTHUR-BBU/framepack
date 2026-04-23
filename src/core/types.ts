@@ -216,22 +216,24 @@ export interface SourceSceneMap {
   sources: SourceSceneMapSourceEntry[];
 }
 
-export interface CaptureExecutionPlanItem {
+export interface AssetExecutionPlanItem {
   suggestedAsset: string;
-  sourceUrl: string;
-  sectionTitle: string;
-  sectionBody: string;
-  purposeTag: CaptureTarget["purposeTag"];
-  assetForm: CaptureTarget["assetForm"];
+  sourceType: "website" | "thread";
+  sourceLabel: string;
+  sourceText: string;
+  sourceUrl?: string;
+  purposeTag?: CaptureTarget["purposeTag"];
+  executionKind: "capture-screenshot" | "compose-text-card";
+  assetForm: CaptureTarget["assetForm"] | "text-card";
   recommendedSceneIds: string[];
   outputPath: string;
   metadataPath: string;
   status: "pending" | "available";
 }
 
-export interface CaptureExecutionPlan {
+export interface AssetExecutionPlan {
   generatedAt: string;
-  items: CaptureExecutionPlanItem[];
+  items: AssetExecutionPlanItem[];
 }
 
 export interface ValidationReport {

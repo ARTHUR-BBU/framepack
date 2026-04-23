@@ -95,8 +95,8 @@ export function formatHandoffMarkdown(input: {
     "Source scene map:",
     "- See `SOURCE_SCENE_MAP.json` for source-first and scene-first source linkage.",
     "",
-    "Capture execution:",
-    "- See `CAPTURE_EXECUTION_PLAN.json` for expected output paths and sync status.",
+    "Asset execution:",
+    "- See `ASSET_EXECUTION_PLAN.json` for expected output paths, execution kinds, and sync status.",
     "",
     "Runtime guidance:",
     formatList(

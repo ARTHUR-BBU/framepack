@@ -135,7 +135,7 @@ Check runtime availability:
 node dist/cli.js runtime doctor
 ```
 
-Sync capture execution state after screenshot or asset generation work:
+Sync asset execution state after screenshot or asset generation work:
 
 ```bash
 node dist/cli.js sync-captures --project-dir out/website-case
@@ -191,7 +191,7 @@ The generated package includes:
 - thread packages now populate `ASSET_PLAN.json` with `compose:post-N-card` missing assets for text-card production
 - website `captureTargets` also include `recommendedSceneIds` so follow-on agents know which scenes each capture best supports
 - website `captureTargets` now also include `purposeTag` and `assetForm`, so downstream agents know both the storytelling role and the likely visual treatment
-- `CAPTURE_EXECUTION_PLAN.json` with expected output paths and pending/available sync state for capture work
+- `ASSET_EXECUTION_PLAN.json` with expected output paths, execution kinds, and pending/available sync state
 - `VALIDATION_REPORT.json`
 - `VALIDATION_REPORT.md`
 - `GUARDRAILS.md`
