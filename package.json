@@ -1,12 +1,28 @@
 {
-  "name": "hyperframes-studio-pipeline",
+  "name": "framepack",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
+  "main": "./dist/cli.js",
   "bin": {
-    "hyperframes-studio": "./dist/cli.js"
+    "framepack": "./dist/cli.js"
   },
-  "description": "A flywheel-driven Studio pipeline that compiles case materials into HyperFrames-ready video project packages.",
+  "description": "An agent-native video project compiler that turns content into executable video project packages.",
+  "files": [
+    "dist",
+    "README.md",
+    "AGENTS.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "video",
+    "agent",
+    "hyperframes",
+    "compiler",
+    "cli",
+    "automation"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",

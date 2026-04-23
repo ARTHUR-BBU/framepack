@@ -1,0 +1,5 @@
+1. Teams keep shipping one-off launch videos.
+
+2. We need reusable production systems instead of ad hoc editing.
+
+3. Framepack turns content into executable video project packages.

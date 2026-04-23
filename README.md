@@ -8,6 +8,23 @@ Framepack prepares the video engineering package. HyperFrames and an agent finis
 
 Agents should start with [AGENTS.md](./AGENTS.md).
 
+## Quickstart
+
+```bash
+npm install
+npm run build
+npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+```
+
+Agent-first examples:
+
+```bash
+npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
+npx framepack generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
+npx framepack capture --project-dir out/thread-case
+npx framepack preview --project-dir out/thread-case
+```
+
 Today this repository provides compiler paths for:
 
 - markdown-driven case explainer videos
@@ -62,38 +79,30 @@ After `npm run build`, Framepack exposes package, runtime, and capture commands:
 
 Create a starter project directory with a config file and Markdown input template.
 
-```bash
-node dist/cli.js init --output-dir out --project-name starter --format 9:16
-```
+`npx framepack init --output-dir out --project-name starter --format 9:16`
 
 ### `generate`
 
 Generate a video engineering package from a Markdown source file.
 
-```bash
-node dist/cli.js generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
-```
+`npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"`
 
 Generate a video engineering package from a public single-page URL.
 
-```bash
-node dist/cli.js generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
-```
+`npx framepack generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case`
 
 Generate a video engineering package from a local thread/post text file.
 
-```bash
-node dist/cli.js generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
-```
+`npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case`
 
 ### `validate`
 
 Validate the input and planning path and write a structured report without generating the full package.
 
 ```bash
-node dist/cli.js validate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
-node dist/cli.js validate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
-node dist/cli.js validate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
+npx framepack validate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+npx framepack validate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
+npx framepack validate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
 ```
 
 `validate` writes:
@@ -104,8 +113,8 @@ node dist/cli.js validate --url https://example.com/product --output-dir out --g
 You can also use a project config produced by `init`:
 
 ```bash
-node dist/cli.js generate --config out/starter/hyperframes-studio.json --output-dir out
-node dist/cli.js validate --config out/starter/hyperframes-studio.json --output-dir out
+npx framepack generate --config out/starter/hyperframes-studio.json --output-dir out
+npx framepack validate --config out/starter/hyperframes-studio.json --output-dir out
 ```
 
 For the first version, `--config`, `--input`, `--thread-file`, and `--url` are mutually exclusive. Use exactly one source input per command.
@@ -118,8 +127,8 @@ Materialize pending source assets and sync the project package:
 - thread packages render text cards into `assets/generated/`
 
 ```bash
-node dist/cli.js capture --project-dir out/website-case
-node dist/cli.js capture --project-dir out/thread-case
+npx framepack capture --project-dir out/website-case
+npx framepack capture --project-dir out/thread-case
 ```
 
 Playwright is required for automated asset materialization:
@@ -133,25 +142,21 @@ npx playwright install chromium
 
 Check runtime availability:
 
-```bash
-node dist/cli.js runtime doctor
-```
+`npx framepack runtime doctor`
 
 Sync asset execution state after screenshot or asset generation work:
 
-```bash
-node dist/cli.js sync-assets --project-dir out/website-case
-```
+`npx framepack sync-assets --project-dir out/website-case`
 
 `sync-captures` remains available as a compatibility alias.
 
 Run a generated package:
 
 ```bash
-node dist/cli.js preview --project-dir out/starter
-node dist/cli.js preview --project-dir out/starter --port 3010
-node dist/cli.js render --project-dir out/starter
-node dist/cli.js render --project-dir out/starter --output renders/custom.mp4
+npx framepack preview --project-dir out/starter
+npx framepack preview --project-dir out/starter --port 3010
+npx framepack render --project-dir out/starter
+npx framepack render --project-dir out/starter --output renders/custom.mp4
 ```
 
 If HyperFrames is not installed, Framepack reports that state and keeps package generation available.

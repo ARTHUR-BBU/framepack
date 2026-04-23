@@ -55,6 +55,18 @@ const readmePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../README.md",
 );
+const packageJsonPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../package.json",
+);
+const agentsPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../AGENTS.md",
+);
+const threadExamplePath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../examples/thread.txt",
+);
 
 const tests = [
   {
@@ -1088,6 +1100,8 @@ Framepack compiles content into executable video projects.
     run: () => {
       const readme = readFileSync(readmePath, "utf8");
 
+      assert.match(readme, /Agents should start with \[AGENTS\.md\]/);
+      assert.match(readme, /npx framepack generate/);
       assert.match(readme, /HyperFrames is required for runtime execution/);
       assert.match(readme, /runtime doctor/);
       assert.match(readme, /capture --project-dir/);
@@ -1102,6 +1116,30 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /captureTargets/);
       assert.match(readme, /ASSET_EXECUTION_PLAN\.json/);
       assert.match(readme, /Playwright is required for automated asset materialization/);
+    },
+  },
+  {
+    name: "publish package metadata under the framepack identity",
+    run: () => {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+
+      assert.equal(packageJson.name, "framepack");
+      assert.equal(packageJson.private, false);
+      assert.equal(packageJson.bin.framepack, "./dist/cli.js");
+      assert.ok(Array.isArray(packageJson.files));
+      assert.ok(packageJson.files.includes("AGENTS.md"));
+      assert.ok(packageJson.files.includes("LICENSE"));
+    },
+  },
+  {
+    name: "ship agent and example entry files for the published repo",
+    run: () => {
+      const agents = readFileSync(agentsPath, "utf8");
+      const threadExample = readFileSync(threadExamplePath, "utf8");
+
+      assert.match(agents, /PACKAGE_MANIFEST\.json/);
+      assert.match(agents, /npx framepack generate --thread-file/);
+      assert.match(threadExample, /Framepack turns content into executable video project packages/);
     },
   },
   {

@@ -22,24 +22,24 @@ npm run build
 Generate a package:
 
 ```bash
-node dist/cli.js generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
-node dist/cli.js generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
-node dist/cli.js generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
+npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
+npx framepack generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
 ```
 
 Materialize pending source assets:
 
 ```bash
-node dist/cli.js capture --project-dir out/thread-case
-node dist/cli.js sync-assets --project-dir out/thread-case
+npx framepack capture --project-dir out/thread-case
+npx framepack sync-assets --project-dir out/thread-case
 ```
 
 Render through HyperFrames when the runtime is available:
 
 ```bash
-node dist/cli.js runtime doctor
-node dist/cli.js preview --project-dir out/thread-case
-node dist/cli.js render --project-dir out/thread-case
+npx framepack runtime doctor
+npx framepack preview --project-dir out/thread-case
+npx framepack render --project-dir out/thread-case
 ```
 
 ## Package Protocol
