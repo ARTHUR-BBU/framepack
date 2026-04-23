@@ -70,7 +70,7 @@ export function createVideoProjectPackage(input: {
   );
 
   return {
-    directories: ["assets", "assets/captures", "compositions"],
+    directories: ["assets", "assets/captures", "assets/generated", "compositions"],
     projectName: input.projectName,
     files: {
       ...(input.sourceManifest

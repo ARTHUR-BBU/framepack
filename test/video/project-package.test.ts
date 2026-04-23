@@ -164,7 +164,7 @@ describe("createVideoProjectPackage", () => {
         "index.html",
         "meta.json",
       ]);
-    assert.deepEqual(result.directories.sort(), ["assets", "assets/captures", "compositions"]);
+    assert.deepEqual(result.directories.sort(), ["assets", "assets/captures", "assets/generated", "compositions"]);
     assert.equal(result.projectName, "case-video");
     assert.match(result.files["GUARDRAILS.md"], /Max duration: 60s/);
     assert.match(result.files["GUARDRAILS.md"], /Latest validation: passed/);
@@ -215,6 +215,7 @@ describe("createVideoProjectPackage", () => {
       assert.equal(readFileSync(join(writtenDir, "index.html"), "utf8"), "<div></div>");
       assert.equal(existsSync(join(writtenDir, "assets")), true);
       assert.equal(existsSync(join(writtenDir, "assets", "captures")), true);
+      assert.equal(existsSync(join(writtenDir, "assets", "generated")), true);
       assert.equal(existsSync(join(writtenDir, "compositions")), true);
       assert.equal(existsSync(join(writtenDir, "compositions", "scene-root.html")), true);
     } finally {

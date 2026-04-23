@@ -45,6 +45,7 @@ import {
   compileWebsiteVideoBrief,
 } from "../dist/compiler/index.js";
 import { captureWebsiteProject } from "../dist/capture/website/executor.js";
+import { composeThreadProject } from "../dist/capture/thread/executor.js";
 
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -1091,7 +1092,7 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /SOURCE_MANIFEST\.json/);
       assert.match(readme, /captureTargets/);
       assert.match(readme, /CAPTURE_EXECUTION_PLAN\.json/);
-      assert.match(readme, /Playwright is required for automated website capture/);
+      assert.match(readme, /Playwright is required for automated asset materialization/);
     },
   },
   {
@@ -1416,7 +1417,117 @@ Framepack compiles content into executable video projects.
 
       assert.equal(exitCode, 0);
       assert.equal(stderr.length, 0);
-      assert.match(stdout.join("\n"), /Captured 2 website assets/);
+      assert.match(stdout.join("\n"), /Materialized 2 source assets/);
+      assert.match(stdout.join("\n"), /3 available, 0 pending/);
+    },
+  },
+  {
+    name: "compose thread project assets and write metadata",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-compose-thread-"));
+      const threadPath = join(tempRoot, "thread.txt");
+
+      try {
+        writeFileSync(
+          threadPath,
+          [
+            "Teams keep shipping one-off launch videos.",
+            "",
+            "We need reusable production systems instead of ad hoc editing.",
+            "",
+            "Framepack compiles content into executable video projects.",
+          ].join("\n"),
+          "utf8",
+        );
+
+        const projectName = "thread-compose-video";
+        const projectDir = join(tempRoot, projectName);
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--thread-file",
+            threadPath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the thread",
+            "--audience",
+            "Founders",
+            "--project-name",
+            projectName,
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+
+        const result = await composeThreadProject({
+          projectDir,
+          now: () => "2026-04-23T01:00:00.000Z",
+          renderCard: async ({ suggestedAsset, text }) => ({
+            image: Buffer.from(`card:${suggestedAsset}:${text}`),
+            renderMode: "text-card",
+          }),
+        });
+
+        assert.equal(result.composedCount, 3);
+        assert.equal(result.availableCount, 3);
+        assert.equal(result.pendingCount, 0);
+        assert.match(
+          readFileSync(join(projectDir, "assets", "generated", "post-1-card.png"), "utf8"),
+          /card:post-1-card:Teams keep shipping one-off launch videos\./,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "assets", "generated", "post-1-card.json"), "utf8"),
+          /"renderMode": "text-card"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "assets", "generated", "post-1-card.json"), "utf8"),
+          /"composedAt": "2026-04-23T01:00:00.000Z"/,
+        );
+        assert.match(
+          readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"),
+          /"availableAssets": \[\s*"post-1-card",\s*"post-2-card",\s*"post-3-card"/,
+        );
+        assert.doesNotMatch(
+          readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"),
+          /compose:post-1-card/,
+        );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "capture command composes thread project assets from the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+
+      const exitCode = await runCli(
+        ["capture", "--project-dir", "F:/repo/out/thread-project"],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+        {
+          captureProject: async ({ projectDir }) => ({
+            projectDir,
+            composedCount: 3,
+            availableCount: 3,
+            pendingCount: 0,
+          }),
+        },
+      );
+
+      assert.equal(exitCode, 0);
+      assert.equal(stderr.length, 0);
+      assert.match(stdout.join("\n"), /Materialized 3 source assets/);
       assert.match(stdout.join("\n"), /3 available, 0 pending/);
     },
   },

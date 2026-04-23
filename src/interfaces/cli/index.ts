@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
-import { captureWebsiteProject } from "../../capture/website/executor.js";
+import { materializeProjectAssets } from "../../capture/index.js";
 import { syncCaptureExecutionProject } from "../../packaging/capture-execution.js";
 import {
   compileMarkdownCaseExplainerProject,
@@ -57,7 +57,7 @@ type CliCommandName =
   | "sync-captures";
 
 interface CliDependencies {
-  captureProject?: typeof captureWebsiteProject;
+  captureProject?: typeof materializeProjectAssets;
 }
 
 interface CliConfigFile {
@@ -509,13 +509,13 @@ async function runCaptureCommand(
   dependencies: CliDependencies,
 ): Promise<number> {
   const projectDir = getRequiredProjectDir(args);
-  const captureProject = dependencies.captureProject ?? captureWebsiteProject;
+  const captureProject = dependencies.captureProject ?? materializeProjectAssets;
   const result = await captureProject({
     projectDir,
   });
 
   io.stdout(
-    `Captured ${result.capturedCount} website assets for ${result.projectDir}: ${result.availableCount} available, ${result.pendingCount} pending`,
+    `Materialized ${("capturedCount" in result ? result.capturedCount : result.composedCount)} source assets for ${result.projectDir}: ${result.availableCount} available, ${result.pendingCount} pending`,
   );
   return 0;
 }

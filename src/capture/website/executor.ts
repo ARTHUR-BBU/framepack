@@ -7,6 +7,7 @@ import type {
   SourceManifest,
 } from "../../core/types.js";
 import { syncCaptureExecutionProject } from "../../packaging/capture-execution.js";
+import { createMissingPlaywrightError, loadChromium } from "../playwright.js";
 
 interface CaptureArtifactMetadata {
   suggestedAsset: string;
@@ -42,49 +43,10 @@ function readJsonFile<T>(projectDir: string, fileName: string): T {
   return JSON.parse(readFileSync(resolve(projectDir, fileName), "utf8")) as T;
 }
 
-function createMissingPlaywrightError() {
-  return new Error(
-    "Playwright is required for automated website capture. Install it with `npm install playwright` and then run `npx playwright install chromium`.",
-  );
-}
-
 async function createDefaultCaptureScreenshot(
   input: CaptureScreenshotInput,
 ): Promise<CaptureScreenshotResult> {
-  let chromium: {
-    launch: (options: { headless: boolean }) => Promise<{
-      newPage: (options: { viewport: { width: number; height: number } }) => Promise<{
-        goto: (url: string, options: { waitUntil: "networkidle" }) => Promise<void>;
-        locator: (selector: string) => {
-          filter: (options: { hasText: string }) => {
-            first: () => {
-              count: () => Promise<number>;
-              scrollIntoViewIfNeeded: () => Promise<void>;
-              boundingBox: () => Promise<{ x: number; y: number; width: number; height: number } | null>;
-            };
-          };
-          first: () => {
-            count: () => Promise<number>;
-            scrollIntoViewIfNeeded: () => Promise<void>;
-            boundingBox: () => Promise<{ x: number; y: number; width: number; height: number } | null>;
-          };
-        };
-        screenshot: (options: {
-          path?: string;
-          fullPage?: boolean;
-          clip?: { x: number; y: number; width: number; height: number };
-        }) => Promise<Buffer>;
-        close: () => Promise<void>;
-      }>;
-      close: () => Promise<void>;
-    }>;
-  };
-
-  try {
-    ({ chromium } = (await (new Function('return import("playwright")')() as Promise<any>)));
-  } catch {
-    throw createMissingPlaywrightError();
-  }
+  const chromium = await loadChromium();
 
   const browser = await chromium.launch({ headless: true });
   try {

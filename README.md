@@ -98,13 +98,17 @@ For the first version, `--config`, `--input`, `--thread-file`, and `--url` are m
 
 ### `capture`
 
-Capture pending website assets into `assets/captures/` and sync the project package.
+Materialize pending source assets and sync the project package:
+
+- website packages capture screenshots into `assets/captures/`
+- thread packages render text cards into `assets/generated/`
 
 ```bash
 node dist/cli.js capture --project-dir out/website-case
+node dist/cli.js capture --project-dir out/thread-case
 ```
 
-Playwright is required for automated website capture:
+Playwright is required for automated asset materialization:
 
 ```bash
 npm install playwright
@@ -184,4 +188,5 @@ The generated package includes:
 - `meta.json`
 - `index.html`
 - `assets/`
+- `assets/generated/` for thread/post card materialization
 - `compositions/`
