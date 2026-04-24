@@ -25,6 +25,38 @@ npx framepack capture --project-dir out/thread-case
 npx framepack preview --project-dir out/thread-case
 ```
 
+## Demo Workflow
+
+Run the thread demo:
+
+```bash
+npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
+npx framepack capture --project-dir out/thread-case
+npx framepack sync-assets --project-dir out/thread-case
+```
+
+Run the website demo with any static server that serves `examples/website.html`, then pass that local URL:
+
+```bash
+npx http-server . -p 8080
+npx framepack generate --url http://127.0.0.1:8080/examples/website.html --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
+npx framepack capture --project-dir out/website-case
+npx framepack sync-assets --project-dir out/website-case
+```
+
+After generation, start with `PACKAGE_MANIFEST.json`. It is the package protocol index for humans and agents.
+
+## Agent Workflow
+
+When an agent receives a generated package:
+
+1. Read `PACKAGE_MANIFEST.json`.
+2. Read `HANDOFF.md` for current state and next actions.
+3. Inspect `SOURCE_SCENE_MAP.json` and `ASSET_EXECUTION_PLAN.json`.
+4. Run `npx framepack capture --project-dir <package>` to materialize pending source assets.
+5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
+6. Run `npx framepack runtime doctor`, then `preview` or `render` when HyperFrames is available.
+
 Today this repository provides compiler paths for:
 
 - markdown-driven case explainer videos

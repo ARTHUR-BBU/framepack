@@ -66,6 +66,15 @@ Then inspect these files as needed:
 - `ASSET_EXECUTION_PLAN.json`
 - `HANDOFF.md`
 
+## Agent Workflow
+
+1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
+2. Read `HANDOFF.md` to understand the current package state and pending work.
+3. Inspect `SOURCE_SCENE_MAP.json` and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
+4. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
+5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
+6. Run `npx framepack runtime doctor` before previewing or rendering with HyperFrames.
+
 ## Editing Rules
 
 - Keep `PACKAGE_MANIFEST.json` consistent with package files when changing package structure.

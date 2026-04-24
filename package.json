@@ -10,6 +10,7 @@
   "description": "An agent-native video project compiler that turns content into executable video project packages.",
   "files": [
     "dist",
+    "examples",
     "README.md",
     "AGENTS.md",
     "LICENSE",

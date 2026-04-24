@@ -67,6 +67,10 @@ const threadExamplePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../examples/thread.txt",
 );
+const websiteExamplePath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../examples/website.html",
+);
 
 const tests = [
   {
@@ -1129,6 +1133,8 @@ Framepack compiles content into executable video projects.
       assert.ok(Array.isArray(packageJson.files));
       assert.ok(packageJson.files.includes("AGENTS.md"));
       assert.ok(packageJson.files.includes("LICENSE"));
+      assert.ok(packageJson.files.includes("examples"));
+      assert.ok(packageJson.files.includes("dist"));
     },
   },
   {
@@ -1136,10 +1142,15 @@ Framepack compiles content into executable video projects.
     run: () => {
       const agents = readFileSync(agentsPath, "utf8");
       const threadExample = readFileSync(threadExamplePath, "utf8");
+      const websiteExample = readFileSync(websiteExamplePath, "utf8");
 
       assert.match(agents, /PACKAGE_MANIFEST\.json/);
+      assert.match(agents, /HANDOFF\.md/);
+      assert.match(agents, /capture --project-dir/);
+      assert.match(agents, /sync-assets --project-dir/);
       assert.match(agents, /npx framepack generate --thread-file/);
       assert.match(threadExample, /Framepack turns content into executable video project packages/);
+      assert.match(websiteExample, /Framepack Demo Site/);
     },
   },
   {
