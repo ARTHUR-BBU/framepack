@@ -55,6 +55,10 @@ const readmePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../README.md",
 );
+const chineseReadmePath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../README.zh-CN.md",
+);
 const packageJsonPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../package.json",
@@ -1131,6 +1135,7 @@ Framepack compiles content into executable video projects.
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "./dist/cli.js");
       assert.ok(Array.isArray(packageJson.files));
+      assert.ok(packageJson.files.includes("README.zh-CN.md"));
       assert.ok(packageJson.files.includes("AGENTS.md"));
       assert.ok(packageJson.files.includes("LICENSE"));
       assert.ok(packageJson.files.includes("examples"));
@@ -1143,6 +1148,7 @@ Framepack compiles content into executable video projects.
       const agents = readFileSync(agentsPath, "utf8");
       const threadExample = readFileSync(threadExamplePath, "utf8");
       const websiteExample = readFileSync(websiteExamplePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
 
       assert.match(agents, /PACKAGE_MANIFEST\.json/);
       assert.match(agents, /HANDOFF\.md/);
@@ -1151,6 +1157,8 @@ Framepack compiles content into executable video projects.
       assert.match(agents, /npx framepack generate --thread-file/);
       assert.match(threadExample, /Framepack turns content into executable video project packages/);
       assert.match(websiteExample, /Framepack Demo Site/);
+      assert.match(chineseReadme, /Framepack 是一个面向 agent 的视频工程编译器/);
+      assert.match(chineseReadme, /PACKAGE_MANIFEST\.json/);
     },
   },
   {

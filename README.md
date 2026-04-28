@@ -1,5 +1,7 @@
 # Framepack
 
+[中文说明](./README.zh-CN.md)
+
 Framepack turns content into executable video projects.
 
 In practice, that output is a production-ready intermediate, not usually the final human-facing video.
