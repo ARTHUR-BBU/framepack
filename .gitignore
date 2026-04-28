@@ -4,3 +4,4 @@ coverage/
 *.log
 out/
 .worktrees/
+.claude/
