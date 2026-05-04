@@ -13,11 +13,42 @@ function formatForgeTargetList(input: AssetPlan): string {
   }
 
   return forgeTargets
-    .map(
-      (target) =>
-        `- ${target.sourceLabel} -> ${target.suggestedAsset} (${target.recommendedSceneIds.join(", ")}) [${target.executionKind} / ${target.requiredSkill} / ${target.forgeBackend}]`,
-    )
+    .map((target) => {
+      const qualifiers = [
+        target.executionKind,
+        target.requiredSkill,
+        target.forgeBackend,
+      ].filter(Boolean);
+
+      return `${target.sourceLabel} -> ${target.suggestedAsset} (${target.recommendedSceneIds.join(", ")}) [${qualifiers.join(" / ")}]`;
+    })
+    .map((line) => `- ${line}`)
     .join("\n");
+}
+
+function formatForgeGuidance(input: AssetPlan): string {
+  const forgeTargets = input.forgeTargets ?? [];
+
+  if (forgeTargets.length === 0) {
+    return "- None";
+  }
+
+  const hasAgentSpriteForgeTargets = forgeTargets.some(
+    (target) => target.forgeBackend === "agent-sprite-forge",
+  );
+  const guidance = [
+    "- Use the task prompts, expected outputs, recommended scene IDs, style notes, and acceptance criteria in `ASSET_EXECUTION_PLAN.json`.",
+    "- Framepack only defines the task contract; it does not install or run an image generator.",
+  ];
+
+  if (hasAgentSpriteForgeTargets) {
+    guidance.unshift(
+      "- If agent-sprite-forge skills are installed, use `$generate2dsprite` for character, sprite, prop, and FX packs.",
+      "- Use `$generate2dmap` for map/background packs.",
+    );
+  }
+
+  return guidance.join("\n");
 }
 
 export function formatGuardrailsMarkdown(input: {
@@ -108,13 +139,7 @@ export function formatHandoffMarkdown(input: {
     formatForgeTargetList(input.assetPlan),
     "",
     "Forge guidance:",
-    (input.assetPlan.forgeTargets ?? []).length > 0
-      ? [
-          "- If agent-sprite-forge skills are installed, use `$generate2dsprite` for character, sprite, prop, and FX packs.",
-          "- Use `$generate2dmap` for map/background packs.",
-          "- Framepack only defines the task contract, prompts, expected outputs, and acceptance criteria; it does not install or run an image generator.",
-        ].join("\n")
-      : "- None",
+    formatForgeGuidance(input.assetPlan),
     "",
     "Scene asset map:",
     "- See `SCENE_ASSET_MAP.json` for scene-first and capture-first lookup.",

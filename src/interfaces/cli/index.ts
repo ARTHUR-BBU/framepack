@@ -3,12 +3,12 @@ import { basename, dirname, extname, resolve } from "node:path";
 import { materializeProjectAssets } from "../../capture/index.js";
 import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
 import {
-  compileMarkdownCaseExplainerProject,
-  compileGameAdProject,
-  compileThreadCaseExplainerProject,
-  compileWebsiteCaseExplainerProject,
   ensureProjectValidationPassed,
 } from "../../compiler/index.js";
+import {
+  compileVideoProjectFromSource,
+  type CompilerSourceInput,
+} from "../../compiler/pipeline-registry.js";
 import {
   createHyperframesRuntimeAdapter,
   detectHyperframesCapabilities,
@@ -300,41 +300,15 @@ async function runGenerateCommand(args: string[], io: CliIo): Promise<number> {
     constraints: options.constraints,
     theme: options.theme,
   };
-  const result = options.gameAdDescription
-    ? compileGameAdProject({
-        description: options.gameAdDescription,
-        defaults: {
-          ...baseDefaults,
-          outputType: "game-ad" as const,
-        },
-        projectName: options.projectName,
-      })
-    : options.url
-      ? await compileWebsiteCaseExplainerProject({
-        url: options.url,
-        defaults: {
-          ...baseDefaults,
-          outputType: "case-explainer" as const,
-        },
-        projectName: options.projectName,
-      })
-      : options.threadFile
-        ? compileThreadCaseExplainerProject({
-          text: readFileSync(options.threadFile, "utf8"),
-          defaults: {
-            ...baseDefaults,
-            outputType: "case-explainer" as const,
-          },
-          projectName: options.projectName,
-        })
-        : compileMarkdownCaseExplainerProject({
-        markdown: readFileSync(options.input!, "utf8"),
-        defaults: {
-          ...baseDefaults,
-          outputType: "case-explainer" as const,
-        },
-        projectName: options.projectName,
-      });
+  const source = createCompilerSourceInput(options);
+  const result = await compileVideoProjectFromSource({
+    source,
+    defaults: {
+      ...baseDefaults,
+      outputType: source.sourceType === "game-ad" ? "game-ad" : "case-explainer",
+    },
+    projectName: options.projectName,
+  });
   ensureProjectValidationPassed(result.validationReport);
 
   const writtenDir = writeVideoProjectPackage(options.outputDir, result.package);
@@ -353,41 +327,15 @@ async function runValidateCommand(args: string[], io: CliIo): Promise<number> {
     constraints: options.constraints,
     theme: options.theme,
   };
-  const result = options.gameAdDescription
-    ? compileGameAdProject({
-        description: options.gameAdDescription,
-        defaults: {
-          ...baseDefaults,
-          outputType: "game-ad" as const,
-        },
-        projectName: options.projectName,
-      })
-    : options.url
-      ? await compileWebsiteCaseExplainerProject({
-        url: options.url,
-        defaults: {
-          ...baseDefaults,
-          outputType: "case-explainer" as const,
-        },
-        projectName: options.projectName,
-      })
-      : options.threadFile
-        ? compileThreadCaseExplainerProject({
-          text: readFileSync(options.threadFile, "utf8"),
-          defaults: {
-            ...baseDefaults,
-            outputType: "case-explainer" as const,
-          },
-          projectName: options.projectName,
-        })
-        : compileMarkdownCaseExplainerProject({
-        markdown: readFileSync(options.input!, "utf8"),
-        defaults: {
-          ...baseDefaults,
-          outputType: "case-explainer" as const,
-        },
-        projectName: options.projectName,
-      });
+  const source = createCompilerSourceInput(options);
+  const result = await compileVideoProjectFromSource({
+    source,
+    defaults: {
+      ...baseDefaults,
+      outputType: source.sourceType === "game-ad" ? "game-ad" : "case-explainer",
+    },
+    projectName: options.projectName,
+  });
   const writtenDir = writeValidationReport(options.outputDir, result.validationReport);
 
   if (result.validationReport.status === "failed") {
@@ -473,6 +421,34 @@ function collectRuntimePassthroughArgs(
   }
 
   return passthroughArgs;
+}
+
+function createCompilerSourceInput(options: CliOptions): CompilerSourceInput {
+  if (options.gameAdDescription) {
+    return {
+      sourceType: "game-ad",
+      description: options.gameAdDescription,
+    };
+  }
+
+  if (options.url) {
+    return {
+      sourceType: "website",
+      url: options.url,
+    };
+  }
+
+  if (options.threadFile) {
+    return {
+      sourceType: "thread",
+      text: readFileSync(options.threadFile, "utf8"),
+    };
+  }
+
+  return {
+    sourceType: "markdown",
+    markdown: readFileSync(options.input!, "utf8"),
+  };
 }
 
 function loadProjectRuntimeInfo(projectDir: string) {

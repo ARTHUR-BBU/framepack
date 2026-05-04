@@ -46,6 +46,10 @@ import {
   compileThreadVideoBrief,
   compileWebsiteVideoBrief,
 } from "../dist/compiler/index.js";
+import {
+  compileVideoProjectFromSource,
+  listCompilerPipelines,
+} from "../dist/compiler/pipeline-registry.js";
 import { captureWebsiteProject } from "../dist/capture/website/executor.js";
 import { composeThreadProject } from "../dist/capture/thread/executor.js";
 
@@ -79,6 +83,129 @@ const websiteExamplePath = resolve(
 );
 
 const tests = [
+  {
+    name: "render custom forge handoff tasks without undefined skills or agent-sprite-forge guidance",
+    run: () => {
+      const result = createVideoProjectPackage({
+        projectName: "custom-forge-video",
+        brief: {
+          goal: "Explain custom forge",
+          audience: "Producers",
+          format: "16:9",
+          style: { tone: "direct", pacing: "medium", brandName: "Studio" },
+          sourceMaterials: [],
+          constraints: { maxDurationSec: 60, requiredPoints: [], bannedTerms: [] },
+          outputType: "game-ad",
+        },
+        scenePlan: { totalDurationSec: 60, scenes: [] },
+        script: { scenes: [] },
+        storyboard: { scenes: [] },
+        assetPlan: {
+          availableAssets: [],
+          placeholderAssets: ["custom-prop-pack"],
+          missingAssets: ["forge-prop-pack:custom-prop-pack"],
+          captureTargets: [],
+          forgeTargets: [
+            {
+              suggestedAsset: "custom-prop-pack",
+              sourceLabel: "Custom prop pack",
+              sourceText: "Props from a custom backend.",
+              executionKind: "forge-prop-pack",
+              assetForm: "prop-pack",
+              forgeBackend: "custom",
+              expectedOutputs: ["prop PNGs", "metadata JSON"],
+              prompt: "Create product props.",
+              recommendedSceneIds: ["scene-2"],
+              styleNotes: ["Match package palette."],
+              acceptanceCriteria: ["Props are transparent PNGs."],
+              rationale: "Custom backend produces props.",
+            },
+          ],
+        },
+        validationReport: {
+          projectName: "custom-forge-video",
+          status: "passed",
+          sceneCount: 0,
+          totalDurationSec: 60,
+          issues: [],
+          generatedAt: "2026-05-05T00:00:00.000Z",
+        },
+        compositionHtml: "<div></div>",
+      });
+
+      assert.match(result.files["HANDOFF.md"], /Custom prop pack -> custom-prop-pack/);
+      assert.doesNotMatch(result.files["HANDOFF.md"], /undefined/);
+      assert.doesNotMatch(result.files["HANDOFF.md"], /\$generate2dsprite/);
+      assert.doesNotMatch(result.files["HANDOFF.md"], /agent-sprite-forge/);
+    },
+  },
+  {
+    name: "route project compilation through the compiler pipeline registry",
+    run: async () => {
+      const pipelines = listCompilerPipelines();
+
+      assert.deepEqual(
+        pipelines.map((pipeline) => `${pipeline.sourceType}:${pipeline.outputType}`).sort(),
+        ["game-ad:game-ad", "markdown:case-explainer", "thread:case-explainer", "website:case-explainer"],
+      );
+
+      const markdownResult = await compileVideoProjectFromSource({
+        source: {
+          sourceType: "markdown",
+          markdown: "# Problem\nTeams need reusable video.\n\n# Solution\nCompile packages.",
+        },
+        defaults: {
+          goal: "Explain the system",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+        projectName: "registry-markdown",
+      });
+
+      assert.equal(markdownResult.brief.outputType, "case-explainer");
+      assert.match(markdownResult.package.files["VIDEO_BRIEF.json"], /"goal": "Explain the system"/);
+
+      const gameAdResult = await compileVideoProjectFromSource({
+        source: {
+          sourceType: "game-ad",
+          description: "A platform for agent-native video workflows.",
+        },
+        defaults: {
+          goal: "Promote the platform",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "game-ad",
+        },
+        projectName: "registry-game-ad",
+      });
+
+      assert.equal(gameAdResult.brief.outputType, "game-ad");
+      assert.match(gameAdResult.package.files["ASSET_EXECUTION_PLAN.json"], /forge-character-pack/);
+    },
+  },
+  {
+    name: "reject mismatched compiler pipeline output types",
+    run: async () => {
+      await assert.rejects(
+        () =>
+          compileVideoProjectFromSource({
+            source: {
+              sourceType: "game-ad",
+              description: "A platform for agent-native video workflows.",
+            },
+            defaults: {
+              goal: "Explain the platform",
+              audience: "Founders",
+              format: "16:9",
+              outputType: "case-explainer",
+            },
+            projectName: "bad-registry-route",
+          }),
+        /Pipeline for game-ad requires outputType game-ad/,
+      );
+    },
+  },
   {
     name: "allow custom forge tasks without agent-sprite-forge skill coupling",
     run: () => {
