@@ -78,7 +78,7 @@ function compileThreadSourceMaterials(
 
 export function compileVideoBrief(input: {
   sourceBundle: {
-    sourceType: "markdown" | "website" | "thread" | "prd" | "case";
+    sourceType: "markdown" | "website" | "thread" | "game-ad" | "prd" | "case";
     collectedArtifacts: Array<Record<string, string>>;
   };
   defaults: VideoBriefDefaults;

@@ -1,5 +1,5 @@
 export type VideoFormat = "16:9" | "9:16";
-export type OutputType = "case-explainer" | "product-demo" | "social-short";
+export type OutputType = "case-explainer" | "product-demo" | "social-short" | "game-ad";
 
 export interface VideoStyle {
   tone: string;
@@ -78,7 +78,14 @@ export interface ThreadSourceManifest {
   collectedAt: string;
 }
 
-export type SourceManifest = WebsiteSourceManifest | ThreadSourceManifest;
+export interface GameAdSourceManifest {
+  sourceType: "game-ad";
+  title: string;
+  description: string;
+  collectedAt: string;
+}
+
+export type SourceManifest = WebsiteSourceManifest | ThreadSourceManifest | GameAdSourceManifest;
 
 export interface SourceBundle {
   sourceType: "markdown" | "website" | "thread" | "prd" | "case";
@@ -163,6 +170,30 @@ export interface AssetPlan {
   placeholderAssets: string[];
   missingAssets: string[];
   captureTargets: CaptureTarget[];
+  forgeTargets?: ForgeAssetTarget[];
+}
+
+export type ForgeExecutionKind =
+  | "forge-sprite-sheet"
+  | "forge-map-pack"
+  | "forge-fx-pack"
+  | "forge-prop-pack"
+  | "forge-character-pack";
+
+export interface ForgeAssetTarget {
+  suggestedAsset: string;
+  sourceLabel: string;
+  sourceText: string;
+  executionKind: ForgeExecutionKind;
+  assetForm: "sprite-sheet" | "map-pack" | "fx-pack" | "prop-pack" | "character-pack";
+  forgeBackend?: string;
+  requiredSkill?: string;
+  expectedOutputs: string[];
+  prompt: string;
+  recommendedSceneIds: string[];
+  styleNotes: string[];
+  acceptanceCriteria: string[];
+  rationale: string;
 }
 
 export interface SceneAssetMapSceneEntry {
@@ -193,7 +224,7 @@ export interface SceneAssetMap {
 export interface SourceSceneMapSceneEntry {
   sceneId: string;
   linkedSources: Array<{
-    sourceType: "website" | "thread";
+    sourceType: "website" | "thread" | "game-ad";
     sourceLabel: string;
     suggestedAsset: string;
     assetForm: string;
@@ -202,7 +233,7 @@ export interface SourceSceneMapSceneEntry {
 }
 
 export interface SourceSceneMapSourceEntry {
-  sourceType: "website" | "thread";
+  sourceType: "website" | "thread" | "game-ad";
   sourceLabel: string;
   sourceText: string;
   suggestedAsset: string;
@@ -218,15 +249,21 @@ export interface SourceSceneMap {
 
 export interface AssetExecutionPlanItem {
   suggestedAsset: string;
-  sourceType: "website" | "thread";
+  sourceType: "website" | "thread" | "game-ad";
   sourceLabel: string;
   sourceText: string;
   sourceUrl?: string;
   purposeTag?: CaptureTarget["purposeTag"];
-  executionKind: "capture-screenshot" | "compose-text-card";
-  assetForm: CaptureTarget["assetForm"] | "text-card";
+  executionKind: "capture-screenshot" | "compose-text-card" | ForgeExecutionKind;
+  assetForm: CaptureTarget["assetForm"] | "text-card" | ForgeAssetTarget["assetForm"];
   recommendedSceneIds: string[];
   rationale?: string;
+  forgeBackend?: ForgeAssetTarget["forgeBackend"];
+  requiredSkill?: ForgeAssetTarget["requiredSkill"];
+  expectedOutputs?: string[];
+  prompt?: string;
+  styleNotes?: string[];
+  acceptanceCriteria?: string[];
   outputPath: string;
   metadataPath: string;
   status: "pending" | "available";

@@ -4,6 +4,7 @@ import { materializeProjectAssets } from "../../capture/index.js";
 import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
 import {
   compileMarkdownCaseExplainerProject,
+  compileGameAdProject,
   compileThreadCaseExplainerProject,
   compileWebsiteCaseExplainerProject,
   ensureProjectValidationPassed,
@@ -26,6 +27,7 @@ interface CliOptions {
   input?: string;
   threadFile?: string;
   url?: string;
+  gameAdDescription?: string;
   outputDir: string;
   goal: string;
   audience: string;
@@ -113,8 +115,11 @@ function countDefinedSources(input: {
   input?: string;
   threadFile?: string;
   url?: string;
+  gameAdDescription?: string;
 }) {
-  return [input.configPath, input.input, input.threadFile, input.url].filter((value) => value !== undefined).length;
+  return [input.configPath, input.input, input.threadFile, input.url, input.gameAdDescription].filter(
+    (value) => value !== undefined,
+  ).length;
 }
 
 function deriveProjectName(inputPath: string): string {
@@ -201,9 +206,10 @@ export function parseCliArgs(args: string[]): CliOptions {
   const input = getOptionalArg(commandArgs, "--input");
   const threadFile = getOptionalArg(commandArgs, "--thread-file");
   const url = getOptionalArg(commandArgs, "--url");
+  const gameAdDescription = getOptionalArg(commandArgs, "--game-ad-description");
 
-  if (countDefinedSources({ configPath, input, threadFile, url }) !== 1) {
-    throw new Error("Use exactly one source input: --config, --input, --thread-file, or --url.");
+  if (countDefinedSources({ configPath, input, threadFile, url, gameAdDescription }) !== 1) {
+    throw new Error("Use exactly one source input: --config, --input, --thread-file, --url, or --game-ad-description.");
   }
 
   if (configPath) {
@@ -231,6 +237,7 @@ export function parseCliArgs(args: string[]): CliOptions {
       input,
       threadFile: undefined,
       url: undefined,
+      gameAdDescription: undefined,
       outputDir,
       goal: config.goal,
       audience: config.audience,
@@ -255,12 +262,19 @@ export function parseCliArgs(args: string[]): CliOptions {
     input,
     threadFile,
     url,
+    gameAdDescription,
     outputDir,
     goal,
     audience,
     projectName:
       getOptionalArg(commandArgs, "--project-name") ??
-      (input ? deriveProjectName(input) : threadFile ? deriveProjectName(threadFile) : "website-case-video"),
+      (input
+        ? deriveProjectName(input)
+        : threadFile
+          ? deriveProjectName(threadFile)
+          : gameAdDescription
+            ? "game-ad-demo"
+            : "website-case-video"),
     format,
     style: {
       ...createDefaultStyle(),
@@ -278,30 +292,47 @@ export function parseCliArgs(args: string[]): CliOptions {
 
 async function runGenerateCommand(args: string[], io: CliIo): Promise<number> {
   const options = parseCliArgs(args);
-  const defaults = {
+  const baseDefaults = {
     goal: options.goal,
     audience: options.audience,
     format: options.format,
-    outputType: "case-explainer" as const,
     style: options.style,
     constraints: options.constraints,
     theme: options.theme,
   };
-  const result = options.url
-    ? await compileWebsiteCaseExplainerProject({
-        url: options.url,
-        defaults,
+  const result = options.gameAdDescription
+    ? compileGameAdProject({
+        description: options.gameAdDescription,
+        defaults: {
+          ...baseDefaults,
+          outputType: "game-ad" as const,
+        },
         projectName: options.projectName,
       })
-    : options.threadFile
-      ? compileThreadCaseExplainerProject({
+    : options.url
+      ? await compileWebsiteCaseExplainerProject({
+        url: options.url,
+        defaults: {
+          ...baseDefaults,
+          outputType: "case-explainer" as const,
+        },
+        projectName: options.projectName,
+      })
+      : options.threadFile
+        ? compileThreadCaseExplainerProject({
           text: readFileSync(options.threadFile, "utf8"),
-          defaults,
+          defaults: {
+            ...baseDefaults,
+            outputType: "case-explainer" as const,
+          },
           projectName: options.projectName,
         })
-    : compileMarkdownCaseExplainerProject({
+        : compileMarkdownCaseExplainerProject({
         markdown: readFileSync(options.input!, "utf8"),
-        defaults,
+        defaults: {
+          ...baseDefaults,
+          outputType: "case-explainer" as const,
+        },
         projectName: options.projectName,
       });
   ensureProjectValidationPassed(result.validationReport);
@@ -314,30 +345,47 @@ async function runGenerateCommand(args: string[], io: CliIo): Promise<number> {
 
 async function runValidateCommand(args: string[], io: CliIo): Promise<number> {
   const options = parseCliArgs(args);
-  const defaults = {
+  const baseDefaults = {
     goal: options.goal,
     audience: options.audience,
     format: options.format,
-    outputType: "case-explainer" as const,
     style: options.style,
     constraints: options.constraints,
     theme: options.theme,
   };
-  const result = options.url
-    ? await compileWebsiteCaseExplainerProject({
-        url: options.url,
-        defaults,
+  const result = options.gameAdDescription
+    ? compileGameAdProject({
+        description: options.gameAdDescription,
+        defaults: {
+          ...baseDefaults,
+          outputType: "game-ad" as const,
+        },
         projectName: options.projectName,
       })
-    : options.threadFile
-      ? compileThreadCaseExplainerProject({
+    : options.url
+      ? await compileWebsiteCaseExplainerProject({
+        url: options.url,
+        defaults: {
+          ...baseDefaults,
+          outputType: "case-explainer" as const,
+        },
+        projectName: options.projectName,
+      })
+      : options.threadFile
+        ? compileThreadCaseExplainerProject({
           text: readFileSync(options.threadFile, "utf8"),
-          defaults,
+          defaults: {
+            ...baseDefaults,
+            outputType: "case-explainer" as const,
+          },
           projectName: options.projectName,
         })
-    : compileMarkdownCaseExplainerProject({
+        : compileMarkdownCaseExplainerProject({
         markdown: readFileSync(options.input!, "utf8"),
-        defaults,
+        defaults: {
+          ...baseDefaults,
+          outputType: "case-explainer" as const,
+        },
         projectName: options.projectName,
       });
   const writtenDir = writeValidationReport(options.outputDir, result.validationReport);

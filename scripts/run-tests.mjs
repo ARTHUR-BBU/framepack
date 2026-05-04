@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +13,7 @@ import {
 } from "../dist/ingest/website/index.js";
 import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { buildAssetPlan } from "../dist/planning/assets/index.js";
+import { buildAssetExecutionPlan } from "../dist/packaging/asset-execution.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
 import { buildScript } from "../dist/planning/script/index.js";
 import { buildStoryboard } from "../dist/planning/storyboard/index.js";
@@ -40,6 +41,7 @@ import { emitHyperframesComposition } from "../dist/video/render/hyperframes-ada
 import { buildCaseExplainerVideoProject } from "../dist/video/index.js";
 import {
   compileWebsiteCaseExplainerProject,
+  compileGameAdProject,
   compileThreadCaseExplainerProject,
   compileThreadVideoBrief,
   compileWebsiteVideoBrief,
@@ -77,6 +79,135 @@ const websiteExamplePath = resolve(
 );
 
 const tests = [
+  {
+    name: "allow custom forge tasks without agent-sprite-forge skill coupling",
+    run: () => {
+      const plan = buildAssetExecutionPlan({
+        assetPlan: {
+          availableAssets: [],
+          placeholderAssets: ["custom-prop-pack"],
+          missingAssets: ["forge-prop-pack:custom-prop-pack"],
+          captureTargets: [],
+          forgeTargets: [
+            {
+              suggestedAsset: "custom-prop-pack",
+              sourceLabel: "Manual prop pack",
+              sourceText: "Props for a game-ad package.",
+              executionKind: "forge-prop-pack",
+              assetForm: "prop-pack",
+              forgeBackend: "custom",
+              expectedOutputs: ["prop PNGs", "metadata JSON"],
+              prompt: "Create product props.",
+              recommendedSceneIds: ["scene-2"],
+              styleNotes: ["Match package palette."],
+              acceptanceCriteria: ["Props are transparent PNGs."],
+              rationale: "Manual custom backend produces props.",
+            },
+          ],
+        },
+        sourceManifest: {
+          sourceType: "game-ad",
+          title: "custom-game-ad",
+          description: "Props for a game-ad package.",
+          collectedAt: "2026-05-05T00:00:00.000Z",
+        },
+        now: () => "2026-05-05T00:00:00.000Z",
+      });
+
+      assert.equal(plan.items[0].forgeBackend, "custom");
+      assert.equal("requiredSkill" in plan.items[0], false);
+      assert.equal(plan.items[0].executionKind, "forge-prop-pack");
+    },
+  },
+  {
+    name: "keep empty forge output directories pending during sync",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-empty-forge-sync-"));
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into game-style videos.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "empty-forge-sync",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+
+        const projectDir = join(tempRoot, "empty-forge-sync");
+        mkdirSync(join(projectDir, "assets", "forge", "hero-character-pack"), { recursive: true });
+
+        const syncExitCode = await runCli(
+          ["sync-assets", "--project-dir", projectDir],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+        const assetExecutionPlan = JSON.parse(readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"));
+        const heroItem = assetExecutionPlan.items.find((item) => item.suggestedAsset === "hero-character-pack");
+
+        assert.equal(syncExitCode, 0);
+        assert.equal(heroItem.status, "pending");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "compile game-ad input into forge execution tasks",
+    run: () => {
+      const result = compileGameAdProject({
+        description: "A course that teaches founders to ship agent-native video systems.",
+        projectName: "game-ad-demo",
+        defaults: {
+          goal: "Promote the course",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "game-ad",
+        },
+      });
+
+      const assetExecutionPlan = JSON.parse(result.package.files["ASSET_EXECUTION_PLAN.json"]);
+      const packageManifest = JSON.parse(result.package.files["PACKAGE_MANIFEST.json"]);
+
+      assert.equal(result.brief.outputType, "game-ad");
+      assert.equal(result.validationReport.status, "passed");
+      assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "game-ad"/);
+      assert.deepEqual(
+        assetExecutionPlan.items.map((item) => item.executionKind),
+        ["forge-character-pack", "forge-map-pack", "forge-fx-pack"],
+      );
+      assert.equal(assetExecutionPlan.items[0].forgeBackend, "agent-sprite-forge");
+      assert.equal(assetExecutionPlan.items[0].requiredSkill, "generate2dsprite");
+      assert.ok(assetExecutionPlan.items[0].expectedOutputs.includes("transparent PNG sprite sheet"));
+      assert.match(assetExecutionPlan.items[0].prompt, /Promote the course/);
+      assert.deepEqual(assetExecutionPlan.items[1].recommendedSceneIds, ["scene-1", "scene-2", "scene-3", "scene-4"]);
+      assert.equal(packageManifest.capabilities.executionKinds.includes("forge-character-pack"), true);
+      assert.equal(packageManifest.capabilities.executionKinds.includes("forge-map-pack"), true);
+      assert.equal(packageManifest.capabilities.executionKinds.includes("forge-fx-pack"), true);
+      assert.match(result.package.files["HANDOFF.md"], /\$generate2dsprite/);
+      assert.match(result.package.files["HANDOFF.md"], /\$generate2dmap/);
+      assert.match(result.package.files["HANDOFF.md"], /agent-sprite-forge/);
+    },
+  },
   {
     name: "parse and normalize detected HyperFrames versions",
     run: () => {
@@ -1123,6 +1254,10 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /SOURCE_MANIFEST\.json/);
       assert.match(readme, /captureTargets/);
       assert.match(readme, /ASSET_EXECUTION_PLAN\.json/);
+      assert.match(readme, /Asset forge layer/);
+      assert.match(readme, /agent-sprite-forge/);
+      assert.match(readme, /forge-map-pack/);
+      assert.match(readme, /--game-ad-description/);
       assert.match(readme, /Playwright is required for automated asset materialization/);
     },
   },
@@ -1155,10 +1290,14 @@ Framepack compiles content into executable video projects.
       assert.match(agents, /capture --project-dir/);
       assert.match(agents, /sync-assets --project-dir/);
       assert.match(agents, /npx framepack generate --thread-file/);
+      assert.match(agents, /--game-ad-description/);
+      assert.match(agents, /agent-sprite-forge/);
+      assert.match(agents, /forge-character-pack/);
       assert.match(threadExample, /Framepack turns content into executable video project packages/);
       assert.match(websiteExample, /Framepack Demo Site/);
       assert.match(chineseReadme, /Framepack 是一个面向 agent 的视频工程编译器/);
       assert.match(chineseReadme, /PACKAGE_MANIFEST\.json/);
+      assert.match(chineseReadme, /agent-sprite-forge/);
     },
   },
   {
@@ -2046,7 +2185,51 @@ Framepack compiles content into executable video projects.
 
       assert.equal(exitCode, 1);
       assert.equal(stdout.length, 0);
-      assert.match(stderr.join("\n"), /Use exactly one source input: --config, --input, --thread-file, or --url/);
+      assert.match(stderr.join("\n"), /Use exactly one source input: --config, --input, --thread-file, --url, or --game-ad-description/);
+    },
+  },
+  {
+    name: "generate a game-ad forge package from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-game-ad-generate-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const exitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into agent-native video packages.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const packageDir = join(tempRoot, "sprite-video-demo");
+
+        assert.equal(exitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Generated video project package/);
+        assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"sourceType": "game-ad"/);
+        assert.match(readFileSync(join(packageDir, "PACKAGE_MANIFEST.json"), "utf8"), /"game-ad"/);
+        assert.match(readFileSync(join(packageDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"forge-map-pack"/);
+        assert.match(readFileSync(join(packageDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"agent-sprite-forge"/);
+        assert.match(readFileSync(join(packageDir, "HANDOFF.md"), "utf8"), /\$generate2dmap/);
+        assert.equal(existsSync(join(packageDir, "assets", "forge")), true);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
     },
   },
   {

@@ -25,6 +25,7 @@ Framepack takes content inputs such as:
 - PRDs
 - case materials
 - websites
+- product, course, or brand descriptions for lightweight game-ad packages
 
 And produces a video project package containing:
 
@@ -33,6 +34,7 @@ And produces a video project package containing:
 - script
 - storyboard
 - asset plan
+- asset execution plan
 - guardrails
 - validation reports
 - runtime entry files
@@ -49,16 +51,34 @@ It is the production-ready intermediate that contains:
 - the planned dish, meaning what video should be made
 - the preparation notes, meaning how to make it
 - the ingredient list, meaning what assets exist and what assets are still missing
+- the execution contract for materializing captures, text cards, or forge-produced assets
 - the runtime entry points needed for HyperFrames to finish preview and render work
 
 The intended execution chain is:
 
 - content source into Framepack
 - Framepack project package into an agent workflow
+- optional asset forge backend into materialized 2D assets
 - agent workflow into HyperFrames runtime execution
 - HyperFrames runtime into preview and final video output
 
 Framepack should therefore be described as a high-value video production middleware layer, not as a final renderer.
+
+## Asset Forge Relationship
+
+Framepack owns the asset requirement and execution contract, not image generation itself.
+
+The package protocol can describe forge tasks in `ASSET_EXECUTION_PLAN.json` using execution kinds such as:
+
+- `forge-sprite-sheet`
+- `forge-map-pack`
+- `forge-fx-pack`
+- `forge-prop-pack`
+- `forge-character-pack`
+
+These tasks are backend-neutral. A task may recommend `agent-sprite-forge` and a skill such as `$generate2dsprite` or `$generate2dmap`, but those values are guidance, not a hard dependency. Manual producers and custom tools must be able to satisfy the same task contract.
+
+Framepack should not silently install forge backends or call image generation models. It should generate prompts, expected outputs, scene linkage, output paths, and acceptance criteria so an agent or external producer can continue the work.
 
 ### What Framepack is not
 
@@ -87,6 +107,7 @@ That content may include:
 - websites
 - PRDs
 - case materials
+- product, course, or brand descriptions
 
 Default external positioning:
 
@@ -131,7 +152,7 @@ The stable ownership split is:
 
 The most accurate practical mental model is:
 
-- raw ingredients: websites, threads, Markdown, PRDs, case materials
+- raw ingredients: websites, threads, Markdown, PRDs, case materials, product descriptions
 - prep and dish plan: Framepack
 - kitchen equipment: HyperFrames runtime
 - cook: the agent
@@ -145,6 +166,7 @@ It is not a thin middleware layer because it performs high-value production judg
 - how the material should be decomposed into scenes
 - which source units should become assets
 - which assets support which scenes
+- which asset execution tasks can be performed by capture, text-card composition, manual production, or an optional asset forge backend
 - what is still missing before rendering can finish
 - what the next agent step should be
 

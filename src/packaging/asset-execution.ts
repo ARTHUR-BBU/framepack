@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type {
   AssetExecutionPlan,
@@ -32,8 +32,46 @@ function createThreadMetadataPath(suggestedAsset: string) {
   return join("assets", "generated", `${suggestedAsset}.json`);
 }
 
+function createForgeOutputPath(suggestedAsset: string) {
+  return join("assets", "forge", suggestedAsset);
+}
+
+function createForgeMetadataPath(suggestedAsset: string) {
+  return join("assets", "forge", `${suggestedAsset}.json`);
+}
+
 function readJsonFile<T>(projectDir: string, fileName: string): T {
   return JSON.parse(readFileSync(resolve(projectDir, fileName), "utf8")) as T;
+}
+
+function isForgeExecutionKind(executionKind: AssetExecutionPlanItem["executionKind"]) {
+  return executionKind.startsWith("forge-");
+}
+
+function hasMaterializedOutput(projectDir: string, item: AssetExecutionPlanItem): boolean {
+  const outputPath = resolve(projectDir, item.outputPath);
+
+  if (!existsSync(outputPath)) {
+    return false;
+  }
+
+  if (!isForgeExecutionKind(item.executionKind)) {
+    return true;
+  }
+
+  const metadataPath = resolve(projectDir, item.metadataPath);
+
+  if (!existsSync(metadataPath)) {
+    return false;
+  }
+
+  const outputStat = statSync(outputPath);
+
+  if (!outputStat.isDirectory()) {
+    return outputStat.isFile();
+  }
+
+  return readdirSync(outputPath).length > 0;
 }
 
 export function buildAssetExecutionPlan(input: {
@@ -48,7 +86,7 @@ export function buildAssetExecutionPlan(input: {
     (input.sourceSceneMap?.sources ?? []).map((entry) => [entry.suggestedAsset, entry] as const),
   );
 
-  const items =
+  const sourceBoundItems =
     input.sourceManifest?.sourceType === "website"
       ? input.assetPlan.captureTargets.map((target) => ({
           suggestedAsset: target.suggestedAsset,
@@ -84,10 +122,29 @@ export function buildAssetExecutionPlan(input: {
             };
           })
         : [];
+  const forgeItems = (input.assetPlan.forgeTargets ?? []).map((target) => ({
+    suggestedAsset: target.suggestedAsset,
+    sourceType: "game-ad" as const,
+    sourceLabel: target.sourceLabel,
+    sourceText: target.sourceText,
+    executionKind: target.executionKind,
+    assetForm: target.assetForm,
+    recommendedSceneIds: [...target.recommendedSceneIds],
+    rationale: target.rationale,
+    ...(target.forgeBackend ? { forgeBackend: target.forgeBackend } : {}),
+    ...(target.requiredSkill ? { requiredSkill: target.requiredSkill } : {}),
+    expectedOutputs: [...target.expectedOutputs],
+    prompt: target.prompt,
+    styleNotes: [...target.styleNotes],
+    acceptanceCriteria: [...target.acceptanceCriteria],
+    outputPath: createForgeOutputPath(target.suggestedAsset),
+    metadataPath: createForgeMetadataPath(target.suggestedAsset),
+    status: getStatus(target.suggestedAsset),
+  }));
 
   return {
     generatedAt: (input.now ?? (() => new Date().toISOString()))(),
-    items,
+    items: [...sourceBoundItems, ...forgeItems],
   };
 }
 
@@ -104,7 +161,7 @@ export function syncAssetExecutionProject(input: {
   const previousAssetExecutionPlan = readJsonFile<AssetExecutionPlan>(projectDir, "ASSET_EXECUTION_PLAN.json");
 
   const availableAssets = previousAssetExecutionPlan.items
-    .filter((item) => existsSync(resolve(projectDir, item.outputPath)))
+    .filter((item) => hasMaterializedOutput(projectDir, item))
     .map((item) => item.suggestedAsset);
 
   const nextMissingAssets =
@@ -117,6 +174,10 @@ export function syncAssetExecutionProject(input: {
             .map((post) => `post-${post.index}-card`)
             .filter((asset) => !availableAssets.includes(asset))
             .map((asset) => `compose:${asset}`)
+        : sourceManifest.sourceType === "game-ad"
+          ? (assetPlan.forgeTargets ?? [])
+              .filter((target) => !availableAssets.includes(target.suggestedAsset))
+              .map((target) => `${target.executionKind}:${target.suggestedAsset}`)
         : [];
 
   const nextAssetPlan: AssetPlan = {

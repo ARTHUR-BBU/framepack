@@ -16,6 +16,7 @@ import {
   buildCaseExplainerVideoProject,
   buildCaseExplainerVideoProjectFromCompiledBrief,
 } from "../video/index.js";
+export { compileGameAdProject } from "./game-ad.js";
 
 function createWebsiteSourceManifest(input: {
   url: string;

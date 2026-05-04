@@ -56,6 +56,16 @@ export function buildSourceSceneMap(input: {
                   ? "Use this post for late proof, takeaway, or ending beats."
                   : "Use this post for middle beats that explain the workflow or core argument.",
           }))
+        : input.sourceManifest?.sourceType === "game-ad"
+          ? (input.assetPlan.forgeTargets ?? []).map((target) => ({
+              sourceType: "game-ad" as const,
+              sourceLabel: target.sourceLabel,
+              sourceText: target.sourceText,
+              suggestedAsset: target.suggestedAsset,
+              assetForm: target.assetForm,
+              recommendedSceneIds: [...target.recommendedSceneIds],
+              rationale: target.rationale,
+            }))
         : [];
 
   const scenes = input.scenePlan.scenes.map((scene) => ({

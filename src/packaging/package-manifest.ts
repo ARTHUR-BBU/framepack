@@ -44,7 +44,7 @@ export function buildPackageManifest(input: {
         "SOURCE_SCENE_MAP.json",
         "SCENE_ASSET_MAP.json",
       ],
-      assets: ["ASSET_PLAN.json", "assets/", "assets/captures/", "assets/generated/"],
+      assets: ["ASSET_PLAN.json", "assets/", "assets/captures/", "assets/generated/", "assets/forge/"],
       execution: ["ASSET_EXECUTION_PLAN.json", "CAPTURE_EXECUTION_PLAN.json"],
       validation: ["VALIDATION_REPORT.json", "VALIDATION_REPORT.md", "GUARDRAILS.md"],
       runtime: ["index.html", "meta.json", "hyperframes.json", "compositions/"],

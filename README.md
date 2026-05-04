@@ -2,11 +2,13 @@
 
 [中文说明](./README.zh-CN.md)
 
-Framepack turns content into executable video projects.
+Framepack turns content into executable video project packages.
 
 In practice, that output is a production-ready intermediate, not usually the final human-facing video.
 
-Framepack prepares the video engineering package. HyperFrames and an agent finish preview, asset materialization, and rendering.
+Framepack prepares the video engineering package: source structure, scene plans, asset requirements, execution tasks, and runtime entrypoints. HyperFrames and an agent finish preview, asset materialization, and rendering.
+
+It is the compiler layer in a hybrid workflow: asset library + orchestration + generative model + post-production composition. Framepack does not become a game engine or image generator.
 
 Agents should start with [AGENTS.md](./AGENTS.md).
 
@@ -23,6 +25,7 @@ Agent-first examples:
 ```bash
 npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
 npx framepack generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
+npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo
 npx framepack capture --project-dir out/thread-case
 npx framepack preview --project-dir out/thread-case
 ```
@@ -46,6 +49,14 @@ npx framepack capture --project-dir out/website-case
 npx framepack sync-assets --project-dir out/website-case
 ```
 
+Run the sprite video demo:
+
+```bash
+npx framepack generate --game-ad-description "A platform that turns product stories into agent-native video packages." --output-dir out --goal "Promote the platform" --audience "Founders" --project-name sprite-video-demo
+```
+
+This produces a game-ad package with character, map/background, and FX forge tasks. It does not install `agent-sprite-forge` or call an image model automatically.
+
 After generation, start with `PACKAGE_MANIFEST.json`. It is the package protocol index for humans and agents.
 
 ## Agent Workflow
@@ -64,6 +75,7 @@ Today this repository provides compiler paths for:
 - markdown-driven case explainer videos
 - local thread/post text files
 - first-version public website URL to case-explainer packages
+- lightweight game-ad / sprite-video demo packages with asset forge tasks
 
 It produces a video engineering package with planning artifacts, validation artifacts, and HyperFrames-ready runtime structure.
 
@@ -129,6 +141,10 @@ Generate a video engineering package from a local thread/post text file.
 
 `npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case`
 
+Generate a sprite-video game-ad package from a short product, course, or brand description.
+
+`npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo`
+
 ### `validate`
 
 Validate the input and planning path and write a structured report without generating the full package.
@@ -151,7 +167,26 @@ npx framepack generate --config out/starter/hyperframes-studio.json --output-dir
 npx framepack validate --config out/starter/hyperframes-studio.json --output-dir out
 ```
 
-For the first version, `--config`, `--input`, `--thread-file`, and `--url` are mutually exclusive. Use exactly one source input per command.
+For the first version, `--config`, `--input`, `--thread-file`, `--url`, and `--game-ad-description` are mutually exclusive. Use exactly one source input per command.
+
+### Asset forge layer
+
+`ASSET_EXECUTION_PLAN.json` is the stable task contract for materializing assets. Existing execution kinds remain:
+
+- `capture-screenshot`
+- `compose-text-card`
+
+Framepack also supports forge execution kinds for 2D asset production:
+
+- `forge-sprite-sheet`
+- `forge-map-pack`
+- `forge-fx-pack`
+- `forge-prop-pack`
+- `forge-character-pack`
+
+Forge tasks can include `forgeBackend`, `requiredSkill`, `expectedOutputs`, `prompt`, `recommendedSceneIds`, `styleNotes`, and `acceptanceCriteria`.
+
+`agent-sprite-forge` is the first recommended 2D asset forge backend. If the relevant skills are installed, an agent can continue from the generated package with `$generate2dsprite` for sprites, character packs, prop packs, and FX packs, and `$generate2dmap` for maps/backgrounds. Framepack only emits the backend-neutral task and acceptance contract.
 
 ### `capture`
 
@@ -159,6 +194,7 @@ Materialize pending source assets and sync the project package:
 
 - website packages capture screenshots into `assets/captures/`
 - thread packages render text cards into `assets/generated/`
+- game-ad packages write forge task outputs under `assets/forge/` after an agent or manual asset producer creates them
 
 ```bash
 npx framepack capture --project-dir out/website-case
@@ -203,6 +239,7 @@ The current implementation supports:
 - local thread/post text files
 - public single-page website URLs
 - `case-explainer` output type
+- `game-ad` output type for sprite-video demo packages
 - `16:9` and `9:16` formats
 - engineering package generation
 - guardrail validation
@@ -233,6 +270,7 @@ The generated package includes:
 - `ASSET_PLAN.json`
 - website `ASSET_PLAN.json` entries now include `captureTargets` so follow-on agents know which sections to capture or rebuild
 - thread packages now populate `ASSET_PLAN.json` with `compose:post-N-card` missing assets for text-card production
+- game-ad packages populate `ASSET_PLAN.json` with `forgeTargets` for character, map/background, and FX production
 - website `captureTargets` also include `recommendedSceneIds` so follow-on agents know which scenes each capture best supports
 - website `captureTargets` now also include `purposeTag` and `assetForm`, so downstream agents know both the storytelling role and the likely visual treatment
 - `ASSET_EXECUTION_PLAN.json` with expected output paths, execution kinds, and pending/available sync state
@@ -245,4 +283,5 @@ The generated package includes:
 - `index.html`
 - `assets/`
 - `assets/generated/` for thread/post card materialization
+- `assets/forge/` for generated or manually produced forge assets
 - `compositions/`
