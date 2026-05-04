@@ -84,6 +84,76 @@ const websiteExamplePath = resolve(
 
 const tests = [
   {
+    name: "sync forge metadata status into asset execution lifecycle",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-forge-status-sync-"));
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into game-style videos.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "forge-status-sync",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+
+        const projectDir = join(tempRoot, "forge-status-sync");
+        const outputDir = join(projectDir, "assets", "forge", "hero-character-pack");
+        mkdirSync(outputDir, { recursive: true });
+        writeFileSync(join(outputDir, "placeholder.txt"), "not final", "utf8");
+        writeFileSync(
+          join(projectDir, "assets", "forge", "hero-character-pack.json"),
+          JSON.stringify(
+            {
+              status: "failed",
+              summary: "Generated asset failed acceptance criteria.",
+              outputs: ["assets/forge/hero-character-pack/placeholder.txt"],
+            },
+            null,
+            2,
+          ),
+          "utf8",
+        );
+
+        const syncExitCode = await runCli(
+          ["sync-assets", "--project-dir", projectDir],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+        const assetExecutionPlan = JSON.parse(readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"));
+        const assetPlan = JSON.parse(readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"));
+        const heroItem = assetExecutionPlan.items.find((item) => item.suggestedAsset === "hero-character-pack");
+
+        assert.equal(syncExitCode, 0);
+        assert.equal(heroItem.status, "failed");
+        assert.equal(assetPlan.availableAssets.includes("hero-character-pack"), false);
+        assert.equal(assetPlan.missingAssets.includes("forge-character-pack:hero-character-pack"), false);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "render custom forge handoff tasks without undefined skills or agent-sprite-forge guidance",
     run: () => {
       const result = createVideoProjectPackage({

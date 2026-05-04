@@ -48,6 +48,37 @@ function isForgeExecutionKind(executionKind: AssetExecutionPlanItem["executionKi
   return executionKind.startsWith("forge-");
 }
 
+function isAssetExecutionStatus(value: unknown): value is AssetExecutionPlanItem["status"] {
+  return (
+    value === "pending" ||
+    value === "available" ||
+    value === "failed" ||
+    value === "skipped" ||
+    value === "external"
+  );
+}
+
+function readForgeMetadataStatus(
+  projectDir: string,
+  item: AssetExecutionPlanItem,
+): AssetExecutionPlanItem["status"] | undefined {
+  if (!isForgeExecutionKind(item.executionKind)) {
+    return undefined;
+  }
+
+  const metadataPath = resolve(projectDir, item.metadataPath);
+
+  if (!existsSync(metadataPath)) {
+    return undefined;
+  }
+
+  const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as {
+    status?: unknown;
+  };
+
+  return isAssetExecutionStatus(metadata.status) ? metadata.status : undefined;
+}
+
 function hasMaterializedOutput(projectDir: string, item: AssetExecutionPlanItem): boolean {
   const outputPath = resolve(projectDir, item.outputPath);
 
@@ -72,6 +103,19 @@ function hasMaterializedOutput(projectDir: string, item: AssetExecutionPlanItem)
   }
 
   return readdirSync(outputPath).length > 0;
+}
+
+function getSyncedAssetStatus(
+  projectDir: string,
+  item: AssetExecutionPlanItem,
+): AssetExecutionPlanItem["status"] {
+  const metadataStatus = readForgeMetadataStatus(projectDir, item);
+
+  if (metadataStatus && metadataStatus !== "pending") {
+    return metadataStatus;
+  }
+
+  return hasMaterializedOutput(projectDir, item) ? "available" : "pending";
 }
 
 export function buildAssetExecutionPlan(input: {
@@ -160,8 +204,11 @@ export function syncAssetExecutionProject(input: {
   const sourceManifest = readJsonFile<SourceManifest>(projectDir, "SOURCE_MANIFEST.json");
   const previousAssetExecutionPlan = readJsonFile<AssetExecutionPlan>(projectDir, "ASSET_EXECUTION_PLAN.json");
 
+  const assetStatuses = new Map(
+    previousAssetExecutionPlan.items.map((item) => [item.suggestedAsset, getSyncedAssetStatus(projectDir, item)] as const),
+  );
   const availableAssets = previousAssetExecutionPlan.items
-    .filter((item) => hasMaterializedOutput(projectDir, item))
+    .filter((item) => assetStatuses.get(item.suggestedAsset) === "available")
     .map((item) => item.suggestedAsset);
 
   const nextMissingAssets =
@@ -176,7 +223,7 @@ export function syncAssetExecutionProject(input: {
             .map((asset) => `compose:${asset}`)
         : sourceManifest.sourceType === "game-ad"
           ? (assetPlan.forgeTargets ?? [])
-              .filter((target) => !availableAssets.includes(target.suggestedAsset))
+              .filter((target) => (assetStatuses.get(target.suggestedAsset) ?? "pending") === "pending")
               .map((target) => `${target.executionKind}:${target.suggestedAsset}`)
         : [];
 
@@ -201,6 +248,13 @@ export function syncAssetExecutionProject(input: {
     sourceSceneMap: nextSourceSceneMap,
     now: input.now,
   });
+  const nextAssetExecutionPlan: AssetExecutionPlan = {
+    ...assetExecutionPlan,
+    items: assetExecutionPlan.items.map((item) => ({
+      ...item,
+      status: assetStatuses.get(item.suggestedAsset) ?? item.status,
+    })),
+  };
   const capabilities = detectHyperframesCapabilities();
 
   writeFileSync(resolve(projectDir, "ASSET_PLAN.json"), JSON.stringify(nextAssetPlan, null, 2), "utf8");
@@ -208,12 +262,12 @@ export function syncAssetExecutionProject(input: {
   writeFileSync(resolve(projectDir, "SOURCE_SCENE_MAP.json"), JSON.stringify(nextSourceSceneMap, null, 2), "utf8");
   writeFileSync(
     resolve(projectDir, "ASSET_EXECUTION_PLAN.json"),
-    JSON.stringify(assetExecutionPlan, null, 2),
+    JSON.stringify(nextAssetExecutionPlan, null, 2),
     "utf8",
   );
   writeFileSync(
     resolve(projectDir, "CAPTURE_EXECUTION_PLAN.json"),
-    JSON.stringify(assetExecutionPlan, null, 2),
+    JSON.stringify(nextAssetExecutionPlan, null, 2),
     "utf8",
   );
   writeFileSync(
@@ -232,6 +286,6 @@ export function syncAssetExecutionProject(input: {
   return {
     projectDir,
     availableCount: nextAssetPlan.availableAssets.length,
-    pendingCount: assetExecutionPlan.items.filter((item) => item.status === "pending").length,
+    pendingCount: nextAssetExecutionPlan.items.filter((item) => item.status === "pending").length,
   };
 }

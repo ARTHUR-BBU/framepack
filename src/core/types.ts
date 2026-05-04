@@ -266,7 +266,7 @@ export interface AssetExecutionPlanItem {
   acceptanceCriteria?: string[];
   outputPath: string;
   metadataPath: string;
-  status: "pending" | "available";
+  status: "pending" | "available" | "failed" | "skipped" | "external";
 }
 
 export interface AssetExecutionPlan {

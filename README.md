@@ -186,6 +186,8 @@ Framepack also supports forge execution kinds for 2D asset production:
 
 Forge tasks can include `forgeBackend`, `requiredSkill`, `expectedOutputs`, `prompt`, `recommendedSceneIds`, `styleNotes`, and `acceptanceCriteria`.
 
+Execution item status values are `pending`, `available`, `failed`, `skipped`, and `external`. Forge producers can write metadata JSON next to their output path to report status back into `sync-assets`.
+
 `agent-sprite-forge` is the first recommended 2D asset forge backend. If the relevant skills are installed, an agent can continue from the generated package with `$generate2dsprite` for sprites, character packs, prop packs, and FX packs, and `$generate2dmap` for maps/backgrounds. Framepack only emits the backend-neutral task and acceptance contract.
 
 ### `capture`

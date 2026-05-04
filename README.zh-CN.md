@@ -88,6 +88,8 @@ Forge 任务可以包含：
 - `styleNotes`
 - `acceptanceCriteria`
 
+执行项状态包括 `pending`、`available`、`failed`、`skipped`、`external`。Forge 生产方可以在输出路径旁写入 metadata JSON，让 `sync-assets` 把状态同步回工程包。
+
 `agent-sprite-forge` 是第一个推荐的 2D asset forge 参考后端。如果相关 skill 已安装，agent 可以根据工程包用 `$generate2dsprite` 生产 sprite、角色、prop、FX，用 `$generate2dmap` 生产地图/背景。Framepack 只生成标准化任务、提示词、预期输出和验收条件，不绑定单一后端。
 
 ## 常用命令
