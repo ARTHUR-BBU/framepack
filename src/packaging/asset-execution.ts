@@ -12,7 +12,7 @@ import type {
   VideoBrief,
 } from "../core/types.js";
 import { detectHyperframesCapabilities } from "../runtime/hyperframes/adapter.js";
-import { formatHandoffMarkdown } from "./documents.js";
+import { formatForgeTasksMarkdown, formatHandoffMarkdown } from "./documents.js";
 import { buildSceneAssetMap } from "./scene-asset-map.js";
 import { buildSourceSceneMap } from "./source-scene-map.js";
 
@@ -306,6 +306,7 @@ export function syncAssetExecutionProject(input: {
     }),
     "utf8",
   );
+  writeFileSync(resolve(projectDir, "FORGE_TASKS.md"), formatForgeTasksMarkdown(nextAssetPlan), "utf8");
 
   return {
     projectDir,

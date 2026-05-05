@@ -52,6 +52,7 @@ import {
 } from "../dist/compiler/pipeline-registry.js";
 import { captureWebsiteProject } from "../dist/capture/website/executor.js";
 import { composeThreadProject } from "../dist/capture/thread/executor.js";
+import { createForgeTaskInstruction } from "../dist/forge/adapter.js";
 
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -83,6 +84,68 @@ const websiteExamplePath = resolve(
 );
 
 const tests = [
+  {
+    name: "create agent-sprite-forge task instructions without executing the backend",
+    run: () => {
+      const instruction = createForgeTaskInstruction({
+        suggestedAsset: "hero-character-pack",
+        sourceType: "game-ad",
+        sourceLabel: "Playable hero character",
+        sourceText: "A platform that turns product stories into videos.",
+        executionKind: "forge-character-pack",
+        assetForm: "character-pack",
+        recommendedSceneIds: ["scene-1", "scene-3"],
+        forgeBackend: "agent-sprite-forge",
+        requiredSkill: "generate2dsprite",
+        expectedOutputs: ["transparent PNG sprite sheet", "asset metadata JSON"],
+        prompt: "Create a hero character pack.",
+        styleNotes: ["Readable at video scale."],
+        acceptanceCriteria: ["Includes reusable poses."],
+        outputPath: "assets/forge/hero-character-pack",
+        metadataPath: "assets/forge/hero-character-pack.json",
+        status: "pending",
+      });
+
+      assert.equal(instruction.backend, "agent-sprite-forge");
+      assert.equal(instruction.skill, "generate2dsprite");
+      assert.match(instruction.agentInstruction, /\$generate2dsprite/);
+      assert.match(instruction.agentInstruction, /Create a hero character pack/);
+      assert.match(instruction.agentInstruction, /assets\/forge\/hero-character-pack\.json/);
+      assert.deepEqual(instruction.expectedMetadata, {
+        status: "available",
+        outputs: ["<package-relative output paths>"],
+      });
+      assert.equal(instruction.autoExecute, false);
+    },
+  },
+  {
+    name: "create manual forge task instructions without skill commands",
+    run: () => {
+      const instruction = createForgeTaskInstruction({
+        suggestedAsset: "custom-prop-pack",
+        sourceType: "game-ad",
+        sourceLabel: "Custom prop pack",
+        sourceText: "Props from a custom backend.",
+        executionKind: "forge-prop-pack",
+        assetForm: "prop-pack",
+        recommendedSceneIds: ["scene-2"],
+        forgeBackend: "manual",
+        expectedOutputs: ["prop PNGs", "metadata JSON"],
+        prompt: "Create product props.",
+        styleNotes: ["Match package palette."],
+        acceptanceCriteria: ["Props are transparent PNGs."],
+        outputPath: "assets/forge/custom-prop-pack",
+        metadataPath: "assets/forge/custom-prop-pack.json",
+        status: "pending",
+      });
+
+      assert.equal(instruction.backend, "manual");
+      assert.equal(instruction.skill, undefined);
+      assert.doesNotMatch(instruction.agentInstruction, /\$/);
+      assert.match(instruction.agentInstruction, /manual or custom asset producer/);
+      assert.equal(instruction.autoExecute, false);
+    },
+  },
   {
     name: "mark forge metadata available when declared outputs exist",
     run: async () => {
@@ -540,6 +603,8 @@ const tests = [
       assert.match(result.package.files["HANDOFF.md"], /\$generate2dsprite/);
       assert.match(result.package.files["HANDOFF.md"], /\$generate2dmap/);
       assert.match(result.package.files["HANDOFF.md"], /agent-sprite-forge/);
+      assert.match(result.package.files["FORGE_TASKS.md"], /\$generate2dsprite/);
+      assert.match(result.package.files["FORGE_TASKS.md"], /Metadata must include/);
     },
   },
   {

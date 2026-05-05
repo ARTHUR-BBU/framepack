@@ -11,6 +11,7 @@ import type {
 } from "../types.js";
 import {
   formatGuardrailsMarkdown,
+  formatForgeTasksMarkdown,
   formatHandoffMarkdown,
   formatRuntimeCommandsMarkdown,
   formatScriptMarkdown,
@@ -95,6 +96,7 @@ export function createVideoProjectPackage(input: {
       "SCENE_ASSET_MAP.json": JSON.stringify(sceneAssetMap, null, 2),
       "SOURCE_SCENE_MAP.json": JSON.stringify(sourceSceneMap, null, 2),
       "FLYWHEEL.md": "# Flywheel\n\nIntake -> Plan -> Review -> Compose -> Render -> Retro\n",
+      "FORGE_TASKS.md": formatForgeTasksMarkdown(input.assetPlan),
       "hyperframes.json": JSON.stringify(
         {
           $schema: "https://hyperframes.heygen.com/schema/hyperframes.json",

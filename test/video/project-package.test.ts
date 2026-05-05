@@ -150,6 +150,7 @@ describe("createVideoProjectPackage", () => {
         "CAPTURE_EXECUTION_PLAN.json",
         "COMMANDS.md",
         "FLYWHEEL.md",
+        "FORGE_TASKS.md",
         "GUARDRAILS.md",
       "HANDOFF.md",
       "PACKAGE_MANIFEST.json",
@@ -169,6 +170,7 @@ describe("createVideoProjectPackage", () => {
     assert.deepEqual(result.directories.sort(), ["assets", "assets/captures", "assets/forge", "assets/generated", "compositions"]);
     assert.equal(result.projectName, "case-video");
     assert.match(result.files["GUARDRAILS.md"], /Max duration: 60s/);
+    assert.match(result.files["FORGE_TASKS.md"], /# Forge Tasks/);
     assert.match(result.files["GUARDRAILS.md"], /Latest validation: passed/);
     assert.match(result.files["HANDOFF.md"], /Validation status: passed/);
     assert.match(result.files["SCENE_ASSET_MAP.json"], /"scenes": \[/);

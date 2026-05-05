@@ -48,7 +48,7 @@ export function buildPackageManifest(input: {
       execution: ["ASSET_EXECUTION_PLAN.json", "CAPTURE_EXECUTION_PLAN.json"],
       validation: ["VALIDATION_REPORT.json", "VALIDATION_REPORT.md", "GUARDRAILS.md"],
       runtime: ["index.html", "meta.json", "hyperframes.json", "compositions/"],
-      docs: ["HANDOFF.md", "COMMANDS.md", "FLYWHEEL.md", "RETRO_LOG.md"],
+      docs: ["HANDOFF.md", "FORGE_TASKS.md", "COMMANDS.md", "FLYWHEEL.md", "RETRO_LOG.md"],
     },
     capabilities: {
       sourceTypes: input.sourceManifest ? [input.sourceManifest.sourceType] : [],

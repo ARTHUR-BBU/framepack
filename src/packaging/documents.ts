@@ -1,4 +1,5 @@
 import type { AssetPlan, Script, Storyboard, ValidationReport, VideoBrief } from "../core/types.js";
+import { createForgeTaskInstruction } from "../forge/adapter.js";
 import type { HyperframesCommandSpec, RuntimeCapabilities } from "../runtime/hyperframes/types.js";
 
 function formatList(items: string[]): string {
@@ -158,6 +159,45 @@ export function formatHandoffMarkdown(input: {
     ),
     "",
   ].join("\n");
+}
+
+export function formatForgeTasksMarkdown(assetPlan: AssetPlan): string {
+  const forgeTargets = assetPlan.forgeTargets ?? [];
+
+  if (forgeTargets.length === 0) {
+    return ["# Forge Tasks", "", "- None", ""].join("\n");
+  }
+
+  const sections = forgeTargets.flatMap((target) => {
+    const instruction = createForgeTaskInstruction({
+      suggestedAsset: target.suggestedAsset,
+      sourceType: "game-ad",
+      sourceLabel: target.sourceLabel,
+      sourceText: target.sourceText,
+      executionKind: target.executionKind,
+      assetForm: target.assetForm,
+      recommendedSceneIds: [...target.recommendedSceneIds],
+      rationale: target.rationale,
+      ...(target.forgeBackend ? { forgeBackend: target.forgeBackend } : {}),
+      ...(target.requiredSkill ? { requiredSkill: target.requiredSkill } : {}),
+      expectedOutputs: [...target.expectedOutputs],
+      prompt: target.prompt,
+      styleNotes: [...target.styleNotes],
+      acceptanceCriteria: [...target.acceptanceCriteria],
+      outputPath: `assets/forge/${target.suggestedAsset}`,
+      metadataPath: `assets/forge/${target.suggestedAsset}.json`,
+      status: assetPlan.availableAssets.includes(target.suggestedAsset) ? "available" : "pending",
+    });
+
+    return [
+      `## ${target.suggestedAsset}`,
+      "",
+      instruction.agentInstruction,
+      "",
+    ];
+  });
+
+  return ["# Forge Tasks", "", ...sections, ""].join("\n");
 }
 
 export function formatRuntimeCommandsMarkdown(input: {

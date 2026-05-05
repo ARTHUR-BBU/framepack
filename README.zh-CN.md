@@ -53,6 +53,7 @@ Framepack 会生成一个视频工程包。进入工程包后，优先看：
 - `SOURCE_SCENE_MAP.json`
 - `ASSET_PLAN.json`
 - `ASSET_EXECUTION_PLAN.json`
+- `FORGE_TASKS.md`
 
 这些文件共同描述：
 

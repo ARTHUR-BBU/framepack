@@ -69,6 +69,7 @@ Then inspect these files as needed:
 - `SOURCE_SCENE_MAP.json`
 - `ASSET_PLAN.json`
 - `ASSET_EXECUTION_PLAN.json`
+- `FORGE_TASKS.md`
 - `HANDOFF.md`
 
 ## Agent Workflow

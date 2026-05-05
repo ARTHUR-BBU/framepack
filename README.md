@@ -276,6 +276,7 @@ The generated package includes:
 - website `captureTargets` also include `recommendedSceneIds` so follow-on agents know which scenes each capture best supports
 - website `captureTargets` now also include `purposeTag` and `assetForm`, so downstream agents know both the storytelling role and the likely visual treatment
 - `ASSET_EXECUTION_PLAN.json` with expected output paths, execution kinds, and pending/available sync state
+- `FORGE_TASKS.md` with agent-facing instructions for forge tasks
 - `VALIDATION_REPORT.json`
 - `VALIDATION_REPORT.md`
 - `GUARDRAILS.md`
