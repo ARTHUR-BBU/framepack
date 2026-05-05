@@ -58,10 +58,15 @@ function isAssetExecutionStatus(value: unknown): value is AssetExecutionPlanItem
   );
 }
 
-function readForgeMetadataStatus(
+interface ForgeArtifactMetadata {
+  status?: unknown;
+  outputs?: unknown;
+}
+
+function readForgeMetadata(
   projectDir: string,
   item: AssetExecutionPlanItem,
-): AssetExecutionPlanItem["status"] | undefined {
+): ForgeArtifactMetadata | undefined {
   if (!isForgeExecutionKind(item.executionKind)) {
     return undefined;
   }
@@ -72,11 +77,25 @@ function readForgeMetadataStatus(
     return undefined;
   }
 
-  const metadata = JSON.parse(readFileSync(metadataPath, "utf8")) as {
-    status?: unknown;
-  };
+  return JSON.parse(readFileSync(metadataPath, "utf8")) as ForgeArtifactMetadata;
+}
 
-  return isAssetExecutionStatus(metadata.status) ? metadata.status : undefined;
+function getForgeMetadataStatus(metadata?: ForgeArtifactMetadata): AssetExecutionPlanItem["status"] | undefined {
+  return isAssetExecutionStatus(metadata?.status) ? metadata.status : undefined;
+}
+
+function getForgeMetadataOutputs(metadata?: ForgeArtifactMetadata): string[] {
+  if (!Array.isArray(metadata?.outputs)) {
+    return [];
+  }
+
+  return metadata.outputs.filter((output): output is string => typeof output === "string" && output.length > 0);
+}
+
+function forgeMetadataOutputsExist(projectDir: string, metadata?: ForgeArtifactMetadata): boolean {
+  const outputs = getForgeMetadataOutputs(metadata);
+
+  return outputs.length > 0 && outputs.every((output) => existsSync(resolve(projectDir, output)));
 }
 
 function hasMaterializedOutput(projectDir: string, item: AssetExecutionPlanItem): boolean {
@@ -109,7 +128,12 @@ function getSyncedAssetStatus(
   projectDir: string,
   item: AssetExecutionPlanItem,
 ): AssetExecutionPlanItem["status"] {
-  const metadataStatus = readForgeMetadataStatus(projectDir, item);
+  const metadata = readForgeMetadata(projectDir, item);
+  const metadataStatus = getForgeMetadataStatus(metadata);
+
+  if ((metadataStatus === "available" || metadataStatus === "external") && !forgeMetadataOutputsExist(projectDir, metadata)) {
+    return "pending";
+  }
 
   if (metadataStatus && metadataStatus !== "pending") {
     return metadataStatus;

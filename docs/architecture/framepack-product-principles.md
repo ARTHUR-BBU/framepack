@@ -80,7 +80,7 @@ These tasks are backend-neutral. A task may recommend `agent-sprite-forge` and a
 
 Framepack should not silently install forge backends or call image generation models. It should generate prompts, expected outputs, scene linkage, output paths, and acceptance criteria so an agent or external producer can continue the work.
 
-Asset execution status is part of the package protocol. Execution items can be `pending`, `available`, `failed`, `skipped`, or `external`; `sync-assets` should preserve producer-reported metadata status instead of reducing every result to available or pending.
+Asset execution status is part of the package protocol. Execution items can be `pending`, `available`, `failed`, `skipped`, or `external`; `sync-assets` should preserve producer-reported metadata status instead of reducing every result to available or pending. For forge metadata, `available` and `external` require an `outputs` array of package-relative paths so the package can verify the declared files exist.
 
 ### What Framepack is not
 

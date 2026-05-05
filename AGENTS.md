@@ -99,7 +99,7 @@ Forge execution kinds:
 
 Forge items may include `forgeBackend`, `requiredSkill`, `expectedOutputs`, `prompt`, `recommendedSceneIds`, `styleNotes`, and `acceptanceCriteria`.
 
-Execution item statuses are `pending`, `available`, `failed`, `skipped`, and `external`. If a forge backend writes metadata JSON next to the expected output path, run `npx framepack sync-assets --project-dir <package>` to sync that status into the package.
+Execution item statuses are `pending`, `available`, `failed`, `skipped`, and `external`. If a forge backend writes metadata JSON next to the expected output path, run `npx framepack sync-assets --project-dir <package>` to sync that status into the package. For `available` or `external`, metadata must include `outputs` with package-relative file paths that exist.
 
 For `forgeBackend: "agent-sprite-forge"`, use `$generate2dsprite` for sprites, character packs, prop packs, and FX packs, and `$generate2dmap` for maps/backgrounds if those skills are installed. Do not install external skills automatically. If the skills are not available, leave the task contract intact for manual or custom asset production.
 

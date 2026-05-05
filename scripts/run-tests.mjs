@@ -84,6 +84,143 @@ const websiteExamplePath = resolve(
 
 const tests = [
   {
+    name: "mark forge metadata available when declared outputs exist",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-forge-output-available-"));
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into game-style videos.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "forge-output-available",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+
+        const projectDir = join(tempRoot, "forge-output-available");
+        const outputDir = join(projectDir, "assets", "forge", "hero-character-pack");
+        mkdirSync(outputDir, { recursive: true });
+        writeFileSync(join(outputDir, "hero.png"), "fake image bytes", "utf8");
+        writeFileSync(
+          join(projectDir, "assets", "forge", "hero-character-pack.json"),
+          JSON.stringify(
+            {
+              status: "available",
+              outputs: ["assets/forge/hero-character-pack/hero.png"],
+            },
+            null,
+            2,
+          ),
+          "utf8",
+        );
+
+        const syncExitCode = await runCli(
+          ["sync-assets", "--project-dir", projectDir],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+        const assetExecutionPlan = JSON.parse(readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"));
+        const assetPlan = JSON.parse(readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"));
+        const heroItem = assetExecutionPlan.items.find((item) => item.suggestedAsset === "hero-character-pack");
+
+        assert.equal(syncExitCode, 0);
+        assert.equal(heroItem.status, "available");
+        assert.equal(assetPlan.availableAssets.includes("hero-character-pack"), true);
+        assert.equal(assetPlan.missingAssets.includes("forge-character-pack:hero-character-pack"), false);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "keep forge metadata with missing declared outputs pending",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-forge-output-sync-"));
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into game-style videos.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "forge-output-sync",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+
+        const projectDir = join(tempRoot, "forge-output-sync");
+        const outputDir = join(projectDir, "assets", "forge", "hero-character-pack");
+        mkdirSync(outputDir, { recursive: true });
+        writeFileSync(
+          join(projectDir, "assets", "forge", "hero-character-pack.json"),
+          JSON.stringify(
+            {
+              status: "available",
+              outputs: ["assets/forge/hero-character-pack/missing.png"],
+            },
+            null,
+            2,
+          ),
+          "utf8",
+        );
+
+        const syncExitCode = await runCli(
+          ["sync-assets", "--project-dir", projectDir],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+        const assetExecutionPlan = JSON.parse(readFileSync(join(projectDir, "ASSET_EXECUTION_PLAN.json"), "utf8"));
+        const assetPlan = JSON.parse(readFileSync(join(projectDir, "ASSET_PLAN.json"), "utf8"));
+        const heroItem = assetExecutionPlan.items.find((item) => item.suggestedAsset === "hero-character-pack");
+
+        assert.equal(syncExitCode, 0);
+        assert.equal(heroItem.status, "pending");
+        assert.equal(assetPlan.availableAssets.includes("hero-character-pack"), false);
+        assert.equal(assetPlan.missingAssets.includes("forge-character-pack:hero-character-pack"), true);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "sync forge metadata status into asset execution lifecycle",
     run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-forge-status-sync-"));
