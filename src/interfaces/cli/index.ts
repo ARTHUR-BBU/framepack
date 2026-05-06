@@ -3,6 +3,10 @@ import { basename, dirname, extname, resolve } from "node:path";
 import { materializeProjectAssets } from "../../capture/index.js";
 import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
 import {
+  validateProjectPackage,
+  writeProjectPackageValidationReport,
+} from "../../packaging/package-validation.js";
+import {
   ensureProjectValidationPassed,
 } from "../../compiler/index.js";
 import {
@@ -318,6 +322,28 @@ async function runGenerateCommand(args: string[], io: CliIo): Promise<number> {
 }
 
 async function runValidateCommand(args: string[], io: CliIo): Promise<number> {
+  const commandArgs = getCommandArgs(args);
+  const projectDir = getOptionalArg(commandArgs, "--project-dir");
+
+  if (projectDir) {
+    const resolvedProjectDir = resolve(projectDir);
+    const report = validateProjectPackage({
+      projectDir: resolvedProjectDir,
+    });
+    writeProjectPackageValidationReport({
+      projectDir: resolvedProjectDir,
+      report,
+    });
+
+    if (report.status === "failed") {
+      io.stderr(`Package validation failed for ${resolvedProjectDir}: ${report.issues.join(", ")}`);
+      return 1;
+    }
+
+    io.stdout(`Package validation passed for ${resolvedProjectDir}. Report written to ${resolvedProjectDir}`);
+    return 0;
+  }
+
   const options = parseCliArgs(args);
   const baseDefaults = {
     goal: options.goal,

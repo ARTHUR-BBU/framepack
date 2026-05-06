@@ -2643,6 +2643,250 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "validate a generated project package protocol from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-validate-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into agent-native video packages.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        const validateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(validateExitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /Package validation passed/);
+        assert.match(readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"), /"status": "passed"/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail project package validation when execution assets are not mapped to scenes",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-validate-fail-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into agent-native video packages.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        const sceneAssetMapPath = join(projectDir, "SCENE_ASSET_MAP.json");
+        const sceneAssetMap = JSON.parse(readFileSync(sceneAssetMapPath, "utf8"));
+        sceneAssetMap.assets = sceneAssetMap.assets.filter((asset) => asset.suggestedAsset !== "hero-character-pack");
+        sceneAssetMap.scenes = sceneAssetMap.scenes.map((scene) => ({
+          ...scene,
+          recommendedAssets: scene.recommendedAssets.filter((asset) => asset.suggestedAsset !== "hero-character-pack"),
+        }));
+        writeFileSync(sceneAssetMapPath, JSON.stringify(sceneAssetMap, null, 2), "utf8");
+
+        const validateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(validateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /Package validation failed/);
+        assert.match(stderr.join("\n"), /hero-character-pack/);
+        assert.match(readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"), /"status": "failed"/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail project package validation when manifest protocol version is unsupported",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-validate-version-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--thread-file",
+            threadExamplePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the thread",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "thread-package",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "thread-package");
+        const manifestPath = join(projectDir, "PACKAGE_MANIFEST.json");
+        const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+        manifest.protocolVersion = 99;
+        writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+
+        const validateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(validateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /protocolVersion/);
+        assert.match(readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"), /"status": "failed"/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail project package validation cleanly when scene asset map lacks unified asset fields",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-validate-legacy-map-"));
+      const originalFetch = globalThis.fetch;
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        globalThis.fetch = async () =>
+          new Response(
+            `
+              <!doctype html>
+              <html>
+                <head>
+                  <title>Website Product</title>
+                  <meta name="description" content="A product landing page for founders." />
+                </head>
+                <body>
+                  <h1>Launch faster</h1>
+                  <p>Ship reusable video workflows.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html" },
+            },
+          );
+
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--url",
+            "https://example.com/product",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the site",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "legacy-map-package",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "legacy-map-package");
+        const sceneAssetMapPath = join(projectDir, "SCENE_ASSET_MAP.json");
+        const sceneAssetMap = JSON.parse(readFileSync(sceneAssetMapPath, "utf8"));
+        delete sceneAssetMap.assets;
+        sceneAssetMap.scenes = sceneAssetMap.scenes.map((scene) => {
+          const nextScene = { ...scene };
+          delete nextScene.recommendedAssets;
+          return nextScene;
+        });
+        writeFileSync(sceneAssetMapPath, JSON.stringify(sceneAssetMap, null, 2), "utf8");
+
+        const validateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(validateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /SCENE_ASSET_MAP.json assets/);
+        assert.match(readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"), /"status": "failed"/);
+      } finally {
+        globalThis.fetch = originalFetch;
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "generate from a project config file",
     run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-generate-"));

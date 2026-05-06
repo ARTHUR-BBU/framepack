@@ -155,6 +155,14 @@ npx framepack validate --thread-file examples/thread.txt --output-dir out --goal
 npx framepack validate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
 ```
 
+Validate an already generated project package protocol in place:
+
+```bash
+npx framepack validate --project-dir out/sprite-video-demo
+```
+
+Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` stay aligned. It also fails if an item marked `available` or `external` points at a missing output file.
+
 `validate` writes:
 
 - `VALIDATION_REPORT.json`

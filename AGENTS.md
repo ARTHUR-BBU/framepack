@@ -36,6 +36,7 @@ Materialize pending source assets:
 ```bash
 npx framepack capture --project-dir out/thread-case
 npx framepack sync-assets --project-dir out/thread-case
+npx framepack validate --project-dir out/thread-case
 ```
 
 Render through HyperFrames when the runtime is available:
@@ -80,7 +81,8 @@ Then inspect these files as needed:
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
 4. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
 5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
-6. Run `npx framepack runtime doctor` before previewing or rendering with HyperFrames.
+6. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment.
+7. Run `npx framepack runtime doctor` before previewing or rendering with HyperFrames.
 
 ## Asset Forge Layer
 
