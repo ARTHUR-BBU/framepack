@@ -605,6 +605,10 @@ const tests = [
       assert.match(result.package.files["HANDOFF.md"], /agent-sprite-forge/);
       assert.match(result.package.files["FORGE_TASKS.md"], /\$generate2dsprite/);
       assert.match(result.package.files["FORGE_TASKS.md"], /Metadata must include/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"recommendedAssets": \[/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"assets": \[/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"executionKind": "forge-character-pack"/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"suggestedAsset": "hero-character-pack"/);
     },
   },
   {
@@ -881,6 +885,10 @@ Framepack compiles content into executable video projects.
       assert.match(result.package.files["VIDEO_BRIEF.json"], /"goal": "Explain the thread"/);
       assert.match(result.package.files["SCENE_PLAN.json"], /post-1-card/);
       assert.match(result.package.files["ASSET_PLAN.json"], /compose:post-1-card/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"recommendedAssets": \[/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"assets": \[/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"executionKind": "compose-text-card"/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"suggestedAsset": "post-1-card"/);
       assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceType": "thread"/);
       assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceLabel": "Post 1"/);
     },
@@ -1011,6 +1019,9 @@ Framepack compiles content into executable video projects.
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"captures": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"sceneId": "scene-1"/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"suggestedAsset": "launch-faster-capture"/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"recommendedAssets": \[/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"assets": \[/);
+      assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"executionKind": "capture-screenshot"/);
       assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceType": "website"/);
       assert.match(result.package.files["SOURCE_SCENE_MAP.json"], /"sourceLabel": "Launch faster"/);
       assert.match(result.package.files["HANDOFF.md"], /Capture targets:/);

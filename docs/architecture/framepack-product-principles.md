@@ -167,7 +167,7 @@ It is not a thin middleware layer because it performs high-value production judg
 - what should be explained
 - how the material should be decomposed into scenes
 - which source units should become assets
-- which assets support which scenes
+- which assets support which scenes, expressed through `SCENE_ASSET_MAP.json`
 - which asset execution tasks can be performed by capture, text-card composition, manual production, or an optional asset forge backend
 - what is still missing before rendering can finish
 - what the next agent step should be

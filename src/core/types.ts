@@ -180,6 +180,8 @@ export type ForgeExecutionKind =
   | "forge-prop-pack"
   | "forge-character-pack";
 
+export type AssetExecutionKind = "capture-screenshot" | "compose-text-card" | ForgeExecutionKind;
+
 export interface ForgeAssetTarget {
   suggestedAsset: string;
   sourceLabel: string;
@@ -205,6 +207,17 @@ export interface SceneAssetMapSceneEntry {
     sourceSectionTitle: string;
     rationale: string;
   }>;
+  recommendedAssets: SceneAssetMapAssetEntry[];
+}
+
+export interface SceneAssetMapAssetEntry {
+  suggestedAsset: string;
+  sourceType: "website" | "thread" | "game-ad";
+  sourceLabel: string;
+  assetForm: CaptureTarget["assetForm"] | "text-card" | ForgeAssetTarget["assetForm"];
+  executionKind: AssetExecutionKind;
+  recommendedSceneIds: string[];
+  rationale?: string;
 }
 
 export interface SceneAssetMapCaptureEntry {
@@ -219,6 +232,7 @@ export interface SceneAssetMapCaptureEntry {
 export interface SceneAssetMap {
   scenes: SceneAssetMapSceneEntry[];
   captures: SceneAssetMapCaptureEntry[];
+  assets: SceneAssetMapAssetEntry[];
 }
 
 export interface SourceSceneMapSceneEntry {
@@ -254,7 +268,7 @@ export interface AssetExecutionPlanItem {
   sourceText: string;
   sourceUrl?: string;
   purposeTag?: CaptureTarget["purposeTag"];
-  executionKind: "capture-screenshot" | "compose-text-card" | ForgeExecutionKind;
+  executionKind: AssetExecutionKind;
   assetForm: CaptureTarget["assetForm"] | "text-card" | ForgeAssetTarget["assetForm"];
   recommendedSceneIds: string[];
   rationale?: string;

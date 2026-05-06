@@ -50,6 +50,7 @@ Framepack 会生成一个视频工程包。进入工程包后，优先看：
 - `SOURCE_MANIFEST.json`
 - `VIDEO_BRIEF.json`
 - `SCENE_PLAN.json`
+- `SCENE_ASSET_MAP.json`
 - `SOURCE_SCENE_MAP.json`
 - `ASSET_PLAN.json`
 - `ASSET_EXECUTION_PLAN.json`
@@ -63,6 +64,8 @@ Framepack 会生成一个视频工程包。进入工程包后，优先看：
 - 哪些素材要生成、截取或外部生产
 - 素材应该服务哪些镜头
 - agent 下一步应该执行什么
+
+`SCENE_ASSET_MAP.json` 是按镜头查看素材任务的统一入口。新字段 `recommendedAssets` 和顶层 `assets` 会同时覆盖网页截图、帖子文字卡片和 forge 素材任务；旧字段 `recommendedCaptures` 和 `captures` 会继续保留，方便老流程读取网页截图映射。
 
 ## Asset Forge Layer
 
@@ -175,7 +178,7 @@ npx framepack render --project-dir out/thread-case
 
 1. 先读 `PACKAGE_MANIFEST.json`
 2. 再读 `HANDOFF.md`
-3. 查看 `SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json`
+3. 查看 `SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json`
 4. 运行 `capture` 生成待处理素材
 5. 对 forge 任务，根据 `requiredSkill`、`prompt`、`expectedOutputs` 和 `acceptanceCriteria` 生产或交接素材
 6. 运行 `sync-assets` 同步素材状态

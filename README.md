@@ -65,7 +65,7 @@ When an agent receives a generated package:
 
 1. Read `PACKAGE_MANIFEST.json`.
 2. Read `HANDOFF.md` for current state and next actions.
-3. Inspect `SOURCE_SCENE_MAP.json` and `ASSET_EXECUTION_PLAN.json`.
+3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json`.
 4. Run `npx framepack capture --project-dir <package>` to materialize pending source assets.
 5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
 6. Run `npx framepack runtime doctor`, then `preview` or `render` when HyperFrames is available.
@@ -265,8 +265,8 @@ The generated package includes:
 - `SOURCE_MANIFEST.json` for website-generated and thread-generated packages
 - `SCENE_PLAN.json`
 - website `SCENE_PLAN.json` now carries scene-level asset hints derived from structured website sections
-- `SCENE_ASSET_MAP.json` with scene-first and capture-first lookup for website-derived asset recommendations
-- `SOURCE_SCENE_MAP.json` with scene-first and source-first lookup across website sections and thread posts
+- `SCENE_ASSET_MAP.json` with scene-first `recommendedAssets`, top-level `assets`, and compatibility `recommendedCaptures` / `captures`
+- `SOURCE_SCENE_MAP.json` with scene-first and source-first lookup across website sections, thread posts, and game-ad forge sources
 - `SCRIPT.md`
 - `STORYBOARD.md`
 - `ASSET_PLAN.json`

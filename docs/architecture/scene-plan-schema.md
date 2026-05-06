@@ -28,4 +28,4 @@ Each scene includes:
 - Scene timing must remain consistent with `totalDurationSec`.
 - The structure is intentionally composition-agnostic so validation can happen before HyperFrames emission.
 - The final scene must set `transition` to `null` to mark the end of the plan.
-- `assets` may reference captures, generated text cards, or forge-produced assets. The actual materialization task lives in `ASSET_EXECUTION_PLAN.json`.
+- `assets` may reference captures, generated text cards, or forge-produced assets. Treat these as scene-level hints; the authoritative scene-to-asset lookup lives in `SCENE_ASSET_MAP.json`, and the actual materialization task lives in `ASSET_EXECUTION_PLAN.json`.

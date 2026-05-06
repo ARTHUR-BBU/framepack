@@ -66,6 +66,7 @@ Then inspect these files as needed:
 - `SOURCE_MANIFEST.json`
 - `VIDEO_BRIEF.json`
 - `SCENE_PLAN.json`
+- `SCENE_ASSET_MAP.json`
 - `SOURCE_SCENE_MAP.json`
 - `ASSET_PLAN.json`
 - `ASSET_EXECUTION_PLAN.json`
@@ -76,7 +77,7 @@ Then inspect these files as needed:
 
 1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
 2. Read `HANDOFF.md` to understand the current package state and pending work.
-3. Inspect `SOURCE_SCENE_MAP.json` and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
+3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
 4. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
 5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
 6. Run `npx framepack runtime doctor` before previewing or rendering with HyperFrames.
@@ -84,6 +85,8 @@ Then inspect these files as needed:
 ## Asset Forge Layer
 
 `ASSET_EXECUTION_PLAN.json` can include source capture tasks and forge tasks.
+
+`SCENE_ASSET_MAP.json` is the scene-first asset lookup. Use `recommendedAssets` and top-level `assets` for the unified asset contract across website captures, thread cards, and forge-produced assets. `recommendedCaptures` and `captures` remain as compatibility fields for older website capture flows.
 
 Existing source materialization kinds:
 
@@ -107,7 +110,7 @@ For `forgeBackend: "agent-sprite-forge"`, use `$generate2dsprite` for sprites, c
 ## Editing Rules
 
 - Keep `PACKAGE_MANIFEST.json` consistent with package files when changing package structure.
-- Keep `SOURCE_SCENE_MAP.json` and `ASSET_EXECUTION_PLAN.json` aligned when changing source-to-scene mapping.
+- Keep `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` aligned when changing source-to-scene mapping.
 - Prefer adding new execution kinds to `ASSET_EXECUTION_PLAN.json` over creating source-specific plan files.
 - Keep forge tasks backend-neutral; `agent-sprite-forge` is a reference backend, not a hard dependency.
 - Keep `CAPTURE_EXECUTION_PLAN.json` as compatibility output while older flows may still read it.

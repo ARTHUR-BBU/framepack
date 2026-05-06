@@ -260,6 +260,7 @@ export function syncAssetExecutionProject(input: {
   const sceneAssetMap: SceneAssetMap = buildSceneAssetMap({
     scenePlan,
     assetPlan: nextAssetPlan,
+    sourceManifest,
   });
   const nextSourceSceneMap = buildSourceSceneMap({
     scenePlan,

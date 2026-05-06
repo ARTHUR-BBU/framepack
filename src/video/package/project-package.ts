@@ -49,6 +49,7 @@ export function createVideoProjectPackage(input: {
   const sceneAssetMap = buildSceneAssetMap({
     scenePlan: input.scenePlan,
     assetPlan: input.assetPlan,
+    sourceManifest: input.sourceManifest,
   });
   const sourceSceneMap = buildSourceSceneMap({
     scenePlan: input.scenePlan,

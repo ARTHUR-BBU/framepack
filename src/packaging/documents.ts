@@ -143,7 +143,7 @@ export function formatHandoffMarkdown(input: {
     formatForgeGuidance(input.assetPlan),
     "",
     "Scene asset map:",
-    "- See `SCENE_ASSET_MAP.json` for scene-first and capture-first lookup.",
+    "- See `SCENE_ASSET_MAP.json` for scene-first `recommendedAssets`, top-level `assets`, and compatibility capture lookup.",
     "",
     "Source scene map:",
     "- See `SOURCE_SCENE_MAP.json` for source-first and scene-first source linkage.",

@@ -4,6 +4,7 @@ import type {
   SourceManifest,
   SourceSceneMap,
 } from "../core/types.js";
+import { getThreadRecommendedSceneIds } from "./thread-scene-recommendations.js";
 
 function slugifyAssetName(value: string) {
   return value
@@ -11,18 +12,6 @@ function slugifyAssetName(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48) || "source";
-}
-
-function getThreadRecommendedSceneIds(postIndex: number, postCount: number) {
-  if (postCount <= 1 || postIndex === 0) {
-    return ["scene-1", "scene-2"];
-  }
-
-  if (postIndex >= postCount - 1) {
-    return ["scene-4", "scene-5", "scene-6"];
-  }
-
-  return ["scene-2", "scene-3", "scene-4"];
 }
 
 export function buildSourceSceneMap(input: {
