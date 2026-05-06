@@ -493,18 +493,44 @@ function loadProjectRuntimeInfo(projectDir: string) {
   };
 }
 
-function runRuntimeDoctorCommand(io: CliIo): number {
+function runRuntimeDoctorCommand(args: string[], io: CliIo): number {
   const capabilities = detectHyperframesCapabilities();
-  io.stdout(
-    [
-      "HyperFrames runtime",
-      `available: ${capabilities.available}`,
-      `binary: ${capabilities.binary}`,
-      `version: ${capabilities.version}`,
-      `detectedAt: ${capabilities.detectedAt}`,
-      `fallbackNotes: ${capabilities.fallbackNotes.join(" | ") || "none"}`,
-    ].join("\n"),
-  );
+  const projectDir = getOptionalArg(args, "--project-dir");
+  const outputLines = [
+    "HyperFrames runtime",
+    `available: ${capabilities.available}`,
+    `binary: ${capabilities.binary}`,
+    `version: ${capabilities.version}`,
+    `detectedAt: ${capabilities.detectedAt}`,
+    `fallbackNotes: ${capabilities.fallbackNotes.join(" | ") || "none"}`,
+  ];
+
+  if (projectDir) {
+    const resolvedProjectDir = resolve(projectDir);
+    const packageReport = validateProjectPackage({
+      projectDir: resolvedProjectDir,
+    });
+
+    outputLines.push(
+      "",
+      "Package protocol",
+      `projectDir: ${resolvedProjectDir}`,
+      `packageStatus: ${packageReport.status}`,
+      `sceneCount: ${packageReport.sceneCount}`,
+      `issueCount: ${packageReport.issues.length}`,
+    );
+
+    io.stdout(outputLines.join("\n"));
+
+    if (packageReport.status === "failed") {
+      io.stderr(`Package protocol failed for ${resolvedProjectDir}: ${packageReport.issues.join(", ")}`);
+      return 1;
+    }
+
+    return 0;
+  }
+
+  io.stdout(outputLines.join("\n"));
 
   return 0;
 }
@@ -590,7 +616,7 @@ export async function runCli(
     }
 
     if (command === "runtime-doctor") {
-      return runRuntimeDoctorCommand(io);
+      return runRuntimeDoctorCommand(args.slice(2), io);
     }
 
     if (command === "capture") {

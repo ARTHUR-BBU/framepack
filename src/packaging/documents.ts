@@ -153,9 +153,12 @@ export function formatHandoffMarkdown(input: {
     "",
     "Runtime guidance:",
     formatList(
-      input.runtimeAvailable
-        ? ["Run `framepack preview --project-dir <path>` or `framepack render --project-dir <path>`."]
-        : input.runtimeFallbackNotes,
+      [
+        "Run `framepack runtime doctor --project-dir <path>` before preview or render.",
+        ...(input.runtimeAvailable
+          ? ["Run `framepack preview --project-dir <path>` or `framepack render --project-dir <path>`."]
+          : input.runtimeFallbackNotes),
+      ],
     ),
     "",
   ].join("\n");

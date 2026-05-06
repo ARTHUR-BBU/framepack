@@ -1599,6 +1599,7 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(writtenDir, "STORYBOARD.md"), "utf8"), /# Storyboard/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Validation status: passed/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Runtime available: (true|false)/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /runtime doctor --project-dir <path>/);
         assert.match(readFileSync(join(writtenDir, "hyperframes.json"), "utf8"), /"assets": "assets"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"rootEntry": "index.html"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"runtime": "hyperframes"/);
@@ -1726,6 +1727,111 @@ Framepack compiles content into executable video projects.
       assert.match(stdout.join("\n"), /HyperFrames runtime/);
       assert.match(stdout.join("\n"), /available: (true|false)/);
       assert.match(stdout.join("\n"), /version: (0\.4\.12|unknown)/);
+    },
+  },
+  {
+    name: "report package protocol status from the CLI doctor command",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-doctor-package-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--input",
+            fixturePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the case",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "doctor-case",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "doctor-case");
+        const doctorExitCode = await runCli(
+          ["runtime", "doctor", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(doctorExitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(stdout.join("\n"), /HyperFrames runtime/);
+        assert.match(stdout.join("\n"), /Package protocol/);
+        assert.match(stdout.join("\n"), /packageStatus: passed/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail CLI doctor when the package protocol is invalid",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-doctor-package-fail-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--thread-file",
+            threadExamplePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the thread",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "doctor-thread",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "doctor-thread");
+        const manifestPath = join(projectDir, "PACKAGE_MANIFEST.json");
+        const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+        manifest.protocolVersion = 99;
+        writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+
+        const doctorExitCode = await runCli(
+          ["runtime", "doctor", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(doctorExitCode, 1);
+        assert.match(stdout.join("\n"), /HyperFrames runtime/);
+        assert.match(stdout.join("\n"), /Package protocol/);
+        assert.match(stdout.join("\n"), /packageStatus: failed/);
+        assert.match(stderr.join("\n"), /protocolVersion/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
     },
   },
   {

@@ -42,7 +42,7 @@ npx framepack validate --project-dir out/thread-case
 Render through HyperFrames when the runtime is available:
 
 ```bash
-npx framepack runtime doctor
+npx framepack runtime doctor --project-dir out/thread-case
 npx framepack preview --project-dir out/thread-case
 npx framepack render --project-dir out/thread-case
 ```
@@ -82,7 +82,7 @@ Then inspect these files as needed:
 4. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
 5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
 6. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment.
-7. Run `npx framepack runtime doctor` before previewing or rendering with HyperFrames.
+7. Run `npx framepack runtime doctor --project-dir <package>` before previewing or rendering with HyperFrames.
 
 ## Asset Forge Layer
 

@@ -68,7 +68,8 @@ When an agent receives a generated package:
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json`.
 4. Run `npx framepack capture --project-dir <package>` to materialize pending source assets.
 5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
-6. Run `npx framepack runtime doctor`, then `preview` or `render` when HyperFrames is available.
+6. Run `npx framepack runtime doctor --project-dir <package>` to check both the runtime and package protocol.
+7. Run `preview` or `render` when HyperFrames is available.
 
 Today this repository provides compiler paths for:
 
@@ -223,6 +224,10 @@ npx playwright install chromium
 Check runtime availability:
 
 `npx framepack runtime doctor`
+
+Check runtime availability and package protocol alignment together:
+
+`npx framepack runtime doctor --project-dir out/website-case`
 
 Sync asset execution state after screenshot or asset generation work:
 

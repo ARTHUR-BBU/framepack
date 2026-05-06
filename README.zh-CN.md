@@ -140,7 +140,10 @@ npx framepack sync-assets --project-dir out/thread-case
 
 ```bash
 npx framepack runtime doctor
+npx framepack runtime doctor --project-dir out/thread-case
 ```
+
+第二条命令会同时检查 HyperFrames runtime 和工程包协议是否健康。
 
 预览和渲染：
 
