@@ -68,8 +68,10 @@ When an agent receives a generated package:
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json`.
 4. Run `npx framepack capture --project-dir <package>` to materialize pending source assets.
 5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
-6. Run `npx framepack runtime doctor --project-dir <package>` to check both the runtime and package protocol.
-7. Run `preview` or `render` when HyperFrames is available.
+6. Run `npx framepack validate --project-dir <package>` to verify protocol alignment.
+7. Run `npx framepack repair --project-dir <package>` only when derived protocol files drift and can be rebuilt from the package.
+8. Run `npx framepack runtime doctor --project-dir <package>` to check both the runtime and package protocol.
+9. Run `preview` or `render` when HyperFrames is available.
 
 Today this repository provides compiler paths for:
 
@@ -173,6 +175,16 @@ Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCEN
 - `VALIDATION_REPORT.json`
 - `VALIDATION_REPORT.md`
 
+### `repair`
+
+Repair known, deterministic package protocol drift in place:
+
+```bash
+npx framepack repair --project-dir out/sprite-video-demo
+```
+
+`repair` rebuilds derived protocol files from the existing package: `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`. It then reruns package validation and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`. It does not invent missing source content, install forge skills, or materialize image assets.
+
 You can also use a project config produced by `init`:
 
 ```bash
@@ -233,6 +245,10 @@ Check runtime availability and package protocol alignment together:
 
 `npx framepack runtime doctor --project-dir out/website-case`
 
+Repair derived package protocol files after manual edits or older package drift:
+
+`npx framepack repair --project-dir out/website-case`
+
 Sync asset execution state after screenshot or asset generation work:
 
 `npx framepack sync-assets --project-dir out/website-case`
@@ -284,6 +300,7 @@ The generated package includes:
 - website `SCENE_PLAN.json` now carries scene-level asset hints derived from structured website sections
 - `SCENE_ASSET_MAP.json` with scene-first `recommendedAssets`, top-level `assets`, and compatibility `recommendedCaptures` / `captures`
 - `SOURCE_SCENE_MAP.json` with scene-first and source-first lookup across website sections, thread posts, and game-ad forge sources
+- `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json` can be rebuilt by `repair` when those derived files drift from the source package JSON
 - `SCRIPT.md`
 - `STORYBOARD.md`
 - `ASSET_PLAN.json`

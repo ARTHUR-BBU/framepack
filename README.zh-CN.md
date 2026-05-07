@@ -133,6 +133,16 @@ npx framepack validate --project-dir out/sprite-video-demo
 
 包协议验证会检查 `PACKAGE_MANIFEST.json`、`SCENE_PLAN.json`、`SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json` 是否互相对齐。如果某个任务已经标为 `available` 或 `external`，但声明的输出文件不存在，验证会失败。
 
+修复已经生成的工程包协议漂移：
+
+```bash
+npx framepack repair --project-dir out/sprite-video-demo
+```
+
+`repair` 会根据已有 `VIDEO_BRIEF.json`、`SCENE_PLAN.json`、`ASSET_PLAN.json`、`SOURCE_MANIFEST.json` 和 `ASSET_EXECUTION_PLAN.json`，重新生成可推导的 `SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `PACKAGE_MANIFEST.json`，并重新写入验证报告。它不会物化素材，不会执行 forge，也不会安装外部 skill。
+
+给小白的说法：如果工程包像一个视频项目文件夹，`repair` 修的是目录、索引和“哪个素材服务哪个镜头”的清单；它不会替你画图、截图或生成角色，只是把这些清单重新对齐。
+
 物化待处理素材：
 
 ```bash
@@ -197,7 +207,9 @@ npx framepack render --project-dir out/thread-case
 4. 运行 `capture` 生成待处理素材
 5. 对 forge 任务，根据 `requiredSkill`、`prompt`、`expectedOutputs` 和 `acceptanceCriteria` 生产或交接素材
 6. 运行 `sync-assets` 同步素材状态
-7. 有 HyperFrames 时再运行 `preview` 或 `render`
+7. 如果 manifest、scene asset map 或 source scene map 这类派生文件和源 JSON 不一致，运行 `repair`
+8. 运行 `validate` 确认工程包协议健康
+9. 有 HyperFrames 时再运行 `preview` 或 `render`
 
 ## 这个项目的定位
 

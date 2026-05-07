@@ -39,6 +39,12 @@ npx framepack sync-assets --project-dir out/thread-case
 npx framepack validate --project-dir out/thread-case
 ```
 
+Repair derived protocol drift when needed:
+
+```bash
+npx framepack repair --project-dir out/thread-case
+```
+
 Render through HyperFrames when the runtime is available:
 
 ```bash
@@ -81,8 +87,11 @@ Then inspect these files as needed:
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
 4. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
 5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
-6. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment.
-7. Run `npx framepack runtime doctor --project-dir <package>` before previewing or rendering with HyperFrames.
+6. Run `npx framepack repair --project-dir <package>` only when derived protocol files are stale or inconsistent but the source JSON is present.
+7. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment.
+8. Run `npx framepack runtime doctor --project-dir <package>` before previewing or rendering with HyperFrames.
+
+`repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available.
 
 ## Asset Forge Layer
 
@@ -113,6 +122,7 @@ For `forgeBackend: "agent-sprite-forge"`, use `$generate2dsprite` for sprites, c
 
 - Keep `PACKAGE_MANIFEST.json` consistent with package files when changing package structure.
 - Keep `src/packaging/package-protocol.ts` and `docs/architecture/package-protocol-v1.md` aligned when changing protocol v1.
+- Keep `src/packaging/package-repair.ts` aligned with protocol-derived files when changing package repair semantics.
 - Keep `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` aligned when changing source-to-scene mapping.
 - Prefer adding new execution kinds to `ASSET_EXECUTION_PLAN.json` over creating source-specific plan files.
 - Keep forge tasks backend-neutral; `agent-sprite-forge` is a reference backend, not a hard dependency.

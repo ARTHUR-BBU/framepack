@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 import { materializeProjectAssets } from "../../capture/index.js";
 import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
+import { repairProjectPackage } from "../../packaging/package-repair.js";
 import {
   validateProjectPackage,
   writeProjectPackageValidationReport,
@@ -56,6 +57,7 @@ type CliCommandName =
   | "init"
   | "generate"
   | "validate"
+  | "repair"
   | "capture"
   | "preview"
   | "render"
@@ -168,6 +170,7 @@ function getCommandName(args: string[]): CliCommandName {
     command === "init" ||
     command === "generate" ||
     command === "validate" ||
+    command === "repair" ||
     command === "capture" ||
     command === "preview" ||
     command === "render" ||
@@ -177,7 +180,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, generate, validate, capture, runtime doctor, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use init, generate, validate, repair, capture, runtime doctor, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -191,6 +194,7 @@ function getCommandArgs(args: string[]): string[] {
     first === "init" ||
     first === "generate" ||
     first === "validate" ||
+    first === "repair" ||
     first === "capture" ||
     first === "preview" ||
     first === "render" ||
@@ -582,6 +586,24 @@ function runSyncAssetsCommand(args: string[], io: CliIo): number {
   return 0;
 }
 
+function runRepairCommand(args: string[], io: CliIo): number {
+  const projectDir = getRequiredProjectDir(args);
+  const result = repairProjectPackage({
+    projectDir,
+  });
+  const repairedList = result.repairedFiles.length > 0 ? result.repairedFiles.join(", ") : "no files";
+
+  if (result.afterStatus === "failed") {
+    io.stderr(
+      `Package repair updated ${result.projectDir}: ${repairedList}. Validation reports written. Remaining issues: ${result.remainingIssues.join(", ")}`,
+    );
+    return 1;
+  }
+
+  io.stdout(`Package repair updated ${result.projectDir}: ${repairedList}. Validation reports written.`);
+  return 0;
+}
+
 async function runCaptureCommand(
   args: string[],
   io: CliIo,
@@ -613,6 +635,10 @@ export async function runCli(
 
     if (command === "validate") {
       return await runValidateCommand(args, io);
+    }
+
+    if (command === "repair") {
+      return runRepairCommand(args.slice(1), io);
     }
 
     if (command === "runtime-doctor") {

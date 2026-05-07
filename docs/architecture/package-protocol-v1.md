@@ -19,6 +19,8 @@ The minimal protocol surface for generated packages is:
 
 `validate --project-dir <package>` checks these files before deeper protocol validation.
 
+`repair --project-dir <package>` can rebuild derived v1 files when the source JSON still exists and is valid. Its repair surface is intentionally narrow: `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and the validation reports.
+
 ## Manifest Contract
 
 `PACKAGE_MANIFEST.json` indexes:
@@ -30,6 +32,8 @@ The minimal protocol surface for generated packages is:
 
 For v1, `CAPTURE_EXECUTION_PLAN.json` remains a compatibility file. New consumers should prefer `ASSET_EXECUTION_PLAN.json`.
 
+`PACKAGE_MANIFEST.json` is derivable from the project name, `VIDEO_BRIEF.json`, optional `SOURCE_MANIFEST.json`, `ASSET_EXECUTION_PLAN.json`, and the current validation report. Package repair may refresh manifest entrypoints, artifacts, capabilities, and compatibility fields from the centralized v1 contract.
+
 ## Asset Mapping Contract
 
 `SCENE_ASSET_MAP.json` is the authoritative scene-to-asset lookup.
@@ -38,6 +42,8 @@ For v1, `CAPTURE_EXECUTION_PLAN.json` remains a compatibility file. New consumer
 - `scenes[].recommendedCaptures` and top-level `captures` remain as compatibility fields for older website capture flows.
 - Each execution item in `ASSET_EXECUTION_PLAN.json` must appear in top-level `assets`.
 - Each top-level asset recommendation must appear on the corresponding scene entry.
+
+`SCENE_ASSET_MAP.json` and `SOURCE_SCENE_MAP.json` are derivable from `SCENE_PLAN.json`, `ASSET_PLAN.json`, and optional `SOURCE_MANIFEST.json`. Package repair may rebuild them, preserving v1 compatibility fields such as `recommendedCaptures` and `captures`.
 
 ## Execution Contract
 
@@ -56,6 +62,7 @@ Execution statuses are `pending`, `available`, `failed`, `skipped`, and `externa
 ## Validation And Golden Checks
 
 - `framepack validate --project-dir <package>` validates the package protocol and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`.
+- `framepack repair --project-dir <package>` repairs derivable v1 drift by rebuilding `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then writing validation reports. It does not generate assets, execute forge tasks, or migrate packages to a newer protocol.
 - `framepack runtime doctor --project-dir <package>` checks runtime availability and package protocol health without writing validation reports.
 - `npm test` includes golden package protocol summaries for markdown, thread, and game-ad routes.
 

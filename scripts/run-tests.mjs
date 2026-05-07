@@ -3088,6 +3088,190 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "repair project package rebuilds unified scene asset map fields",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-repair-map-"));
+      const originalFetch = globalThis.fetch;
+      const repairStdout = [];
+      const repairStderr = [];
+      const validateStdout = [];
+      const validateStderr = [];
+
+      try {
+        globalThis.fetch = async () =>
+          new Response(
+            `
+              <!doctype html>
+              <html>
+                <head>
+                  <title>Website Product</title>
+                  <meta name="description" content="A product landing page for founders." />
+                </head>
+                <body>
+                  <h1>Launch faster</h1>
+                  <p>Ship reusable video workflows.</p>
+                </body>
+              </html>
+            `,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html" },
+            },
+          );
+
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--url",
+            "https://example.com/product",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the site",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "repair-map-package",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "repair-map-package");
+        const sceneAssetMapPath = join(projectDir, "SCENE_ASSET_MAP.json");
+        const sceneAssetMap = JSON.parse(readFileSync(sceneAssetMapPath, "utf8"));
+        delete sceneAssetMap.assets;
+        sceneAssetMap.scenes = sceneAssetMap.scenes.map((scene) => {
+          const nextScene = { ...scene };
+          delete nextScene.recommendedAssets;
+          return nextScene;
+        });
+        writeFileSync(sceneAssetMapPath, JSON.stringify(sceneAssetMap, null, 2), "utf8");
+
+        const failingValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: () => {},
+            stderr: () => {},
+          },
+        );
+        const repairExitCode = await runCli(
+          ["repair", "--project-dir", projectDir],
+          {
+            stdout: (message) => repairStdout.push(message),
+            stderr: (message) => repairStderr.push(message),
+          },
+        );
+        const repairedSceneAssetMap = JSON.parse(readFileSync(sceneAssetMapPath, "utf8"));
+        const finalValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => validateStdout.push(message),
+            stderr: (message) => validateStderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(failingValidateExitCode, 1);
+        assert.equal(repairExitCode, 0);
+        assert.equal(finalValidateExitCode, 0);
+        assert.equal(repairStderr.length, 0);
+        assert.equal(validateStderr.length, 0);
+        assert.match(repairStdout.join("\n"), /Package repair updated/);
+        assert.ok(Array.isArray(repairedSceneAssetMap.assets));
+        assert.ok(repairedSceneAssetMap.assets.length > 0);
+        assert.ok(Array.isArray(repairedSceneAssetMap.scenes[0].recommendedAssets));
+        assert.match(validateStdout.join("\n"), /Package validation passed/);
+      } finally {
+        globalThis.fetch = originalFetch;
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "repair project package refreshes manifest execution kinds",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-repair-manifest-"));
+      const repairStdout = [];
+      const repairStderr = [];
+      const validateStdout = [];
+      const validateStderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A course that teaches founders to ship agent-native video systems.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the course",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        const manifestPath = join(projectDir, "PACKAGE_MANIFEST.json");
+        const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+        manifest.capabilities.executionKinds = [];
+        writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+
+        const failingValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: () => {},
+            stderr: () => {},
+          },
+        );
+        const repairExitCode = await runCli(
+          ["repair", "--project-dir", projectDir],
+          {
+            stdout: (message) => repairStdout.push(message),
+            stderr: (message) => repairStderr.push(message),
+          },
+        );
+        const repairedManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+        const finalValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => validateStdout.push(message),
+            stderr: (message) => validateStderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(failingValidateExitCode, 1);
+        assert.equal(repairExitCode, 0);
+        assert.equal(finalValidateExitCode, 0);
+        assert.equal(repairStderr.length, 0);
+        assert.equal(validateStderr.length, 0);
+        assert.match(repairStdout.join("\n"), /PACKAGE_MANIFEST.json/);
+        assert.deepEqual(repairedManifest.capabilities.executionKinds, [
+          "forge-character-pack",
+          "forge-map-pack",
+          "forge-fx-pack",
+        ]);
+        assert.match(validateStdout.join("\n"), /Package validation passed/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "generate from a project config file",
     run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-config-generate-"));
