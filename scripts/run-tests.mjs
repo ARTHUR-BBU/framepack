@@ -15,6 +15,12 @@ import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { buildAssetPlan } from "../dist/planning/assets/index.js";
 import { buildAssetExecutionPlan } from "../dist/packaging/asset-execution.js";
 import { createGoldenPackageProtocolSummary } from "../dist/packaging/golden-package.js";
+import {
+  FRAMEPACK_PACKAGE_PROTOCOL,
+  FRAMEPACK_PACKAGE_PROTOCOL_VERSION,
+  FRAMEPACK_PACKAGE_PROTOCOL_V1,
+  getRequiredPackageProtocolFiles,
+} from "../dist/packaging/package-protocol.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
 import { buildScript } from "../dist/planning/script/index.js";
 import { buildStoryboard } from "../dist/planning/storyboard/index.js";
@@ -93,6 +99,37 @@ function readGoldenPackageProtocolFixture(name) {
 }
 
 const tests = [
+  {
+    name: "define the Framepack package protocol v1 contract",
+    run: () => {
+      assert.equal(FRAMEPACK_PACKAGE_PROTOCOL, "framepack.project-package");
+      assert.equal(FRAMEPACK_PACKAGE_PROTOCOL_VERSION, 1);
+      assert.deepEqual(FRAMEPACK_PACKAGE_PROTOCOL_V1.entrypoints, {
+        rootComposition: "index.html",
+        runtimeMeta: "meta.json",
+        runtimeConfig: "hyperframes.json",
+        handoff: "HANDOFF.md",
+        commands: "COMMANDS.md",
+      });
+      assert.deepEqual(FRAMEPACK_PACKAGE_PROTOCOL_V1.artifacts.execution, [
+        "ASSET_EXECUTION_PLAN.json",
+        "CAPTURE_EXECUTION_PLAN.json",
+      ]);
+      assert.deepEqual(FRAMEPACK_PACKAGE_PROTOCOL_V1.compatibility.legacyFiles, [
+        "CAPTURE_EXECUTION_PLAN.json",
+      ]);
+      assert.deepEqual(getRequiredPackageProtocolFiles(), [
+        "PACKAGE_MANIFEST.json",
+        "SCENE_PLAN.json",
+        "SCENE_ASSET_MAP.json",
+        "SOURCE_SCENE_MAP.json",
+        "ASSET_PLAN.json",
+        "ASSET_EXECUTION_PLAN.json",
+        "HANDOFF.md",
+        "FORGE_TASKS.md",
+      ]);
+    },
+  },
   {
     name: "create golden package protocol summaries for core package routes",
     run: async () => {
@@ -1740,6 +1777,7 @@ Framepack compiles content into executable video projects.
       assert.ok(Array.isArray(packageJson.files));
       assert.ok(packageJson.files.includes("README.zh-CN.md"));
       assert.ok(packageJson.files.includes("AGENTS.md"));
+      assert.ok(packageJson.files.includes("docs/architecture"));
       assert.ok(packageJson.files.includes("LICENSE"));
       assert.ok(packageJson.files.includes("examples"));
       assert.ok(packageJson.files.includes("dist"));

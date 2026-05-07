@@ -112,6 +112,7 @@ For `forgeBackend: "agent-sprite-forge"`, use `$generate2dsprite` for sprites, c
 ## Editing Rules
 
 - Keep `PACKAGE_MANIFEST.json` consistent with package files when changing package structure.
+- Keep `src/packaging/package-protocol.ts` and `docs/architecture/package-protocol-v1.md` aligned when changing protocol v1.
 - Keep `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` aligned when changing source-to-scene mapping.
 - Prefer adding new execution kinds to `ASSET_EXECUTION_PLAN.json` over creating source-specific plan files.
 - Keep forge tasks backend-neutral; `agent-sprite-forge` is a reference backend, not a hard dependency.

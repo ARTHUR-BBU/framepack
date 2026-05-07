@@ -4,6 +4,7 @@ import type {
   SceneAssetMap,
 } from "../core/types.js";
 import type { VideoProjectPackage } from "../video/package/project-package.js";
+import { getRequiredPackageProtocolFiles } from "./package-protocol.js";
 
 export interface GoldenPackageProtocolSummary {
   projectName: string;
@@ -25,17 +26,6 @@ export interface GoldenPackageProtocolSummary {
   handoffMentionsForgeTasks: boolean;
 }
 
-const REQUIRED_PROTOCOL_FILES = [
-  "PACKAGE_MANIFEST.json",
-  "SCENE_PLAN.json",
-  "SCENE_ASSET_MAP.json",
-  "SOURCE_SCENE_MAP.json",
-  "ASSET_PLAN.json",
-  "ASSET_EXECUTION_PLAN.json",
-  "HANDOFF.md",
-  "FORGE_TASKS.md",
-];
-
 function parsePackageFile<T>(projectPackage: VideoProjectPackage, path: string): T {
   const rawFile = projectPackage.files[path];
 
@@ -53,7 +43,7 @@ function uniqueSorted(values: string[]) {
 export function createGoldenPackageProtocolSummary(
   projectPackage: VideoProjectPackage,
 ): GoldenPackageProtocolSummary {
-  const missingRequiredFiles = REQUIRED_PROTOCOL_FILES.filter((path) => !(path in projectPackage.files));
+  const missingRequiredFiles = getRequiredPackageProtocolFiles().filter((path) => !(path in projectPackage.files));
   const packageManifest = parsePackageFile<PackageManifest>(projectPackage, "PACKAGE_MANIFEST.json");
   const assetExecutionPlan = parsePackageFile<AssetExecutionPlan>(
     projectPackage,

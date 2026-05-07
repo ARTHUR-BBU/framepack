@@ -9,6 +9,11 @@ import type {
   ValidationReport,
 } from "../core/types.js";
 import { formatValidationReportMarkdown } from "../video/validation/validation-report.js";
+import {
+  FRAMEPACK_PACKAGE_PROTOCOL,
+  FRAMEPACK_PACKAGE_PROTOCOL_VERSION,
+  getRequiredPackageProtocolFiles,
+} from "./package-protocol.js";
 
 function readJsonFile<T>(projectDir: string, relativePath: string, issues: string[]): T | undefined {
   const targetPath = resolve(projectDir, relativePath);
@@ -36,12 +41,14 @@ function validateManifest(input: {
     return;
   }
 
-  if (input.manifest.protocol !== "framepack.project-package") {
-    input.issues.push("PACKAGE_MANIFEST.json protocol must be framepack.project-package.");
+  if (input.manifest.protocol !== FRAMEPACK_PACKAGE_PROTOCOL) {
+    input.issues.push(`PACKAGE_MANIFEST.json protocol must be ${FRAMEPACK_PACKAGE_PROTOCOL}.`);
   }
 
-  if (input.manifest.protocolVersion !== 1) {
-    input.issues.push("PACKAGE_MANIFEST.json protocolVersion must be 1.");
+  if (input.manifest.protocolVersion !== FRAMEPACK_PACKAGE_PROTOCOL_VERSION) {
+    input.issues.push(
+      `PACKAGE_MANIFEST.json protocolVersion must be ${FRAMEPACK_PACKAGE_PROTOCOL_VERSION}.`,
+    );
   }
 
   if (!input.assetExecutionPlan) {
@@ -196,15 +203,32 @@ export function validateProjectPackage(input: {
   now?: Date;
 }): ValidationReport {
   const issues: string[] = [];
-  const manifest = readJsonFile<PackageManifest>(input.projectDir, "PACKAGE_MANIFEST.json", issues);
-  const scenePlan = readJsonFile<ScenePlan>(input.projectDir, "SCENE_PLAN.json", issues);
-  const assetExecutionPlan = readJsonFile<AssetExecutionPlan>(
-    input.projectDir,
-    "ASSET_EXECUTION_PLAN.json",
-    issues,
-  );
-  const sceneAssetMap = readJsonFile<SceneAssetMap>(input.projectDir, "SCENE_ASSET_MAP.json", issues);
-  const sourceSceneMap = readJsonFile<SourceSceneMap>(input.projectDir, "SOURCE_SCENE_MAP.json", issues);
+  for (const path of getRequiredPackageProtocolFiles()) {
+    const targetPath = resolve(input.projectDir, path);
+    if (!existsSync(targetPath)) {
+      issues.push(`Missing required package file: ${path}`);
+    }
+  }
+
+  const manifest = existsSync(resolve(input.projectDir, "PACKAGE_MANIFEST.json"))
+    ? readJsonFile<PackageManifest>(input.projectDir, "PACKAGE_MANIFEST.json", issues)
+    : undefined;
+  const scenePlan = existsSync(resolve(input.projectDir, "SCENE_PLAN.json"))
+    ? readJsonFile<ScenePlan>(input.projectDir, "SCENE_PLAN.json", issues)
+    : undefined;
+  const assetExecutionPlan = existsSync(resolve(input.projectDir, "ASSET_EXECUTION_PLAN.json"))
+    ? readJsonFile<AssetExecutionPlan>(
+        input.projectDir,
+        "ASSET_EXECUTION_PLAN.json",
+        issues,
+      )
+    : undefined;
+  const sceneAssetMap = existsSync(resolve(input.projectDir, "SCENE_ASSET_MAP.json"))
+    ? readJsonFile<SceneAssetMap>(input.projectDir, "SCENE_ASSET_MAP.json", issues)
+    : undefined;
+  const sourceSceneMap = existsSync(resolve(input.projectDir, "SOURCE_SCENE_MAP.json"))
+    ? readJsonFile<SourceSceneMap>(input.projectDir, "SOURCE_SCENE_MAP.json", issues)
+    : undefined;
 
   validateManifest({ manifest, assetExecutionPlan, issues });
   validateSceneAssetMap({ scenePlan, sceneAssetMap, assetExecutionPlan, issues });

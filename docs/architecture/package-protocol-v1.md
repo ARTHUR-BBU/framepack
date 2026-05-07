@@ -1,0 +1,64 @@
+# Package Protocol v1
+
+Framepack project packages use `protocol: "framepack.project-package"` and `protocolVersion: 1`.
+
+The v1 contract is centralized in `src/packaging/package-protocol.ts`. Package generation, package validation, and golden package summaries should read from that contract instead of redefining required files or compatibility files locally.
+
+## Required Package Files
+
+The minimal protocol surface for generated packages is:
+
+- `PACKAGE_MANIFEST.json`
+- `SCENE_PLAN.json`
+- `SCENE_ASSET_MAP.json`
+- `SOURCE_SCENE_MAP.json`
+- `ASSET_PLAN.json`
+- `ASSET_EXECUTION_PLAN.json`
+- `HANDOFF.md`
+- `FORGE_TASKS.md`
+
+`validate --project-dir <package>` checks these files before deeper protocol validation.
+
+## Manifest Contract
+
+`PACKAGE_MANIFEST.json` indexes:
+
+- `entrypoints`: runtime and handoff files
+- `artifacts`: source, planning, asset, execution, validation, runtime, and docs groups
+- `capabilities`: source types, execution kinds, and runtime backend
+- `compatibility`: legacy files that remain available for older flows
+
+For v1, `CAPTURE_EXECUTION_PLAN.json` remains a compatibility file. New consumers should prefer `ASSET_EXECUTION_PLAN.json`.
+
+## Asset Mapping Contract
+
+`SCENE_ASSET_MAP.json` is the authoritative scene-to-asset lookup.
+
+- `scenes[].recommendedAssets` and top-level `assets` are the primary v1 fields.
+- `scenes[].recommendedCaptures` and top-level `captures` remain as compatibility fields for older website capture flows.
+- Each execution item in `ASSET_EXECUTION_PLAN.json` must appear in top-level `assets`.
+- Each top-level asset recommendation must appear on the corresponding scene entry.
+
+## Execution Contract
+
+`ASSET_EXECUTION_PLAN.json` can include:
+
+- `capture-screenshot`
+- `compose-text-card`
+- `forge-sprite-sheet`
+- `forge-map-pack`
+- `forge-fx-pack`
+- `forge-prop-pack`
+- `forge-character-pack`
+
+Execution statuses are `pending`, `available`, `failed`, `skipped`, and `external`. Items marked `available` or `external` must point to existing package-relative outputs.
+
+## Validation And Golden Checks
+
+- `framepack validate --project-dir <package>` validates the package protocol and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`.
+- `framepack runtime doctor --project-dir <package>` checks runtime availability and package protocol health without writing validation reports.
+- `npm test` includes golden package protocol summaries for markdown, thread, and game-ad routes.
+
+## Future Versions
+
+Protocol v2 should be introduced by adding a new explicit contract instead of mutating v1 in place. Migration or repair commands should preserve v1 compatibility fields unless the package manifest declares a newer protocol version.
