@@ -1693,6 +1693,8 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(writtenDir, "STORYBOARD.md"), "utf8"), /# Storyboard/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Validation status: passed/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Runtime available: (true|false)/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /framepack repair --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /does not generate assets/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /runtime doctor --project-dir <path>/);
         assert.match(readFileSync(join(writtenDir, "hyperframes.json"), "utf8"), /"assets": "assets"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"rootEntry": "index.html"/);
@@ -1704,6 +1706,9 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Max duration: 60s/);
         assert.match(readFileSync(join(writtenDir, "GUARDRAILS.md"), "utf8"), /Latest validation: passed/);
         assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /# Runtime Commands/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /# Package Lifecycle Commands/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /framepack repair --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /repair derived protocol files/);
         assert.match(
           readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"),
           /hyperframes(\.cmd)? preview case-video/,

@@ -151,6 +151,14 @@ export function formatHandoffMarkdown(input: {
     "Asset execution:",
     "- See `ASSET_EXECUTION_PLAN.json` for expected output paths, execution kinds, and sync status.",
     "",
+    "Package lifecycle guidance:",
+    formatList([
+      "Run `framepack validate --project-dir <path>` after package edits to check protocol alignment.",
+      "Run `framepack repair --project-dir <path>` only when derived protocol files drift from the source JSON.",
+      "`repair` rebuilds package indexes and scene/source asset maps; it does not generate assets, capture screenshots, execute forge tasks, or install skills.",
+      "Run `framepack sync-assets --project-dir <path>` after manual, capture, or forge asset work to sync pending/available state.",
+    ]),
+    "",
     "Runtime guidance:",
     formatList(
       [
@@ -220,6 +228,21 @@ export function formatRuntimeCommandsMarkdown(input: {
         ]);
 
   return [
+    "# Package Lifecycle Commands",
+    "",
+    "Validate package protocol alignment:",
+    "",
+    "- Command: framepack validate --project-dir <path>",
+    "",
+    "Repair derived protocol files after manual edits or older package drift:",
+    "",
+    "- Command: framepack repair --project-dir <path>",
+    "- Scope: repair derived protocol files only; it does not generate assets or execute forge tasks.",
+    "",
+    "Sync materialized asset state after capture, manual production, or forge work:",
+    "",
+    "- Command: framepack sync-assets --project-dir <path>",
+    "",
     "# Runtime Commands",
     "",
     `Runtime available: ${input.capabilities.available}`,
