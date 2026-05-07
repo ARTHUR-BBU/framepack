@@ -106,6 +106,8 @@ npm test
 npm run build
 ```
 
+`npm test` 里包含 markdown、thread、game-ad 三类工程包的 golden 协议摘要检查。它不会锁时间戳和本机绝对路径，而是检查 manifest、scene asset map、execution kinds、forge 任务数量和 handoff 指令是否稳定。
+
 生成工程包：
 
 ```bash

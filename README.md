@@ -118,6 +118,8 @@ You can think about the stack like this:
 - `npm test`
 - `npm run build`
 
+`npm test` includes golden package protocol summaries for markdown, thread, and game-ad packages. These summaries intentionally avoid timestamps and absolute paths while checking the package manifest, scene asset map, execution kinds, forge task count, and handoff guidance.
+
 ## CLI
 
 After `npm run build`, Framepack exposes package, runtime, and capture commands:

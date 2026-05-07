@@ -116,4 +116,5 @@ For `forgeBackend: "agent-sprite-forge"`, use `$generate2dsprite` for sprites, c
 - Prefer adding new execution kinds to `ASSET_EXECUTION_PLAN.json` over creating source-specific plan files.
 - Keep forge tasks backend-neutral; `agent-sprite-forge` is a reference backend, not a hard dependency.
 - Keep `CAPTURE_EXECUTION_PLAN.json` as compatibility output while older flows may still read it.
+- Treat the golden package protocol summaries in `npm test` as the regression guard for package shape changes.
 - Run `npm run typecheck`, `npm test`, and `npm run build` before claiming a change is complete.

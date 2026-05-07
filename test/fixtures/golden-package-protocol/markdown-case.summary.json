@@ -1,0 +1,19 @@
+{
+  "projectName": "golden-markdown-case",
+  "sourceType": "none",
+  "outputType": "case-explainer",
+  "requiredFilesPresent": true,
+  "missingRequiredFiles": [],
+  "executionKinds": [],
+  "executionItemCount": 0,
+  "sceneAssetMap": {
+    "sceneCount": 6,
+    "topLevelAssetCount": 0,
+    "captureCompatibilityCount": 0,
+    "hasRecommendedAssets": true
+  },
+  "forgeTaskCount": 0,
+  "forgeBackends": [],
+  "handoffMentionsRuntimeDoctor": true,
+  "handoffMentionsForgeTasks": true
+}

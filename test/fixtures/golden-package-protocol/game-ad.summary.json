@@ -1,0 +1,25 @@
+{
+  "projectName": "golden-game-ad",
+  "sourceType": "game-ad",
+  "outputType": "game-ad",
+  "requiredFilesPresent": true,
+  "missingRequiredFiles": [],
+  "executionKinds": [
+    "forge-character-pack",
+    "forge-map-pack",
+    "forge-fx-pack"
+  ],
+  "executionItemCount": 3,
+  "sceneAssetMap": {
+    "sceneCount": 4,
+    "topLevelAssetCount": 3,
+    "captureCompatibilityCount": 0,
+    "hasRecommendedAssets": true
+  },
+  "forgeTaskCount": 3,
+  "forgeBackends": [
+    "agent-sprite-forge"
+  ],
+  "handoffMentionsRuntimeDoctor": true,
+  "handoffMentionsForgeTasks": true
+}

@@ -14,6 +14,7 @@ import {
 import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { buildAssetPlan } from "../dist/planning/assets/index.js";
 import { buildAssetExecutionPlan } from "../dist/packaging/asset-execution.js";
+import { createGoldenPackageProtocolSummary } from "../dist/packaging/golden-package.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
 import { buildScript } from "../dist/planning/script/index.js";
 import { buildStoryboard } from "../dist/planning/storyboard/index.js";
@@ -82,8 +83,64 @@ const websiteExamplePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../examples/website.html",
 );
+const goldenPackageProtocolFixtureDir = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../test/fixtures/golden-package-protocol",
+);
+
+function readGoldenPackageProtocolFixture(name) {
+  return JSON.parse(readFileSync(join(goldenPackageProtocolFixtureDir, `${name}.summary.json`), "utf8"));
+}
 
 const tests = [
+  {
+    name: "create golden package protocol summaries for core package routes",
+    run: async () => {
+      const markdownResult = await compileVideoProjectFromSource({
+        source: {
+          sourceType: "markdown",
+          markdown: readFileSync(fixturePath, "utf8"),
+        },
+        defaults: {
+          goal: "Explain the case",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+        projectName: "golden-markdown-case",
+      });
+      const threadResult = compileThreadCaseExplainerProject({
+        text: readFileSync(threadExamplePath, "utf8"),
+        projectName: "golden-thread-case",
+        defaults: {
+          goal: "Explain the thread",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "case-explainer",
+        },
+      });
+      const gameAdResult = compileGameAdProject({
+        description: "A course that teaches founders to ship agent-native video systems.",
+        projectName: "golden-game-ad",
+        defaults: {
+          goal: "Promote the course",
+          audience: "Founders",
+          format: "16:9",
+          outputType: "game-ad",
+        },
+      });
+
+      const summaries = [
+        createGoldenPackageProtocolSummary(markdownResult.package),
+        createGoldenPackageProtocolSummary(threadResult.package),
+        createGoldenPackageProtocolSummary(gameAdResult.package),
+      ];
+
+      assert.deepEqual(summaries[0], readGoldenPackageProtocolFixture("markdown-case"));
+      assert.deepEqual(summaries[1], readGoldenPackageProtocolFixture("thread-case"));
+      assert.deepEqual(summaries[2], readGoldenPackageProtocolFixture("game-ad"));
+    },
+  },
   {
     name: "create agent-sprite-forge task instructions without executing the backend",
     run: () => {

@@ -1,0 +1,21 @@
+{
+  "projectName": "golden-thread-case",
+  "sourceType": "thread",
+  "outputType": "case-explainer",
+  "requiredFilesPresent": true,
+  "missingRequiredFiles": [],
+  "executionKinds": [
+    "compose-text-card"
+  ],
+  "executionItemCount": 3,
+  "sceneAssetMap": {
+    "sceneCount": 6,
+    "topLevelAssetCount": 3,
+    "captureCompatibilityCount": 0,
+    "hasRecommendedAssets": true
+  },
+  "forgeTaskCount": 0,
+  "forgeBackends": [],
+  "handoffMentionsRuntimeDoctor": true,
+  "handoffMentionsForgeTasks": true
+}
