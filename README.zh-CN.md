@@ -131,9 +131,17 @@ npx framepack validate --input examples/case-explainer-input.md --output-dir out
 npx framepack validate --project-dir out/sprite-video-demo
 ```
 
+查看已经生成的工程包状态：
+
+```bash
+npx framepack status --project-dir out/sprite-video-demo
+```
+
+`status` 会汇总协议健康、素材执行状态、forge 任务进度、runtime 可用性和建议下一步。
+
 包协议验证会检查 `PACKAGE_MANIFEST.json`、`SCENE_PLAN.json`、`SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json` 是否互相对齐。如果某个任务已经标为 `available` 或 `external`，但声明的输出文件不存在，验证会失败。
 
-`PACKAGE_MANIFEST.json` 还会暴露 `capabilities.packageCommands`，让 agent 或工具不用解析 `COMMANDS.md`，也能直接知道这个工程包支持 `validate`、`repair`、`sync-assets`、`capture`、`runtime-doctor`、`preview` 和 `render` 这些包级操作。
+`PACKAGE_MANIFEST.json` 还会暴露 `capabilities.packageCommands`，让 agent 或工具不用解析 `COMMANDS.md`，也能直接知道这个工程包支持 `status`、`validate`、`repair`、`sync-assets`、`capture`、`runtime-doctor`、`preview` 和 `render` 这些包级操作。
 
 修复已经生成的工程包协议漂移：
 
@@ -206,12 +214,13 @@ npx framepack render --project-dir out/thread-case
 1. 先读 `PACKAGE_MANIFEST.json`
 2. 再读 `HANDOFF.md`
 3. 查看 `SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json`
-4. 运行 `capture` 生成待处理素材
-5. 对 forge 任务，根据 `requiredSkill`、`prompt`、`expectedOutputs` 和 `acceptanceCriteria` 生产或交接素材
-6. 运行 `sync-assets` 同步素材状态
-7. 如果 manifest、scene asset map 或 source scene map 这类派生文件和源 JSON 不一致，运行 `repair`
-8. 运行 `validate` 确认工程包协议健康
-9. 有 HyperFrames 时再运行 `preview` 或 `render`
+4. 运行 `status` 看协议、素材、forge、runtime 和下一步建议
+5. 运行 `capture` 生成待处理素材
+6. 对 forge 任务，根据 `requiredSkill`、`prompt`、`expectedOutputs` 和 `acceptanceCriteria` 生产或交接素材
+7. 运行 `sync-assets` 同步素材状态
+8. 如果 manifest、scene asset map 或 source scene map 这类派生文件和源 JSON 不一致，运行 `repair`
+9. 运行 `validate` 确认工程包协议健康
+10. 有 HyperFrames 时再运行 `preview` 或 `render`
 
 ## 这个项目的定位
 

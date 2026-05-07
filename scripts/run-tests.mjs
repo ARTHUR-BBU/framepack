@@ -120,6 +120,7 @@ const tests = [
         "CAPTURE_EXECUTION_PLAN.json",
       ]);
       assert.deepEqual(FRAMEPACK_PACKAGE_COMMANDS, [
+        "status",
         "validate",
         "repair",
         "sync-assets",
@@ -705,6 +706,7 @@ const tests = [
       assert.equal(packageManifest.capabilities.executionKinds.includes("forge-map-pack"), true);
       assert.equal(packageManifest.capabilities.executionKinds.includes("forge-fx-pack"), true);
       assert.deepEqual(packageManifest.capabilities.packageCommands, [
+        "status",
         "validate",
         "repair",
         "sync-assets",
@@ -2917,6 +2919,61 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "report generated project package status from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-status-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into agent-native video packages.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        const statusExitCode = await runCli(
+          ["status", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const output = stdout.join("\n");
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(statusExitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.match(output, /Package status/);
+        assert.match(output, /project: sprite-video-demo/);
+        assert.match(output, /protocol: passed/);
+        assert.match(output, /assets: 0 available, 3 pending, 3 total/);
+        assert.match(output, /forge: 0 available, 3 pending, 3 total/);
+        assert.match(output, /runtime: (available|unavailable)/);
+        assert.match(output, /next: run framepack sync-assets --project-dir <path> after materializing assets/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "fail project package validation when execution assets are not mapped to scenes",
     run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-validate-fail-"));
@@ -3291,6 +3348,7 @@ Framepack compiles content into executable video projects.
           "forge-fx-pack",
         ]);
         assert.deepEqual(repairedManifest.capabilities.packageCommands, [
+          "status",
           "validate",
           "repair",
           "sync-assets",

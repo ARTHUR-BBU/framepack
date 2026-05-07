@@ -4,6 +4,10 @@ import { materializeProjectAssets } from "../../capture/index.js";
 import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
 import { repairProjectPackage } from "../../packaging/package-repair.js";
 import {
+  formatProjectPackageStatus,
+  getProjectPackageStatus,
+} from "../../packaging/package-status.js";
+import {
   validateProjectPackage,
   writeProjectPackageValidationReport,
 } from "../../packaging/package-validation.js";
@@ -56,6 +60,7 @@ interface CliOptions {
 type CliCommandName =
   | "init"
   | "generate"
+  | "status"
   | "validate"
   | "repair"
   | "capture"
@@ -169,6 +174,7 @@ function getCommandName(args: string[]): CliCommandName {
   if (
     command === "init" ||
     command === "generate" ||
+    command === "status" ||
     command === "validate" ||
     command === "repair" ||
     command === "capture" ||
@@ -180,7 +186,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, generate, validate, repair, capture, runtime doctor, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use init, generate, status, validate, repair, capture, runtime doctor, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -193,6 +199,7 @@ function getCommandArgs(args: string[]): string[] {
   if (
     first === "init" ||
     first === "generate" ||
+    first === "status" ||
     first === "validate" ||
     first === "repair" ||
     first === "capture" ||
@@ -604,6 +611,16 @@ function runRepairCommand(args: string[], io: CliIo): number {
   return 0;
 }
 
+function runStatusCommand(args: string[], io: CliIo): number {
+  const projectDir = getRequiredProjectDir(args);
+  const summary = getProjectPackageStatus({
+    projectDir,
+  });
+
+  io.stdout(formatProjectPackageStatus(summary));
+  return summary.protocolStatus === "passed" ? 0 : 1;
+}
+
 async function runCaptureCommand(
   args: string[],
   io: CliIo,
@@ -635,6 +652,10 @@ export async function runCli(
 
     if (command === "validate") {
       return await runValidateCommand(args, io);
+    }
+
+    if (command === "status") {
+      return runStatusCommand(args.slice(1), io);
     }
 
     if (command === "repair") {

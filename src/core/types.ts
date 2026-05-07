@@ -289,6 +289,7 @@ export interface AssetExecutionPlan {
 }
 
 export type PackageCommand =
+  | "status"
   | "validate"
   | "repair"
   | "sync-assets"

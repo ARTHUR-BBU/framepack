@@ -34,7 +34,7 @@ For v1, `CAPTURE_EXECUTION_PLAN.json` remains a compatibility file. New consumer
 
 `PACKAGE_MANIFEST.json` is derivable from the project name, `VIDEO_BRIEF.json`, optional `SOURCE_MANIFEST.json`, `ASSET_EXECUTION_PLAN.json`, and the current validation report. Package repair may refresh manifest entrypoints, artifacts, capabilities, and compatibility fields from the centralized v1 contract.
 
-`capabilities.packageCommands` is the machine-readable list of package-level operations an agent or tool can offer without parsing Markdown: `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render`.
+`capabilities.packageCommands` is the machine-readable list of package-level operations an agent or tool can offer without parsing Markdown: `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render`.
 
 ## Asset Mapping Contract
 
@@ -63,6 +63,7 @@ Execution statuses are `pending`, `available`, `failed`, `skipped`, and `externa
 
 ## Validation And Golden Checks
 
+- `framepack status --project-dir <package>` prints package protocol health, asset execution state, forge task progress, runtime availability, and recommended next actions without writing package files.
 - `framepack validate --project-dir <package>` validates the package protocol and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`.
 - `framepack repair --project-dir <package>` repairs derivable v1 drift by rebuilding `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then writing validation reports. It does not generate assets, execute forge tasks, or migrate packages to a newer protocol.
 - `framepack runtime doctor --project-dir <package>` checks runtime availability and package protocol health without writing validation reports.

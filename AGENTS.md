@@ -34,6 +34,7 @@ npx framepack generate --game-ad-description "A course that teaches founders to 
 Materialize pending source assets:
 
 ```bash
+npx framepack status --project-dir out/thread-case
 npx framepack capture --project-dir out/thread-case
 npx framepack sync-assets --project-dir out/thread-case
 npx framepack validate --project-dir out/thread-case
@@ -86,11 +87,12 @@ Then inspect these files as needed:
 1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
 2. Read `HANDOFF.md` to understand the current package state and pending work.
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
-4. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
-5. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
-6. Run `npx framepack repair --project-dir <package>` only when derived protocol files are stale or inconsistent but the source JSON is present.
-7. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment.
-8. Run `npx framepack runtime doctor --project-dir <package>` before previewing or rendering with HyperFrames.
+4. Run `npx framepack status --project-dir <package>` to summarize protocol health, asset state, forge progress, runtime availability, and next actions.
+5. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
+6. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
+7. Run `npx framepack repair --project-dir <package>` only when derived protocol files are stale or inconsistent but the source JSON is present.
+8. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment.
+9. Run `npx framepack runtime doctor --project-dir <package>` before previewing or rendering with HyperFrames.
 
 `repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available.
 

@@ -8,6 +8,7 @@
     "compose-text-card"
   ],
   "packageCommands": [
+    "status",
     "validate",
     "repair",
     "sync-assets",

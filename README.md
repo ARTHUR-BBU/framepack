@@ -168,9 +168,17 @@ Validate an already generated project package protocol in place:
 npx framepack validate --project-dir out/sprite-video-demo
 ```
 
+Inspect a generated project package status without changing package files:
+
+```bash
+npx framepack status --project-dir out/sprite-video-demo
+```
+
+`status` summarizes protocol health, asset execution state, forge task progress, runtime availability, and recommended next actions.
+
 Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` stay aligned. It also fails if an item marked `available` or `external` points at a missing output file.
 
-`PACKAGE_MANIFEST.json` also exposes `capabilities.packageCommands` so agents and tools can discover package-level operations such as `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render` without parsing `COMMANDS.md`.
+`PACKAGE_MANIFEST.json` also exposes `capabilities.packageCommands` so agents and tools can discover package-level operations such as `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render` without parsing `COMMANDS.md`.
 
 `validate` writes:
 

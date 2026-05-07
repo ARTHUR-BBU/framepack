@@ -3,6 +3,7 @@ import type { PackageManifest } from "../core/types.js";
 export const FRAMEPACK_PACKAGE_PROTOCOL = "framepack.project-package";
 export const FRAMEPACK_PACKAGE_PROTOCOL_VERSION = 1;
 export const FRAMEPACK_PACKAGE_COMMANDS: PackageManifest["capabilities"]["packageCommands"] = [
+  "status",
   "validate",
   "repair",
   "sync-assets",
