@@ -19,6 +19,7 @@ import {
   FRAMEPACK_PACKAGE_PROTOCOL,
   FRAMEPACK_PACKAGE_PROTOCOL_VERSION,
   FRAMEPACK_PACKAGE_PROTOCOL_V1,
+  FRAMEPACK_PACKAGE_COMMANDS,
   getRequiredPackageProtocolFiles,
 } from "../dist/packaging/package-protocol.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
@@ -117,6 +118,15 @@ const tests = [
       ]);
       assert.deepEqual(FRAMEPACK_PACKAGE_PROTOCOL_V1.compatibility.legacyFiles, [
         "CAPTURE_EXECUTION_PLAN.json",
+      ]);
+      assert.deepEqual(FRAMEPACK_PACKAGE_COMMANDS, [
+        "validate",
+        "repair",
+        "sync-assets",
+        "capture",
+        "runtime-doctor",
+        "preview",
+        "render",
       ]);
       assert.deepEqual(getRequiredPackageProtocolFiles(), [
         "PACKAGE_MANIFEST.json",
@@ -694,6 +704,15 @@ const tests = [
       assert.equal(packageManifest.capabilities.executionKinds.includes("forge-character-pack"), true);
       assert.equal(packageManifest.capabilities.executionKinds.includes("forge-map-pack"), true);
       assert.equal(packageManifest.capabilities.executionKinds.includes("forge-fx-pack"), true);
+      assert.deepEqual(packageManifest.capabilities.packageCommands, [
+        "validate",
+        "repair",
+        "sync-assets",
+        "capture",
+        "runtime-doctor",
+        "preview",
+        "render",
+      ]);
       assert.match(result.package.files["HANDOFF.md"], /\$generate2dsprite/);
       assert.match(result.package.files["HANDOFF.md"], /\$generate2dmap/);
       assert.match(result.package.files["HANDOFF.md"], /agent-sprite-forge/);
@@ -3198,7 +3217,7 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "repair project package refreshes manifest execution kinds",
+    name: "repair project package refreshes manifest capabilities",
     run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-repair-manifest-"));
       const repairStdout = [];
@@ -3233,6 +3252,7 @@ Framepack compiles content into executable video projects.
         const manifestPath = join(projectDir, "PACKAGE_MANIFEST.json");
         const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
         manifest.capabilities.executionKinds = [];
+        manifest.capabilities.packageCommands = [];
         writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
 
         const failingValidateExitCode = await runCli(
@@ -3269,6 +3289,15 @@ Framepack compiles content into executable video projects.
           "forge-character-pack",
           "forge-map-pack",
           "forge-fx-pack",
+        ]);
+        assert.deepEqual(repairedManifest.capabilities.packageCommands, [
+          "validate",
+          "repair",
+          "sync-assets",
+          "capture",
+          "runtime-doctor",
+          "preview",
+          "render",
         ]);
         assert.match(validateStdout.join("\n"), /Package validation passed/);
       } finally {

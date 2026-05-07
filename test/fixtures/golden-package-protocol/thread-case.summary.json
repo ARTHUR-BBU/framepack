@@ -7,6 +7,15 @@
   "executionKinds": [
     "compose-text-card"
   ],
+  "packageCommands": [
+    "validate",
+    "repair",
+    "sync-assets",
+    "capture",
+    "runtime-doctor",
+    "preview",
+    "render"
+  ],
   "executionItemCount": 3,
   "sceneAssetMap": {
     "sceneCount": 6,

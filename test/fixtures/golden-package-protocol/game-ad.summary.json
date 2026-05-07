@@ -9,6 +9,15 @@
     "forge-map-pack",
     "forge-fx-pack"
   ],
+  "packageCommands": [
+    "validate",
+    "repair",
+    "sync-assets",
+    "capture",
+    "runtime-doctor",
+    "preview",
+    "render"
+  ],
   "executionItemCount": 3,
   "sceneAssetMap": {
     "sceneCount": 4,

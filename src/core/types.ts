@@ -288,6 +288,15 @@ export interface AssetExecutionPlan {
   items: AssetExecutionPlanItem[];
 }
 
+export type PackageCommand =
+  | "validate"
+  | "repair"
+  | "sync-assets"
+  | "capture"
+  | "runtime-doctor"
+  | "preview"
+  | "render";
+
 export interface PackageManifest {
   protocol: "framepack.project-package";
   protocolVersion: 1;
@@ -315,6 +324,7 @@ export interface PackageManifest {
   capabilities: {
     sourceTypes: Array<SourceManifest["sourceType"]>;
     executionKinds: AssetExecutionPlanItem["executionKind"][];
+    packageCommands: PackageCommand[];
     runtimeBackend: "hyperframes";
   };
   compatibility: {

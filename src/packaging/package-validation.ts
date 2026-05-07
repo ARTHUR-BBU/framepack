@@ -10,6 +10,7 @@ import type {
 } from "../core/types.js";
 import { formatValidationReportMarkdown } from "../video/validation/validation-report.js";
 import {
+  FRAMEPACK_PACKAGE_COMMANDS,
   FRAMEPACK_PACKAGE_PROTOCOL,
   FRAMEPACK_PACKAGE_PROTOCOL_VERSION,
   getRequiredPackageProtocolFiles,
@@ -60,6 +61,15 @@ function validateManifest(input: {
     if (!manifestExecutionKinds.has(item.executionKind)) {
       input.issues.push(
         `PACKAGE_MANIFEST.json capabilities.executionKinds is missing ${item.executionKind} for ${item.suggestedAsset}.`,
+      );
+    }
+  }
+
+  const packageCommands = new Set(input.manifest.capabilities.packageCommands ?? []);
+  for (const command of FRAMEPACK_PACKAGE_COMMANDS) {
+    if (!packageCommands.has(command)) {
+      input.issues.push(
+        `PACKAGE_MANIFEST.json capabilities.packageCommands is missing ${command}.`,
       );
     }
   }

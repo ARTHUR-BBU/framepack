@@ -13,6 +13,7 @@ export interface GoldenPackageProtocolSummary {
   requiredFilesPresent: boolean;
   missingRequiredFiles: string[];
   executionKinds: AssetExecutionPlan["items"][number]["executionKind"][];
+  packageCommands: PackageManifest["capabilities"]["packageCommands"];
   executionItemCount: number;
   sceneAssetMap: {
     sceneCount: number;
@@ -59,6 +60,7 @@ export function createGoldenPackageProtocolSummary(
     requiredFilesPresent: missingRequiredFiles.length === 0,
     missingRequiredFiles,
     executionKinds: [...new Set(assetExecutionPlan.items.map((item) => item.executionKind))],
+    packageCommands: [...packageManifest.capabilities.packageCommands],
     executionItemCount: assetExecutionPlan.items.length,
     sceneAssetMap: {
       sceneCount: sceneAssetMap.scenes.length,

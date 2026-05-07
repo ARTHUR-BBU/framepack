@@ -67,6 +67,7 @@ It indexes:
 - runtime entrypoints
 - compatibility files
 - supported execution kinds, including optional forge kinds
+- supported package lifecycle commands in `capabilities.packageCommands`
 
 Then inspect these files as needed:
 

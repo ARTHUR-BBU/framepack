@@ -5,6 +5,15 @@
   "requiredFilesPresent": true,
   "missingRequiredFiles": [],
   "executionKinds": [],
+  "packageCommands": [
+    "validate",
+    "repair",
+    "sync-assets",
+    "capture",
+    "runtime-doctor",
+    "preview",
+    "render"
+  ],
   "executionItemCount": 0,
   "sceneAssetMap": {
     "sceneCount": 6,

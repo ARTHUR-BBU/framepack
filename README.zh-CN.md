@@ -133,6 +133,8 @@ npx framepack validate --project-dir out/sprite-video-demo
 
 包协议验证会检查 `PACKAGE_MANIFEST.json`、`SCENE_PLAN.json`、`SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json` 是否互相对齐。如果某个任务已经标为 `available` 或 `external`，但声明的输出文件不存在，验证会失败。
 
+`PACKAGE_MANIFEST.json` 还会暴露 `capabilities.packageCommands`，让 agent 或工具不用解析 `COMMANDS.md`，也能直接知道这个工程包支持 `validate`、`repair`、`sync-assets`、`capture`、`runtime-doctor`、`preview` 和 `render` 这些包级操作。
+
 修复已经生成的工程包协议漂移：
 
 ```bash

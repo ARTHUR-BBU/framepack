@@ -27,12 +27,14 @@ The minimal protocol surface for generated packages is:
 
 - `entrypoints`: runtime and handoff files
 - `artifacts`: source, planning, asset, execution, validation, runtime, and docs groups
-- `capabilities`: source types, execution kinds, and runtime backend
+- `capabilities`: source types, execution kinds, package lifecycle commands, and runtime backend
 - `compatibility`: legacy files that remain available for older flows
 
 For v1, `CAPTURE_EXECUTION_PLAN.json` remains a compatibility file. New consumers should prefer `ASSET_EXECUTION_PLAN.json`.
 
 `PACKAGE_MANIFEST.json` is derivable from the project name, `VIDEO_BRIEF.json`, optional `SOURCE_MANIFEST.json`, `ASSET_EXECUTION_PLAN.json`, and the current validation report. Package repair may refresh manifest entrypoints, artifacts, capabilities, and compatibility fields from the centralized v1 contract.
+
+`capabilities.packageCommands` is the machine-readable list of package-level operations an agent or tool can offer without parsing Markdown: `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render`.
 
 ## Asset Mapping Contract
 

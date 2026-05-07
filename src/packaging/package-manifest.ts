@@ -7,6 +7,7 @@ import type {
 } from "../core/types.js";
 import {
   FRAMEPACK_PACKAGE_PROTOCOL,
+  FRAMEPACK_PACKAGE_COMMANDS,
   FRAMEPACK_PACKAGE_PROTOCOL_VERSION,
   FRAMEPACK_PACKAGE_PROTOCOL_V1,
   getPackageProtocolArtifacts,
@@ -38,6 +39,7 @@ export function buildPackageManifest(input: {
     capabilities: {
       sourceTypes: input.sourceManifest ? [input.sourceManifest.sourceType] : [],
       executionKinds: unique(input.assetExecutionPlan.items.map((item) => item.executionKind)),
+      packageCommands: [...FRAMEPACK_PACKAGE_COMMANDS],
       runtimeBackend: "hyperframes",
     },
     compatibility: {
