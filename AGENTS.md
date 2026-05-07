@@ -87,7 +87,7 @@ Then inspect these files as needed:
 1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
 2. Read `HANDOFF.md` to understand the current package state and pending work.
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
-4. Run `npx framepack status --project-dir <package>` to summarize protocol health, asset state, forge progress, runtime availability, and next actions.
+4. Run `npx framepack status --project-dir <package>` to summarize protocol health, asset state, forge progress, runtime availability, and next actions. Use `--json` when another agent or tool needs structured status.
 5. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
 6. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
 7. Run `npx framepack repair --project-dir <package>` only when derived protocol files are stale or inconsistent but the source JSON is present.

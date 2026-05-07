@@ -2974,6 +2974,62 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "report generated project package status as JSON from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-status-json-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into agent-native video packages.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        const statusExitCode = await runCli(
+          ["status", "--project-dir", projectDir, "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const status = JSON.parse(stdout.join("\n"));
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(statusExitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.equal(status.projectName, "sprite-video-demo");
+        assert.equal(status.protocolStatus, "passed");
+        assert.equal(status.assets.total, 3);
+        assert.equal(status.assets.pending, 3);
+        assert.equal(status.forge.total, 3);
+        assert.equal(status.forge.pending, 3);
+        assert.equal(typeof status.runtimeAvailable, "boolean");
+        assert.ok(status.nextActions.includes("run framepack sync-assets --project-dir <path> after materializing assets"));
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "fail project package validation when execution assets are not mapped to scenes",
     run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-validate-fail-"));

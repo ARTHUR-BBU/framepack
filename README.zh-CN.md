@@ -135,9 +135,10 @@ npx framepack validate --project-dir out/sprite-video-demo
 
 ```bash
 npx framepack status --project-dir out/sprite-video-demo
+npx framepack status --project-dir out/sprite-video-demo --json
 ```
 
-`status` 会汇总协议健康、素材执行状态、forge 任务进度、runtime 可用性和建议下一步。
+`status` 会汇总协议健康、素材执行状态、forge 任务进度、runtime 可用性和建议下一步。agent、UI 或自动化工具需要结构化数据时，用 `--json`。
 
 包协议验证会检查 `PACKAGE_MANIFEST.json`、`SCENE_PLAN.json`、`SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json` 是否互相对齐。如果某个任务已经标为 `available` 或 `external`，但声明的输出文件不存在，验证会失败。
 

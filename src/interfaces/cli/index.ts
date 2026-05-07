@@ -617,7 +617,12 @@ function runStatusCommand(args: string[], io: CliIo): number {
     projectDir,
   });
 
-  io.stdout(formatProjectPackageStatus(summary));
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify(summary, null, 2));
+  } else {
+    io.stdout(formatProjectPackageStatus(summary));
+  }
+
   return summary.protocolStatus === "passed" ? 0 : 1;
 }
 
