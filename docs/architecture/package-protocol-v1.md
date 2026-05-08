@@ -63,7 +63,7 @@ Execution statuses are `pending`, `available`, `failed`, `skipped`, and `externa
 
 ## Validation And Golden Checks
 
-- `framepack status --project-dir <package>` prints package protocol health, asset execution state, forge task progress, runtime availability, and recommended next actions without writing package files. `--json` emits the same status summary as structured data for agents, UIs, and automation.
+- `framepack status --project-dir <package>` prints package protocol health, asset execution state, forge task progress, runtime availability, and recommended next actions without writing package files. `--json` emits the same status summary as structured data for agents, UIs, and automation. Structured consumers should prefer `nextActionItems` with `category`, `command`, and `reason`; `nextActions` remains a text compatibility field.
 - `framepack validate --project-dir <package>` validates the package protocol and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`.
 - `framepack repair --project-dir <package>` repairs derivable v1 drift by rebuilding `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then writing validation reports. It does not generate assets, execute forge tasks, or migrate packages to a newer protocol.
 - `framepack runtime doctor --project-dir <package>` checks runtime availability and package protocol health without writing validation reports.

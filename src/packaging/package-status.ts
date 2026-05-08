@@ -13,6 +13,12 @@ interface StatusCounts {
   external: number;
 }
 
+export interface PackageStatusNextAction {
+  category: "protocol" | "assets" | "forge" | "runtime" | "ready";
+  command: string;
+  reason: string;
+}
+
 export interface PackageStatusSummary {
   projectDir: string;
   projectName: string;
@@ -25,6 +31,7 @@ export interface PackageStatusSummary {
   forge: StatusCounts;
   runtimeAvailable: boolean;
   runtimeBinary: string;
+  nextActionItems: PackageStatusNextAction[];
   nextActions: string[];
 }
 
@@ -60,36 +67,84 @@ function countItems(items: AssetExecutionPlan["items"]): StatusCounts {
   return counts;
 }
 
-function buildNextActions(input: {
+function buildNextActionItems(input: {
   protocolStatus: "passed" | "failed";
   assets: StatusCounts;
   forge: StatusCounts;
   runtimeAvailable: boolean;
-}): string[] {
-  const actions: string[] = [];
+}): PackageStatusNextAction[] {
+  const actions: PackageStatusNextAction[] = [];
 
   if (input.protocolStatus === "failed") {
-    actions.push("run framepack repair --project-dir <path> when protocol drift is derivable");
-    actions.push("run framepack validate --project-dir <path> after repair or manual fixes");
+    actions.push({
+      category: "protocol",
+      command: "framepack repair --project-dir <path>",
+      reason: "Package protocol validation failed and may have derivable drift.",
+    });
+    actions.push({
+      category: "protocol",
+      command: "framepack validate --project-dir <path>",
+      reason: "Re-run validation after repair or manual protocol fixes.",
+    });
   }
 
   if (input.assets.pending > 0) {
-    actions.push("run framepack sync-assets --project-dir <path> after materializing assets");
+    actions.push({
+      category: "assets",
+      command: "framepack sync-assets --project-dir <path>",
+      reason: `${input.assets.pending} asset execution items are still pending after materialization work.`,
+    });
   }
 
   if (input.forge.pending > 0) {
-    actions.push("produce pending forge assets manually or with the declared forge skill, then sync assets");
+    actions.push({
+      category: "forge",
+      command: "produce-forge-assets",
+      reason: `${input.forge.pending} forge tasks are pending and need manual, custom, or skill-backed production.`,
+    });
   }
 
   if (!input.runtimeAvailable) {
-    actions.push("run framepack runtime doctor before preview or render");
+    actions.push({
+      category: "runtime",
+      command: "framepack runtime doctor --project-dir <path>",
+      reason: "HyperFrames runtime is unavailable or not confirmed for preview/render.",
+    });
   }
 
   if (actions.length === 0) {
-    actions.push("package is ready for preview or render");
+    actions.push({
+      category: "ready",
+      command: "framepack preview --project-dir <path>",
+      reason: "Package has no pending status blockers and can move to preview or render.",
+    });
   }
 
   return actions;
+}
+
+function formatNextAction(action: PackageStatusNextAction): string {
+  if (action.category === "assets") {
+    return "run framepack sync-assets --project-dir <path> after materializing assets";
+  }
+
+  if (action.category === "forge") {
+    return "produce pending forge assets manually or with the declared forge skill, then sync assets";
+  }
+
+  if (action.category === "protocol" && action.command.includes("repair")) {
+    return "run framepack repair --project-dir <path> when protocol drift is derivable";
+  }
+
+  if (action.category === "protocol") {
+    return "run framepack validate --project-dir <path> after repair or manual fixes";
+  }
+
+  if (action.category === "runtime") {
+    return "run framepack runtime doctor before preview or render";
+  }
+
+  return "package is ready for preview or render";
 }
 
 export function getProjectPackageStatus(input: { projectDir: string }): PackageStatusSummary {
@@ -105,6 +160,12 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
   const runtime = detectHyperframesCapabilities();
   const assets = countItems(items);
   const forge = countItems(forgeItems);
+  const nextActionItems = buildNextActionItems({
+    protocolStatus: validationReport.status,
+    assets,
+    forge,
+    runtimeAvailable: runtime.available,
+  });
 
   return {
     projectDir,
@@ -118,12 +179,8 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
     forge,
     runtimeAvailable: runtime.available,
     runtimeBinary: runtime.binary,
-    nextActions: buildNextActions({
-      protocolStatus: validationReport.status,
-      assets,
-      forge,
-      runtimeAvailable: runtime.available,
-    }),
+    nextActionItems,
+    nextActions: nextActionItems.map(formatNextAction),
   };
 }
 
