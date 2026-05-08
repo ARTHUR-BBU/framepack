@@ -19,9 +19,12 @@ export interface PackageStatusNextAction {
   reason: string;
 }
 
+export type PackageReadiness = "blocked" | "needs-assets" | "needs-runtime" | "ready";
+
 export interface PackageStatusSummary {
   projectDir: string;
   projectName: string;
+  readiness: PackageReadiness;
   protocolStatus: "passed" | "failed";
   issueCount: number;
   issues: string[];
@@ -147,6 +150,27 @@ function formatNextAction(action: PackageStatusNextAction): string {
   return "package is ready for preview or render";
 }
 
+function determineReadiness(input: {
+  protocolStatus: "passed" | "failed";
+  assets: StatusCounts;
+  forge: StatusCounts;
+  runtimeAvailable: boolean;
+}): PackageReadiness {
+  if (input.protocolStatus === "failed") {
+    return "blocked";
+  }
+
+  if (input.assets.pending > 0 || input.forge.pending > 0) {
+    return "needs-assets";
+  }
+
+  if (!input.runtimeAvailable) {
+    return "needs-runtime";
+  }
+
+  return "ready";
+}
+
 export function getProjectPackageStatus(input: { projectDir: string }): PackageStatusSummary {
   const projectDir = resolve(input.projectDir);
   const validationReport = validateProjectPackage({ projectDir });
@@ -160,6 +184,12 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
   const runtime = detectHyperframesCapabilities();
   const assets = countItems(items);
   const forge = countItems(forgeItems);
+  const readiness = determineReadiness({
+    protocolStatus: validationReport.status,
+    assets,
+    forge,
+    runtimeAvailable: runtime.available,
+  });
   const nextActionItems = buildNextActionItems({
     protocolStatus: validationReport.status,
     assets,
@@ -170,6 +200,7 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
   return {
     projectDir,
     projectName: manifest?.projectName ?? validationReport.projectName,
+    readiness,
     protocolStatus: validationReport.status,
     issueCount: validationReport.issues.length,
     issues: validationReport.issues,
@@ -193,6 +224,7 @@ export function formatProjectPackageStatus(summary: PackageStatusSummary): strin
     "Package status",
     `project: ${summary.projectName}`,
     `projectDir: ${summary.projectDir}`,
+    `readiness: ${summary.readiness}`,
     `sourceType: ${summary.sourceType}`,
     `outputType: ${summary.outputType}`,
     `protocol: ${summary.protocolStatus}`,

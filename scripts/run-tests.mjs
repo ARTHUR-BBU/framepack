@@ -3017,6 +3017,7 @@ Framepack compiles content into executable video projects.
         assert.equal(statusExitCode, 0);
         assert.equal(stderr.length, 0);
         assert.equal(status.projectName, "sprite-video-demo");
+        assert.equal(status.readiness, "needs-assets");
         assert.equal(status.protocolStatus, "passed");
         assert.equal(status.assets.total, 3);
         assert.equal(status.assets.pending, 3);
