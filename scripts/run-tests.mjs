@@ -719,7 +719,14 @@ const tests = [
       assert.match(result.package.files["HANDOFF.md"], /\$generate2dsprite/);
       assert.match(result.package.files["HANDOFF.md"], /\$generate2dmap/);
       assert.match(result.package.files["HANDOFF.md"], /agent-sprite-forge/);
+      assert.match(result.package.files["HANDOFF.md"], /Recommended backend: agent-sprite-forge/);
+      assert.match(result.package.files["HANDOFF.md"], /Install or enable the agent-sprite-forge skills/);
+      assert.match(result.package.files["HANDOFF.md"], /Framepack does not install external skills automatically/);
+      assert.match(result.package.files["HANDOFF.md"], /You may also produce these assets manually, use a custom forge backend, or reuse existing assets/);
       assert.match(result.package.files["FORGE_TASKS.md"], /\$generate2dsprite/);
+      assert.match(result.package.files["FORGE_TASKS.md"], /Recommended backend: agent-sprite-forge/);
+      assert.match(result.package.files["FORGE_TASKS.md"], /Install or enable the agent-sprite-forge skills/);
+      assert.match(result.package.files["FORGE_TASKS.md"], /Manual or custom backends are valid/);
       assert.match(result.package.files["FORGE_TASKS.md"], /Metadata must include/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"recommendedAssets": \[/);
       assert.match(result.package.files["SCENE_ASSET_MAP.json"], /"assets": \[/);

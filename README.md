@@ -55,7 +55,7 @@ Run the sprite video demo:
 npx framepack generate --game-ad-description "A platform that turns product stories into agent-native video packages." --output-dir out --goal "Promote the platform" --audience "Founders" --project-name sprite-video-demo
 ```
 
-This produces a game-ad package with character, map/background, and FX forge tasks. It does not install `agent-sprite-forge` or call an image model automatically.
+This produces a game-ad package with character, map/background, and FX forge tasks. It recommends `agent-sprite-forge` as the first 2D backend for those tasks, but it does not install `agent-sprite-forge` or call an image model automatically.
 
 After generation, start with `PACKAGE_MANIFEST.json`. It is the package protocol index for humans and agents.
 
@@ -235,7 +235,9 @@ Forge tasks can include `forgeBackend`, `requiredSkill`, `expectedOutputs`, `pro
 
 Execution item status values are `pending`, `available`, `failed`, `skipped`, and `external`. Forge producers can write metadata JSON next to their output path to report status back into `sync-assets`. For `available` or `external` forge metadata, include an `outputs` array of package-relative file paths; `sync-assets` keeps the task pending until those declared outputs exist.
 
-`agent-sprite-forge` is the first recommended 2D asset forge backend. If the relevant skills are installed, an agent can continue from the generated package with `$generate2dsprite` for sprites, character packs, prop packs, and FX packs, and `$generate2dmap` for maps/backgrounds. Framepack only emits the backend-neutral task and acceptance contract.
+`agent-sprite-forge` is the first recommended 2D asset forge backend. Users who want Codex to produce the generated 2D asset tasks should install or enable the `agent-sprite-forge` skills before handing off the package. If the relevant skills are installed, an agent can continue from the generated package with `$generate2dsprite` for sprites, character packs, prop packs, and FX packs, and `$generate2dmap` for maps/backgrounds.
+
+The recommendation is optional. Framepack only emits the backend-neutral task and acceptance contract; users may also produce assets manually, use a custom forge backend, or reuse existing assets as long as the declared outputs and metadata match the package contract.
 
 ### `capture`
 

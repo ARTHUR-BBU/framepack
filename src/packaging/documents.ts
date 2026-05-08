@@ -44,10 +44,17 @@ function formatForgeGuidance(input: AssetPlan): string {
 
   if (hasAgentSpriteForgeTargets) {
     guidance.unshift(
+      "- Recommended backend: agent-sprite-forge.",
+      "- Install or enable the agent-sprite-forge skills when you want Codex to produce the referenced 2D sprites, maps, props, and FX assets.",
       "- If agent-sprite-forge skills are installed, use `$generate2dsprite` for character, sprite, prop, and FX packs.",
       "- Use `$generate2dmap` for map/background packs.",
     );
   }
+
+  guidance.push(
+    "- Framepack does not install external skills automatically.",
+    "- You may also produce these assets manually, use a custom forge backend, or reuse existing assets as long as outputs and metadata match the task contract.",
+  );
 
   return guidance.join("\n");
 }
@@ -179,6 +186,20 @@ export function formatForgeTasksMarkdown(assetPlan: AssetPlan): string {
     return ["# Forge Tasks", "", "- None", ""].join("\n");
   }
 
+  const hasAgentSpriteForgeTargets = forgeTargets.some(
+    (target) => target.forgeBackend === "agent-sprite-forge",
+  );
+  const backendGuidance = hasAgentSpriteForgeTargets
+    ? [
+        "Recommended backend: agent-sprite-forge.",
+        "Install or enable the agent-sprite-forge skills to let Codex use `$generate2dsprite` and `$generate2dmap` for these tasks.",
+        "Manual or custom backends are valid if they produce the declared outputs and metadata.",
+        "Framepack does not install external skills automatically.",
+      ]
+    : [
+        "Use the declared backend, a manual workflow, a custom forge, or existing assets that satisfy each task contract.",
+      ];
+
   const sections = forgeTargets.flatMap((target) => {
     const instruction = createForgeTaskInstruction({
       suggestedAsset: target.suggestedAsset,
@@ -208,7 +229,7 @@ export function formatForgeTasksMarkdown(assetPlan: AssetPlan): string {
     ];
   });
 
-  return ["# Forge Tasks", "", ...sections, ""].join("\n");
+  return ["# Forge Tasks", "", ...backendGuidance, "", ...sections, ""].join("\n");
 }
 
 export function formatRuntimeCommandsMarkdown(input: {

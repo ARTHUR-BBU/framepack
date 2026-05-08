@@ -39,7 +39,7 @@ npx framepack sync-assets --project-dir out/website-case
 npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo
 ```
 
-这个包会包含角色、地图/背景、FX 的 forge 任务，但不会自动安装 `agent-sprite-forge`，也不会自动调用图像生成。
+这个包会包含角色、地图/背景、FX 的 forge 任务，并推荐 `agent-sprite-forge` 作为第一套 2D 素材后端；但它不会自动安装 `agent-sprite-forge`，也不会自动调用图像生成。
 
 ## 它输出什么
 
@@ -94,7 +94,9 @@ Forge 任务可以包含：
 
 执行项状态包括 `pending`、`available`、`failed`、`skipped`、`external`。Forge 生产方可以在输出路径旁写入 metadata JSON，让 `sync-assets` 把状态同步回工程包。对于 `available` 或 `external` forge metadata，需要提供 `outputs` 数组，里面是相对工程包的输出文件路径；只有这些声明文件真实存在时，`sync-assets` 才会把任务标为可用。
 
-`agent-sprite-forge` 是第一个推荐的 2D asset forge 参考后端。如果相关 skill 已安装，agent 可以根据工程包用 `$generate2dsprite` 生产 sprite、角色、prop、FX，用 `$generate2dmap` 生产地图/背景。Framepack 只生成标准化任务、提示词、预期输出和验收条件，不绑定单一后端。
+`agent-sprite-forge` 是第一个推荐的 2D asset forge 参考后端。如果用户希望 Codex 直接接着工程包生产 2D 素材，建议先安装或启用 `agent-sprite-forge` skills。相关 skill 已安装后，agent 可以根据工程包用 `$generate2dsprite` 生产 sprite、角色、prop、FX，用 `$generate2dmap` 生产地图/背景。
+
+这个推荐不是强制绑定。Framepack 只生成标准化任务、提示词、预期输出和验收条件；用户也可以手工生产素材、使用自定义 forge 后端，或者复用已有素材，只要输出文件和 metadata 符合工程包协议即可。
 
 ## 常用命令
 
