@@ -14,6 +14,13 @@ interface StatusCounts {
 }
 
 export interface PackageStatusNextAction {
+  id:
+    | "repair-protocol"
+    | "validate-protocol"
+    | "sync-assets"
+    | "produce-forge-assets"
+    | "runtime-doctor"
+    | "preview";
   category: "protocol" | "assets" | "forge" | "runtime" | "ready";
   command: string;
   reason: string;
@@ -80,11 +87,13 @@ function buildNextActionItems(input: {
 
   if (input.protocolStatus === "failed") {
     actions.push({
+      id: "repair-protocol",
       category: "protocol",
       command: "framepack repair --project-dir <path>",
       reason: "Package protocol validation failed and may have derivable drift.",
     });
     actions.push({
+      id: "validate-protocol",
       category: "protocol",
       command: "framepack validate --project-dir <path>",
       reason: "Re-run validation after repair or manual protocol fixes.",
@@ -93,6 +102,7 @@ function buildNextActionItems(input: {
 
   if (input.assets.pending > 0) {
     actions.push({
+      id: "sync-assets",
       category: "assets",
       command: "framepack sync-assets --project-dir <path>",
       reason: `${input.assets.pending} asset execution items are still pending after materialization work.`,
@@ -101,6 +111,7 @@ function buildNextActionItems(input: {
 
   if (input.forge.pending > 0) {
     actions.push({
+      id: "produce-forge-assets",
       category: "forge",
       command: "produce-forge-assets",
       reason: `${input.forge.pending} forge tasks are pending and need manual, custom, or skill-backed production.`,
@@ -109,6 +120,7 @@ function buildNextActionItems(input: {
 
   if (!input.runtimeAvailable) {
     actions.push({
+      id: "runtime-doctor",
       category: "runtime",
       command: "framepack runtime doctor --project-dir <path>",
       reason: "HyperFrames runtime is unavailable or not confirmed for preview/render.",
@@ -117,6 +129,7 @@ function buildNextActionItems(input: {
 
   if (actions.length === 0) {
     actions.push({
+      id: "preview",
       category: "ready",
       command: "framepack preview --project-dir <path>",
       reason: "Package has no pending status blockers and can move to preview or render.",

@@ -3026,11 +3026,13 @@ Framepack compiles content into executable video projects.
         assert.equal(typeof status.runtimeAvailable, "boolean");
         assert.ok(status.nextActions.includes("run framepack sync-assets --project-dir <path> after materializing assets"));
         assert.deepEqual(status.nextActionItems[0], {
+          id: "sync-assets",
           category: "assets",
           command: "framepack sync-assets --project-dir <path>",
           reason: "3 asset execution items are still pending after materialization work.",
         });
         assert.deepEqual(status.nextActionItems[1], {
+          id: "produce-forge-assets",
           category: "forge",
           command: "produce-forge-assets",
           reason: "3 forge tasks are pending and need manual, custom, or skill-backed production.",

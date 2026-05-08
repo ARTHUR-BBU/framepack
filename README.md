@@ -175,7 +175,7 @@ npx framepack status --project-dir out/sprite-video-demo
 npx framepack status --project-dir out/sprite-video-demo --json
 ```
 
-`status` summarizes protocol health, asset execution state, forge task progress, runtime availability, readiness, and recommended next actions. Use `--json` when an agent, UI, or automation needs the same state as structured data; structured consumers should prefer `readiness` and `nextActionItems` over parsing `nextActions` text.
+`status` summarizes protocol health, asset execution state, forge task progress, runtime availability, readiness, and recommended next actions. Use `--json` when an agent, UI, or automation needs the same state as structured data; structured consumers should prefer `readiness` and `nextActionItems` over parsing `nextActions` text. Each structured next action includes a stable `id`, `category`, `command`, and `reason`.
 
 Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` stay aligned. It also fails if an item marked `available` or `external` points at a missing output file.
 
