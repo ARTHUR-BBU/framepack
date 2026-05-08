@@ -140,6 +140,15 @@ npx framepack status --project-dir out/sprite-video-demo --json
 
 `status` 会汇总协议健康、素材执行状态、forge 任务进度、runtime 可用性、readiness 和建议下一步。agent、UI 或自动化工具需要结构化数据时，用 `--json`；结构化消费方应优先读取 `readiness` 和 `nextActionItems`，不要解析 `nextActions` 文本。每条结构化下一步都包含稳定的 `id`、`category`、`command` 和 `reason`。
 
+`readiness` 故意保持粗粒度：`blocked` 表示协议验证失败，`needs-assets` 表示源素材或 forge 素材仍待完成，`needs-runtime` 表示包本身已经清爽但 HyperFrames 不可用，`ready` 表示可以进入预览或渲染。
+
+| readiness | 常见 action id | 是否可预览/渲染 |
+| --- | --- | --- |
+| `blocked` | `repair-protocol`、`validate-protocol`、`inspect-failed-assets`、`inspect-failed-forge-assets` | 否 |
+| `needs-assets` | `sync-assets`、`produce-forge-assets` | 否 |
+| `needs-runtime` | `runtime-doctor` | 否 |
+| `ready` | `preview` | 是 |
+
 包协议验证会检查 `PACKAGE_MANIFEST.json`、`SCENE_PLAN.json`、`SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json` 是否互相对齐。如果某个任务已经标为 `available` 或 `external`，但声明的输出文件不存在，验证会失败。
 
 `PACKAGE_MANIFEST.json` 还会暴露 `capabilities.packageCommands`，让 agent 或工具不用解析 `COMMANDS.md`，也能直接知道这个工程包支持 `status`、`validate`、`repair`、`sync-assets`、`capture`、`runtime-doctor`、`preview` 和 `render` 这些包级操作。

@@ -177,6 +177,15 @@ npx framepack status --project-dir out/sprite-video-demo --json
 
 `status` summarizes protocol health, asset execution state, forge task progress, runtime availability, readiness, and recommended next actions. Use `--json` when an agent, UI, or automation needs the same state as structured data; structured consumers should prefer `readiness` and `nextActionItems` over parsing `nextActions` text. Each structured next action includes a stable `id`, `category`, `command`, and `reason`.
 
+Readiness values are intentionally coarse: `blocked` means protocol validation failed, `needs-assets` means source or forge assets are still pending, `needs-runtime` means the package is otherwise clear but HyperFrames is unavailable, and `ready` means the package can move to preview or render.
+
+| readiness | Typical action ids | Preview/render |
+| --- | --- | --- |
+| `blocked` | `repair-protocol`, `validate-protocol`, `inspect-failed-assets`, `inspect-failed-forge-assets` | No |
+| `needs-assets` | `sync-assets`, `produce-forge-assets` | No |
+| `needs-runtime` | `runtime-doctor` | No |
+| `ready` | `preview` | Yes |
+
 Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` stay aligned. It also fails if an item marked `available` or `external` points at a missing output file.
 
 `PACKAGE_MANIFEST.json` also exposes `capabilities.packageCommands` so agents and tools can discover package-level operations such as `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render` without parsing `COMMANDS.md`.

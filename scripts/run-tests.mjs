@@ -22,6 +22,7 @@ import {
   FRAMEPACK_PACKAGE_COMMANDS,
   getRequiredPackageProtocolFiles,
 } from "../dist/packaging/package-protocol.js";
+import { createPackageStatusDecision } from "../dist/packaging/package-status.js";
 import { normalizeVideoBriefInput } from "../dist/video/brief/normalize.js";
 import { buildScript } from "../dist/planning/script/index.js";
 import { buildStoryboard } from "../dist/planning/storyboard/index.js";
@@ -2970,6 +2971,150 @@ Framepack compiles content into executable video projects.
         assert.match(output, /next: run framepack sync-assets --project-dir <path> after materializing assets/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "derive package status readiness and action ids across state matrix",
+    run: () => {
+      const emptyCounts = {
+        total: 0,
+        available: 0,
+        pending: 0,
+        failed: 0,
+        skipped: 0,
+        external: 0,
+      };
+
+      const matrix = [
+        {
+          input: {
+            protocolStatus: "failed",
+            assets: { ...emptyCounts, total: 3, pending: 2, failed: 1 },
+            forge: { ...emptyCounts, total: 1, failed: 1 },
+            runtimeAvailable: false,
+          },
+          readiness: "blocked",
+          actions: [
+            {
+              id: "repair-protocol",
+              category: "protocol",
+              command: "framepack repair --project-dir <path>",
+              reason: "Package protocol validation failed and may have derivable drift.",
+            },
+            {
+              id: "validate-protocol",
+              category: "protocol",
+              command: "framepack validate --project-dir <path>",
+              reason: "Re-run validation after repair or manual protocol fixes.",
+            },
+            {
+              id: "inspect-failed-assets",
+              category: "assets",
+              command: "inspect-failed-assets",
+              reason: "1 asset execution items failed and need manual inspection before preview/render.",
+            },
+            {
+              id: "sync-assets",
+              category: "assets",
+              command: "framepack sync-assets --project-dir <path>",
+              reason: "2 asset execution items are still pending after materialization work.",
+            },
+            {
+              id: "inspect-failed-forge-assets",
+              category: "forge",
+              command: "inspect-failed-forge-assets",
+              reason: "1 forge tasks failed and need manual, custom, or skill-backed recovery.",
+            },
+            {
+              id: "runtime-doctor",
+              category: "runtime",
+              command: "framepack runtime doctor --project-dir <path>",
+              reason: "HyperFrames runtime is unavailable or not confirmed for preview/render.",
+            },
+          ],
+        },
+        {
+          input: {
+            protocolStatus: "passed",
+            assets: { ...emptyCounts, total: 2, pending: 2 },
+            forge: { ...emptyCounts, total: 1, pending: 1 },
+            runtimeAvailable: true,
+          },
+          readiness: "needs-assets",
+          actions: [
+            {
+              id: "sync-assets",
+              category: "assets",
+              command: "framepack sync-assets --project-dir <path>",
+              reason: "2 asset execution items are still pending after materialization work.",
+            },
+            {
+              id: "produce-forge-assets",
+              category: "forge",
+              command: "produce-forge-assets",
+              reason: "1 forge tasks are pending and need manual, custom, or skill-backed production.",
+            },
+          ],
+        },
+        {
+          input: {
+            protocolStatus: "passed",
+            assets: { ...emptyCounts, total: 1, failed: 1 },
+            forge: emptyCounts,
+            runtimeAvailable: true,
+          },
+          readiness: "blocked",
+          actions: [
+            {
+              id: "inspect-failed-assets",
+              category: "assets",
+              command: "inspect-failed-assets",
+              reason: "1 asset execution items failed and need manual inspection before preview/render.",
+            },
+          ],
+        },
+        {
+          input: {
+            protocolStatus: "passed",
+            assets: emptyCounts,
+            forge: emptyCounts,
+            runtimeAvailable: false,
+          },
+          readiness: "needs-runtime",
+          actions: [
+            {
+              id: "runtime-doctor",
+              category: "runtime",
+              command: "framepack runtime doctor --project-dir <path>",
+              reason: "HyperFrames runtime is unavailable or not confirmed for preview/render.",
+            },
+          ],
+        },
+        {
+          input: {
+            protocolStatus: "passed",
+            assets: emptyCounts,
+            forge: emptyCounts,
+            runtimeAvailable: true,
+          },
+          readiness: "ready",
+          actions: [
+            {
+              id: "preview",
+              category: "ready",
+              command: "framepack preview --project-dir <path>",
+              reason: "Package has no pending status blockers and can move to preview or render.",
+            },
+          ],
+        },
+      ];
+
+      for (const item of matrix) {
+        const decision = createPackageStatusDecision(item.input);
+
+        assert.equal(decision.readiness, item.readiness);
+        assert.deepEqual(decision.nextActionItems, item.actions);
       }
     },
   },

@@ -64,6 +64,16 @@ Execution statuses are `pending`, `available`, `failed`, `skipped`, and `externa
 ## Validation And Golden Checks
 
 - `framepack status --project-dir <package>` prints package protocol health, asset execution state, forge task progress, runtime availability, readiness, and recommended next actions without writing package files. `--json` emits the same status summary as structured data for agents, UIs, and automation. Structured consumers should inspect `readiness` first, then use `nextActionItems` with stable `id`, `category`, `command`, and `reason`; `nextActions` remains a text compatibility field.
+- `readiness` values are `blocked`, `needs-assets`, `needs-runtime`, and `ready`. They are designed as the first dispatch decision for agents before interpreting detailed action items.
+- Status dispatch is intentionally stable:
+
+  | readiness | Typical action ids | Preview/render |
+  | --- | --- | --- |
+  | `blocked` | `repair-protocol`, `validate-protocol`, `inspect-failed-assets`, `inspect-failed-forge-assets` | No |
+  | `needs-assets` | `sync-assets`, `produce-forge-assets` | No |
+  | `needs-runtime` | `runtime-doctor` | No |
+  | `ready` | `preview` | Yes |
+
 - `framepack validate --project-dir <package>` validates the package protocol and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`.
 - `framepack repair --project-dir <package>` repairs derivable v1 drift by rebuilding `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then writing validation reports. It does not generate assets, execute forge tasks, or migrate packages to a newer protocol.
 - `framepack runtime doctor --project-dir <package>` checks runtime availability and package protocol health without writing validation reports.

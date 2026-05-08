@@ -4,7 +4,7 @@ import type { AssetExecutionPlan, PackageManifest } from "../core/types.js";
 import { detectHyperframesCapabilities } from "../runtime/hyperframes/adapter.js";
 import { validateProjectPackage } from "./package-validation.js";
 
-interface StatusCounts {
+export interface StatusCounts {
   total: number;
   available: number;
   pending: number;
@@ -17,7 +17,9 @@ export interface PackageStatusNextAction {
   id:
     | "repair-protocol"
     | "validate-protocol"
+    | "inspect-failed-assets"
     | "sync-assets"
+    | "inspect-failed-forge-assets"
     | "produce-forge-assets"
     | "runtime-doctor"
     | "preview";
@@ -43,6 +45,11 @@ export interface PackageStatusSummary {
   runtimeBinary: string;
   nextActionItems: PackageStatusNextAction[];
   nextActions: string[];
+}
+
+export interface PackageStatusDecision {
+  readiness: PackageReadiness;
+  nextActionItems: PackageStatusNextAction[];
 }
 
 function readOptionalJsonFile<T>(projectDir: string, relativePath: string): T | undefined {
@@ -100,12 +107,30 @@ function buildNextActionItems(input: {
     });
   }
 
+  if (input.assets.failed > 0) {
+    actions.push({
+      id: "inspect-failed-assets",
+      category: "assets",
+      command: "inspect-failed-assets",
+      reason: `${input.assets.failed} asset execution items failed and need manual inspection before preview/render.`,
+    });
+  }
+
   if (input.assets.pending > 0) {
     actions.push({
       id: "sync-assets",
       category: "assets",
       command: "framepack sync-assets --project-dir <path>",
       reason: `${input.assets.pending} asset execution items are still pending after materialization work.`,
+    });
+  }
+
+  if (input.forge.failed > 0) {
+    actions.push({
+      id: "inspect-failed-forge-assets",
+      category: "forge",
+      command: "inspect-failed-forge-assets",
+      reason: `${input.forge.failed} forge tasks failed and need manual, custom, or skill-backed recovery.`,
     });
   }
 
@@ -140,6 +165,14 @@ function buildNextActionItems(input: {
 }
 
 function formatNextAction(action: PackageStatusNextAction): string {
+  if (action.id === "inspect-failed-assets") {
+    return "inspect failed asset execution items before preview or render";
+  }
+
+  if (action.id === "inspect-failed-forge-assets") {
+    return "inspect failed forge tasks before preview or render";
+  }
+
   if (action.category === "assets") {
     return "run framepack sync-assets --project-dir <path> after materializing assets";
   }
@@ -173,6 +206,10 @@ function determineReadiness(input: {
     return "blocked";
   }
 
+  if (input.assets.failed > 0 || input.forge.failed > 0) {
+    return "blocked";
+  }
+
   if (input.assets.pending > 0 || input.forge.pending > 0) {
     return "needs-assets";
   }
@@ -182,6 +219,18 @@ function determineReadiness(input: {
   }
 
   return "ready";
+}
+
+export function createPackageStatusDecision(input: {
+  protocolStatus: "passed" | "failed";
+  assets: StatusCounts;
+  forge: StatusCounts;
+  runtimeAvailable: boolean;
+}): PackageStatusDecision {
+  return {
+    readiness: determineReadiness(input),
+    nextActionItems: buildNextActionItems(input),
+  };
 }
 
 export function getProjectPackageStatus(input: { projectDir: string }): PackageStatusSummary {
@@ -197,13 +246,7 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
   const runtime = detectHyperframesCapabilities();
   const assets = countItems(items);
   const forge = countItems(forgeItems);
-  const readiness = determineReadiness({
-    protocolStatus: validationReport.status,
-    assets,
-    forge,
-    runtimeAvailable: runtime.available,
-  });
-  const nextActionItems = buildNextActionItems({
+  const decision = createPackageStatusDecision({
     protocolStatus: validationReport.status,
     assets,
     forge,
@@ -213,7 +256,7 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
   return {
     projectDir,
     projectName: manifest?.projectName ?? validationReport.projectName,
-    readiness,
+    readiness: decision.readiness,
     protocolStatus: validationReport.status,
     issueCount: validationReport.issues.length,
     issues: validationReport.issues,
@@ -223,8 +266,8 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
     forge,
     runtimeAvailable: runtime.available,
     runtimeBinary: runtime.binary,
-    nextActionItems,
-    nextActions: nextActionItems.map(formatNextAction),
+    nextActionItems: decision.nextActionItems,
+    nextActions: decision.nextActionItems.map(formatNextAction),
   };
 }
 
