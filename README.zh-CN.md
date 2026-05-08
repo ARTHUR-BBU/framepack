@@ -149,6 +149,8 @@ npx framepack status --project-dir out/sprite-video-demo --json
 | `needs-runtime` | `runtime-doctor` | 否 |
 | `ready` | `preview` | 是 |
 
+对 forge 工程包，`status --json` 还会输出 `forgeBreakdown`，让 agent 不必先扫描 `ASSET_EXECUTION_PLAN.json` 也能分派素材工作。它会按 `executionKind`、`forgeBackend` 和 `requiredSkill` 汇总 forge 任务数量；缺失的 backend 或 skill 会归入 `unspecified`。
+
 包协议验证会检查 `PACKAGE_MANIFEST.json`、`SCENE_PLAN.json`、`SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json` 是否互相对齐。如果某个任务已经标为 `available` 或 `external`，但声明的输出文件不存在，验证会失败。
 
 `PACKAGE_MANIFEST.json` 还会暴露 `capabilities.packageCommands`，让 agent 或工具不用解析 `COMMANDS.md`，也能直接知道这个工程包支持 `status`、`validate`、`repair`、`sync-assets`、`capture`、`runtime-doctor`、`preview` 和 `render` 这些包级操作。

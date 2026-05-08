@@ -3168,6 +3168,66 @@ Framepack compiles content into executable video projects.
         assert.equal(status.assets.pending, 3);
         assert.equal(status.forge.total, 3);
         assert.equal(status.forge.pending, 3);
+        assert.deepEqual(status.forgeBreakdown.byExecutionKind, [
+          {
+            key: "forge-character-pack",
+            total: 1,
+            available: 0,
+            pending: 1,
+            failed: 0,
+            skipped: 0,
+            external: 0,
+          },
+          {
+            key: "forge-fx-pack",
+            total: 1,
+            available: 0,
+            pending: 1,
+            failed: 0,
+            skipped: 0,
+            external: 0,
+          },
+          {
+            key: "forge-map-pack",
+            total: 1,
+            available: 0,
+            pending: 1,
+            failed: 0,
+            skipped: 0,
+            external: 0,
+          },
+        ]);
+        assert.deepEqual(status.forgeBreakdown.byBackend, [
+          {
+            key: "agent-sprite-forge",
+            total: 3,
+            available: 0,
+            pending: 3,
+            failed: 0,
+            skipped: 0,
+            external: 0,
+          },
+        ]);
+        assert.deepEqual(status.forgeBreakdown.byRequiredSkill, [
+          {
+            key: "generate2dmap",
+            total: 1,
+            available: 0,
+            pending: 1,
+            failed: 0,
+            skipped: 0,
+            external: 0,
+          },
+          {
+            key: "generate2dsprite",
+            total: 2,
+            available: 0,
+            pending: 2,
+            failed: 0,
+            skipped: 0,
+            external: 0,
+          },
+        ]);
         assert.equal(typeof status.runtimeAvailable, "boolean");
         assert.ok(status.nextActions.includes("run framepack sync-assets --project-dir <path> after materializing assets"));
         assert.deepEqual(status.nextActionItems[0], {

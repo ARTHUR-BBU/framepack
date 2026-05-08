@@ -13,6 +13,16 @@ export interface StatusCounts {
   external: number;
 }
 
+export interface StatusBreakdownEntry extends StatusCounts {
+  key: string;
+}
+
+export interface ForgeStatusBreakdown {
+  byExecutionKind: StatusBreakdownEntry[];
+  byBackend: StatusBreakdownEntry[];
+  byRequiredSkill: StatusBreakdownEntry[];
+}
+
 export interface PackageStatusNextAction {
   id:
     | "repair-protocol"
@@ -41,6 +51,7 @@ export interface PackageStatusSummary {
   outputType: string;
   assets: StatusCounts;
   forge: StatusCounts;
+  forgeBreakdown: ForgeStatusBreakdown;
   runtimeAvailable: boolean;
   runtimeBinary: string;
   nextActionItems: PackageStatusNextAction[];
@@ -82,6 +93,31 @@ function countItems(items: AssetExecutionPlan["items"]): StatusCounts {
   }
 
   return counts;
+}
+
+function buildBreakdown(
+  items: AssetExecutionPlan["items"],
+  getKey: (item: AssetExecutionPlan["items"][number]) => string | undefined,
+): StatusBreakdownEntry[] {
+  const groups = new Map<string, StatusBreakdownEntry>();
+
+  for (const item of items) {
+    const key = getKey(item) ?? "unspecified";
+    const counts = groups.get(key) ?? { key, ...createEmptyCounts() };
+    counts.total += 1;
+    counts[item.status] += 1;
+    groups.set(key, counts);
+  }
+
+  return [...groups.values()].sort((left, right) => left.key.localeCompare(right.key));
+}
+
+function buildForgeBreakdown(items: AssetExecutionPlan["items"]): ForgeStatusBreakdown {
+  return {
+    byExecutionKind: buildBreakdown(items, (item) => item.executionKind),
+    byBackend: buildBreakdown(items, (item) => item.forgeBackend),
+    byRequiredSkill: buildBreakdown(items, (item) => item.requiredSkill),
+  };
 }
 
 function buildNextActionItems(input: {
@@ -246,6 +282,7 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
   const runtime = detectHyperframesCapabilities();
   const assets = countItems(items);
   const forge = countItems(forgeItems);
+  const forgeBreakdown = buildForgeBreakdown(forgeItems);
   const decision = createPackageStatusDecision({
     protocolStatus: validationReport.status,
     assets,
@@ -264,6 +301,7 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
     outputType: manifest?.outputType ?? "unknown",
     assets,
     forge,
+    forgeBreakdown,
     runtimeAvailable: runtime.available,
     runtimeBinary: runtime.binary,
     nextActionItems: decision.nextActionItems,

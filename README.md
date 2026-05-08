@@ -186,6 +186,8 @@ Readiness values are intentionally coarse: `blocked` means protocol validation f
 | `needs-runtime` | `runtime-doctor` | No |
 | `ready` | `preview` | Yes |
 
+For forge packages, `status --json` also includes `forgeBreakdown` so agents can dispatch asset work without scanning `ASSET_EXECUTION_PLAN.json` first. It groups forge task counts by `executionKind`, `forgeBackend`, and `requiredSkill`; missing backend or skill values are reported as `unspecified`.
+
 Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` stay aligned. It also fails if an item marked `available` or `external` points at a missing output file.
 
 `PACKAGE_MANIFEST.json` also exposes `capabilities.packageCommands` so agents and tools can discover package-level operations such as `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render` without parsing `COMMANDS.md`.

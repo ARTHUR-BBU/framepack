@@ -64,6 +64,7 @@ Execution statuses are `pending`, `available`, `failed`, `skipped`, and `externa
 ## Validation And Golden Checks
 
 - `framepack status --project-dir <package>` prints package protocol health, asset execution state, forge task progress, runtime availability, readiness, and recommended next actions without writing package files. `--json` emits the same status summary as structured data for agents, UIs, and automation. Structured consumers should inspect `readiness` first, then use `nextActionItems` with stable `id`, `category`, `command`, and `reason`; `nextActions` remains a text compatibility field.
+- `forgeBreakdown` groups forge execution counts by `executionKind`, `forgeBackend`, and `requiredSkill`. Missing backend or skill values are grouped under `unspecified`.
 - `readiness` values are `blocked`, `needs-assets`, `needs-runtime`, and `ready`. They are designed as the first dispatch decision for agents before interpreting detailed action items.
 - Status dispatch is intentionally stable:
 
