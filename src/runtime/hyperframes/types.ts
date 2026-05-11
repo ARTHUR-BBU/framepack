@@ -1,4 +1,12 @@
-export type HyperframesRuntimeAction = "doctor" | "preview" | "lint" | "validate" | "render";
+export type HyperframesRuntimeAction =
+  | "doctor"
+  | "preview"
+  | "lint"
+  | "validate"
+  | "render"
+  | "inspect"
+  | "snapshot"
+  | "upgrade-check";
 
 export interface RuntimeCapabilities {
   available: boolean;

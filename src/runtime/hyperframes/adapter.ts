@@ -1,6 +1,7 @@
 import type {
   HyperframesCommandSpec,
   HyperframesPackageRuntimeInfo,
+  HyperframesRuntimeAction,
   RuntimeCapabilities,
 } from "./types.js";
 import { detectLocalHyperframesCapabilities } from "./discovery.js";
@@ -22,8 +23,8 @@ export function createHyperframesRuntimeAdapter() {
       };
     },
     buildCommand(input: {
-      action: "doctor" | "preview" | "lint" | "validate" | "render";
-      packageDirectory: string;
+      action: HyperframesRuntimeAction;
+      packageDirectory?: string;
       packageRuntimeInfo: HyperframesPackageRuntimeInfo;
       capabilities: RuntimeCapabilities;
       passthroughArgs?: string[];

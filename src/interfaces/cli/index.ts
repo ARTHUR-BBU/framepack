@@ -23,6 +23,7 @@ import {
   detectHyperframesCapabilities,
 } from "../../runtime/hyperframes/adapter.js";
 import { executeHyperframesCommand } from "../../runtime/hyperframes/execution.js";
+import type { RuntimeCapabilities } from "../../runtime/hyperframes/types.js";
 import { writeVideoProjectPackage } from "../../video/package/project-package.js";
 import { writeValidationReport } from "../../video/validation/validation-report.js";
 
@@ -67,11 +68,17 @@ type CliCommandName =
   | "preview"
   | "render"
   | "runtime-doctor"
+  | "runtime-lint"
+  | "runtime-inspect"
+  | "runtime-snapshot"
+  | "runtime-upgrade-check"
   | "sync-captures"
   | "sync-assets";
 
 interface CliDependencies {
   captureProject?: typeof materializeProjectAssets;
+  detectRuntimeCapabilities?: () => RuntimeCapabilities;
+  executeRuntimeCommand?: typeof executeHyperframesCommand;
 }
 
 interface CliConfigFile {
@@ -171,6 +178,22 @@ function getCommandName(args: string[]): CliCommandName {
     return "runtime-doctor";
   }
 
+  if (command === "runtime" && subcommand === "lint") {
+    return "runtime-lint";
+  }
+
+  if (command === "runtime" && subcommand === "inspect") {
+    return "runtime-inspect";
+  }
+
+  if (command === "runtime" && subcommand === "snapshot") {
+    return "runtime-snapshot";
+  }
+
+  if (command === "runtime" && subcommand === "upgrade-check") {
+    return "runtime-upgrade-check";
+  }
+
   if (
     command === "init" ||
     command === "generate" ||
@@ -186,13 +209,20 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, generate, status, validate, repair, capture, runtime doctor, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use init, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
   const [first, second] = args;
 
-  if (first === "runtime" && second === "doctor") {
+  if (
+    first === "runtime" &&
+    (second === "doctor" ||
+      second === "lint" ||
+      second === "inspect" ||
+      second === "snapshot" ||
+      second === "upgrade-check")
+  ) {
     return args.slice(2);
   }
 
@@ -441,23 +471,63 @@ function getRequiredProjectDir(args: string[]): string {
   return resolve(getRequiredArg(args, "--project-dir"));
 }
 
-function collectRuntimePassthroughArgs(
-  action: "preview" | "render",
+function collectKnownOptionArgs(
   args: string[],
+  valueOptions: string[],
+  booleanOptions: string[],
 ): string[] {
   const passthroughArgs: string[] = [];
-  const port = getOptionalArg(args, "--port");
-  const output = getOptionalArg(args, "--output");
 
-  if (action === "preview" && port) {
-    passthroughArgs.push("--port", port);
-  }
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
 
-  if (action === "render" && output) {
-    passthroughArgs.push("--output", output);
+    if (booleanOptions.includes(arg)) {
+      passthroughArgs.push(arg);
+      continue;
+    }
+
+    if (valueOptions.includes(arg)) {
+      const value = args[index + 1];
+
+      if (value !== undefined) {
+        passthroughArgs.push(arg, value);
+        index += 1;
+      }
+    }
   }
 
   return passthroughArgs;
+}
+
+function collectRuntimePassthroughArgs(
+  action: "preview" | "render" | "inspect" | "snapshot" | "lint" | "upgrade-check",
+  args: string[],
+): string[] {
+  if (action === "preview") {
+    return collectKnownOptionArgs(args, ["--port"], []);
+  }
+
+  if (action === "inspect") {
+    return collectKnownOptionArgs(
+      args,
+      ["--samples", "--at", "--tolerance", "--timeout", "--max-issues"],
+      ["--json", "--collapse-static", "--no-collapse-static", "--strict"],
+    );
+  }
+
+  if (action === "snapshot") {
+    return collectKnownOptionArgs(args, ["--frames", "--at", "--timeout"], []);
+  }
+
+  if (action === "render") {
+    return collectKnownOptionArgs(
+      args,
+      ["--output", "--format", "--fps", "--quality", "--workers", "--crf", "--video-bitrate", "--max-concurrent-renders"],
+      ["--docker", "--hdr", "--gpu", "--quiet", "--strict", "--strict-all"],
+    );
+  }
+
+  return [];
 }
 
 function createCompilerSourceInput(options: CliOptions): CompilerSourceInput {
@@ -547,12 +617,15 @@ function runRuntimeDoctorCommand(args: string[], io: CliIo): number {
 }
 
 function runRuntimeActionCommand(
-  action: "preview" | "render",
+  action: "preview" | "render" | "lint" | "inspect" | "snapshot" | "upgrade-check",
   args: string[],
   io: CliIo,
+  dependencies: CliDependencies = {},
 ): number {
-  const projectDir = getRequiredProjectDir(args);
-  const capabilities = detectHyperframesCapabilities();
+  const projectDir = action === "upgrade-check" ? undefined : getRequiredProjectDir(args);
+  const detectRuntime = dependencies.detectRuntimeCapabilities ?? detectHyperframesCapabilities;
+  const executeRuntime = dependencies.executeRuntimeCommand ?? executeHyperframesCommand;
+  const capabilities = detectRuntime();
 
   if (!capabilities.available) {
     io.stderr(`HyperFrames runtime is unavailable: ${capabilities.fallbackNotes.join(" | ")}`);
@@ -560,7 +633,9 @@ function runRuntimeActionCommand(
   }
 
   const runtimeAdapter = createHyperframesRuntimeAdapter();
-  const runtimeInfo = loadProjectRuntimeInfo(projectDir);
+  const runtimeInfo = projectDir
+    ? loadProjectRuntimeInfo(projectDir)
+    : runtimeAdapter.describePackage({ projectName: "runtime-upgrade-check" });
   const command = runtimeAdapter.buildCommand({
     action,
     packageDirectory: projectDir,
@@ -568,7 +643,7 @@ function runRuntimeActionCommand(
     capabilities,
     passthroughArgs: collectRuntimePassthroughArgs(action, args),
   });
-  const result = executeHyperframesCommand({
+  const result = executeRuntime({
     command,
   });
 
@@ -671,6 +746,22 @@ export async function runCli(
       return runRuntimeDoctorCommand(args.slice(2), io);
     }
 
+    if (command === "runtime-lint") {
+      return runRuntimeActionCommand("lint", args.slice(2), io, dependencies);
+    }
+
+    if (command === "runtime-inspect") {
+      return runRuntimeActionCommand("inspect", args.slice(2), io, dependencies);
+    }
+
+    if (command === "runtime-snapshot") {
+      return runRuntimeActionCommand("snapshot", args.slice(2), io, dependencies);
+    }
+
+    if (command === "runtime-upgrade-check") {
+      return runRuntimeActionCommand("upgrade-check", args.slice(2), io, dependencies);
+    }
+
     if (command === "capture") {
       return await runCaptureCommand(args.slice(1), io, dependencies);
     }
@@ -680,7 +771,7 @@ export async function runCli(
     }
 
     if (command === "preview" || command === "render") {
-      return runRuntimeActionCommand(command, args.slice(1), io);
+      return runRuntimeActionCommand(command, args.slice(1), io, dependencies);
     }
 
     return await runGenerateCommand(args, io);

@@ -1687,6 +1687,60 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "build extended runtime command specs for HyperFrames 0.5 commands",
+    run: () => {
+      const baseInput = {
+        packageDirectory: "/tmp/case-video",
+        packageRuntimeInfo: {
+          rootEntry: "index.html",
+          compositionDirectory: "compositions",
+          assetDirectory: "assets",
+        },
+        capabilities: {
+          available: true,
+          binary: "hyperframes",
+          detectedAt: "2026-05-11T00:00:00.000Z",
+          version: "0.5.5",
+          supportedCommands: ["preview", "lint", "validate", "render", "inspect", "snapshot", "upgrade"],
+          supportedCatalogFeatures: [],
+          supportedRenderOptions: ["format", "fps", "quality", "strict"],
+          fallbackNotes: [],
+        },
+      };
+
+      assert.deepEqual(
+        buildHyperframesCommandSpec({
+          ...baseInput,
+          action: "lint",
+        }).args,
+        ["lint", "/tmp/case-video"],
+      );
+      assert.deepEqual(
+        buildHyperframesCommandSpec({
+          ...baseInput,
+          action: "inspect",
+          passthroughArgs: ["--json", "--samples", "9"],
+        }).args,
+        ["inspect", "--json", "--samples", "9", "/tmp/case-video"],
+      );
+      assert.deepEqual(
+        buildHyperframesCommandSpec({
+          ...baseInput,
+          action: "snapshot",
+          passthroughArgs: ["--frames", "5"],
+        }).args,
+        ["snapshot", "--frames", "5", "/tmp/case-video"],
+      );
+      assert.deepEqual(
+        buildHyperframesCommandSpec({
+          ...baseInput,
+          action: "upgrade-check",
+        }).args,
+        ["upgrade", "--check", "--json"],
+      );
+    },
+  },
+  {
     name: "normalize runtime execution results",
     run: () => {
       const result = executeHyperframesCommand({
@@ -2449,6 +2503,157 @@ Framepack compiles content into executable video projects.
       assert.equal(stderr.length, 0);
       assert.match(stdout.join("\n"), /Materialized 3 source assets/);
       assert.match(stdout.join("\n"), /3 available, 0 pending/);
+    },
+  },
+  {
+    name: "run extended HyperFrames runtime commands from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-runtime-commands-"));
+
+      try {
+        const projectDir = join(tempRoot, "runtime-case");
+        mkdirSync(projectDir, { recursive: true });
+        writeFileSync(
+          join(projectDir, "meta.json"),
+          JSON.stringify(
+            {
+              rootEntry: "index.html",
+              compositionDirectory: "compositions",
+              assetDirectory: "assets",
+            },
+            null,
+            2,
+          ),
+          "utf8",
+        );
+
+        const commands = [];
+        const dependencies = {
+          detectRuntimeCapabilities: () => ({
+            available: true,
+            binary: "hyperframes",
+            detectedAt: "2026-05-11T00:00:00.000Z",
+            version: "0.5.5",
+            supportedCommands: ["lint", "inspect", "snapshot", "upgrade"],
+            supportedCatalogFeatures: [],
+            supportedRenderOptions: ["format", "fps", "quality", "strict"],
+            fallbackNotes: [],
+          }),
+          executeRuntimeCommand: ({ command }) => {
+            commands.push(command);
+            return {
+              action: command.action,
+              success: true,
+              outputPaths: [],
+              warnings: [],
+              summary: command.summary,
+              exitCode: 0,
+              stdout: `${command.action} ok`,
+              stderr: "",
+            };
+          },
+        };
+
+        assert.equal(await runCli(["runtime", "lint", "--project-dir", projectDir], { stdout: () => {}, stderr: () => {} }, dependencies), 0);
+        assert.equal(
+          await runCli(
+            ["runtime", "inspect", "--project-dir", projectDir, "--json", "--samples", "9"],
+            { stdout: () => {}, stderr: () => {} },
+            dependencies,
+          ),
+          0,
+        );
+        assert.equal(
+          await runCli(
+            ["runtime", "snapshot", "--project-dir", projectDir, "--frames", "5"],
+            { stdout: () => {}, stderr: () => {} },
+            dependencies,
+          ),
+          0,
+        );
+        assert.equal(await runCli(["runtime", "upgrade-check"], { stdout: () => {}, stderr: () => {} }, dependencies), 0);
+
+        assert.deepEqual(commands.map((command) => command.args), [
+          ["lint", projectDir],
+          ["inspect", "--json", "--samples", "9", projectDir],
+          ["snapshot", "--frames", "5", projectDir],
+          ["upgrade", "--check", "--json"],
+        ]);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "pass extended render options through the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-render-options-"));
+
+      try {
+        const projectDir = join(tempRoot, "render-case");
+        mkdirSync(projectDir, { recursive: true });
+        writeFileSync(
+          join(projectDir, "meta.json"),
+          JSON.stringify(
+            {
+              rootEntry: "index.html",
+              compositionDirectory: "compositions",
+              assetDirectory: "assets",
+            },
+            null,
+            2,
+          ),
+          "utf8",
+        );
+
+        let commandArgs = [];
+        const dependencies = {
+          detectRuntimeCapabilities: () => ({
+            available: true,
+            binary: "hyperframes",
+            detectedAt: "2026-05-11T00:00:00.000Z",
+            version: "0.5.5",
+            supportedCommands: ["render"],
+            supportedCatalogFeatures: [],
+            supportedRenderOptions: ["format", "fps", "quality", "strict"],
+            fallbackNotes: [],
+          }),
+          executeRuntimeCommand: ({ command }) => {
+            commandArgs = command.args;
+            return {
+              action: command.action,
+              success: true,
+              outputPaths: [],
+              warnings: [],
+              summary: command.summary,
+              exitCode: 0,
+              stdout: "render ok",
+              stderr: "",
+            };
+          },
+        };
+
+        const exitCode = await runCli(
+          ["render", "--project-dir", projectDir, "--format", "webm", "--fps", "60", "--quality", "high", "--strict"],
+          { stdout: () => {}, stderr: () => {} },
+          dependencies,
+        );
+
+        assert.equal(exitCode, 0);
+        assert.deepEqual(commandArgs, [
+          "render",
+          "--format",
+          "webm",
+          "--fps",
+          "60",
+          "--quality",
+          "high",
+          "--strict",
+          projectDir,
+        ]);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
     },
   },
   {
