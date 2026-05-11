@@ -37,6 +37,6 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "hyperframes": "^0.4.12"
+    "hyperframes": "^0.5.5"
   }
 }

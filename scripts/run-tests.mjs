@@ -739,6 +739,7 @@ const tests = [
     run: () => {
       assert.equal(parseHyperframesVersion("hyperframes/0.4.11\n"), "0.4.11");
       assert.equal(parseHyperframesVersion("0.4.12"), "0.4.12");
+      assert.equal(parseHyperframesVersion("0.5.5"), "0.5.5");
       assert.equal(parseHyperframesVersion("F:/repo/node_modules/.bin/hyperframes.cmd 0.4.11\n"), "0.4.11");
       assert.equal(parseHyperframesVersion(""), "unknown");
     },
@@ -792,7 +793,33 @@ const tests = [
       );
       assert.equal(capabilities.version, "0.4.11");
       assert.equal(capabilities.detectedAt, "2026-04-22T09:00:00.000Z");
-      assert.ok(capabilities.supportedCommands.includes("preview"));
+      assert.deepEqual(capabilities.supportedCommands, [
+        "preview",
+        "lint",
+        "validate",
+        "render",
+        "inspect",
+        "snapshot",
+        "upgrade",
+        "skills",
+        "capture",
+        "remove-background",
+      ]);
+      assert.deepEqual(capabilities.supportedRenderOptions, [
+        "format",
+        "fps",
+        "quality",
+        "workers",
+        "docker",
+        "hdr",
+        "crf",
+        "video-bitrate",
+        "gpu",
+        "quiet",
+        "strict",
+        "strict-all",
+        "max-concurrent-renders",
+      ]);
     },
   },
   {
@@ -824,7 +851,7 @@ const tests = [
 
       assert.match(capabilities.binary, /hyperframes(\.cmd)?$/);
       assert.ok(capabilities.available === true || capabilities.available === false);
-      assert.ok(capabilities.version === "0.4.12" || capabilities.version === "unknown");
+      assert.ok(capabilities.version === "0.5.5" || capabilities.version === "unknown");
     },
   },
   {
@@ -1591,9 +1618,11 @@ Framepack compiles content into executable video projects.
 
       assert.ok(capabilities.available === true || capabilities.available === false);
       assert.match(capabilities.binary, /hyperframes(\.cmd)?$/);
-      assert.ok(capabilities.version === "0.4.12" || capabilities.version === "unknown");
+      assert.ok(capabilities.version === "0.5.5" || capabilities.version === "unknown");
       assert.ok(capabilities.detectedAt.length > 0);
       assert.ok(capabilities.supportedCommands.includes("preview"));
+      assert.ok(capabilities.supportedCommands.includes("inspect"));
+      assert.ok(capabilities.supportedRenderOptions.includes("strict-all"));
       assert.equal(runtimeInfo.rootEntry, "index.html");
       assert.equal(runtimeInfo.compositionDirectory, "compositions");
       assert.equal(runtimeInfo.assetDirectory, "assets");
@@ -1855,7 +1884,7 @@ Framepack compiles content into executable video projects.
       assert.equal(stderr.length, 0);
       assert.match(stdout.join("\n"), /HyperFrames runtime/);
       assert.match(stdout.join("\n"), /available: (true|false)/);
-      assert.match(stdout.join("\n"), /version: (0\.4\.12|unknown)/);
+      assert.match(stdout.join("\n"), /version: (0\.5\.5|unknown)/);
     },
   },
   {

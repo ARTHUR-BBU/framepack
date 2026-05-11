@@ -20,7 +20,33 @@ interface DetectLocalHyperframesCapabilitiesInput {
 }
 
 const DEFAULT_BINARY = "hyperframes";
-const DEFAULT_SUPPORTED_COMMANDS = ["preview", "lint", "validate", "render"];
+const DEFAULT_SUPPORTED_COMMANDS = [
+  "preview",
+  "lint",
+  "validate",
+  "render",
+  "inspect",
+  "snapshot",
+  "upgrade",
+  "skills",
+  "capture",
+  "remove-background",
+];
+const DEFAULT_SUPPORTED_RENDER_OPTIONS = [
+  "format",
+  "fps",
+  "quality",
+  "workers",
+  "docker",
+  "hdr",
+  "crf",
+  "video-bitrate",
+  "gpu",
+  "quiet",
+  "strict",
+  "strict-all",
+  "max-concurrent-renders",
+];
 
 export function resolveHyperframesBinary(input?: {
   binary?: string;
@@ -86,7 +112,7 @@ export function createMissingHyperframesCapabilities(input?: {
     version: "unknown",
     supportedCommands: DEFAULT_SUPPORTED_COMMANDS,
     supportedCatalogFeatures: [],
-    supportedRenderOptions: [],
+    supportedRenderOptions: DEFAULT_SUPPORTED_RENDER_OPTIONS,
     fallbackNotes: [reason],
   };
 }
@@ -123,7 +149,7 @@ export function detectLocalHyperframesCapabilities(
     version: parseHyperframesVersion(probeResult.stdout),
     supportedCommands: DEFAULT_SUPPORTED_COMMANDS,
     supportedCatalogFeatures: [],
-    supportedRenderOptions: [],
+    supportedRenderOptions: DEFAULT_SUPPORTED_RENDER_OPTIONS,
     fallbackNotes: [],
   };
 }
