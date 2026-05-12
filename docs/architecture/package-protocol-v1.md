@@ -34,7 +34,7 @@ For v1, `CAPTURE_EXECUTION_PLAN.json` remains a compatibility file. New consumer
 
 `PACKAGE_MANIFEST.json` is derivable from the project name, `VIDEO_BRIEF.json`, optional `SOURCE_MANIFEST.json`, `ASSET_EXECUTION_PLAN.json`, and the current validation report. Package repair may refresh manifest entrypoints, artifacts, capabilities, and compatibility fields from the centralized v1 contract.
 
-`capabilities.packageCommands` is the machine-readable list of package-level operations an agent or tool can offer without parsing Markdown: `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render`.
+`capabilities.packageCommands` is the machine-readable list of package-level operations an agent or tool can offer without parsing Markdown: `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `runtime-lint`, `runtime-inspect`, `runtime-snapshot`, `runtime-upgrade-check`, `preview`, and `render`.
 
 ## Asset Mapping Contract
 
@@ -79,6 +79,11 @@ Execution statuses are `pending`, `available`, `failed`, `skipped`, and `externa
 - `framepack validate --project-dir <package>` validates the package protocol and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`.
 - `framepack repair --project-dir <package>` repairs derivable v1 drift by rebuilding `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then writing validation reports. It does not generate assets, execute forge tasks, or migrate packages to a newer protocol.
 - `framepack runtime doctor --project-dir <package>` checks runtime availability and package protocol health without writing validation reports.
+- `framepack runtime lint --project-dir <package>` runs HyperFrames composition linting.
+- `framepack runtime inspect --project-dir <package>` checks visual layout and text overflow across the timeline. Agents can pass HyperFrames inspect options such as `--json`, `--samples`, `--at`, `--tolerance`, `--timeout`, `--max-issues`, `--collapse-static`, `--no-collapse-static`, and `--strict`.
+- `framepack runtime snapshot --project-dir <package>` captures PNG key frames for visual verification. Agents can pass `--frames`, `--at`, and `--timeout`.
+- `framepack runtime upgrade-check` explicitly checks HyperFrames updates through `hyperframes upgrade --check --json`. Ordinary `status`, `validate`, and package generation do not run this network check.
+- HyperFrames 0.5.5 also has `publish`, but Framepack 0.2 does not orchestrate it because it uploads externally and returns a public URL.
 - `npm test` includes golden package protocol summaries for markdown, thread, and game-ad routes.
 
 ## Future Versions

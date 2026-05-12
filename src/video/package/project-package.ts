@@ -25,12 +25,33 @@ import {
   createHyperframesRuntimeAdapter,
   detectHyperframesCapabilities,
 } from "../../runtime/hyperframes/adapter.js";
+import type { HyperframesRuntimeAction } from "../../runtime/hyperframes/types.js";
 import { formatValidationReportMarkdown } from "../validation/validation-report.js";
 
 export interface VideoProjectPackage {
   directories: string[];
   projectName: string;
   files: Record<string, string>;
+}
+
+const PACKAGE_RUNTIME_ACTIONS: HyperframesRuntimeAction[] = [
+  "preview",
+  "lint",
+  "inspect",
+  "snapshot",
+  "render",
+  "upgrade-check",
+];
+
+function isRuntimeActionSupported(
+  action: HyperframesRuntimeAction,
+  supportedCommands: string[],
+): boolean {
+  if (action === "upgrade-check") {
+    return supportedCommands.includes("upgrade");
+  }
+
+  return supportedCommands.includes(action);
 }
 
 export function createVideoProjectPackage(input: {
@@ -72,14 +93,16 @@ export function createVideoProjectPackage(input: {
     projectName: input.projectName,
   });
   const packageDirectory = input.projectName;
-  const runtimeCommands = capabilities.supportedCommands.map((action) =>
-    runtimeAdapter.buildCommand({
-      action: action as "preview" | "lint" | "validate" | "render",
-      packageDirectory,
-      packageRuntimeInfo: runtimeInfo,
-      capabilities,
-    }),
-  );
+  const runtimeCommands = PACKAGE_RUNTIME_ACTIONS
+    .filter((action) => isRuntimeActionSupported(action, capabilities.supportedCommands))
+    .map((action) =>
+      runtimeAdapter.buildCommand({
+        action,
+        packageDirectory,
+        packageRuntimeInfo: runtimeInfo,
+        capabilities,
+      }),
+    );
 
   return {
     directories: ["assets", "assets/captures", "assets/generated", "assets/forge", "compositions"],

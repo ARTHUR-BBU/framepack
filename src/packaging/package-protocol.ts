@@ -9,6 +9,10 @@ export const FRAMEPACK_PACKAGE_COMMANDS: PackageManifest["capabilities"]["packag
   "sync-assets",
   "capture",
   "runtime-doctor",
+  "runtime-lint",
+  "runtime-inspect",
+  "runtime-snapshot",
+  "runtime-upgrade-check",
   "preview",
   "render",
 ];

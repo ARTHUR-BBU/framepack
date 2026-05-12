@@ -127,6 +127,10 @@ const tests = [
         "sync-assets",
         "capture",
         "runtime-doctor",
+        "runtime-lint",
+        "runtime-inspect",
+        "runtime-snapshot",
+        "runtime-upgrade-check",
         "preview",
         "render",
       ]);
@@ -713,9 +717,14 @@ const tests = [
         "sync-assets",
         "capture",
         "runtime-doctor",
+        "runtime-lint",
+        "runtime-inspect",
+        "runtime-snapshot",
+        "runtime-upgrade-check",
         "preview",
         "render",
       ]);
+      assert.equal(packageManifest.capabilities.packageCommands.includes("publish"), false);
       assert.match(result.package.files["HANDOFF.md"], /\$generate2dsprite/);
       assert.match(result.package.files["HANDOFF.md"], /\$generate2dmap/);
       assert.match(result.package.files["HANDOFF.md"], /agent-sprite-forge/);
@@ -1808,6 +1817,10 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /framepack repair --project-dir <path>/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /does not generate assets/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /runtime doctor --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /runtime lint --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /runtime inspect --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /runtime snapshot --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /runtime upgrade-check/);
         assert.match(readFileSync(join(writtenDir, "hyperframes.json"), "utf8"), /"assets": "assets"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"rootEntry": "index.html"/);
         assert.match(readFileSync(join(writtenDir, "meta.json"), "utf8"), /"runtime": "hyperframes"/);
@@ -1821,6 +1834,12 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /# Package Lifecycle Commands/);
         assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /framepack repair --project-dir <path>/);
         assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /repair derived protocol files/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /framepack runtime lint --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /framepack runtime inspect --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /framepack runtime snapshot --project-dir <path>/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /framepack runtime upgrade-check/);
+        assert.match(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /publish exists in HyperFrames 0\.5\.5/);
+        assert.doesNotMatch(readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"), /framepack publish/);
         assert.match(
           readFileSync(join(writtenDir, "COMMANDS.md"), "utf8"),
           /hyperframes(\.cmd)? preview case-video/,
@@ -3869,6 +3888,10 @@ Framepack compiles content into executable video projects.
           "sync-assets",
           "capture",
           "runtime-doctor",
+          "runtime-lint",
+          "runtime-inspect",
+          "runtime-snapshot",
+          "runtime-upgrade-check",
           "preview",
           "render",
         ]);

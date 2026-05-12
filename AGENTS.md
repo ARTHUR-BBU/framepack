@@ -50,9 +50,15 @@ Render through HyperFrames when the runtime is available:
 
 ```bash
 npx framepack runtime doctor --project-dir out/thread-case
+npx framepack runtime lint --project-dir out/thread-case
+npx framepack runtime inspect --project-dir out/thread-case --json --samples 9
+npx framepack runtime snapshot --project-dir out/thread-case --frames 5
+npx framepack runtime upgrade-check
 npx framepack preview --project-dir out/thread-case
 npx framepack render --project-dir out/thread-case
 ```
+
+`runtime lint` checks HyperFrames composition mistakes. `runtime inspect` checks visual layout and text overflow across the timeline. `runtime snapshot` captures PNG key frames for visual verification. `runtime upgrade-check` explicitly checks for HyperFrames updates. Framepack 0.2 does not expose HyperFrames `publish` because it uploads externally and returns a public URL.
 
 ## Package Protocol
 
@@ -93,6 +99,8 @@ Then inspect these files as needed:
 7. Run `npx framepack repair --project-dir <package>` only when derived protocol files are stale or inconsistent but the source JSON is present.
 8. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment.
 9. Run `npx framepack runtime doctor --project-dir <package>` before previewing or rendering with HyperFrames.
+10. Run `npx framepack runtime lint --project-dir <package>`, `npx framepack runtime inspect --project-dir <package>`, or `npx framepack runtime snapshot --project-dir <package>` when you need HyperFrames-side composition checks.
+11. Run `npx framepack runtime upgrade-check` only when explicitly checking HyperFrames updates; do not run update checks as part of ordinary package status.
 
 `repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available.
 

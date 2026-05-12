@@ -71,7 +71,8 @@ When an agent receives a generated package:
 6. Run `npx framepack validate --project-dir <package>` to verify protocol alignment.
 7. Run `npx framepack repair --project-dir <package>` only when derived protocol files drift and can be rebuilt from the package.
 8. Run `npx framepack runtime doctor --project-dir <package>` to check both the runtime and package protocol.
-9. Run `preview` or `render` when HyperFrames is available.
+9. Run `npx framepack runtime lint --project-dir <package>`, `npx framepack runtime inspect --project-dir <package>`, or `npx framepack runtime snapshot --project-dir <package>` for HyperFrames-side composition checks.
+10. Run `preview` or `render` when HyperFrames is available.
 
 Today this repository provides compiler paths for:
 
@@ -190,7 +191,7 @@ For forge packages, `status --json` also includes `forgeBreakdown` so agents can
 
 Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` stay aligned. It also fails if an item marked `available` or `external` points at a missing output file.
 
-`PACKAGE_MANIFEST.json` also exposes `capabilities.packageCommands` so agents and tools can discover package-level operations such as `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `preview`, and `render` without parsing `COMMANDS.md`.
+`PACKAGE_MANIFEST.json` also exposes `capabilities.packageCommands` so agents and tools can discover package-level operations such as `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `runtime-lint`, `runtime-inspect`, `runtime-snapshot`, `runtime-upgrade-check`, `preview`, and `render` without parsing `COMMANDS.md`.
 
 `validate` writes:
 
@@ -269,6 +270,17 @@ Check runtime availability and package protocol alignment together:
 
 `npx framepack runtime doctor --project-dir out/website-case`
 
+Run HyperFrames-side composition checks:
+
+```bash
+npx framepack runtime lint --project-dir out/website-case
+npx framepack runtime inspect --project-dir out/website-case --json --samples 9
+npx framepack runtime snapshot --project-dir out/website-case --frames 5
+npx framepack runtime upgrade-check
+```
+
+`runtime lint` checks composition mistakes, `runtime inspect` checks visual layout and text overflow across the timeline, `runtime snapshot` captures PNG key frames, and `runtime upgrade-check` performs an explicit HyperFrames update check. Framepack 0.2 intentionally does not expose HyperFrames `publish`, because it uploads externally and returns a public URL.
+
 Repair derived package protocol files after manual edits or older package drift:
 
 `npx framepack repair --project-dir out/website-case`
@@ -286,6 +298,7 @@ npx framepack preview --project-dir out/starter
 npx framepack preview --project-dir out/starter --port 3010
 npx framepack render --project-dir out/starter
 npx framepack render --project-dir out/starter --output renders/custom.mp4
+npx framepack render --project-dir out/starter --format webm --fps 60 --quality high --strict
 ```
 
 If HyperFrames is not installed, Framepack reports that state and keeps package generation available.

@@ -157,6 +157,8 @@ npx framepack status --project-dir out/sprite-video-demo --json
 
 `PACKAGE_MANIFEST.json` 还会暴露 `capabilities.packageCommands`，让 agent 或工具不用解析 `COMMANDS.md`，也能直接知道这个工程包支持 `status`、`validate`、`repair`、`sync-assets`、`capture`、`runtime-doctor`、`preview` 和 `render` 这些包级操作。
 
+新版 `capabilities.packageCommands` 还包括 `runtime-lint`、`runtime-inspect`、`runtime-snapshot` 和 `runtime-upgrade-check`，用于 HyperFrames 侧的 lint、视觉检查、关键帧截图和显式升级检查。
+
 修复已经生成的工程包协议漂移：
 
 ```bash
@@ -179,9 +181,15 @@ npx framepack sync-assets --project-dir out/thread-case
 ```bash
 npx framepack runtime doctor
 npx framepack runtime doctor --project-dir out/thread-case
+npx framepack runtime lint --project-dir out/thread-case
+npx framepack runtime inspect --project-dir out/thread-case --json --samples 9
+npx framepack runtime snapshot --project-dir out/thread-case --frames 5
+npx framepack runtime upgrade-check
 ```
 
 第二条命令会同时检查 HyperFrames runtime 和工程包协议是否健康。
+
+`runtime lint` 用来检查 HyperFrames composition 错误；`runtime inspect` 用来检查时间线里的视觉布局和文字溢出；`runtime snapshot` 用来截取 PNG 关键帧做视觉验收；`runtime upgrade-check` 只在明确需要检查 HyperFrames 更新时运行。Framepack 0.2 不封装 HyperFrames 的 `publish`，因为它会上传到外部并返回公开 URL。
 
 预览和渲染：
 
