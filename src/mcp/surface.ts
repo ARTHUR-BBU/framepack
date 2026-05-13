@@ -1,0 +1,46 @@
+export const FRAMEPACK_MCP_TOOLS = [
+  "generateProject",
+  "getStatus",
+  "validatePackage",
+  "repairPackage",
+  "captureAssets",
+  "syncAssets",
+  "runtimeDoctor",
+  "runtimeLint",
+  "runtimeInspect",
+  "runtimeSnapshot",
+  "explainNextActions",
+] as const;
+
+export const FRAMEPACK_MCP_RESOURCES = [
+  "framepack://project/{projectName}/manifest",
+  "framepack://project/{projectName}/handoff",
+  "framepack://project/{projectName}/asset-execution-plan",
+  "framepack://project/{projectName}/forge-tasks",
+  "framepack://project/{projectName}/status",
+] as const;
+
+export const FRAMEPACK_MCP_PROMPTS = [
+  "create-video-from-markdown",
+  "create-video-from-thread",
+  "create-video-from-website",
+  "create-game-ad-video",
+  "continue-framepack-project",
+  "materialize-framepack-assets",
+  "prepare-hyperframes-render",
+] as const;
+
+export function describeFramepackMcpSurface(): string {
+  return [
+    "Framepack MCP surface",
+    "",
+    "Tools:",
+    ...FRAMEPACK_MCP_TOOLS.map((tool) => `- ${tool}`),
+    "",
+    "Resources:",
+    ...FRAMEPACK_MCP_RESOURCES.map((resource) => `- ${resource}`),
+    "",
+    "Prompts:",
+    ...FRAMEPACK_MCP_PROMPTS.map((prompt) => `- ${prompt}`),
+  ].join("\n");
+}

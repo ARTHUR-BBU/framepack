@@ -2,6 +2,20 @@
 
 [English](./README.md)
 
+## 让 Codex 安装 Framepack
+
+Framepack 的主入口是 agent-first。用户不需要先记住一串 CLI 命令，而是直接让 Codex 阅读仓库并安装配置。
+
+在 Codex 里说：
+
+```text
+请阅读 https://github.com/ARTHUR-BBU/framepack，把 Framepack 安装到当前项目，配置 MCP server，并验证 generate/status/validate 可以使用。
+```
+
+Codex 应运行 `framepack init-agent --target codex --scope project`，连接 Framepack MCP，然后用 `generateProject`、`getStatus`、`validatePackage`、`captureAssets`、`runtimeSnapshot` 等工具推进工程包。
+
+Claude Code 预览支持可用 `framepack init-agent --target claude-code --scope project`。
+
 Framepack 是一个面向 agent 的视频工程编译器。
 
 它把 Markdown、帖子串、公开网页、产品/课程/品牌描述这类内容源，编译成可以继续执行的视频工程包。这个工程包通常不是最终给人看的成片，而是给 Codex、Claude Code 这类 agent 和 HyperFrames 继续加工的中间工作面。

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-rc.1
+
+- added the Framepack MCP stdio server with project generation, status, validation, asset, runtime, resource, and prompt surfaces for coding agents
+- added `framepack init-agent` for project-scoped Codex workflow files and Claude Code preview MCP configuration
+- added Codex-first agent platform docs, templates, and README install guidance focused on natural language agent installation
+- packaged agent-platform docs and templates for npm distribution
+- added regression coverage for MCP surface discovery, Codex initialization, Claude Code MCP config, and packaged agent platform assets
+
 ## 0.2.0-rc.2
 
 - fixed the published CLI bin entrypoint by preserving the Node shebang in `dist/cli.js`

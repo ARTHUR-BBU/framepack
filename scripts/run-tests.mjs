@@ -1945,6 +1945,36 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "ship agent platform docs and templates for packaged installs",
+    run: () => {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+
+      assert.ok(packageJson.files.includes("docs/agent-platform"));
+      assert.ok(packageJson.files.includes("templates"));
+      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.md"), "utf8"), /Install with Codex/);
+      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.zh-CN.md"), "utf8"), /让 Codex 安装 Framepack/);
+    },
+  },
+  {
+    name: "describe the Framepack MCP surface for agent installers",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(["mcp", "--describe"], {
+        stdout: (message) => stdout.push(message),
+        stderr: (message) => stderr.push(message),
+      });
+      const output = stdout.join("\n");
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      assert.match(output, /generateProject/);
+      assert.match(output, /getStatus/);
+      assert.match(output, /runtimeSnapshot/);
+      assert.match(output, /framepack:\/\/project\/\{projectName\}\/manifest/);
+      assert.match(output, /create-game-ad-video/);
+    },
+  },
+  {
     name: "report runtime availability from the CLI doctor command",
     run: async () => {
       const stdout = [];
@@ -2831,6 +2861,62 @@ Framepack compiles content into executable video projects.
           /"maxDurationSec": 60/,
         );
         assert.match(readFileSync(join(projectDir, "input.md"), "utf8"), /# Problem/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "initialize Codex agent workflow files in a project",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-agent-codex-"));
+
+      try {
+        const stdout = [];
+        const stderr = [];
+        const exitCode = await runCli(
+          ["init-agent", "--target", "codex", "--scope", "project", "--package-source", "npm"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+          {},
+          { cwd: tempRoot },
+        );
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.match(stdout.join("\n"), /Initialized Framepack agent workflow/);
+        assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /FRAMEPACK MANAGED BLOCK/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /generateProject/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "INSTALL.md"), "utf8"), /npx -y framepack mcp/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "initialize Claude Code preview MCP files in a project",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-agent-claude-"));
+
+      try {
+        const stdout = [];
+        const stderr = [];
+        const exitCode = await runCli(
+          ["init-agent", "--target", "claude-code", "--scope", "project", "--package-source", "npm"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+          {},
+          { cwd: tempRoot, platform: "win32" },
+        );
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /Framepack/);
+        const mcpConfig = JSON.parse(readFileSync(join(tempRoot, ".mcp.json"), "utf8"));
+        assert.equal(mcpConfig.mcpServers.framepack.command, "cmd");
+        assert.deepEqual(mcpConfig.mcpServers.framepack.args, ["/c", "npx", "-y", "framepack", "mcp"]);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

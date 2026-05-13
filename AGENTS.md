@@ -22,6 +22,17 @@ npm install
 npm run build
 ```
 
+Install Framepack into a project as an agent-facing workflow:
+
+```bash
+npx framepack init-agent --target codex --scope project
+npx framepack init-agent --target claude-code --scope project
+npx framepack mcp --describe
+npx framepack mcp
+```
+
+Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server.
+
 Generate a package:
 
 ```bash

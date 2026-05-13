@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
+import { initAgentProject, type AgentTarget, type PackageSource } from "../../agent/init-agent.js";
 import { materializeProjectAssets } from "../../capture/index.js";
 import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
 import { repairProjectPackage } from "../../packaging/package-repair.js";
@@ -26,6 +27,8 @@ import { executeHyperframesCommand } from "../../runtime/hyperframes/execution.j
 import type { RuntimeCapabilities } from "../../runtime/hyperframes/types.js";
 import { writeVideoProjectPackage } from "../../video/package/project-package.js";
 import { writeValidationReport } from "../../video/validation/validation-report.js";
+import { runFramepackMcpServer } from "../../mcp/server.js";
+import { describeFramepackMcpSurface } from "../../mcp/surface.js";
 
 export interface CliIo {
   stdout: (message: string) => void;
@@ -60,6 +63,8 @@ interface CliOptions {
 
 type CliCommandName =
   | "init"
+  | "init-agent"
+  | "mcp"
   | "generate"
   | "status"
   | "validate"
@@ -79,6 +84,11 @@ interface CliDependencies {
   captureProject?: typeof materializeProjectAssets;
   detectRuntimeCapabilities?: () => RuntimeCapabilities;
   executeRuntimeCommand?: typeof executeHyperframesCommand;
+}
+
+interface CliContext {
+  cwd?: string;
+  platform?: NodeJS.Platform;
 }
 
 interface CliConfigFile {
@@ -196,6 +206,8 @@ function getCommandName(args: string[]): CliCommandName {
 
   if (
     command === "init" ||
+    command === "init-agent" ||
+    command === "mcp" ||
     command === "generate" ||
     command === "status" ||
     command === "validate" ||
@@ -209,7 +221,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use init, init-agent, mcp, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -228,6 +240,8 @@ function getCommandArgs(args: string[]): string[] {
 
   if (
     first === "init" ||
+    first === "init-agent" ||
+    first === "mcp" ||
     first === "generate" ||
     first === "status" ||
     first === "validate" ||
@@ -464,6 +478,53 @@ function runInitCommand(args: string[], io: CliIo): number {
   );
 
   io.stdout(`Initialized project template at ${targetDir}`);
+  return 0;
+}
+
+function runInitAgentCommand(args: string[], io: CliIo, context: CliContext = {}): number {
+  const target = (getOptionalArg(args, "--target") ?? "codex") as AgentTarget;
+  const scope = getOptionalArg(args, "--scope") ?? "project";
+  const packageSource = (getOptionalArg(args, "--package-source") ?? "npm") as PackageSource;
+
+  if (target !== "codex" && target !== "claude-code" && target !== "auto") {
+    throw new Error("Invalid --target value. Use codex, claude-code, or auto.");
+  }
+
+  if (scope !== "project") {
+    throw new Error("Invalid --scope value. Use project.");
+  }
+
+  if (packageSource !== "npm" && packageSource !== "github") {
+    throw new Error("Invalid --package-source value. Use npm or github.");
+  }
+
+  const result = initAgentProject({
+    cwd: context.cwd,
+    target,
+    scope: "project",
+    packageSource,
+    force: args.includes("--force"),
+    platform: context.platform,
+  });
+
+  io.stdout(
+    [
+      `Initialized Framepack agent workflow at ${result.projectDir}`,
+      `target: ${result.target}`,
+      "files:",
+      ...result.writtenFiles.map((file) => `- ${file}`),
+    ].join("\n"),
+  );
+  return 0;
+}
+
+async function runMcpCommand(args: string[], io: CliIo): Promise<number> {
+  if (args.includes("--describe")) {
+    io.stdout(describeFramepackMcpSurface());
+    return 0;
+  }
+
+  await runFramepackMcpServer();
   return 0;
 }
 
@@ -722,12 +783,21 @@ export async function runCli(
   args: string[],
   io: CliIo = DEFAULT_IO,
   dependencies: CliDependencies = {},
+  context: CliContext = {},
 ): Promise<number> {
   try {
     const command = getCommandName(args);
 
     if (command === "init") {
       return runInitCommand(args.slice(1), io);
+    }
+
+    if (command === "init-agent") {
+      return runInitAgentCommand(args.slice(1), io, context);
+    }
+
+    if (command === "mcp") {
+      return await runMcpCommand(args.slice(1), io);
     }
 
     if (command === "validate") {

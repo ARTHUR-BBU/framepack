@@ -12,6 +12,20 @@ It is the compiler layer in a hybrid workflow: asset library + orchestration + g
 
 Agents should start with [AGENTS.md](./AGENTS.md).
 
+## Install with Codex
+
+Framepack is meant to be installed and operated by coding agents, not memorized as a long command sequence.
+
+In Codex, ask:
+
+```text
+Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project as an agent-native video project compiler. Configure its MCP server and verify generate/status/validate.
+```
+
+The agent should run `framepack init-agent --target codex --scope project`, connect the Framepack MCP server, then use MCP tools such as `generateProject`, `getStatus`, `validatePackage`, `captureAssets`, and `runtimeSnapshot`.
+
+Claude Code preview support is available with `framepack init-agent --target claude-code --scope project`.
+
 ## Quickstart
 
 ```bash
