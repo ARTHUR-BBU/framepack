@@ -13,8 +13,9 @@ The agent should:
 1. Install Framepack from npm.
 2. Run `framepack init-agent --target codex --scope project`.
 3. Verify `framepack mcp --describe`.
-4. Generate a small package.
-5. Run status and validation.
+4. Inspect `framepack packs --json` or the MCP pack tools.
+5. Generate a small package.
+6. Run status and validation.
 
 ## What The Agent Is Installing
 
@@ -23,6 +24,7 @@ Framepack is not only a CLI. The install should make the agent able to use:
 - MCP tools for generation, status, validation, asset work, and runtime checks
 - project resources such as manifest, handoff, asset execution plan, forge tasks, and status
 - workflow prompts for common video tasks
+- workflow packs and creative direction packs for route and taste selection
 - Codex skill instructions or Claude Code preview instructions
 
 The intended user experience is natural language first. The user describes the video job; the agent chooses the Framepack workflow, generates a package, checks readiness, follows `nextActionItems`, and reports what remains.

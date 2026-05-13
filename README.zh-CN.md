@@ -1,5 +1,18 @@
 # Framepack
 
+## 当前可用的 Workflow Packs
+
+Framepack 现在有一个内置的工作流包和审美方向包注册表。用户不需要先记住所有命令，可以让 Codex 或 Claude Code 先运行：
+
+```bash
+npx framepack packs
+npx framepack packs --json
+```
+
+`packs` 会告诉 agent：现在适合走产品解释、帖子转视频、网页转视频、游戏风 sprite 宣传片、课程宣传、发布复盘还是投资人更新；同时也会给出审美方向，比如干净 SaaS 解释片、证据叙事片、复古游戏广告片。
+
+这些 pack 不是最终视频模板本身，而是给 agent 的“工作选择器”和“审美指南”。agent 先选对工作流，再生成工程包，再按 `status`、`capture`、`sync-assets`、`validate`、`runtime snapshot` 继续推进。
+
 ## 产品形态
 
 Framepack 正在演进成一个面向 agent 安装和调用的视频工作流系统：

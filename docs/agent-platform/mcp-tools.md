@@ -13,8 +13,15 @@ Framepack exposes an MCP stdio server with tools for the complete package lifecy
 - `runtimeInspect`
 - `runtimeSnapshot`
 - `explainNextActions`
+- `listWorkflowPacks`
+- `getWorkflowPack`
+- `listCreativeDirectionPacks`
+- `getCreativeDirectionPack`
 
-It also exposes project resources for manifest, handoff, asset execution plan, forge tasks, and status.
+It also exposes project resources for manifest, handoff, asset execution plan, forge tasks, and status, plus registry resources for workflow packs and creative direction packs:
+
+- `framepack://packs/workflows`
+- `framepack://packs/creative-directions`
 
 ## Role In The Ecosystem
 
@@ -32,4 +39,8 @@ MCP tools should stay stable and structured so higher-level skills and workflow 
 
 ## Creative Direction Through Tools
 
-The current MCP surface focuses on package lifecycle tools. Future versions should expose creative direction and template selection as first-class capabilities, so agents can reason about visual quality, animation rhythm, template fit, and acceptance criteria before rendering.
+The MCP surface now exposes the first creative direction registry.
+
+Agents should call `listWorkflowPacks` and `listCreativeDirectionPacks` before generating a project when the user request is broad or product-shaped. The workflow pack helps choose the source route and expected execution kinds. The creative direction pack helps choose visual language, motion language, template guidance, and acceptance criteria before rendering.
+
+Future versions can move from registry guidance into richer template selection and project metadata, but agents should already treat these packs as part of the planning step.

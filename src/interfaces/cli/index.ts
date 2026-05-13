@@ -29,6 +29,11 @@ import { writeVideoProjectPackage } from "../../video/package/project-package.js
 import { writeValidationReport } from "../../video/validation/validation-report.js";
 import { runFramepackMcpServer } from "../../mcp/server.js";
 import { describeFramepackMcpSurface } from "../../mcp/surface.js";
+import {
+  describeFramepackPackRegistry,
+  listFramepackCreativeDirectionPacks,
+  listFramepackWorkflowPacks,
+} from "../../workflow-packs/registry.js";
 
 export interface CliIo {
   stdout: (message: string) => void;
@@ -65,6 +70,7 @@ type CliCommandName =
   | "init"
   | "init-agent"
   | "mcp"
+  | "packs"
   | "generate"
   | "status"
   | "validate"
@@ -208,6 +214,7 @@ function getCommandName(args: string[]): CliCommandName {
     command === "init" ||
     command === "init-agent" ||
     command === "mcp" ||
+    command === "packs" ||
     command === "generate" ||
     command === "status" ||
     command === "validate" ||
@@ -221,7 +228,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, init-agent, mcp, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use init, init-agent, mcp, packs, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -242,6 +249,7 @@ function getCommandArgs(args: string[]): string[] {
     first === "init" ||
     first === "init-agent" ||
     first === "mcp" ||
+    first === "packs" ||
     first === "generate" ||
     first === "status" ||
     first === "validate" ||
@@ -528,6 +536,21 @@ async function runMcpCommand(args: string[], io: CliIo): Promise<number> {
   return 0;
 }
 
+function runPacksCommand(args: string[], io: CliIo): number {
+  const payload = {
+    workflowPacks: listFramepackWorkflowPacks(),
+    creativeDirectionPacks: listFramepackCreativeDirectionPacks(),
+  };
+
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify(payload, null, 2));
+    return 0;
+  }
+
+  io.stdout(describeFramepackPackRegistry());
+  return 0;
+}
+
 function getRequiredProjectDir(args: string[]): string {
   return resolve(getRequiredArg(args, "--project-dir"));
 }
@@ -798,6 +821,10 @@ export async function runCli(
 
     if (command === "mcp") {
       return await runMcpCommand(args.slice(1), io);
+    }
+
+    if (command === "packs") {
+      return runPacksCommand(args.slice(1), io);
     }
 
     if (command === "validate") {

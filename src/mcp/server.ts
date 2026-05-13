@@ -13,6 +13,12 @@ import { validateProjectPackage, writeProjectPackageValidationReport } from "../
 import { createHyperframesRuntimeAdapter, detectHyperframesCapabilities } from "../runtime/hyperframes/adapter.js";
 import { executeHyperframesCommand } from "../runtime/hyperframes/execution.js";
 import { writeVideoProjectPackage } from "../video/package/project-package.js";
+import {
+  getFramepackCreativeDirectionPack,
+  getFramepackWorkflowPack,
+  listFramepackCreativeDirectionPacks,
+  listFramepackWorkflowPacks,
+} from "../workflow-packs/registry.js";
 
 type SourceType = "markdown" | "thread" | "website" | "game-ad";
 
@@ -205,6 +211,45 @@ export function createFramepackMcpServer(): McpServer {
       explanation: status.nextActionItems.map((item) => `${item.id}: ${item.reason}`),
     });
   });
+
+  server.registerTool("listWorkflowPacks", { inputSchema: {} }, () =>
+    textJson({ workflowPacks: listFramepackWorkflowPacks() }),
+  );
+
+  server.registerTool("getWorkflowPack", { inputSchema: { id: z.string() } }, (input) =>
+    textJson(getFramepackWorkflowPack(input.id)),
+  );
+
+  server.registerTool("listCreativeDirectionPacks", { inputSchema: {} }, () =>
+    textJson({ creativeDirectionPacks: listFramepackCreativeDirectionPacks() }),
+  );
+
+  server.registerTool("getCreativeDirectionPack", { inputSchema: { id: z.string() } }, (input) =>
+    textJson(getFramepackCreativeDirectionPack(input.id)),
+  );
+
+  server.registerResource(
+    "workflow-packs",
+    "framepack://packs/workflows",
+    { title: "Framepack workflow packs" },
+    (uri) => ({
+      contents: [{ uri: uri.href, text: JSON.stringify({ workflowPacks: listFramepackWorkflowPacks() }, null, 2) }],
+    }),
+  );
+
+  server.registerResource(
+    "creative-direction-packs",
+    "framepack://packs/creative-directions",
+    { title: "Framepack creative direction packs" },
+    (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          text: JSON.stringify({ creativeDirectionPacks: listFramepackCreativeDirectionPacks() }, null, 2),
+        },
+      ],
+    }),
+  );
 
   server.registerResource(
     "manifest",

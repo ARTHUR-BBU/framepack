@@ -55,7 +55,7 @@ Community contributors should be able to add workflow packs, design systems, mot
 
 ## Near-Term Direction
 
-After MCP and `init-agent`, the next product layer should be workflow packs and creative direction packs.
+After MCP and `init-agent`, the next product layer is workflow packs and creative direction packs.
 
 Recommended initial packs:
 
@@ -68,3 +68,22 @@ Recommended initial packs:
 - Launch Review Video
 
 Each pack should include a setup interview, required inputs, style defaults, asset policy, runtime checks, handoff criteria, and acceptance checklist.
+
+## Current Registry Surface
+
+Framepack now exposes the first built-in pack registry through:
+
+```bash
+framepack packs
+framepack packs --json
+framepack mcp --describe
+```
+
+MCP clients can also use:
+
+- `listWorkflowPacks`
+- `getWorkflowPack`
+- `listCreativeDirectionPacks`
+- `getCreativeDirectionPack`
+
+This registry is intentionally separate from the package protocol. It helps agents choose the right workflow and creative direction before generating or continuing a package, without forcing every existing project package to change shape.

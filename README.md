@@ -26,6 +26,15 @@ The agent should run `framepack init-agent --target codex --scope project`, conn
 
 Claude Code preview support is available with `framepack init-agent --target claude-code --scope project`.
 
+Agents can inspect the built-in workflow and creative direction packs before choosing a route:
+
+```bash
+npx framepack packs
+npx framepack packs --json
+```
+
+The same registry is exposed through MCP tools: `listWorkflowPacks`, `getWorkflowPack`, `listCreativeDirectionPacks`, and `getCreativeDirectionPack`.
+
 ## Product Shape
 
 Framepack is evolving into an agent-installable video workflow system:
@@ -39,11 +48,20 @@ Framepack is evolving into an agent-installable video workflow system:
 
 The long-term goal is not only to make video project packages valid. It is to help agents produce packages with clear narrative, strong design direction, reusable motion patterns, and enough creative structure for humans, designers, and community contributors to improve the result.
 
+## Workflow Packs
+
+Framepack ships a first built-in registry of workflow packs and creative direction packs.
+
+Workflow packs tell an agent what kind of video job it is doing: product explainer, thread-to-video, website-to-video, game-ad sprite video, course promo, launch review, or investor update. Some packs are available today through the existing compiler routes; others are marked as planned so agents know the direction without pretending a finished pipeline exists.
+
+Creative direction packs describe visual language, motion language, template guidance, and acceptance criteria. They are the first structured step toward design taste and animation taste being part of the agent workflow, not a vague afterthought.
+
 ## Quickstart
 
 ```bash
 npm install
 npm run build
+npx framepack packs
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 ```
 

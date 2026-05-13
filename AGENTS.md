@@ -28,10 +28,12 @@ Install Framepack into a project as an agent-facing workflow:
 npx framepack init-agent --target codex --scope project
 npx framepack init-agent --target claude-code --scope project
 npx framepack mcp --describe
+npx framepack packs
+npx framepack packs --json
 npx framepack mcp
 ```
 
-Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server.
+Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs so agents can choose the correct production route before generating a package.
 
 Generate a package:
 
@@ -101,6 +103,7 @@ Then inspect these files as needed:
 
 ## Agent Workflow
 
+0. For broad requests, run `npx framepack packs --json` or use the MCP pack tools to choose a workflow pack and creative direction pack before generating or continuing a package.
 1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
 2. Read `HANDOFF.md` to understand the current package state and pending work.
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
@@ -114,6 +117,30 @@ Then inspect these files as needed:
 11. Run `npx framepack runtime upgrade-check` only when explicitly checking HyperFrames updates; do not run update checks as part of ordinary package status.
 
 `repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available.
+
+## Workflow And Creative Direction Packs
+
+Workflow packs are agent-facing production routes. They describe source types, output type, expected execution kinds, recommended forge backend, instructions, and acceptance criteria.
+
+Creative direction packs are agent-facing taste guides. They describe visual language, motion language, template guidance, and acceptance criteria.
+
+Current built-in workflow packs:
+
+- `product-explainer`
+- `thread-to-video`
+- `website-to-video`
+- `game-ad-sprite-video`
+- `course-promo`
+- `launch-review`
+- `investor-update`
+
+Current built-in creative direction packs:
+
+- `clean-saas-explainer`
+- `editorial-proof-story`
+- `game-ad-retro-arcade`
+
+Use `game-ad-sprite-video` with `game-ad-retro-arcade` when generating sprite/video promo packages. It recommends `agent-sprite-forge` but remains backend-neutral.
 
 ## Asset Forge Layer
 

@@ -62,6 +62,10 @@ import {
 import { captureWebsiteProject } from "../dist/capture/website/executor.js";
 import { composeThreadProject } from "../dist/capture/thread/executor.js";
 import { createForgeTaskInstruction } from "../dist/forge/adapter.js";
+import {
+  listFramepackCreativeDirectionPacks,
+  listFramepackWorkflowPacks,
+} from "../dist/workflow-packs/registry.js";
 
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -2920,6 +2924,80 @@ Framepack compiles content into executable video projects.
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
+    },
+  },
+  {
+    name: "expose built-in workflow packs and creative direction packs",
+    run: () => {
+      const workflowPacks = listFramepackWorkflowPacks();
+      const creativePacks = listFramepackCreativeDirectionPacks();
+
+      assert.ok(workflowPacks.length >= 6);
+      assert.deepEqual(
+        workflowPacks.map((pack) => pack.id),
+        [
+          "product-explainer",
+          "thread-to-video",
+          "website-to-video",
+          "game-ad-sprite-video",
+          "course-promo",
+          "launch-review",
+          "investor-update",
+        ],
+      );
+      assert.equal(workflowPacks.find((pack) => pack.id === "game-ad-sprite-video")?.recommendedForgeBackend, "agent-sprite-forge");
+      assert.ok(
+        workflowPacks
+          .find((pack) => pack.id === "game-ad-sprite-video")
+          ?.requiredExecutionKinds.includes("forge-character-pack"),
+      );
+
+      assert.ok(creativePacks.length >= 3);
+      assert.ok(creativePacks.some((pack) => pack.id === "clean-saas-explainer"));
+      assert.ok(creativePacks.some((pack) => pack.acceptanceCriteria.some((criterion) => criterion.includes("text"))));
+    },
+  },
+  {
+    name: "describe workflow packs through the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        ["packs", "--json"],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      const payload = JSON.parse(stdout.join("\n"));
+      assert.equal(payload.workflowPacks[0].id, "product-explainer");
+      assert.ok(payload.workflowPacks.some((pack) => pack.id === "game-ad-sprite-video"));
+      assert.ok(payload.creativeDirectionPacks.some((pack) => pack.id === "game-ad-retro-arcade"));
+    },
+  },
+  {
+    name: "include workflow pack tools and resources in the MCP description",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        ["mcp", "--describe"],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+      const output = stdout.join("\n");
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      assert.match(output, /listWorkflowPacks/);
+      assert.match(output, /getWorkflowPack/);
+      assert.match(output, /listCreativeDirectionPacks/);
+      assert.match(output, /getCreativeDirectionPack/);
+      assert.match(output, /framepack:\/\/packs\/workflows/);
+      assert.match(output, /framepack:\/\/packs\/creative-directions/);
     },
   },
   {

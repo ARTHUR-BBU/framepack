@@ -1,3 +1,5 @@
+import { describeFramepackPackRegistry } from "../workflow-packs/registry.js";
+
 export const FRAMEPACK_MCP_TOOLS = [
   "generateProject",
   "getStatus",
@@ -10,9 +12,15 @@ export const FRAMEPACK_MCP_TOOLS = [
   "runtimeInspect",
   "runtimeSnapshot",
   "explainNextActions",
+  "listWorkflowPacks",
+  "getWorkflowPack",
+  "listCreativeDirectionPacks",
+  "getCreativeDirectionPack",
 ] as const;
 
 export const FRAMEPACK_MCP_RESOURCES = [
+  "framepack://packs/workflows",
+  "framepack://packs/creative-directions",
   "framepack://project/{projectName}/manifest",
   "framepack://project/{projectName}/handoff",
   "framepack://project/{projectName}/asset-execution-plan",
@@ -42,5 +50,7 @@ export function describeFramepackMcpSurface(): string {
     "",
     "Prompts:",
     ...FRAMEPACK_MCP_PROMPTS.map((prompt) => `- ${prompt}`),
+    "",
+    describeFramepackPackRegistry(),
   ].join("\n");
 }
