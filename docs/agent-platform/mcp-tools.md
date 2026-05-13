@@ -43,4 +43,6 @@ The MCP surface now exposes the first creative direction registry.
 
 Agents should call `listWorkflowPacks` and `listCreativeDirectionPacks` before generating a project when the user request is broad or product-shaped. The workflow pack helps choose the source route and expected execution kinds. The creative direction pack helps choose visual language, motion language, template guidance, and acceptance criteria before rendering.
 
+`generateProject` accepts optional `workflowPackId` and `creativeDirectionPackId`. When provided, Framepack validates the workflow pack against the selected source/output route and writes the pack selection into `VIDEO_BRIEF.json` and `HANDOFF.md`.
+
 Future versions can move from registry guidance into richer template selection and project metadata, but agents should already treat these packs as part of the planning step.

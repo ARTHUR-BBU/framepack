@@ -29,6 +29,8 @@ Framepack is not only a CLI. The install should make the agent able to use:
 
 The intended user experience is natural language first. The user describes the video job; the agent chooses the Framepack workflow, generates a package, checks readiness, follows `nextActionItems`, and reports what remains.
 
+When the agent chooses a workflow and creative direction, it should pass those IDs into generation. CLI uses `--workflow-pack` and `--creative-direction-pack`; MCP uses `workflowPackId` and `creativeDirectionPackId`.
+
 ## Creative And Template Direction
 
 Agents should treat design and motion quality as part of the workflow, not as an afterthought.

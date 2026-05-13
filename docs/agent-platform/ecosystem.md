@@ -87,3 +87,5 @@ MCP clients can also use:
 - `getCreativeDirectionPack`
 
 This registry is intentionally separate from the package protocol. It helps agents choose the right workflow and creative direction before generating or continuing a package, without forcing every existing project package to change shape.
+
+When a pack is selected during generation, Framepack writes the selection into `VIDEO_BRIEF.json` and `HANDOFF.md`. This makes creative and workflow decisions durable package context rather than temporary chat history.

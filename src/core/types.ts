@@ -24,11 +24,25 @@ export interface VideoBriefDefaults {
   audience: string;
   format: VideoFormat;
   outputType: OutputType;
+  packSelection?: VideoPackSelection;
   style?: Partial<VideoStyle>;
   constraints?: Partial<VideoConstraintSet>;
   theme?: {
     palette: string;
   };
+}
+
+export interface VideoPackSelection {
+  workflowPackId?: string;
+  workflowPackLabel?: string;
+  workflowPackStatus?: "available" | "planned";
+  creativeDirectionPackId?: string;
+  creativeDirectionPackLabel?: string;
+  agentInstructions: string[];
+  visualLanguage: string[];
+  motionLanguage: string[];
+  templateGuidance: string[];
+  acceptanceCriteria: string[];
 }
 
 export interface MarkdownVideoBriefInput {
@@ -101,6 +115,7 @@ export interface VideoBrief {
   audience: string;
   format: VideoFormat;
   style: VideoStyle;
+  packSelection?: VideoPackSelection;
   sourceMaterials: SourceMaterial[];
   constraints: VideoConstraintSet;
   outputType: OutputType;

@@ -35,6 +35,12 @@ npx framepack packs --json
 
 The same registry is exposed through MCP tools: `listWorkflowPacks`, `getWorkflowPack`, `listCreativeDirectionPacks`, and `getCreativeDirectionPack`.
 
+When a route is selected, pass it into generation so the package records the decision:
+
+```bash
+npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade
+```
+
 ## Product Shape
 
 Framepack is evolving into an agent-installable video workflow system:
@@ -70,7 +76,7 @@ Agent-first examples:
 ```bash
 npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
 npx framepack generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
-npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo
+npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade
 npx framepack capture --project-dir out/thread-case
 npx framepack preview --project-dir out/thread-case
 ```

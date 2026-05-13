@@ -3297,6 +3297,91 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "generate a package with workflow and creative direction pack selection",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-pack-selection-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const exitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into agent-native video packages.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+            "--workflow-pack",
+            "game-ad-sprite-video",
+            "--creative-direction-pack",
+            "game-ad-retro-arcade",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        const brief = JSON.parse(readFileSync(join(projectDir, "VIDEO_BRIEF.json"), "utf8"));
+        const handoff = readFileSync(join(projectDir, "HANDOFF.md"), "utf8");
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.equal(brief.packSelection.workflowPackId, "game-ad-sprite-video");
+        assert.equal(brief.packSelection.creativeDirectionPackId, "game-ad-retro-arcade");
+        assert.ok(brief.packSelection.acceptanceCriteria.some((criterion) => criterion.includes("Forge tasks")));
+        assert.match(handoff, /Workflow pack: game-ad-sprite-video/);
+        assert.match(handoff, /Creative direction pack: game-ad-retro-arcade/);
+        assert.match(handoff, /Readable sprite silhouettes/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "reject incompatible workflow pack selection during generation",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-pack-selection-invalid-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const exitCode = await runCli(
+          [
+            "generate",
+            "--input",
+            fixturePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the case",
+            "--audience",
+            "Founders",
+            "--workflow-pack",
+            "game-ad-sprite-video",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(exitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /Workflow pack game-ad-sprite-video does not support sourceType markdown/);
+        assert.equal(existsSync(join(tempRoot, "case-explainer-input")), false);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "validate a generated project package protocol from the CLI",
     run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-validate-"));

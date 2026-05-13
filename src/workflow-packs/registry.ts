@@ -1,4 +1,4 @@
-import type { AssetExecutionKind, OutputType, VideoFormat } from "../core/types.js";
+import type { AssetExecutionKind, OutputType, VideoFormat, VideoPackSelection } from "../core/types.js";
 import type { CompilerSourceInput } from "../compiler/pipeline-registry.js";
 
 export type WorkflowPackStatus = "available" | "planned";
@@ -291,6 +291,60 @@ export function getFramepackCreativeDirectionPack(id: string): FramepackCreative
   }
 
   return cloneCreativeDirectionPack(pack);
+}
+
+export function createFramepackPackSelection(input: {
+  workflowPackId?: string;
+  creativeDirectionPackId?: string;
+  sourceType?: string;
+  outputType?: OutputType;
+}): VideoPackSelection | undefined {
+  if (!input.workflowPackId && !input.creativeDirectionPackId) {
+    return undefined;
+  }
+
+  const workflowPack = input.workflowPackId
+    ? getFramepackWorkflowPack(input.workflowPackId)
+    : undefined;
+  const creativeDirectionPack = input.creativeDirectionPackId
+    ? getFramepackCreativeDirectionPack(input.creativeDirectionPackId)
+    : undefined;
+
+  if (
+    workflowPack &&
+    input.sourceType &&
+    !workflowPack.sourceTypes.includes(input.sourceType as CompilerSourceInput["sourceType"])
+  ) {
+    throw new Error(`Workflow pack ${workflowPack.id} does not support sourceType ${input.sourceType}.`);
+  }
+
+  if (workflowPack && input.outputType && workflowPack.outputType !== input.outputType) {
+    throw new Error(`Workflow pack ${workflowPack.id} requires outputType ${workflowPack.outputType}.`);
+  }
+
+  return {
+    ...(workflowPack
+      ? {
+          workflowPackId: workflowPack.id,
+          workflowPackLabel: workflowPack.label,
+          workflowPackStatus: workflowPack.status,
+        }
+      : {}),
+    ...(creativeDirectionPack
+      ? {
+          creativeDirectionPackId: creativeDirectionPack.id,
+          creativeDirectionPackLabel: creativeDirectionPack.label,
+        }
+      : {}),
+    agentInstructions: [...(workflowPack?.agentInstructions ?? [])],
+    visualLanguage: [...(creativeDirectionPack?.visualLanguage ?? [])],
+    motionLanguage: [...(creativeDirectionPack?.motionLanguage ?? [])],
+    templateGuidance: [...(creativeDirectionPack?.templateGuidance ?? [])],
+    acceptanceCriteria: [
+      ...(workflowPack?.acceptanceCriteria ?? []),
+      ...(creativeDirectionPack?.acceptanceCriteria ?? []),
+    ],
+  };
 }
 
 export function describeFramepackPackRegistry(): string {

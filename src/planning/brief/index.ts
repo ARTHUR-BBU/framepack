@@ -92,6 +92,7 @@ export function compileVideoBrief(input: {
     audience: input.defaults.audience,
     format: input.defaults.format,
     style: createVideoStyle(input.defaults.style),
+    ...(input.defaults.packSelection ? { packSelection: input.defaults.packSelection } : {}),
     sourceMaterials:
       input.sourceBundle.sourceType === "markdown"
         ? compileMarkdownSourceMaterials(input.sourceBundle.collectedArtifacts)

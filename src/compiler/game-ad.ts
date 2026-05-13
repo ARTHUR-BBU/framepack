@@ -39,6 +39,7 @@ function createGameAdBrief(input: {
       pacing: input.defaults.style?.pacing ?? "fast",
       brandName: input.defaults.style?.brandName ?? "Studio",
     },
+    ...(input.defaults.packSelection ? { packSelection: input.defaults.packSelection } : {}),
     sourceMaterials: [
       {
         kind: "structured",

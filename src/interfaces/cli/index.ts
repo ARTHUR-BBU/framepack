@@ -30,6 +30,7 @@ import { writeValidationReport } from "../../video/validation/validation-report.
 import { runFramepackMcpServer } from "../../mcp/server.js";
 import { describeFramepackMcpSurface } from "../../mcp/surface.js";
 import {
+  createFramepackPackSelection,
   describeFramepackPackRegistry,
   listFramepackCreativeDirectionPacks,
   listFramepackWorkflowPacks,
@@ -64,6 +65,8 @@ interface CliOptions {
     requiredPoints: string[];
     bannedTerms: string[];
   };
+  workflowPackId?: string;
+  creativeDirectionPackId?: string;
 }
 
 type CliCommandName =
@@ -117,6 +120,8 @@ interface CliConfigFile {
     requiredPoints?: string[];
     bannedTerms?: string[];
   };
+  workflowPackId?: string;
+  creativeDirectionPackId?: string;
 }
 
 const DEFAULT_IO: CliIo = {
@@ -313,6 +318,8 @@ export function parseCliArgs(args: string[]): CliOptions {
       style,
       theme,
       constraints,
+      workflowPackId: config.workflowPackId,
+      creativeDirectionPackId: config.creativeDirectionPackId,
     };
   }
 
@@ -354,11 +361,28 @@ export function parseCliArgs(args: string[]): CliOptions {
       palette: getOptionalArg(commandArgs, "--palette") ?? "default",
     },
     constraints: createDefaultConstraints(),
+    workflowPackId: getOptionalArg(commandArgs, "--workflow-pack"),
+    creativeDirectionPackId: getOptionalArg(commandArgs, "--creative-direction-pack"),
   };
+}
+
+function createPackSelectionForOptions(
+  options: CliOptions,
+  sourceType: ReturnType<typeof createCompilerSourceInput>["sourceType"],
+  outputType: "case-explainer" | "game-ad",
+) {
+  return createFramepackPackSelection({
+    workflowPackId: options.workflowPackId,
+    creativeDirectionPackId: options.creativeDirectionPackId,
+    sourceType,
+    outputType,
+  });
 }
 
 async function runGenerateCommand(args: string[], io: CliIo): Promise<number> {
   const options = parseCliArgs(args);
+  const source = createCompilerSourceInput(options);
+  const outputType = source.sourceType === "game-ad" ? "game-ad" : "case-explainer";
   const baseDefaults = {
     goal: options.goal,
     audience: options.audience,
@@ -366,13 +390,13 @@ async function runGenerateCommand(args: string[], io: CliIo): Promise<number> {
     style: options.style,
     constraints: options.constraints,
     theme: options.theme,
+    packSelection: createPackSelectionForOptions(options, source.sourceType, outputType),
   };
-  const source = createCompilerSourceInput(options);
   const result = await compileVideoProjectFromSource({
     source,
     defaults: {
       ...baseDefaults,
-      outputType: source.sourceType === "game-ad" ? "game-ad" : "case-explainer",
+      outputType,
     },
     projectName: options.projectName,
   });
@@ -408,6 +432,8 @@ async function runValidateCommand(args: string[], io: CliIo): Promise<number> {
   }
 
   const options = parseCliArgs(args);
+  const source = createCompilerSourceInput(options);
+  const outputType = source.sourceType === "game-ad" ? "game-ad" : "case-explainer";
   const baseDefaults = {
     goal: options.goal,
     audience: options.audience,
@@ -415,13 +441,13 @@ async function runValidateCommand(args: string[], io: CliIo): Promise<number> {
     style: options.style,
     constraints: options.constraints,
     theme: options.theme,
+    packSelection: createPackSelectionForOptions(options, source.sourceType, outputType),
   };
-  const source = createCompilerSourceInput(options);
   const result = await compileVideoProjectFromSource({
     source,
     defaults: {
       ...baseDefaults,
-      outputType: source.sourceType === "game-ad" ? "game-ad" : "case-explainer",
+      outputType,
     },
     projectName: options.projectName,
   });

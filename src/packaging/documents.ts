@@ -59,6 +59,30 @@ function formatForgeGuidance(input: AssetPlan): string {
   return guidance.join("\n");
 }
 
+function formatPackSelection(input: VideoBrief): string {
+  const selection = input.packSelection;
+
+  if (!selection) {
+    return "- None";
+  }
+
+  const lines = [
+    selection.workflowPackId
+      ? `- Workflow pack: ${selection.workflowPackId}${selection.workflowPackLabel ? ` (${selection.workflowPackLabel})` : ""}`
+      : undefined,
+    selection.creativeDirectionPackId
+      ? `- Creative direction pack: ${selection.creativeDirectionPackId}${selection.creativeDirectionPackLabel ? ` (${selection.creativeDirectionPackLabel})` : ""}`
+      : undefined,
+    ...selection.agentInstructions.map((item) => `- Agent instruction: ${item}`),
+    ...selection.visualLanguage.map((item) => `- Visual language: ${item}`),
+    ...selection.motionLanguage.map((item) => `- Motion language: ${item}`),
+    ...selection.templateGuidance.map((item) => `- Template guidance: ${item}`),
+    ...selection.acceptanceCriteria.map((item) => `- Acceptance criterion: ${item}`),
+  ].filter((line): line is string => line !== undefined);
+
+  return lines.length === 0 ? "- None" : lines.join("\n");
+}
+
 export function formatGuardrailsMarkdown(input: {
   brief: VideoBrief;
   validationReport: ValidationReport;
@@ -131,6 +155,9 @@ export function formatHandoffMarkdown(input: {
     `Validation status: ${input.validationReport.status}`,
     `Runtime available: ${input.runtimeAvailable}`,
     `Runtime binary: ${input.runtimeBinary}`,
+    "",
+    "Pack selection:",
+    formatPackSelection(input.brief),
     "",
     "Missing assets:",
     formatList(input.assetPlan.missingAssets),

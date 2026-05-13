@@ -13,6 +13,14 @@ npx framepack packs --json
 
 这些 pack 不是最终视频模板本身，而是给 agent 的“工作选择器”和“审美指南”。agent 先选对工作流，再生成工程包，再按 `status`、`capture`、`sync-assets`、`validate`、`runtime snapshot` 继续推进。
 
+选中路线后，可以把选择写进工程包：
+
+```bash
+npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade
+```
+
+这样 `VIDEO_BRIEF.json` 和 `HANDOFF.md` 都会记录工作流与审美方向，后续 agent 不需要重新猜。
+
 ## 产品形态
 
 Framepack 正在演进成一个面向 agent 安装和调用的视频工作流系统：

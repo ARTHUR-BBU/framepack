@@ -14,6 +14,7 @@ import { createHyperframesRuntimeAdapter, detectHyperframesCapabilities } from "
 import { executeHyperframesCommand } from "../runtime/hyperframes/execution.js";
 import { writeVideoProjectPackage } from "../video/package/project-package.js";
 import {
+  createFramepackPackSelection,
   getFramepackCreativeDirectionPack,
   getFramepackWorkflowPack,
   listFramepackCreativeDirectionPacks,
@@ -128,16 +129,25 @@ export function createFramepackMcpServer(): McpServer {
         audience: z.string(),
         projectName: z.string(),
         format: z.enum(["16:9", "9:16"]).default("16:9"),
+        workflowPackId: z.string().optional(),
+        creativeDirectionPackId: z.string().optional(),
       },
     },
     async (input) => {
+      const outputType = input.sourceType === "game-ad" ? "game-ad" : "case-explainer";
       const result = await compileVideoProjectFromSource({
         source: sourceInput(input),
         defaults: {
           goal: input.goal,
           audience: input.audience,
           format: input.format,
-          outputType: input.sourceType === "game-ad" ? "game-ad" : "case-explainer",
+          outputType,
+          packSelection: createFramepackPackSelection({
+            workflowPackId: input.workflowPackId,
+            creativeDirectionPackId: input.creativeDirectionPackId,
+            sourceType: input.sourceType,
+            outputType,
+          }),
         },
         projectName: input.projectName,
       });
