@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-rc.2
+
+- fixed the published CLI bin entrypoint by preserving the Node shebang in `dist/cli.js`
+- added release regression coverage to ensure the packaged CLI entrypoint remains directly executable
+- verified clean tarball installation through `npx framepack`, markdown package generation, runtime checks, and game-ad forge package generation
+
 ## 0.2.0-rc.1
 
 - added the Asset Forge Layer with backend-neutral forge execution kinds for sprite sheets, maps, FX, props, and character packs

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { fileURLToPath } from "node:url";
 import { runCli } from "./interfaces/cli/index.js";
 

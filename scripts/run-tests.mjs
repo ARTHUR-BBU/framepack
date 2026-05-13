@@ -1906,10 +1906,12 @@ Framepack compiles content into executable video projects.
     name: "publish package metadata under the framepack identity",
     run: () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+      const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "./dist/cli.js");
+      assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
       assert.ok(Array.isArray(packageJson.files));
       assert.ok(packageJson.files.includes("README.zh-CN.md"));
       assert.ok(packageJson.files.includes("AGENTS.md"));
