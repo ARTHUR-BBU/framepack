@@ -15,3 +15,29 @@ The agent should:
 3. Verify `framepack mcp --describe`.
 4. Generate a small package.
 5. Run status and validation.
+
+## What The Agent Is Installing
+
+Framepack is not only a CLI. The install should make the agent able to use:
+
+- MCP tools for generation, status, validation, asset work, and runtime checks
+- project resources such as manifest, handoff, asset execution plan, forge tasks, and status
+- workflow prompts for common video tasks
+- Codex skill instructions or Claude Code preview instructions
+
+The intended user experience is natural language first. The user describes the video job; the agent chooses the Framepack workflow, generates a package, checks readiness, follows `nextActionItems`, and reports what remains.
+
+## Creative And Template Direction
+
+Agents should treat design and motion quality as part of the workflow, not as an afterthought.
+
+When a task needs creative output, the agent should identify:
+
+- the intended video type
+- the audience and tone
+- the visual style
+- the animation rhythm
+- the best available template or workflow pack
+- any missing assets or forge tasks
+
+If no template exists, the agent should preserve clear creative notes in the package handoff so a human, designer, or future template pack can improve the result.

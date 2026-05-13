@@ -1,5 +1,18 @@
 # Framepack
 
+## 产品形态
+
+Framepack 正在演进成一个面向 agent 安装和调用的视频工作流系统：
+
+- Framepack Core：CLI、工程包协议、校验和 HyperFrames 桥接。
+- Framepack MCP：agent 可以直接调用的 tools、resources 和 prompts。
+- Framepack Skills：给 Codex、Claude Code 和未来 agent 平台使用的视频生产 playbook。
+- Framepack Workflow Packs：可安装的视频工作流，比如产品解释、帖子视频、网页视频、游戏风广告、课程宣传、发布复盘和投资人更新。
+- Framepack Creative Direction Layer：设计审美、动画审美、运动语言、叙事节奏、模板选择和视觉验收标准。
+- Framepack Connectors：内容源、asset forge 后端、渲染系统、发布系统和未来社区集成。
+
+长期目标不只是让工程包“协议正确”，而是让 agent 生成的工程包拥有清晰叙事、稳定审美、可复用动画模式，并且能被设计师、爱好者和社区持续共建。
+
 [English](./README.md)
 
 ## 让 Codex 安装 Framepack

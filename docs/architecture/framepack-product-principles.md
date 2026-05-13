@@ -18,6 +18,7 @@ Framepack is:
 - a packaging system for reusable video work
 - a planning and validation layer above a rendering runtime
 - an execution-oriented middleware layer between content sources and final video rendering
+- an agent-installable video workflow system that can grow through MCP tools, skills, workflow packs, creative direction packs, connectors, and community templates
 
 Framepack takes content inputs such as:
 
@@ -81,6 +82,56 @@ These tasks are backend-neutral. A task may recommend `agent-sprite-forge` and a
 Framepack should not silently install forge backends or call image generation models. It should generate prompts, expected outputs, scene linkage, output paths, and acceptance criteria so an agent or external producer can continue the work.
 
 Asset execution status is part of the package protocol. Execution items can be `pending`, `available`, `failed`, `skipped`, or `external`; `sync-assets` should preserve producer-reported metadata status instead of reducing every result to available or pending. For forge metadata, `available` and `external` require an `outputs` array of package-relative paths so the package can verify the declared files exist.
+
+## Agent Platform And Ecosystem
+
+Framepack's product direction is broader than a CLI. It should become an agent-facing workflow platform:
+
+- Core compiler: source ingest, package protocol, validation, and runtime bridge.
+- MCP server: stable tools, resources, and prompts for agent platforms.
+- Skills: reusable playbooks that teach agents how to run video production workflows.
+- Workflow packs: installable task packages for product explainers, thread videos, website videos, game ads, course promos, launch reviews, and investor updates.
+- Connectors: content sources, asset forge backends, render systems, publishing systems, and third-party integrations.
+- Community registry: examples, templates, style packs, connector packs, and best-practice packages contributed by users and builders.
+
+The guiding benchmark is not "can a user run a command?" but "can an agent install the workflow, understand the task, call the right tools, continue from package state, and produce a video project that is useful to humans?"
+
+## Creative Direction Layer
+
+Framepack needs an explicit creative direction layer. Protocol correctness is necessary but not sufficient.
+
+This layer should capture:
+
+- design taste: typography, hierarchy, layout density, visual language, and brand fit
+- animation taste: motion vocabulary, transitions, rhythm, camera movement, and timing
+- narrative taste: hook, pacing, information reveal, emotional arc, and ending
+- template selection: which composition or template pack fits the source and audience
+- asset style: how generated, captured, manual, or existing assets should look together
+- acceptance criteria: not only "files exist" but "the result is visually coherent and motion-aware"
+
+Creative direction should be encoded as structured package guidance where possible, and as workflow-pack playbooks where taste is still subjective. Framepack should leave room for designers, motion specialists, hobbyists, and third-party communities to contribute template packs, motion presets, and best-practice examples.
+
+## Template And Community Ecosystem
+
+Templates are first-class product assets, not incidental examples.
+
+A future Framepack template pack should be able to include:
+
+- composition templates
+- scene layouts
+- motion presets
+- typography and color tokens
+- asset slots and fallback rules
+- creative acceptance checklists
+- example packages and screenshots
+
+Community participation is part of the product logic. Framepack should make it possible for:
+
+- motion designers to contribute template packs
+- agent builders to contribute workflow packs and skills
+- asset tool builders to contribute forge adapters
+- product teams to share example packages
+- communities to encode design and animation best practices
 
 ### What Framepack is not
 

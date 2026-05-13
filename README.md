@@ -26,6 +26,19 @@ The agent should run `framepack init-agent --target codex --scope project`, conn
 
 Claude Code preview support is available with `framepack init-agent --target claude-code --scope project`.
 
+## Product Shape
+
+Framepack is evolving into an agent-installable video workflow system:
+
+- Framepack Core: CLI, package protocol, validation, and the HyperFrames bridge.
+- Framepack MCP: tools, resources, and prompts that agents can call directly.
+- Framepack Skills: reusable video production playbooks for Codex, Claude Code, and future agent platforms.
+- Framepack Workflow Packs: installable workflows such as product explainers, thread videos, website videos, game ads, course promos, launch reviews, and investor updates.
+- Framepack Creative Direction Layer: design taste, animation taste, motion language, pacing, template selection, and visual acceptance criteria.
+- Framepack Connectors: content sources, asset forge backends, render systems, publishing systems, and future community integrations.
+
+The long-term goal is not only to make video project packages valid. It is to help agents produce packages with clear narrative, strong design direction, reusable motion patterns, and enough creative structure for humans, designers, and community contributors to improve the result.
+
 ## Quickstart
 
 ```bash
