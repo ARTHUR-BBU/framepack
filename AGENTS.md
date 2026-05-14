@@ -30,10 +30,11 @@ npx framepack init-agent --target claude-code --scope project
 npx framepack mcp --describe
 npx framepack packs
 npx framepack packs --json
+npx framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course" --audience "Founders" --format 9:16 --json
 npx framepack mcp
 ```
 
-Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs so agents can choose the correct production route before generating a package.
+Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs. `packs recommend` and MCP `recommendPacks` provide a conservative default route before generating a package.
 
 Generate a package:
 
@@ -103,7 +104,7 @@ Then inspect these files as needed:
 
 ## Agent Workflow
 
-0. For broad requests, run `npx framepack packs --json` or use the MCP pack tools to choose a workflow pack and creative direction pack before generating or continuing a package. Pass the selected route with `--workflow-pack <id>` and `--creative-direction-pack <id>`, or MCP `workflowPackId` and `creativeDirectionPackId`, so `VIDEO_BRIEF.json` and `HANDOFF.md` preserve the decision.
+0. For broad requests, run `npx framepack packs recommend --json` or use MCP `recommendPacks` to choose a workflow pack and creative direction pack before generating or continuing a package. Pass the selected route with `--workflow-pack <id>` and `--creative-direction-pack <id>`, or MCP `workflowPackId` and `creativeDirectionPackId`, so `VIDEO_BRIEF.json` and `HANDOFF.md` preserve the decision.
 1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
 2. Read `HANDOFF.md` to understand the current package state and pending work.
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.

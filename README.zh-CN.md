@@ -13,6 +13,15 @@ npx framepack packs --json
 
 这些 pack 不是最终视频模板本身，而是给 agent 的“工作选择器”和“审美指南”。agent 先选对工作流，再生成工程包，再按 `status`、`capture`、`sync-assets`、`validate`、`runtime snapshot` 继续推进。
 
+agent 可以先让 Framepack 做保守推荐：
+
+```bash
+npx framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course with game-style visuals" --audience "Founders" --format 9:16
+npx framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course with game-style visuals" --audience "Founders" --format 9:16 --json
+```
+
+MCP 里对应工具是 `recommendPacks`。
+
 选中路线后，可以把选择写进工程包：
 
 ```bash

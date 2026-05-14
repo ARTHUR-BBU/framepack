@@ -29,6 +29,21 @@ export interface FramepackCreativeDirectionPack {
   acceptanceCriteria: string[];
 }
 
+export interface FramepackPackRecommendationInput {
+  sourceType: CompilerSourceInput["sourceType"];
+  outputType: OutputType;
+  goal?: string;
+  audience?: string;
+  format?: VideoFormat;
+}
+
+export interface FramepackPackRecommendation {
+  workflowPack: FramepackWorkflowPack;
+  creativeDirectionPack: FramepackCreativeDirectionPack;
+  packSelection: VideoPackSelection;
+  reason: string;
+}
+
 export const FRAMEPACK_WORKFLOW_PACKS: FramepackWorkflowPack[] = [
   {
     id: "product-explainer",
@@ -344,6 +359,101 @@ export function createFramepackPackSelection(input: {
       ...(workflowPack?.acceptanceCriteria ?? []),
       ...(creativeDirectionPack?.acceptanceCriteria ?? []),
     ],
+  };
+}
+
+function scoreWorkflowPack(pack: FramepackWorkflowPack, input: FramepackPackRecommendationInput): number {
+  const intent = `${input.goal ?? ""} ${input.audience ?? ""}`.toLowerCase();
+  let score = 0;
+
+  if (pack.status === "available") {
+    score += 100;
+  }
+
+  if (pack.sourceTypes.includes(input.sourceType)) {
+    score += 40;
+  }
+
+  if (pack.outputType === input.outputType) {
+    score += 30;
+  }
+
+  if (!input.format || pack.formats.includes(input.format)) {
+    score += 10;
+  }
+
+  if (intent.includes("game") || intent.includes("sprite") || intent.includes("arcade")) {
+    score += pack.id === "game-ad-sprite-video" ? 20 : 0;
+  }
+
+  if (intent.includes("thread") || intent.includes("post")) {
+    score += pack.id === "thread-to-video" ? 20 : 0;
+  }
+
+  if (intent.includes("website") || intent.includes("landing")) {
+    score += pack.id === "website-to-video" ? 20 : 0;
+  }
+
+  if (intent.includes("course")) {
+    score += pack.id === "course-promo" ? 10 : 0;
+  }
+
+  return score;
+}
+
+function pickCreativeDirectionPack(workflowPack: FramepackWorkflowPack, input: FramepackPackRecommendationInput) {
+  const intent = `${input.goal ?? ""} ${input.audience ?? ""}`.toLowerCase();
+  const recommendedIds = workflowPack.recommendedCreativeDirectionPacks;
+
+  if (
+    recommendedIds.includes("game-ad-retro-arcade") &&
+    (workflowPack.id === "game-ad-sprite-video" || intent.includes("game") || intent.includes("sprite"))
+  ) {
+    return getFramepackCreativeDirectionPack("game-ad-retro-arcade");
+  }
+
+  if (
+    recommendedIds.includes("editorial-proof-story") &&
+    (workflowPack.id === "thread-to-video" ||
+      workflowPack.id === "launch-review" ||
+      intent.includes("proof"))
+  ) {
+    return getFramepackCreativeDirectionPack("editorial-proof-story");
+  }
+
+  return getFramepackCreativeDirectionPack(recommendedIds[0] ?? "clean-saas-explainer");
+}
+
+export function recommendFramepackPacks(input: FramepackPackRecommendationInput): FramepackPackRecommendation {
+  const candidates = FRAMEPACK_WORKFLOW_PACKS
+    .filter((pack) => pack.sourceTypes.includes(input.sourceType))
+    .filter((pack) => pack.outputType === input.outputType)
+    .filter((pack) => !input.format || pack.formats.includes(input.format))
+    .filter((pack) => pack.status === "available")
+    .sort((left, right) => scoreWorkflowPack(right, input) - scoreWorkflowPack(left, input));
+  const workflowPack = candidates[0];
+
+  if (!workflowPack) {
+    throw new Error(`No available workflow pack supports sourceType ${input.sourceType} and outputType ${input.outputType}.`);
+  }
+
+  const creativeDirectionPack = pickCreativeDirectionPack(workflowPack, input);
+  const packSelection = createFramepackPackSelection({
+    workflowPackId: workflowPack.id,
+    creativeDirectionPackId: creativeDirectionPack.id,
+    sourceType: input.sourceType,
+    outputType: input.outputType,
+  });
+
+  if (!packSelection) {
+    throw new Error("Failed to create Framepack pack selection from recommendation.");
+  }
+
+  return {
+    workflowPack: cloneWorkflowPack(workflowPack),
+    creativeDirectionPack,
+    packSelection,
+    reason: `Recommended ${workflowPack.id} because it supports sourceType ${input.sourceType}, outputType ${input.outputType}, and format ${input.format ?? "any"}.`,
   };
 }
 

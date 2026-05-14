@@ -17,6 +17,7 @@ Framepack exposes an MCP stdio server with tools for the complete package lifecy
 - `getWorkflowPack`
 - `listCreativeDirectionPacks`
 - `getCreativeDirectionPack`
+- `recommendPacks`
 
 It also exposes project resources for manifest, handoff, asset execution plan, forge tasks, and status, plus registry resources for workflow packs and creative direction packs:
 
@@ -42,6 +43,8 @@ MCP tools should stay stable and structured so higher-level skills and workflow 
 The MCP surface now exposes the first creative direction registry.
 
 Agents should call `listWorkflowPacks` and `listCreativeDirectionPacks` before generating a project when the user request is broad or product-shaped. The workflow pack helps choose the source route and expected execution kinds. The creative direction pack helps choose visual language, motion language, template guidance, and acceptance criteria before rendering.
+
+For a conservative default, call `recommendPacks` with `sourceType`, `outputType`, optional `goal`, optional `audience`, and optional `format`. The response includes `workflowPack`, `creativeDirectionPack`, `packSelection`, and a human-readable `reason`. Agents should rely on IDs and `packSelection` for automation; `reason` is explanatory text.
 
 `generateProject` accepts optional `workflowPackId` and `creativeDirectionPackId`. When provided, Framepack validates the workflow pack against the selected source/output route and writes the pack selection into `VIDEO_BRIEF.json` and `HANDOFF.md`.
 

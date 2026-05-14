@@ -13,7 +13,7 @@ The agent should:
 1. Install Framepack from npm.
 2. Run `framepack init-agent --target codex --scope project`.
 3. Verify `framepack mcp --describe`.
-4. Inspect `framepack packs --json` or the MCP pack tools.
+4. Inspect `framepack packs recommend --json` or the MCP `recommendPacks` tool.
 5. Generate a small package.
 6. Run status and validation.
 

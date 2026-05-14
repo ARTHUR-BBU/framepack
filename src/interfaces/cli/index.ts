@@ -34,6 +34,7 @@ import {
   describeFramepackPackRegistry,
   listFramepackCreativeDirectionPacks,
   listFramepackWorkflowPacks,
+  recommendFramepackPacks,
 } from "../../workflow-packs/registry.js";
 
 export interface CliIo {
@@ -563,6 +564,35 @@ async function runMcpCommand(args: string[], io: CliIo): Promise<number> {
 }
 
 function runPacksCommand(args: string[], io: CliIo): number {
+  if (args[0] === "recommend") {
+    const sourceType = getRequiredArg(args, "--source-type") as CompilerSourceInput["sourceType"];
+    const outputType = getRequiredArg(args, "--output-type") as "case-explainer" | "game-ad";
+    const format = getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined;
+    const recommendation = recommendFramepackPacks({
+      sourceType,
+      outputType,
+      goal: getOptionalArg(args, "--goal"),
+      audience: getOptionalArg(args, "--audience"),
+      format,
+    });
+
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify(recommendation, null, 2));
+      return 0;
+    }
+
+    io.stdout(
+      [
+        "Framepack pack recommendation",
+        "",
+        `Workflow pack: ${recommendation.workflowPack.id} (${recommendation.workflowPack.label})`,
+        `Creative direction pack: ${recommendation.creativeDirectionPack.id} (${recommendation.creativeDirectionPack.label})`,
+        `Reason: ${recommendation.reason}`,
+      ].join("\n"),
+    );
+    return 0;
+  }
+
   const payload = {
     workflowPacks: listFramepackWorkflowPacks(),
     creativeDirectionPacks: listFramepackCreativeDirectionPacks(),

@@ -65,6 +65,7 @@ import { createForgeTaskInstruction } from "../dist/forge/adapter.js";
 import {
   listFramepackCreativeDirectionPacks,
   listFramepackWorkflowPacks,
+  recommendFramepackPacks,
 } from "../dist/workflow-packs/registry.js";
 
 const fixturePath = resolve(
@@ -2978,6 +2979,66 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "recommend workflow and creative direction packs from source intent",
+    run: () => {
+      const gameAdRecommendation = recommendFramepackPacks({
+        sourceType: "game-ad",
+        outputType: "game-ad",
+        goal: "Promote a course with a game-style founder quest",
+        audience: "Founders",
+        format: "9:16",
+      });
+      const markdownRecommendation = recommendFramepackPacks({
+        sourceType: "markdown",
+        outputType: "case-explainer",
+        goal: "Explain a B2B SaaS product launch",
+        audience: "Operators",
+        format: "16:9",
+      });
+
+      assert.equal(gameAdRecommendation.workflowPack.id, "game-ad-sprite-video");
+      assert.equal(gameAdRecommendation.creativeDirectionPack.id, "game-ad-retro-arcade");
+      assert.equal(gameAdRecommendation.packSelection.workflowPackId, "game-ad-sprite-video");
+      assert.ok(gameAdRecommendation.reason.includes("sourceType game-ad"));
+      assert.equal(markdownRecommendation.workflowPack.id, "product-explainer");
+      assert.equal(markdownRecommendation.creativeDirectionPack.id, "clean-saas-explainer");
+    },
+  },
+  {
+    name: "describe pack recommendations through the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        [
+          "packs",
+          "recommend",
+          "--source-type",
+          "game-ad",
+          "--output-type",
+          "game-ad",
+          "--goal",
+          "Promote a course with game-style visuals",
+          "--audience",
+          "Founders",
+          "--format",
+          "9:16",
+          "--json",
+        ],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      const payload = JSON.parse(stdout.join("\n"));
+      assert.equal(payload.workflowPack.id, "game-ad-sprite-video");
+      assert.equal(payload.creativeDirectionPack.id, "game-ad-retro-arcade");
+      assert.equal(payload.packSelection.workflowPackId, "game-ad-sprite-video");
+    },
+  },
+  {
     name: "include workflow pack tools and resources in the MCP description",
     run: async () => {
       const stdout = [];
@@ -2996,6 +3057,7 @@ Framepack compiles content into executable video projects.
       assert.match(output, /getWorkflowPack/);
       assert.match(output, /listCreativeDirectionPacks/);
       assert.match(output, /getCreativeDirectionPack/);
+      assert.match(output, /recommendPacks/);
       assert.match(output, /framepack:\/\/packs\/workflows/);
       assert.match(output, /framepack:\/\/packs\/creative-directions/);
     },

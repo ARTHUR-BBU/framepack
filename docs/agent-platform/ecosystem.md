@@ -76,6 +76,7 @@ Framepack now exposes the first built-in pack registry through:
 ```bash
 framepack packs
 framepack packs --json
+framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course" --audience "Founders" --format 9:16 --json
 framepack mcp --describe
 ```
 
@@ -85,6 +86,7 @@ MCP clients can also use:
 - `getWorkflowPack`
 - `listCreativeDirectionPacks`
 - `getCreativeDirectionPack`
+- `recommendPacks`
 
 This registry is intentionally separate from the package protocol. It helps agents choose the right workflow and creative direction before generating or continuing a package, without forcing every existing project package to change shape.
 

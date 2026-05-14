@@ -19,6 +19,7 @@ import {
   getFramepackWorkflowPack,
   listFramepackCreativeDirectionPacks,
   listFramepackWorkflowPacks,
+  recommendFramepackPacks,
 } from "../workflow-packs/registry.js";
 
 type SourceType = "markdown" | "thread" | "website" | "game-ad";
@@ -236,6 +237,20 @@ export function createFramepackMcpServer(): McpServer {
 
   server.registerTool("getCreativeDirectionPack", { inputSchema: { id: z.string() } }, (input) =>
     textJson(getFramepackCreativeDirectionPack(input.id)),
+  );
+
+  server.registerTool(
+    "recommendPacks",
+    {
+      inputSchema: {
+        sourceType: z.enum(["markdown", "thread", "website", "game-ad"]),
+        outputType: z.enum(["case-explainer", "game-ad"]),
+        goal: z.string().optional(),
+        audience: z.string().optional(),
+        format: z.enum(["16:9", "9:16"]).optional(),
+      },
+    },
+    (input) => textJson(recommendFramepackPacks(input)),
   );
 
   server.registerResource(

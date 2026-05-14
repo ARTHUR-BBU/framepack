@@ -10,6 +10,7 @@
 - documented the long-term agent platform ecosystem, including workflow packs, creative direction, template packs, connectors, and community contribution paths
 - added the first built-in workflow pack and creative direction pack registry, exposed through `framepack packs`, MCP tools, and MCP resources
 - added workflow and creative direction pack selection during generation, with validation and durable `VIDEO_BRIEF.json` / `HANDOFF.md` output
+- added pack recommendation through `framepack packs recommend` and MCP `recommendPacks`
 
 ## 0.2.0-rc.2
 

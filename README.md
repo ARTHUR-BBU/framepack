@@ -35,6 +35,15 @@ npx framepack packs --json
 
 The same registry is exposed through MCP tools: `listWorkflowPacks`, `getWorkflowPack`, `listCreativeDirectionPacks`, and `getCreativeDirectionPack`.
 
+Agents can ask Framepack for a conservative recommendation:
+
+```bash
+npx framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course with game-style visuals" --audience "Founders" --format 9:16
+npx framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course with game-style visuals" --audience "Founders" --format 9:16 --json
+```
+
+The same recommendation is available through MCP as `recommendPacks`.
+
 When a route is selected, pass it into generation so the package records the decision:
 
 ```bash

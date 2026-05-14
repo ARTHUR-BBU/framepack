@@ -7,6 +7,6 @@ description: Use Framepack to compile content into executable video project pack
 
 Use Framepack MCP tools when the user asks to create or continue a video project package.
 
-For broad requests, start with `listWorkflowPacks` and `listCreativeDirectionPacks` so you can choose the right production route and visual direction.
+For broad requests, start with `recommendPacks` so you can choose the right production route and visual direction.
 
 Then use `generateProject` with `workflowPackId` and `creativeDirectionPackId`, run `getStatus` and `validatePackage`, and follow `nextActionItems`.

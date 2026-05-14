@@ -16,6 +16,7 @@ export const FRAMEPACK_MCP_TOOLS = [
   "getWorkflowPack",
   "listCreativeDirectionPacks",
   "getCreativeDirectionPack",
+  "recommendPacks",
 ] as const;
 
 export const FRAMEPACK_MCP_RESOURCES = [
