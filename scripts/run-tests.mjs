@@ -1928,6 +1928,23 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "publish a real install smoke script for release candidates",
+    run: () => {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+      const scriptPath = resolve(dirname(packageJsonPath), "scripts", "run-install-smoke.mjs");
+      const script = readFileSync(scriptPath, "utf8");
+
+      assert.equal(packageJson.scripts["release:smoke:install"], "npm run build && node scripts/run-install-smoke.mjs");
+      assert.match(script, /npm pack/);
+      assert.match(script, /npm install/);
+      assert.match(script, /framepack/);
+      assert.match(script, /release-smoke/);
+      assert.match(script, /--auto-pack/);
+      assert.match(script, /validate/);
+      assert.match(script, /status/);
+    },
+  },
+  {
     name: "ship agent and example entry files for the published repo",
     run: () => {
       const agents = readFileSync(agentsPath, "utf8");

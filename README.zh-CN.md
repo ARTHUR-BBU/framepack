@@ -77,6 +77,7 @@ Framepack 负责生成资产库、编排、生成模型、后期合成混合工�
 npm install
 npm run build
 npx framepack release-smoke --output-dir out/release-smoke --json
+npm run release:smoke:install
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 ```
 
@@ -170,6 +171,7 @@ Forge 任务可以包含：
 npm run typecheck
 npm test
 npm run build
+npm run release:smoke:install
 ```
 
 `npm test` 里包含 markdown、thread、game-ad 三类工程包的 golden 协议摘要检查。它不会锁时间戳和本机绝对路径，而是检查 manifest、scene asset map、execution kinds、forge 任务数量和 handoff 指令是否稳定。
@@ -193,6 +195,14 @@ npx framepack release-smoke --output-dir out/release-smoke --json
 ```
 
 `release-smoke` 会生成 Codex 和 Claude Code 的 agent 工作流文件，检查 MCP surface，自动推荐 workflow / creative direction packs，生成一个 `--auto-pack` 游戏风宣传片工程包，然后跑 `status` 和 `validate`。它不安装外部 forge skills，不调用图像生成，也不要求 HyperFrames 渲染可用。
+
+更严格的发布候选版本验证可以运行：
+
+```bash
+npm run release:smoke:install
+```
+
+它会先 build，再 `npm pack` 打出 npm tarball，把 tarball 安装进一个临时空项目，然后用安装后的 `framepack` 真实执行 MCP discovery、`release-smoke`、`generate --auto-pack`、`validate` 和 `status --json`。
 
 只验证，不生成完整工程包：
 

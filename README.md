@@ -85,6 +85,7 @@ npm run build
 npx framepack packs
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 npx framepack release-smoke --output-dir out/release-smoke --json
+npm run release:smoke:install
 ```
 
 Agent-first examples:
@@ -187,6 +188,7 @@ You can think about the stack like this:
 - `npm run typecheck`
 - `npm test`
 - `npm run build`
+- `npm run release:smoke:install`
 
 `npm test` includes golden package protocol summaries for markdown, thread, and game-ad packages. These summaries intentionally avoid timestamps and absolute paths while checking the package manifest, scene asset map, execution kinds, forge task count, and handoff guidance.
 
@@ -230,6 +232,14 @@ npx framepack release-smoke --output-dir out/release-smoke --json
 ```
 
 Agents should use this before publishing or tagging a release candidate. It is intentionally package/protocol focused: it does not install external forge skills, does not call image generation, and does not require HyperFrames rendering to be available.
+
+For a stricter release-candidate gate, run:
+
+```bash
+npm run release:smoke:install
+```
+
+This builds the repo, packs the npm tarball, installs that tarball into a temporary empty consumer project, then runs the installed `framepack` binary through MCP discovery, `release-smoke`, `generate --auto-pack`, `validate`, and `status --json`.
 
 ### `validate`
 

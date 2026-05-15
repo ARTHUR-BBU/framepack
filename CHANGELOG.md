@@ -13,6 +13,7 @@
 - added pack recommendation through `framepack packs recommend` and MCP `recommendPacks`
 - added one-step automatic pack recommendation during generation through CLI `--auto-pack` and MCP `autoRecommendPacks`
 - added the agent-platform release smoke harness through CLI `release-smoke` and MCP `releaseSmoke`
+- added `npm run release:smoke:install` for real npm tarball installation checks before publishing release candidates
 
 ## 0.2.0-rc.2
 
