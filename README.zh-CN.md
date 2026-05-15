@@ -76,6 +76,7 @@ Framepack 负责生成资产库、编排、生成模型、后期合成混合工�
 ```bash
 npm install
 npm run build
+npx framepack release-smoke --output-dir out/release-smoke --json
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 ```
 
@@ -183,6 +184,15 @@ npx framepack generate --thread-file examples/thread.txt --output-dir out --goal
 npx framepack generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
 npx framepack generate --game-ad-description "A product story for a sprite-style video ad." --output-dir out --goal "Promote the product" --audience "Founders" --project-name sprite-video-demo
 ```
+
+发布候选版本前，agent 可以跑一次完整烟测：
+
+```bash
+npx framepack release-smoke --output-dir out/release-smoke
+npx framepack release-smoke --output-dir out/release-smoke --json
+```
+
+`release-smoke` 会生成 Codex 和 Claude Code 的 agent 工作流文件，检查 MCP surface，自动推荐 workflow / creative direction packs，生成一个 `--auto-pack` 游戏风宣传片工程包，然后跑 `status` 和 `validate`。它不安装外部 forge skills，不调用图像生成，也不要求 HyperFrames 渲染可用。
 
 只验证，不生成完整工程包：
 

@@ -29,6 +29,7 @@ import { writeVideoProjectPackage } from "../../video/package/project-package.js
 import { writeValidationReport } from "../../video/validation/validation-report.js";
 import { runFramepackMcpServer } from "../../mcp/server.js";
 import { describeFramepackMcpSurface } from "../../mcp/surface.js";
+import { runFramepackReleaseSmoke } from "../../release-smoke.js";
 import {
   describeFramepackPackRegistry,
   listFramepackCreativeDirectionPacks,
@@ -76,6 +77,7 @@ type CliCommandName =
   | "init-agent"
   | "mcp"
   | "packs"
+  | "release-smoke"
   | "generate"
   | "status"
   | "validate"
@@ -223,6 +225,7 @@ function getCommandName(args: string[]): CliCommandName {
     command === "init-agent" ||
     command === "mcp" ||
     command === "packs" ||
+    command === "release-smoke" ||
     command === "generate" ||
     command === "status" ||
     command === "validate" ||
@@ -236,7 +239,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, init-agent, mcp, packs, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use init, init-agent, mcp, packs, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -258,6 +261,7 @@ function getCommandArgs(args: string[]): string[] {
     first === "init-agent" ||
     first === "mcp" ||
     first === "packs" ||
+    first === "release-smoke" ||
     first === "generate" ||
     first === "status" ||
     first === "validate" ||
@@ -615,6 +619,30 @@ function runPacksCommand(args: string[], io: CliIo): number {
   return 0;
 }
 
+async function runReleaseSmokeCommand(args: string[], io: CliIo, context: CliContext = {}): Promise<number> {
+  const report = await runFramepackReleaseSmoke({
+    outputDir: getRequiredArg(args, "--output-dir"),
+    platform: context.platform,
+  });
+
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify(report, null, 2));
+  } else {
+    io.stdout(
+      [
+        `Framepack release smoke: ${report.status}`,
+        `roundId: ${report.roundId}`,
+        `outputDir: ${report.outputDir}`,
+        report.generatedProjectDir ? `generatedProjectDir: ${report.generatedProjectDir}` : undefined,
+        "",
+        ...report.checks.map((check) => `- ${check.status}: ${check.id} - ${check.summary}`),
+      ].filter((line): line is string => line !== undefined).join("\n"),
+    );
+  }
+
+  return report.status === "passed" ? 0 : 1;
+}
+
 function getRequiredProjectDir(args: string[]): string {
   return resolve(getRequiredArg(args, "--project-dir"));
 }
@@ -889,6 +917,10 @@ export async function runCli(
 
     if (command === "packs") {
       return runPacksCommand(args.slice(1), io);
+    }
+
+    if (command === "release-smoke") {
+      return await runReleaseSmokeCommand(args.slice(1), io, context);
     }
 
     if (command === "validate") {

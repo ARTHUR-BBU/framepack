@@ -84,6 +84,7 @@ npm install
 npm run build
 npx framepack packs
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
+npx framepack release-smoke --output-dir out/release-smoke --json
 ```
 
 Agent-first examples:
@@ -218,6 +219,17 @@ Generate a video engineering package from a local thread/post text file.
 Generate a sprite-video game-ad package from a short product, course, or brand description.
 
 `npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo`
+
+### `release-smoke`
+
+Run the agent-platform RC smoke harness. This creates Codex and Claude Code agent workflow files, checks the MCP surface, recommends packs, generates a sprite-video package with `--auto-pack` behavior, then runs package status and validation.
+
+```bash
+npx framepack release-smoke --output-dir out/release-smoke
+npx framepack release-smoke --output-dir out/release-smoke --json
+```
+
+Agents should use this before publishing or tagging a release candidate. It is intentionally package/protocol focused: it does not install external forge skills, does not call image generation, and does not require HyperFrames rendering to be available.
 
 ### `validate`
 

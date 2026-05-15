@@ -32,6 +32,7 @@ npx framepack packs
 npx framepack packs --json
 npx framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course" --audience "Founders" --format 9:16 --json
 npx framepack mcp
+npx framepack release-smoke --output-dir out/release-smoke --json
 ```
 
 Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs. `packs recommend` and MCP `recommendPacks` provide a conservative default route before generating a package.
@@ -73,6 +74,8 @@ npx framepack render --project-dir out/thread-case
 ```
 
 `runtime lint` checks HyperFrames composition mistakes. `runtime inspect` checks visual layout and text overflow across the timeline. `runtime snapshot` captures PNG key frames for visual verification. `runtime upgrade-check` explicitly checks for HyperFrames updates. Framepack 0.2 does not expose HyperFrames `publish` because it uploads externally and returns a public URL.
+
+Run `release-smoke` before tagging or publishing a release candidate. It creates Codex and Claude Code agent workflow files, checks the MCP surface, recommends packs, generates an auto-packed game-ad package, and runs status plus validation. It does not install external forge skills, call image generation, or require HyperFrames rendering.
 
 ## Package Protocol
 

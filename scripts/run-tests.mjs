@@ -3084,6 +3084,7 @@ Framepack compiles content into executable video projects.
       assert.match(output, /listCreativeDirectionPacks/);
       assert.match(output, /getCreativeDirectionPack/);
       assert.match(output, /recommendPacks/);
+      assert.match(output, /releaseSmoke/);
       assert.match(output, /framepack:\/\/packs\/workflows/);
       assert.match(output, /framepack:\/\/packs\/creative-directions/);
     },
@@ -3513,6 +3514,55 @@ Framepack compiles content into executable video projects.
         assert.equal(exitCode, 0, stderr.join("\n"));
         assert.equal(brief.packSelection.workflowPackId, "product-explainer");
         assert.equal(brief.packSelection.creativeDirectionPackId, "editorial-proof-story");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "run release smoke harness for agent platform readiness",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-release-smoke-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const exitCode = await runCli(
+          ["release-smoke", "--output-dir", tempRoot, "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const report = JSON.parse(stdout.join("\n"));
+        const projectDir = join(tempRoot, "sprite-video-demo");
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.equal(stderr.length, 0);
+        assert.equal(report.status, "passed");
+        assert.equal(report.roundId, "AGENT-PLATFORM-RC-SMOKE");
+        assert.equal(report.outputDir, tempRoot);
+        assert.deepEqual(
+          report.checks.map((check) => check.id),
+          [
+            "init-agent-codex",
+            "init-agent-claude-code",
+            "mcp-surface",
+            "pack-recommendation",
+            "auto-pack-generation",
+            "package-status",
+            "package-validation",
+          ],
+        );
+        assert.ok(report.checks.every((check) => check.status === "passed"));
+        assert.equal(report.recommended.workflowPackId, "game-ad-sprite-video");
+        assert.equal(report.recommended.creativeDirectionPackId, "game-ad-retro-arcade");
+        assert.equal(report.generatedProjectDir, projectDir);
+        assert.equal(existsSync(join(projectDir, "PACKAGE_MANIFEST.json")), true);
+        assert.equal(existsSync(join(projectDir, "VIDEO_BRIEF.json")), true);
+        assert.equal(existsSync(join(tempRoot, "codex-agent", ".framepack", "agent", "codex", "SKILL.md")), true);
+        assert.equal(existsSync(join(tempRoot, "claude-code-agent", "CLAUDE.md")), true);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

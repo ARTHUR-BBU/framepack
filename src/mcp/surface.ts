@@ -17,6 +17,7 @@ export const FRAMEPACK_MCP_TOOLS = [
   "listCreativeDirectionPacks",
   "getCreativeDirectionPack",
   "recommendPacks",
+  "releaseSmoke",
 ] as const;
 
 export const FRAMEPACK_MCP_RESOURCES = [

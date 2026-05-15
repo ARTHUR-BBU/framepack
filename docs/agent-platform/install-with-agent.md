@@ -17,6 +17,8 @@ The agent should:
 5. Generate a small package.
 6. Run status and validation.
 
+For release-candidate or installer verification, the agent can run `framepack release-smoke --output-dir out/release-smoke --json` or MCP `releaseSmoke`. This performs the same flow as a structured smoke harness: agent workflow files, MCP surface, pack recommendation, auto-pack generation, package status, and package validation.
+
 ## What The Agent Is Installing
 
 Framepack is not only a CLI. The install should make the agent able to use:

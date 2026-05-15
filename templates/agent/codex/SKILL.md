@@ -10,3 +10,5 @@ Use Framepack MCP tools when the user asks to create or continue a video project
 For broad requests, start with `recommendPacks` so you can choose the right production route and visual direction.
 
 Then use `generateProject` with `autoRecommendPacks: true`, or with explicit `workflowPackId` and `creativeDirectionPackId` when the route is already chosen. Run `getStatus` and `validatePackage`, and follow `nextActionItems`.
+
+Before publishing, tagging, or verifying a Framepack release candidate, run MCP `releaseSmoke` or CLI `framepack release-smoke --output-dir out/release-smoke --json`.

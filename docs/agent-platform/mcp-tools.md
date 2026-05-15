@@ -18,6 +18,7 @@ Framepack exposes an MCP stdio server with tools for the complete package lifecy
 - `listCreativeDirectionPacks`
 - `getCreativeDirectionPack`
 - `recommendPacks`
+- `releaseSmoke`
 
 It also exposes project resources for manifest, handoff, asset execution plan, forge tasks, and status, plus registry resources for workflow packs and creative direction packs:
 
@@ -49,5 +50,7 @@ For a conservative default, call `recommendPacks` with `sourceType`, `outputType
 `generateProject` accepts optional `workflowPackId` and `creativeDirectionPackId`. When provided, Framepack validates the workflow pack against the selected source/output route and writes the pack selection into `VIDEO_BRIEF.json` and `HANDOFF.md`.
 
 `generateProject` also accepts `autoRecommendPacks: true`. When this is set and no explicit pack IDs are provided, Framepack applies the conservative recommendation automatically during generation. Explicit IDs always take priority.
+
+`releaseSmoke` runs the agent-platform RC smoke harness from MCP. It creates Codex and Claude Code workflow files, checks the MCP surface, recommends packs, generates an auto-packed game-ad package, then runs package status and validation. It is intended for release candidates and agent installer verification; it does not install external forge skills, call image generation, or require HyperFrames rendering.
 
 Future versions can move from registry guidance into richer template selection and project metadata, but agents should already treat these packs as part of the planning step.

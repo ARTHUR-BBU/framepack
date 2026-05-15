@@ -12,6 +12,7 @@
 - added workflow and creative direction pack selection during generation, with validation and durable `VIDEO_BRIEF.json` / `HANDOFF.md` output
 - added pack recommendation through `framepack packs recommend` and MCP `recommendPacks`
 - added one-step automatic pack recommendation during generation through CLI `--auto-pack` and MCP `autoRecommendPacks`
+- added the agent-platform release smoke harness through CLI `release-smoke` and MCP `releaseSmoke`
 
 ## 0.2.0-rc.2
 

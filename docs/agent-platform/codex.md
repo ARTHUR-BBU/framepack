@@ -15,3 +15,5 @@ For broad video requests, Codex should first call `recommendPacks`, or run `fram
 When generating, Codex should pass `autoRecommendPacks: true` for broad requests, or pass explicit `workflowPackId` and `creativeDirectionPackId` when the route is already chosen. CLI equivalents are `--auto-pack`, or `--workflow-pack` and `--creative-direction-pack`. This records the decision inside the package handoff instead of leaving it as chat-only context.
 
 Codex should prefer `readiness`, `nextActionItems`, and `forgeBreakdown` over parsing human-readable command output.
+
+For release-candidate verification, Codex should run MCP `releaseSmoke` or CLI `framepack release-smoke --output-dir out/release-smoke --json`. This checks the agent workflow files, MCP surface, pack recommendation, auto-pack generation, package status, and package validation in one structured pass.

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { materializeProjectAssets } from "../capture/index.js";
 import { ensureProjectValidationPassed } from "../compiler/index.js";
 import { compileVideoProjectFromSource, type CompilerSourceInput } from "../compiler/pipeline-registry.js";
+import { runFramepackReleaseSmoke } from "../release-smoke.js";
 import { syncAssetExecutionProject } from "../packaging/asset-execution.js";
 import { getProjectPackageStatus } from "../packaging/package-status.js";
 import { repairProjectPackage } from "../packaging/package-repair.js";
@@ -257,6 +258,17 @@ export function createFramepackMcpServer(): McpServer {
       },
     },
     (input) => textJson(recommendFramepackPacks(input)),
+  );
+
+  server.registerTool(
+    "releaseSmoke",
+    {
+      description: "Run the agent-platform release smoke harness for Framepack.",
+      inputSchema: {
+        outputDir: z.string(),
+      },
+    },
+    async (input) => textJson(await runFramepackReleaseSmoke({ outputDir: input.outputDir })),
   );
 
   server.registerResource(
