@@ -86,6 +86,7 @@ npx framepack packs
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 npx framepack release-smoke --output-dir out/release-smoke --json
 npm run release:smoke:install
+npm run release:gate
 ```
 
 Agent-first examples:
@@ -189,6 +190,7 @@ You can think about the stack like this:
 - `npm test`
 - `npm run build`
 - `npm run release:smoke:install`
+- `npm run release:gate`
 
 `npm test` includes golden package protocol summaries for markdown, thread, and game-ad packages. These summaries intentionally avoid timestamps and absolute paths while checking the package manifest, scene asset map, execution kinds, forge task count, and handoff guidance.
 
@@ -240,6 +242,14 @@ npm run release:smoke:install
 ```
 
 This builds the repo, packs the npm tarball, installs that tarball into a temporary empty consumer project, then runs the installed `framepack` binary through MCP discovery, `release-smoke`, `generate --auto-pack`, `validate`, and `status --json`.
+
+The final release-candidate gate is:
+
+```bash
+npm run release:gate
+```
+
+It runs typecheck, the full test suite, npm pack dry-run, and the real install smoke gate in one structured pass.
 
 ### `validate`
 

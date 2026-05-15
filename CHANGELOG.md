@@ -14,6 +14,7 @@
 - added one-step automatic pack recommendation during generation through CLI `--auto-pack` and MCP `autoRecommendPacks`
 - added the agent-platform release smoke harness through CLI `release-smoke` and MCP `releaseSmoke`
 - added `npm run release:smoke:install` for real npm tarball installation checks before publishing release candidates
+- added `npm run release:gate` as the final release-candidate verification gate
 
 ## 0.2.0-rc.2
 

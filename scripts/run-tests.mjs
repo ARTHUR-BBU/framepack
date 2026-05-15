@@ -1945,6 +1945,21 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "publish a final release gate script for release candidates",
+    run: () => {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+      const scriptPath = resolve(dirname(packageJsonPath), "scripts", "run-release-gate.mjs");
+      const script = readFileSync(scriptPath, "utf8");
+
+      assert.equal(packageJson.scripts["release:gate"], "node scripts/run-release-gate.mjs");
+      assert.match(script, /npm run typecheck/);
+      assert.match(script, /npm test/);
+      assert.match(script, /npm pack --dry-run --json/);
+      assert.match(script, /npm run release:smoke:install/);
+      assert.match(script, /Release gate/);
+    },
+  },
+  {
     name: "ship agent and example entry files for the published repo",
     run: () => {
       const agents = readFileSync(agentsPath, "utf8");

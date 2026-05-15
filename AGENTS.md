@@ -34,6 +34,7 @@ npx framepack packs recommend --source-type game-ad --output-type game-ad --goal
 npx framepack mcp
 npx framepack release-smoke --output-dir out/release-smoke --json
 npm run release:smoke:install
+npm run release:gate
 ```
 
 Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs. `packs recommend` and MCP `recommendPacks` provide a conservative default route before generating a package.
@@ -79,6 +80,8 @@ npx framepack render --project-dir out/thread-case
 Run `release-smoke` before tagging or publishing a release candidate. It creates Codex and Claude Code agent workflow files, checks the MCP surface, recommends packs, generates an auto-packed game-ad package, and runs status plus validation. It does not install external forge skills, call image generation, or require HyperFrames rendering.
 
 Run `npm run release:smoke:install` as the stricter RC gate. It builds the repo, packs the npm tarball, installs it into a temporary empty consumer project, then runs the installed binary through MCP discovery, `release-smoke`, `generate --auto-pack`, `validate`, and `status --json`.
+
+Run `npm run release:gate` as the final RC gate. It runs typecheck, the full test suite, npm pack dry-run, and the real install smoke gate in one structured pass.
 
 ## Package Protocol
 

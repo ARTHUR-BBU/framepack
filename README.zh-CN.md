@@ -78,6 +78,7 @@ npm install
 npm run build
 npx framepack release-smoke --output-dir out/release-smoke --json
 npm run release:smoke:install
+npm run release:gate
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 ```
 
@@ -172,6 +173,7 @@ npm run typecheck
 npm test
 npm run build
 npm run release:smoke:install
+npm run release:gate
 ```
 
 `npm test` 里包含 markdown、thread、game-ad 三类工程包的 golden 协议摘要检查。它不会锁时间戳和本机绝对路径，而是检查 manifest、scene asset map、execution kinds、forge 任务数量和 handoff 指令是否稳定。
@@ -203,6 +205,14 @@ npm run release:smoke:install
 ```
 
 它会先 build，再 `npm pack` 打出 npm tarball，把 tarball 安装进一个临时空项目，然后用安装后的 `framepack` 真实执行 MCP discovery、`release-smoke`、`generate --auto-pack`、`validate` 和 `status --json`。
+
+最终发布候选版本门禁是：
+
+```bash
+npm run release:gate
+```
+
+它会一次性运行 typecheck、全量测试、npm pack dry-run 和真实安装烟测。
 
 只验证，不生成完整工程包：
 
