@@ -42,7 +42,7 @@ Generate a package:
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
 npx framepack generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
-npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade
+npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo --format 9:16 --auto-pack
 ```
 
 Materialize pending source assets:
@@ -104,7 +104,7 @@ Then inspect these files as needed:
 
 ## Agent Workflow
 
-0. For broad requests, run `npx framepack packs recommend --json` or use MCP `recommendPacks` to choose a workflow pack and creative direction pack before generating or continuing a package. Pass the selected route with `--workflow-pack <id>` and `--creative-direction-pack <id>`, or MCP `workflowPackId` and `creativeDirectionPackId`, so `VIDEO_BRIEF.json` and `HANDOFF.md` preserve the decision.
+0. For broad requests, run `npx framepack packs recommend --json` or use MCP `recommendPacks` to choose a workflow pack and creative direction pack before generating or continuing a package. For one-step generation, use CLI `--auto-pack` or MCP `autoRecommendPacks: true`; explicit `--workflow-pack` / `--creative-direction-pack` and MCP `workflowPackId` / `creativeDirectionPackId` still take priority.
 1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
 2. Read `HANDOFF.md` to understand the current package state and pending work.
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.

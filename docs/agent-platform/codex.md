@@ -12,6 +12,6 @@ Codex should install Framepack, run `framepack init-agent --target codex --scope
 
 For broad video requests, Codex should first call `recommendPacks`, or run `framepack packs recommend --json` if MCP is not connected. This makes the agent choose a workflow route and visual direction before it generates files.
 
-When generating, Codex should pass `workflowPackId` and `creativeDirectionPackId` to MCP `generateProject`, or use CLI `--workflow-pack` and `--creative-direction-pack`. This records the decision inside the package handoff instead of leaving it as chat-only context.
+When generating, Codex should pass `autoRecommendPacks: true` for broad requests, or pass explicit `workflowPackId` and `creativeDirectionPackId` when the route is already chosen. CLI equivalents are `--auto-pack`, or `--workflow-pack` and `--creative-direction-pack`. This records the decision inside the package handoff instead of leaving it as chat-only context.
 
 Codex should prefer `readiness`, `nextActionItems`, and `forgeBreakdown` over parsing human-readable command output.

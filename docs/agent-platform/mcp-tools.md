@@ -48,4 +48,6 @@ For a conservative default, call `recommendPacks` with `sourceType`, `outputType
 
 `generateProject` accepts optional `workflowPackId` and `creativeDirectionPackId`. When provided, Framepack validates the workflow pack against the selected source/output route and writes the pack selection into `VIDEO_BRIEF.json` and `HANDOFF.md`.
 
+`generateProject` also accepts `autoRecommendPacks: true`. When this is set and no explicit pack IDs are provided, Framepack applies the conservative recommendation automatically during generation. Explicit IDs always take priority.
+
 Future versions can move from registry guidance into richer template selection and project metadata, but agents should already treat these packs as part of the planning step.

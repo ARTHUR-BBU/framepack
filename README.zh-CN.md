@@ -30,6 +30,12 @@ npx framepack generate --game-ad-description "A course that teaches founders to 
 
 这样 `VIDEO_BRIEF.json` 和 `HANDOFF.md` 都会记录工作流与审美方向，后续 agent 不需要重新猜。
 
+也可以让 Framepack 在生成时自动套用保守推荐：
+
+```bash
+npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo --format 9:16 --auto-pack
+```
+
 ## 产品形态
 
 Framepack 正在演进成一个面向 agent 安装和调用的视频工作流系统：

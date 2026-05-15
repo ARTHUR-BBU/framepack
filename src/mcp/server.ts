@@ -14,12 +14,12 @@ import { createHyperframesRuntimeAdapter, detectHyperframesCapabilities } from "
 import { executeHyperframesCommand } from "../runtime/hyperframes/execution.js";
 import { writeVideoProjectPackage } from "../video/package/project-package.js";
 import {
-  createFramepackPackSelection,
   getFramepackCreativeDirectionPack,
   getFramepackWorkflowPack,
   listFramepackCreativeDirectionPacks,
   listFramepackWorkflowPacks,
   recommendFramepackPacks,
+  resolveFramepackPackSelection,
 } from "../workflow-packs/registry.js";
 
 type SourceType = "markdown" | "thread" | "website" | "game-ad";
@@ -132,10 +132,21 @@ export function createFramepackMcpServer(): McpServer {
         format: z.enum(["16:9", "9:16"]).default("16:9"),
         workflowPackId: z.string().optional(),
         creativeDirectionPackId: z.string().optional(),
+        autoRecommendPacks: z.boolean().optional(),
       },
     },
     async (input) => {
       const outputType = input.sourceType === "game-ad" ? "game-ad" : "case-explainer";
+      const packSelection = resolveFramepackPackSelection({
+        workflowPackId: input.workflowPackId,
+        creativeDirectionPackId: input.creativeDirectionPackId,
+        autoRecommendPacks: input.autoRecommendPacks,
+        sourceType: input.sourceType,
+        outputType,
+        goal: input.goal,
+        audience: input.audience,
+        format: input.format,
+      });
       const result = await compileVideoProjectFromSource({
         source: sourceInput(input),
         defaults: {
@@ -143,12 +154,7 @@ export function createFramepackMcpServer(): McpServer {
           audience: input.audience,
           format: input.format,
           outputType,
-          packSelection: createFramepackPackSelection({
-            workflowPackId: input.workflowPackId,
-            creativeDirectionPackId: input.creativeDirectionPackId,
-            sourceType: input.sourceType,
-            outputType,
-          }),
+          packSelection,
         },
         projectName: input.projectName,
       });

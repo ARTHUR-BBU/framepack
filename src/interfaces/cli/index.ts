@@ -30,11 +30,11 @@ import { writeValidationReport } from "../../video/validation/validation-report.
 import { runFramepackMcpServer } from "../../mcp/server.js";
 import { describeFramepackMcpSurface } from "../../mcp/surface.js";
 import {
-  createFramepackPackSelection,
   describeFramepackPackRegistry,
   listFramepackCreativeDirectionPacks,
   listFramepackWorkflowPacks,
   recommendFramepackPacks,
+  resolveFramepackPackSelection,
 } from "../../workflow-packs/registry.js";
 
 export interface CliIo {
@@ -68,6 +68,7 @@ interface CliOptions {
   };
   workflowPackId?: string;
   creativeDirectionPackId?: string;
+  autoRecommendPacks: boolean;
 }
 
 type CliCommandName =
@@ -123,6 +124,7 @@ interface CliConfigFile {
   };
   workflowPackId?: string;
   creativeDirectionPackId?: string;
+  autoRecommendPacks?: boolean;
 }
 
 const DEFAULT_IO: CliIo = {
@@ -321,6 +323,7 @@ export function parseCliArgs(args: string[]): CliOptions {
       constraints,
       workflowPackId: config.workflowPackId,
       creativeDirectionPackId: config.creativeDirectionPackId,
+      autoRecommendPacks: config.autoRecommendPacks ?? false,
     };
   }
 
@@ -364,6 +367,7 @@ export function parseCliArgs(args: string[]): CliOptions {
     constraints: createDefaultConstraints(),
     workflowPackId: getOptionalArg(commandArgs, "--workflow-pack"),
     creativeDirectionPackId: getOptionalArg(commandArgs, "--creative-direction-pack"),
+    autoRecommendPacks: commandArgs.includes("--auto-pack"),
   };
 }
 
@@ -372,11 +376,15 @@ function createPackSelectionForOptions(
   sourceType: ReturnType<typeof createCompilerSourceInput>["sourceType"],
   outputType: "case-explainer" | "game-ad",
 ) {
-  return createFramepackPackSelection({
+  return resolveFramepackPackSelection({
     workflowPackId: options.workflowPackId,
     creativeDirectionPackId: options.creativeDirectionPackId,
+    autoRecommendPacks: options.autoRecommendPacks,
     sourceType,
     outputType,
+    goal: options.goal,
+    audience: options.audience,
+    format: options.format,
   });
 }
 

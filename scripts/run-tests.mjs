@@ -66,6 +66,7 @@ import {
   listFramepackCreativeDirectionPacks,
   listFramepackWorkflowPacks,
   recommendFramepackPacks,
+  resolveFramepackPackSelection,
 } from "../dist/workflow-packs/registry.js";
 
 const fixturePath = resolve(
@@ -3039,6 +3040,31 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "resolve automatic pack selection with explicit ids taking priority",
+    run: () => {
+      const automaticSelection = resolveFramepackPackSelection({
+        sourceType: "game-ad",
+        outputType: "game-ad",
+        goal: "Promote a course with game-style visuals",
+        audience: "Founders",
+        format: "9:16",
+        autoRecommendPacks: true,
+      });
+      const explicitSelection = resolveFramepackPackSelection({
+        sourceType: "markdown",
+        outputType: "case-explainer",
+        workflowPackId: "product-explainer",
+        creativeDirectionPackId: "editorial-proof-story",
+        autoRecommendPacks: true,
+      });
+
+      assert.equal(automaticSelection?.workflowPackId, "game-ad-sprite-video");
+      assert.equal(automaticSelection?.creativeDirectionPackId, "game-ad-retro-arcade");
+      assert.equal(explicitSelection?.workflowPackId, "product-explainer");
+      assert.equal(explicitSelection?.creativeDirectionPackId, "editorial-proof-story");
+    },
+  },
+  {
     name: "include workflow pack tools and resources in the MCP description",
     run: async () => {
       const stdout = [];
@@ -3401,6 +3427,92 @@ Framepack compiles content into executable video projects.
         assert.match(handoff, /Workflow pack: game-ad-sprite-video/);
         assert.match(handoff, /Creative direction pack: game-ad-retro-arcade/);
         assert.match(handoff, /Readable sprite silhouettes/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "auto-recommend pack selection during CLI generation",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-auto-pack-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const exitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A platform that turns product stories into agent-native video packages.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the platform with game-style visuals",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+            "--format",
+            "9:16",
+            "--auto-pack",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        const brief = JSON.parse(readFileSync(join(projectDir, "VIDEO_BRIEF.json"), "utf8"));
+        const handoff = readFileSync(join(projectDir, "HANDOFF.md"), "utf8");
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.equal(brief.packSelection.workflowPackId, "game-ad-sprite-video");
+        assert.equal(brief.packSelection.creativeDirectionPackId, "game-ad-retro-arcade");
+        assert.match(handoff, /Workflow pack: game-ad-sprite-video/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "honor explicit pack selection over auto recommendation",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-auto-pack-explicit-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const exitCode = await runCli(
+          [
+            "generate",
+            "--input",
+            fixturePath,
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Explain the case",
+            "--audience",
+            "Founders",
+            "--workflow-pack",
+            "product-explainer",
+            "--creative-direction-pack",
+            "editorial-proof-story",
+            "--auto-pack",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const projectDir = join(tempRoot, "case-explainer-input");
+        const brief = JSON.parse(readFileSync(join(projectDir, "VIDEO_BRIEF.json"), "utf8"));
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.equal(brief.packSelection.workflowPackId, "product-explainer");
+        assert.equal(brief.packSelection.creativeDirectionPackId, "editorial-proof-story");
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

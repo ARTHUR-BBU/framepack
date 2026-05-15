@@ -362,6 +362,27 @@ export function createFramepackPackSelection(input: {
   };
 }
 
+export function resolveFramepackPackSelection(input: {
+  workflowPackId?: string;
+  creativeDirectionPackId?: string;
+  autoRecommendPacks?: boolean;
+  sourceType: CompilerSourceInput["sourceType"];
+  outputType: OutputType;
+  goal?: string;
+  audience?: string;
+  format?: VideoFormat;
+}): VideoPackSelection | undefined {
+  if (input.workflowPackId || input.creativeDirectionPackId) {
+    return createFramepackPackSelection(input);
+  }
+
+  if (!input.autoRecommendPacks) {
+    return undefined;
+  }
+
+  return recommendFramepackPacks(input).packSelection;
+}
+
 function scoreWorkflowPack(pack: FramepackWorkflowPack, input: FramepackPackRecommendationInput): number {
   const intent = `${input.goal ?? ""} ${input.audience ?? ""}`.toLowerCase();
   let score = 0;
