@@ -182,6 +182,8 @@ npm run release:gate
 
 发布候选版本说明见 [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md)。下一阶段架构学习和升级路线见 [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md)。
 
+0.4 的具体架构方案见 [`docs/architecture/framepack-0.4-capability-runtime-architecture.md`](docs/architecture/framepack-0.4-capability-runtime-architecture.md)。
+
 生成工程包：
 
 ```bash

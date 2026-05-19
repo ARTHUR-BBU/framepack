@@ -4,6 +4,8 @@ This document defines the learning and architecture agenda after Framepack `v0.3
 
 Framepack 0.4 should move from "agent can generate a correct package" toward "agent can continuously improve a video project through structured planning, creative judgment, asset production, runtime inspection, and revision."
 
+The concrete 0.4 proposal is documented in [`framepack-0.4-capability-runtime-architecture.md`](framepack-0.4-capability-runtime-architecture.md). It turns the learning agenda into a capability runtime architecture with a package-level capability graph, runtime manifest, template pack contract, motion grammar layer, visual QA evidence, and Asset Forge Loop V2.
+
 ## Architecture Learning Agenda
 
 The next phase should study and absorb patterns from:

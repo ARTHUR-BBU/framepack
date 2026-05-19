@@ -1970,6 +1970,10 @@ Framepack compiles content into executable video projects.
         resolve(dirname(packageJsonPath), "docs", "architecture", "next-architecture-uplift.md"),
         "utf8",
       );
+      const architectureDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "architecture", "framepack-0.4-capability-runtime-architecture.md"),
+        "utf8",
+      );
 
       assert.match(releaseDoc, /npm run release:gate/);
       assert.match(releaseDoc, /v0\.3\.0-rc\.1/);
@@ -1979,6 +1983,15 @@ Framepack compiles content into executable video projects.
       assert.match(upliftDoc, /Architecture Learning Agenda/);
       assert.match(upliftDoc, /HyperFrames/);
       assert.match(upliftDoc, /agent-first/);
+      assert.match(upliftDoc, /framepack-0\.4-capability-runtime-architecture/);
+      assert.match(architectureDoc, /Capability Graph/);
+      assert.match(architectureDoc, /RUNTIME_MANIFEST\.json/);
+      assert.match(architectureDoc, /Template Pack Contract/);
+      assert.match(architectureDoc, /MOTION_GRAMMAR\.json/);
+      assert.match(architectureDoc, /Visual QA Evidence/);
+      assert.match(architectureDoc, /Asset Forge Loop V2/);
+      assert.match(architectureDoc, /MCP/);
+      assert.match(architectureDoc, /HyperFrames/);
     },
   },
   {
