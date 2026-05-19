@@ -180,6 +180,8 @@ npm run release:gate
 
 工程包协议版本说明见 [`docs/architecture/package-protocol-v1.md`](docs/architecture/package-protocol-v1.md)。
 
+发布候选版本说明见 [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md)。下一阶段架构学习和升级路线见 [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md)。
+
 生成工程包：
 
 ```bash

@@ -15,6 +15,7 @@
 - added the agent-platform release smoke harness through CLI `release-smoke` and MCP `releaseSmoke`
 - added `npm run release:smoke:install` for real npm tarball installation checks before publishing release candidates
 - added `npm run release:gate` as the final release-candidate verification gate
+- added release-candidate notes and the next architecture learning agenda for the Framepack 0.4 uplift
 
 ## 0.2.0-rc.2
 

@@ -87,6 +87,8 @@ Run `npm run release:gate` as the final RC gate. It runs typecheck, the full tes
 
 Start with `PACKAGE_MANIFEST.json`.
 
+For release-candidate context, read `docs/agent-platform/release-candidate-v0.3.0-rc.1.md`. For the next architecture learning and uplift agenda, read `docs/architecture/next-architecture-uplift.md`.
+
 It indexes:
 
 - source files

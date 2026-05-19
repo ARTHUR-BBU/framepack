@@ -1960,6 +1960,28 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "document the release candidate and next architecture uplift",
+    run: () => {
+      const releaseDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "agent-platform", "release-candidate-v0.3.0-rc.1.md"),
+        "utf8",
+      );
+      const upliftDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "architecture", "next-architecture-uplift.md"),
+        "utf8",
+      );
+
+      assert.match(releaseDoc, /npm run release:gate/);
+      assert.match(releaseDoc, /v0\.3\.0-rc\.1/);
+      assert.match(releaseDoc, /MCP/);
+      assert.match(releaseDoc, /agent-sprite-forge/);
+      assert.match(upliftDoc, /Framepack 0\.4/);
+      assert.match(upliftDoc, /Architecture Learning Agenda/);
+      assert.match(upliftDoc, /HyperFrames/);
+      assert.match(upliftDoc, /agent-first/);
+    },
+  },
+  {
     name: "ship agent and example entry files for the published repo",
     run: () => {
       const agents = readFileSync(agentsPath, "utf8");
