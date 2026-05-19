@@ -52,6 +52,7 @@ export interface BuildCapabilityGraphInput {
   forgeBackends: string[];
   requiredSkills: string[];
   runtimeBackend: "hyperframes";
+  runtimeStatus?: CapabilityStatus;
   packageCommands: string[];
 }
 
@@ -67,7 +68,7 @@ export function buildCapabilityGraph(input: BuildCapabilityGraphInput): Capabili
       provider: input.runtimeBackend,
       delivery: "npm-local",
       required: true,
-      status: "available",
+      status: input.runtimeStatus ?? "available",
       usedBy: input.packageCommands,
     },
     {

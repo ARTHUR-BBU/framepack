@@ -3,6 +3,7 @@ import type {
   PackageManifest,
   SceneAssetMap,
 } from "../core/types.js";
+import type { CapabilityGraph } from "../capabilities/capability-graph.js";
 import type { VideoProjectPackage } from "../video/package/project-package.js";
 import { getRequiredPackageProtocolFiles } from "./package-protocol.js";
 
@@ -23,6 +24,15 @@ export interface GoldenPackageProtocolSummary {
   };
   forgeTaskCount: number;
   forgeBackends: string[];
+  capabilityGraph: {
+    present: boolean;
+    nodeIds: string[];
+    runtimeNode?: {
+      required: boolean;
+      status: string;
+      usedBy: string[];
+    };
+  };
   handoffMentionsRuntimeDoctor: boolean;
   handoffMentionsForgeTasks: boolean;
 }
@@ -51,6 +61,10 @@ export function createGoldenPackageProtocolSummary(
     "ASSET_EXECUTION_PLAN.json",
   );
   const sceneAssetMap = parsePackageFile<SceneAssetMap>(projectPackage, "SCENE_ASSET_MAP.json");
+  const capabilityGraph = projectPackage.files["CAPABILITY_GRAPH.json"]
+    ? parsePackageFile<CapabilityGraph>(projectPackage, "CAPABILITY_GRAPH.json")
+    : undefined;
+  const runtimeNode = capabilityGraph?.nodes.find((node) => node.id === "video-runtime.hyperframes");
   const handoff = projectPackage.files["HANDOFF.md"] ?? "";
 
   return {
@@ -76,6 +90,17 @@ export function createGoldenPackageProtocolSummary(
         .map((item) => item.forgeBackend)
         .filter((backend): backend is string => Boolean(backend)),
     ),
+    capabilityGraph: {
+      present: Boolean(projectPackage.files["CAPABILITY_GRAPH.json"]),
+      nodeIds: capabilityGraph?.nodes.map((node) => node.id).sort() ?? [],
+      runtimeNode: runtimeNode
+        ? {
+            required: runtimeNode.required,
+            status: runtimeNode.status,
+            usedBy: runtimeNode.usedBy,
+          }
+        : undefined,
+    },
     handoffMentionsRuntimeDoctor: /runtime doctor --project-dir/.test(handoff),
     handoffMentionsForgeTasks: /Asset forge tasks/.test(handoff),
   };

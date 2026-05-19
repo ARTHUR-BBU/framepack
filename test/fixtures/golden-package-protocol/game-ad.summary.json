@@ -34,6 +34,34 @@
   "forgeBackends": [
     "agent-sprite-forge"
   ],
+  "capabilityGraph": {
+    "present": true,
+    "nodeIds": [
+      "asset-forge.agent-sprite-forge",
+      "mcp.framepack",
+      "skill.generate2dmap",
+      "skill.generate2dsprite",
+      "video-runtime.hyperframes"
+    ],
+    "runtimeNode": {
+      "required": true,
+      "status": "available",
+      "usedBy": [
+        "status",
+        "validate",
+        "repair",
+        "sync-assets",
+        "capture",
+        "runtime-doctor",
+        "runtime-lint",
+        "runtime-inspect",
+        "runtime-snapshot",
+        "runtime-upgrade-check",
+        "preview",
+        "render"
+      ]
+    }
+  },
   "handoffMentionsRuntimeDoctor": true,
   "handoffMentionsForgeTasks": true
 }

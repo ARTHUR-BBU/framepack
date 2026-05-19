@@ -123,6 +123,7 @@ const tests = [
       assert.deepEqual(FRAMEPACK_PACKAGE_PROTOCOL_V1.artifacts.execution, [
         "ASSET_EXECUTION_PLAN.json",
         "CAPTURE_EXECUTION_PLAN.json",
+        "CAPABILITY_GRAPH.json",
       ]);
       assert.deepEqual(FRAMEPACK_PACKAGE_PROTOCOL_V1.compatibility.legacyFiles, [
         "CAPTURE_EXECUTION_PLAN.json",
@@ -167,6 +168,8 @@ const tests = [
       });
 
       assert.equal(graph.version, "framepack.capability-graph.v1");
+      assert.equal("sourceType" in graph, false);
+      assert.equal("outputType" in graph, false);
       assert.ok(graph.nodes.some((node) => node.id === "video-runtime.hyperframes"));
       assert.ok(graph.nodes.some((node) => node.id === "asset-forge.agent-sprite-forge"));
       assert.ok(graph.nodes.some((node) => node.delivery === "codex-skill"));
@@ -245,6 +248,8 @@ const tests = [
       assert.deepEqual(summaries[0], readGoldenPackageProtocolFixture("markdown-case"));
       assert.deepEqual(summaries[1], readGoldenPackageProtocolFixture("thread-case"));
       assert.deepEqual(summaries[2], readGoldenPackageProtocolFixture("game-ad"));
+      assert.equal(summaries[2].capabilityGraph.present, true);
+      assert.ok(summaries[2].capabilityGraph.nodeIds.includes("video-runtime.hyperframes"));
     },
   },
   {
@@ -3508,8 +3513,27 @@ Framepack compiles content into executable video projects.
         assert.match(stdout.join("\n"), /Generated video project package/);
         assert.match(readFileSync(join(packageDir, "SOURCE_MANIFEST.json"), "utf8"), /"sourceType": "game-ad"/);
         assert.match(readFileSync(join(packageDir, "PACKAGE_MANIFEST.json"), "utf8"), /"game-ad"/);
+        assert.match(readFileSync(join(packageDir, "PACKAGE_MANIFEST.json"), "utf8"), /CAPABILITY_GRAPH\.json/);
         assert.match(readFileSync(join(packageDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"forge-map-pack"/);
         assert.match(readFileSync(join(packageDir, "ASSET_EXECUTION_PLAN.json"), "utf8"), /"agent-sprite-forge"/);
+        assert.equal(existsSync(join(packageDir, "CAPABILITY_GRAPH.json")), true);
+        const capabilityGraph = JSON.parse(readFileSync(join(packageDir, "CAPABILITY_GRAPH.json"), "utf8"));
+        const runtimeNode = capabilityGraph.nodes.find((node) => node.id === "video-runtime.hyperframes");
+        assert.equal(runtimeNode.required, true);
+        assert.deepEqual(runtimeNode.usedBy, [
+          "status",
+          "validate",
+          "repair",
+          "sync-assets",
+          "capture",
+          "runtime-doctor",
+          "runtime-lint",
+          "runtime-inspect",
+          "runtime-snapshot",
+          "runtime-upgrade-check",
+          "preview",
+          "render",
+        ]);
         assert.match(readFileSync(join(packageDir, "HANDOFF.md"), "utf8"), /\$generate2dmap/);
         assert.equal(existsSync(join(packageDir, "assets", "forge")), true);
       } finally {
@@ -4448,10 +4472,12 @@ Framepack compiles content into executable video projects.
 
         const projectDir = join(tempRoot, "sprite-video-demo");
         const manifestPath = join(projectDir, "PACKAGE_MANIFEST.json");
+        const capabilityGraphPath = join(projectDir, "CAPABILITY_GRAPH.json");
         const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
         manifest.capabilities.executionKinds = [];
         manifest.capabilities.packageCommands = [];
         writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+        rmSync(capabilityGraphPath, { force: true });
 
         const failingValidateExitCode = await runCli(
           ["validate", "--project-dir", projectDir],
@@ -4468,6 +4494,7 @@ Framepack compiles content into executable video projects.
           },
         );
         const repairedManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+        const repairedCapabilityGraph = JSON.parse(readFileSync(capabilityGraphPath, "utf8"));
         const finalValidateExitCode = await runCli(
           ["validate", "--project-dir", projectDir],
           {
@@ -4483,6 +4510,7 @@ Framepack compiles content into executable video projects.
         assert.equal(repairStderr.length, 0);
         assert.equal(validateStderr.length, 0);
         assert.match(repairStdout.join("\n"), /PACKAGE_MANIFEST.json/);
+        assert.match(repairStdout.join("\n"), /CAPABILITY_GRAPH.json/);
         assert.deepEqual(repairedManifest.capabilities.executionKinds, [
           "forge-character-pack",
           "forge-map-pack",
@@ -4502,6 +4530,10 @@ Framepack compiles content into executable video projects.
           "preview",
           "render",
         ]);
+        assert.equal(repairedCapabilityGraph.version, "framepack.capability-graph.v1");
+        assert.ok(
+          repairedCapabilityGraph.nodes.some((node) => node.id === "asset-forge.agent-sprite-forge"),
+        );
         assert.match(validateStdout.join("\n"), /Package validation passed/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });

@@ -30,6 +30,31 @@
   },
   "forgeTaskCount": 0,
   "forgeBackends": [],
+  "capabilityGraph": {
+    "present": true,
+    "nodeIds": [
+      "mcp.framepack",
+      "video-runtime.hyperframes"
+    ],
+    "runtimeNode": {
+      "required": true,
+      "status": "available",
+      "usedBy": [
+        "status",
+        "validate",
+        "repair",
+        "sync-assets",
+        "capture",
+        "runtime-doctor",
+        "runtime-lint",
+        "runtime-inspect",
+        "runtime-snapshot",
+        "runtime-upgrade-check",
+        "preview",
+        "render"
+      ]
+    }
+  },
   "handoffMentionsRuntimeDoctor": true,
   "handoffMentionsForgeTasks": true
 }

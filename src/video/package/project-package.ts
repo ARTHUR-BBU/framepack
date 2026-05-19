@@ -18,6 +18,7 @@ import {
   formatStoryboardMarkdown,
 } from "../../packaging/documents.js";
 import { buildAssetExecutionPlan } from "../../packaging/asset-execution.js";
+import { buildCapabilityGraph } from "../../capabilities/capability-graph.js";
 import { buildPackageManifest } from "../../packaging/package-manifest.js";
 import { buildSceneAssetMap } from "../../packaging/scene-asset-map.js";
 import { buildSourceSceneMap } from "../../packaging/source-scene-map.js";
@@ -89,6 +90,28 @@ export function createVideoProjectPackage(input: {
     assetExecutionPlan,
     validationReport: input.validationReport,
   });
+  const capabilityGraph = buildCapabilityGraph({
+    sourceType: packageManifest.sourceType,
+    outputType: input.brief.outputType,
+    executionKinds: [...new Set(assetExecutionPlan.items.map((item) => item.executionKind))],
+    forgeBackends: [
+      ...new Set(
+        assetExecutionPlan.items
+          .map((item) => item.forgeBackend)
+          .filter((backend): backend is string => Boolean(backend)),
+      ),
+    ],
+    requiredSkills: [
+      ...new Set(
+        assetExecutionPlan.items
+          .map((item) => item.requiredSkill)
+          .filter((skill): skill is string => Boolean(skill)),
+      ),
+    ],
+    runtimeBackend: "hyperframes",
+    runtimeStatus: capabilities.available ? "available" : "not-detected",
+    packageCommands: packageManifest.capabilities.packageCommands,
+  });
   const runtimeInfo = runtimeAdapter.describePackage({
     projectName: input.projectName,
   });
@@ -116,6 +139,7 @@ export function createVideoProjectPackage(input: {
       "ASSET_PLAN.json": JSON.stringify(input.assetPlan, null, 2),
       "ASSET_EXECUTION_PLAN.json": JSON.stringify(assetExecutionPlan, null, 2),
       "CAPTURE_EXECUTION_PLAN.json": JSON.stringify(assetExecutionPlan, null, 2),
+      "CAPABILITY_GRAPH.json": JSON.stringify(capabilityGraph, null, 2),
       "PACKAGE_MANIFEST.json": JSON.stringify(packageManifest, null, 2),
       "SCENE_ASSET_MAP.json": JSON.stringify(sceneAssetMap, null, 2),
       "SOURCE_SCENE_MAP.json": JSON.stringify(sourceSceneMap, null, 2),

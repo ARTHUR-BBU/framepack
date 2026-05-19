@@ -9,6 +9,7 @@ import type {
   ValidationReport,
   VideoBrief,
 } from "../core/types.js";
+import { buildCapabilityGraph } from "../capabilities/capability-graph.js";
 import { buildSceneAssetMap } from "./scene-asset-map.js";
 import { buildSourceSceneMap } from "./source-scene-map.js";
 import { buildPackageManifest } from "./package-manifest.js";
@@ -110,6 +111,32 @@ export function repairProjectPackage(input: { projectDir: string }): PackageRepa
   });
   if (writeJsonFile(projectDir, "PACKAGE_MANIFEST.json", packageManifest)) {
     repairedFiles.push("PACKAGE_MANIFEST.json");
+  }
+
+  const capabilityGraph = buildCapabilityGraph({
+    sourceType: packageManifest.sourceType,
+    outputType: brief.outputType,
+    executionKinds: [...new Set(assetExecutionPlan.items.map((item) => item.executionKind))],
+    forgeBackends: [
+      ...new Set(
+        assetExecutionPlan.items
+          .map((item) => item.forgeBackend)
+          .filter((backend): backend is string => Boolean(backend)),
+      ),
+    ],
+    requiredSkills: [
+      ...new Set(
+        assetExecutionPlan.items
+          .map((item) => item.requiredSkill)
+          .filter((skill): skill is string => Boolean(skill)),
+      ),
+    ],
+    runtimeBackend: "hyperframes",
+    runtimeStatus: "not-detected",
+    packageCommands: packageManifest.capabilities.packageCommands,
+  });
+  if (writeJsonFile(projectDir, "CAPABILITY_GRAPH.json", capabilityGraph)) {
+    repairedFiles.push("CAPABILITY_GRAPH.json");
   }
 
   const afterReport = validateProjectPackage({ projectDir });

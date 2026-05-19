@@ -36,6 +36,7 @@ function readJsonFile<T>(projectDir: string, relativePath: string, issues: strin
 function validateManifest(input: {
   manifest?: PackageManifest;
   assetExecutionPlan?: AssetExecutionPlan;
+  projectDir: string;
   issues: string[];
 }) {
   if (!input.manifest) {
@@ -71,6 +72,17 @@ function validateManifest(input: {
       input.issues.push(
         `PACKAGE_MANIFEST.json capabilities.packageCommands is missing ${command}.`,
       );
+    }
+  }
+
+  for (const artifactPath of Object.values(input.manifest.artifacts).flat()) {
+    if (artifactPath.endsWith("/")) {
+      continue;
+    }
+
+    const targetPath = resolve(input.projectDir, artifactPath);
+    if (!existsSync(targetPath)) {
+      input.issues.push(`PACKAGE_MANIFEST.json artifacts references missing file: ${artifactPath}.`);
     }
   }
 }
@@ -240,7 +252,7 @@ export function validateProjectPackage(input: {
     ? readJsonFile<SourceSceneMap>(input.projectDir, "SOURCE_SCENE_MAP.json", issues)
     : undefined;
 
-  validateManifest({ manifest, assetExecutionPlan, issues });
+  validateManifest({ manifest, assetExecutionPlan, projectDir: input.projectDir, issues });
   validateSceneAssetMap({ scenePlan, sceneAssetMap, assetExecutionPlan, issues });
   validateSourceSceneMap({ scenePlan, sourceSceneMap, sceneAssetMap, issues });
   validateAvailableOutputs({ projectDir: input.projectDir, assetExecutionPlan, issues });
