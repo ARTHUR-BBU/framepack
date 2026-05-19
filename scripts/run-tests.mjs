@@ -13,6 +13,7 @@ import {
 } from "../dist/ingest/website/index.js";
 import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { buildAssetPlan } from "../dist/planning/assets/index.js";
+import { buildCapabilityGraph } from "../dist/capabilities/capability-graph.js";
 import { buildAssetExecutionPlan } from "../dist/packaging/asset-execution.js";
 import { createGoldenPackageProtocolSummary } from "../dist/packaging/golden-package.js";
 import {
@@ -150,6 +151,52 @@ const tests = [
         "HANDOFF.md",
         "FORGE_TASKS.md",
       ]);
+    },
+  },
+  {
+    name: "build a capability graph for game-ad forge packages",
+    run: () => {
+      const graph = buildCapabilityGraph({
+        sourceType: "game-ad",
+        outputType: "game-ad",
+        executionKinds: ["forge-character-pack", "forge-map-pack", "forge-fx-pack"],
+        forgeBackends: ["agent-sprite-forge"],
+        requiredSkills: ["generate2dsprite", "generate2dmap"],
+        runtimeBackend: "hyperframes",
+        packageCommands: ["runtime-lint", "runtime-snapshot", "render"],
+      });
+
+      assert.equal(graph.version, "framepack.capability-graph.v1");
+      assert.ok(graph.nodes.some((node) => node.id === "video-runtime.hyperframes"));
+      assert.ok(graph.nodes.some((node) => node.id === "asset-forge.agent-sprite-forge"));
+      assert.ok(graph.nodes.some((node) => node.delivery === "codex-skill"));
+      assert.ok(
+        graph.edges.some(
+          (edge) => edge.from === "asset-forge.agent-sprite-forge" && edge.to === "video-runtime.hyperframes",
+        ),
+      );
+    },
+  },
+  {
+    name: "deduplicate capability graph backend and skill nodes",
+    run: () => {
+      const graph = buildCapabilityGraph({
+        sourceType: "game-ad",
+        outputType: "game-ad",
+        executionKinds: ["forge-character-pack", "forge-character-pack"],
+        forgeBackends: ["agent-sprite-forge", "agent-sprite-forge"],
+        requiredSkills: ["generate2dsprite", "generate2dsprite"],
+        runtimeBackend: "hyperframes",
+        packageCommands: ["runtime-lint"],
+      });
+
+      const nodeIds = graph.nodes.map((node) => node.id);
+      assert.equal(nodeIds.filter((id) => id === "asset-forge.agent-sprite-forge").length, 1);
+      assert.equal(nodeIds.filter((id) => id === "skill.generate2dsprite").length, 1);
+      assert.deepEqual(
+        graph.nodes.find((node) => node.id === "asset-forge.agent-sprite-forge")?.usedBy,
+        ["forge-character-pack"],
+      );
     },
   },
   {
