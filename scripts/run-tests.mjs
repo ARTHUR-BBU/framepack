@@ -1995,6 +1995,24 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "document the Framepack 0.4 implementation plan",
+    run: () => {
+      const planDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "superpowers", "plans", "2026-05-19-framepack-0.4-capability-runtime-foundation.md"),
+        "utf8",
+      );
+
+      assert.match(planDoc, /Framepack 0\.4 Capability Runtime Foundation Implementation Plan/);
+      assert.match(planDoc, /CAPABILITY_GRAPH\.json/);
+      assert.match(planDoc, /RUNTIME_MANIFEST\.json/);
+      assert.match(planDoc, /Template Pack Contract/);
+      assert.match(planDoc, /MOTION_GRAMMAR\.json/);
+      assert.match(planDoc, /Visual QA Evidence/);
+      assert.match(planDoc, /Asset Forge Loop V2/);
+      assert.match(planDoc, /npm run release:gate/);
+    },
+  },
+  {
     name: "ship agent and example entry files for the published repo",
     run: () => {
       const agents = readFileSync(agentsPath, "utf8");
