@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -100,6 +100,8 @@ try {
       "- npm pack",
       "- npm install",
       "- npx framepack mcp --describe",
+      "- npx framepack atlas --json",
+      "- npx framepack atlas recommend --json",
       "- npx framepack release-smoke --json",
       "- npx framepack generate --auto-pack",
       "- npx framepack validate",
@@ -120,8 +122,38 @@ try {
   );
 
   const mcpSurface = runFramepack("mcp-describe", ["mcp", "--describe"]);
-  if (!mcpSurface.includes("releaseSmoke") || !mcpSurface.includes("recommendPacks")) {
-    throw new Error("Installed MCP surface is missing releaseSmoke or recommendPacks");
+  if (
+    !mcpSurface.includes("releaseSmoke") ||
+    !mcpSurface.includes("recommendPacks") ||
+    !mcpSurface.includes("listCapabilityAtlas") ||
+    !mcpSurface.includes("framepack://capabilities/atlas")
+  ) {
+    throw new Error("Installed MCP surface is missing releaseSmoke, recommendPacks, or capability atlas entries");
+  }
+
+  const atlas = parseJsonOutput("parse-atlas-json", runFramepack("atlas-json", ["atlas", "--json"]));
+  if (!atlas.capabilityAtlas?.nodes?.some((node) => node.id === "library.animejs")) {
+    throw new Error(`Installed atlas is missing Anime.js: ${JSON.stringify(atlas)}`);
+  }
+
+  const atlasRecommendation = parseJsonOutput(
+    "parse-atlas-recommend-json",
+    runFramepack("atlas-recommend", [
+      "atlas",
+      "recommend",
+      "--workflow-pack",
+      "game-ad-sprite-video",
+      "--creative-direction-pack",
+      "game-ad-retro-arcade",
+      "--output-type",
+      "game-ad",
+      "--format",
+      "9:16",
+      "--json",
+    ]),
+  );
+  if (atlasRecommendation.stack?.id !== "game-ad-sprite-video-stack") {
+    throw new Error(`Installed atlas recommendation did not return game-ad stack: ${JSON.stringify(atlasRecommendation)}`);
   }
 
   const releaseSmoke = parseJsonOutput(
@@ -152,9 +184,22 @@ try {
   const projectDir = join(outDir, "sprite-video-demo");
   runFramepack("validate-package", ["validate", "--project-dir", projectDir]);
   const status = parseJsonOutput("parse-status-json", runFramepack("status-json", ["status", "--project-dir", projectDir, "--json"]));
+  const videoBrief = parseJsonOutput(
+    "parse-generated-video-brief",
+    readFileSync(join(projectDir, "VIDEO_BRIEF.json"), "utf8"),
+  );
+  checks.push({
+    id: "read-generated-video-brief",
+    status: "passed",
+    command: "read generated VIDEO_BRIEF.json",
+  });
 
   if (status.protocolStatus !== "passed") {
     throw new Error(`Installed package protocol did not pass: ${JSON.stringify(status)}`);
+  }
+
+  if (videoBrief.capabilityStackSelection?.id !== "game-ad-sprite-video-stack") {
+    throw new Error(`Generated package is missing capabilityStackSelection: ${JSON.stringify(videoBrief)}`);
   }
 
   const report = {

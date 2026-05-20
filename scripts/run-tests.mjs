@@ -96,6 +96,10 @@ const packageJsonPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../package.json",
 );
+const framepack04AlphaNotesPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/release-candidate-v0.4.0-alpha.1.md",
+);
 const agentsPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../AGENTS.md",
@@ -2342,6 +2346,19 @@ Framepack compiles content into executable video projects.
       assert.match(chineseReadme, /记忆编码/);
       assert.match(chineseReadme, /反馈循环/);
       assert.match(changelog, /video production Agent Harness/);
+    },
+  },
+  {
+    name: "document the Framepack 0.4 alpha release candidate",
+    run: () => {
+      const notes = readFileSync(framepack04AlphaNotesPath, "utf8");
+
+      assert.match(notes, /v0\.4\.0-alpha\.1/);
+      assert.match(notes, /Animation Capability Atlas/);
+      assert.match(notes, /capabilityStackSelection/);
+      assert.match(notes, /npm run release:gate/);
+      assert.match(notes, /does not install external skills/i);
+      assert.match(notes, /does not publish or tag/i);
     },
   },
   {
