@@ -10,6 +10,15 @@ import type {
   VideoBrief,
 } from "../core/types.js";
 import { buildCapabilityGraph } from "../capabilities/capability-graph.js";
+import {
+  createHyperframesRuntimeAdapter,
+  detectHyperframesCapabilities,
+} from "../runtime/hyperframes/adapter.js";
+import {
+  buildRuntimeManifest,
+  isRuntimeActionSupported,
+  PACKAGE_RUNTIME_ACTIONS,
+} from "../runtime/manifest.js";
 import { buildSceneAssetMap } from "./scene-asset-map.js";
 import { buildSourceSceneMap } from "./source-scene-map.js";
 import { buildPackageManifest } from "./package-manifest.js";
@@ -137,6 +146,31 @@ export function repairProjectPackage(input: { projectDir: string }): PackageRepa
   });
   if (writeJsonFile(projectDir, "CAPABILITY_GRAPH.json", capabilityGraph)) {
     repairedFiles.push("CAPABILITY_GRAPH.json");
+  }
+
+  const capabilities = detectHyperframesCapabilities();
+  const runtimeAdapter = createHyperframesRuntimeAdapter();
+  const runtimeInfo = runtimeAdapter.describePackage({
+    projectName,
+  });
+  const runtimeCommands = PACKAGE_RUNTIME_ACTIONS
+    .filter((action) => isRuntimeActionSupported(action, capabilities.supportedCommands))
+    .map((action) =>
+      runtimeAdapter.buildCommand({
+        action,
+        packageDirectory: projectName,
+        packageRuntimeInfo: runtimeInfo,
+        capabilities,
+      }),
+    );
+  const runtimeManifest = buildRuntimeManifest({
+    backend: "hyperframes",
+    runtimeInfo,
+    capabilities,
+    commands: runtimeCommands,
+  });
+  if (writeJsonFile(projectDir, "RUNTIME_MANIFEST.json", runtimeManifest)) {
+    repairedFiles.push("RUNTIME_MANIFEST.json");
   }
 
   const afterReport = validateProjectPackage({ projectDir });

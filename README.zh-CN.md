@@ -14,7 +14,7 @@ Framepack 0.4 按五维 Agent Harness 组织：
 - 武器库暴露：MCP `exposeArsenal`、`getCapabilityGraph` 和 `explainCapabilityGaps` 把 workflow packs、creative direction packs、能力状态和常见技术适配情况摊开给 agent 看，但不替 agent 做创意判断。
 - 运动通路：MCP tools 和 CLI commands 把 agent 的判断变成生成、校验、修复、截图、运行时检查和渲染动作。
 - 脊髓反射：`validate`、`repair`、`runtime lint`、`runtime inspect` 和后续能力扫描会自动发现明显漂移，减少 agent 猜测。
-- 记忆编码：工程包文件系统持久化 brief、scene plan、asset map、execution plan、capability graph、runtime manifest 和证据。
+- 记忆编码：工程包文件系统持久化 brief、scene plan、asset map、execution plan、capability graph、`RUNTIME_MANIFEST.json` 和证据。
 - 反馈循环：runtime inspect report、snapshot manifest、visual QA notes 和 validation report 让“完成”基于证据，而不是基于感觉。
 
 ## 当前可用的 Workflow Packs
@@ -277,13 +277,15 @@ npx framepack status --project-dir out/sprite-video-demo --json
 
 新版 `capabilities.packageCommands` 还包括 `runtime-lint`、`runtime-inspect`、`runtime-snapshot` 和 `runtime-upgrade-check`，用于 HyperFrames 侧的 lint、视觉检查、关键帧截图和显式升级检查。
 
+`RUNTIME_MANIFEST.json` 是给 agent 看的运行时契约。它记录 HyperFrames backend、根入口、runtime config/meta 文件、composition 和 asset 目录、检测到的 runtime capabilities、可执行 command specs，以及 validation report、guardrails、snapshot、runtime inspect report 的证据路径。
+
 修复已经生成的工程包协议漂移：
 
 ```bash
 npx framepack repair --project-dir out/sprite-video-demo
 ```
 
-`repair` 会根据已有 `VIDEO_BRIEF.json`、`SCENE_PLAN.json`、`ASSET_PLAN.json`、`SOURCE_MANIFEST.json` 和 `ASSET_EXECUTION_PLAN.json`，重新生成可推导的 `SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json`、`PACKAGE_MANIFEST.json` 和 `CAPABILITY_GRAPH.json`，并重新写入验证报告。它不会物化素材，不会执行 forge，也不会安装外部 skill。
+`repair` 会根据已有 `VIDEO_BRIEF.json`、`SCENE_PLAN.json`、`ASSET_PLAN.json`、`SOURCE_MANIFEST.json` 和 `ASSET_EXECUTION_PLAN.json`，重新生成可推导的 `SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json`、`PACKAGE_MANIFEST.json`、`CAPABILITY_GRAPH.json` 和 `RUNTIME_MANIFEST.json`，并重新写入验证报告。它不会物化素材，不会执行 forge，也不会安装外部 skill。
 
 给小白的说法：如果工程包像一个视频项目文件夹，`repair` 修的是目录、索引和“哪个素材服务哪个镜头”的清单；它不会替你画图、截图或生成角色，只是把这些清单重新对齐。
 

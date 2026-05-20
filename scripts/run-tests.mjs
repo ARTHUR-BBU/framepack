@@ -41,6 +41,7 @@ import {
   createHyperframesRuntimeAdapter,
   detectHyperframesCapabilities,
 } from "../dist/runtime/hyperframes/adapter.js";
+import { buildRuntimeManifest } from "../dist/runtime/manifest.js";
 import { buildHyperframesCommandSpec } from "../dist/runtime/hyperframes/commands.js";
 import { executeHyperframesCommand } from "../dist/runtime/hyperframes/execution.js";
 import {
@@ -129,6 +130,7 @@ const tests = [
         "CAPTURE_EXECUTION_PLAN.json",
         "CAPABILITY_GRAPH.json",
       ]);
+      assert.ok(FRAMEPACK_PACKAGE_PROTOCOL_V1.artifacts.runtime.includes("RUNTIME_MANIFEST.json"));
       assert.deepEqual(FRAMEPACK_PACKAGE_PROTOCOL_V1.compatibility.legacyFiles, [
         "CAPTURE_EXECUTION_PLAN.json",
       ]);
@@ -156,6 +158,60 @@ const tests = [
         "HANDOFF.md",
         "FORGE_TASKS.md",
       ]);
+    },
+  },
+  {
+    name: "build a runtime manifest for HyperFrames package execution",
+    run: () => {
+      const manifest = buildRuntimeManifest({
+        backend: "hyperframes",
+        runtimeInfo: {
+          rootEntry: "index.html",
+          compositionDirectory: "compositions",
+          assetDirectory: "assets",
+        },
+        capabilities: {
+          available: true,
+          binary: "hyperframes",
+          detectedAt: "2026-05-20T00:00:00.000Z",
+          version: "0.5.5",
+          supportedCommands: ["preview", "lint", "inspect", "snapshot", "render", "upgrade"],
+          supportedCatalogFeatures: ["blocks"],
+          supportedRenderOptions: ["--fps"],
+          fallbackNotes: [],
+        },
+        commands: [
+          {
+            action: "preview",
+            executable: "hyperframes",
+            args: ["preview", "demo"],
+            cwd: "demo",
+            summary: "hyperframes preview demo",
+            passthroughArgs: [],
+          },
+          {
+            action: "upgrade-check",
+            executable: "hyperframes",
+            args: ["upgrade", "--check", "--json"],
+            cwd: ".",
+            summary: "hyperframes upgrade --check --json",
+            passthroughArgs: [],
+          },
+        ],
+      });
+
+      assert.equal(manifest.version, "framepack.runtime-manifest.v1");
+      assert.equal(manifest.backend, "hyperframes");
+      assert.equal(manifest.entrypoints.rootEntry, "index.html");
+      assert.equal(manifest.entrypoints.runtimeConfig, "hyperframes.json");
+      assert.equal(manifest.capabilities.available, true);
+      assert.deepEqual(manifest.commands.map((command) => command.action), ["preview", "upgrade-check"]);
+      assert.deepEqual(manifest.evidence, {
+        validationReport: "VALIDATION_REPORT.json",
+        guardrails: "GUARDRAILS.md",
+        runtimeSnapshots: "snapshots/",
+        runtimeInspectReports: "reports/runtime-inspect/",
+      });
     },
   },
   {
@@ -323,6 +379,9 @@ const tests = [
       assert.deepEqual(summaries[2], readGoldenPackageProtocolFixture("game-ad"));
       assert.equal(summaries[2].capabilityGraph.present, true);
       assert.ok(summaries[2].capabilityGraph.nodeIds.includes("video-runtime.hyperframes"));
+      assert.equal(summaries[2].runtimeManifest.present, true);
+      assert.equal(summaries[2].runtimeManifest.backend, "hyperframes");
+      assert.ok(summaries[2].runtimeManifest.commandActions.includes("render"));
     },
   },
   {
@@ -1295,8 +1354,11 @@ Framepack compiles content into executable video projects.
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"sourceType": "website"/);
       assert.match(result.package.files["SOURCE_MANIFEST.json"], /"url": "https:\/\/example.com\/product"/);
       assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"sourceType": "website"/);
-      assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"ASSET_EXECUTION_PLAN.json"/);
-      assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"capture-screenshot"/);
+        assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"ASSET_EXECUTION_PLAN.json"/);
+        assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"RUNTIME_MANIFEST.json"/);
+        assert.match(result.package.files["RUNTIME_MANIFEST.json"], /"version": "framepack.runtime-manifest.v1"/);
+        assert.match(result.package.files["RUNTIME_MANIFEST.json"], /"backend": "hyperframes"/);
+        assert.match(result.package.files["PACKAGE_MANIFEST.json"], /"capture-screenshot"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"captureTargets": \[/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"purposeTag": "hero"/);
       assert.match(result.package.files["ASSET_PLAN.json"], /"assetForm": "screenshot"/);
@@ -4482,6 +4544,129 @@ Framepack compiles content into executable video projects.
         assert.equal(validateStderr.length, 0);
         assert.match(repairStdout.join("\n"), /CAPABILITY_GRAPH\.json/);
         assert.ok(repairedCapabilityGraph.nodes.some((node) => node.id === "video-runtime.hyperframes"));
+        assert.match(validateStdout.join("\n"), /Package validation passed/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail project package validation when runtime manifest is invalid JSON",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-validation-invalid-runtime-manifest-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A course that teaches founders to ship agent-native video systems.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the course",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        writeFileSync(join(projectDir, "RUNTIME_MANIFEST.json"), "{", "utf8");
+
+        const validateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(validateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /RUNTIME_MANIFEST\.json/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "repair project package rebuilds missing runtime manifest",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-repair-runtime-manifest-"));
+      const repairStdout = [];
+      const repairStderr = [];
+      const validateStdout = [];
+      const validateStderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A course that teaches founders to ship agent-native video systems.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the course",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        rmSync(join(projectDir, "RUNTIME_MANIFEST.json"), { force: true });
+
+        const failingValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: () => {},
+            stderr: () => {},
+          },
+        );
+        const repairExitCode = await runCli(
+          ["repair", "--project-dir", projectDir],
+          {
+            stdout: (message) => repairStdout.push(message),
+            stderr: (message) => repairStderr.push(message),
+          },
+        );
+        const finalValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => validateStdout.push(message),
+            stderr: (message) => validateStderr.push(message),
+          },
+        );
+        const runtimeManifest = JSON.parse(readFileSync(join(projectDir, "RUNTIME_MANIFEST.json"), "utf8"));
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(failingValidateExitCode, 1);
+        assert.equal(repairExitCode, 0);
+        assert.equal(finalValidateExitCode, 0);
+        assert.equal(repairStderr.length, 0);
+        assert.equal(validateStderr.length, 0);
+        assert.match(repairStdout.join("\n"), /RUNTIME_MANIFEST\.json/);
+        assert.equal(runtimeManifest.version, "framepack.runtime-manifest.v1");
+        assert.equal(runtimeManifest.backend, "hyperframes");
         assert.match(validateStdout.join("\n"), /Package validation passed/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });

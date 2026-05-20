@@ -62,6 +62,18 @@
       ]
     }
   },
+  "runtimeManifest": {
+    "present": true,
+    "backend": "hyperframes",
+    "commandActions": [
+      "inspect",
+      "lint",
+      "preview",
+      "render",
+      "snapshot",
+      "upgrade-check"
+    ]
+  },
   "handoffMentionsRuntimeDoctor": true,
   "handoffMentionsForgeTasks": true
 }

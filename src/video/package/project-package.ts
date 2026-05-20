@@ -26,33 +26,17 @@ import {
   createHyperframesRuntimeAdapter,
   detectHyperframesCapabilities,
 } from "../../runtime/hyperframes/adapter.js";
-import type { HyperframesRuntimeAction } from "../../runtime/hyperframes/types.js";
+import {
+  buildRuntimeManifest,
+  isRuntimeActionSupported,
+  PACKAGE_RUNTIME_ACTIONS,
+} from "../../runtime/manifest.js";
 import { formatValidationReportMarkdown } from "../validation/validation-report.js";
 
 export interface VideoProjectPackage {
   directories: string[];
   projectName: string;
   files: Record<string, string>;
-}
-
-const PACKAGE_RUNTIME_ACTIONS: HyperframesRuntimeAction[] = [
-  "preview",
-  "lint",
-  "inspect",
-  "snapshot",
-  "render",
-  "upgrade-check",
-];
-
-function isRuntimeActionSupported(
-  action: HyperframesRuntimeAction,
-  supportedCommands: string[],
-): boolean {
-  if (action === "upgrade-check") {
-    return supportedCommands.includes("upgrade");
-  }
-
-  return supportedCommands.includes(action);
 }
 
 export function createVideoProjectPackage(input: {
@@ -126,6 +110,12 @@ export function createVideoProjectPackage(input: {
         capabilities,
       }),
     );
+  const runtimeManifest = buildRuntimeManifest({
+    backend: "hyperframes",
+    runtimeInfo,
+    capabilities,
+    commands: runtimeCommands,
+  });
 
   return {
     directories: ["assets", "assets/captures", "assets/generated", "assets/forge", "compositions"],
@@ -140,6 +130,7 @@ export function createVideoProjectPackage(input: {
       "ASSET_EXECUTION_PLAN.json": JSON.stringify(assetExecutionPlan, null, 2),
       "CAPTURE_EXECUTION_PLAN.json": JSON.stringify(assetExecutionPlan, null, 2),
       "CAPABILITY_GRAPH.json": JSON.stringify(capabilityGraph, null, 2),
+      "RUNTIME_MANIFEST.json": JSON.stringify(runtimeManifest, null, 2),
       "PACKAGE_MANIFEST.json": JSON.stringify(packageManifest, null, 2),
       "SCENE_ASSET_MAP.json": JSON.stringify(sceneAssetMap, null, 2),
       "SOURCE_SCENE_MAP.json": JSON.stringify(sourceSceneMap, null, 2),

@@ -123,6 +123,7 @@ Then inspect these files as needed:
 - `SOURCE_SCENE_MAP.json`
 - `ASSET_PLAN.json`
 - `ASSET_EXECUTION_PLAN.json`
+- `RUNTIME_MANIFEST.json`
 - `FORGE_TASKS.md`
 - `HANDOFF.md`
 
@@ -143,7 +144,7 @@ Then inspect these files as needed:
 10. Run `npx framepack runtime lint --project-dir <package>`, `npx framepack runtime inspect --project-dir <package>`, or `npx framepack runtime snapshot --project-dir <package>` when you need HyperFrames-side composition checks.
 11. Run `npx framepack runtime upgrade-check` only when explicitly checking HyperFrames updates; do not run update checks as part of ordinary package status.
 
-`repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and `CAPABILITY_GRAPH.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available. If capability graph JSON is invalid or missing derivable nodes such as `video-runtime.hyperframes`, use `repair` before continuing package work.
+`repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, `CAPABILITY_GRAPH.json`, and `RUNTIME_MANIFEST.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available. If capability graph JSON is invalid or missing derivable nodes such as `video-runtime.hyperframes`, use `repair` before continuing package work.
 
 ## Workflow And Creative Direction Packs
 

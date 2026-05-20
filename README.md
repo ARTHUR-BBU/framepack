@@ -10,7 +10,7 @@ Framepack turns content into executable video project packages.
 
 In practice, that output is a production-ready intermediate, not usually the final human-facing video.
 
-Framepack prepares the video engineering package: source structure, scene plans, asset requirements, execution tasks, capability graphs, and runtime entrypoints. HyperFrames and an agent finish preview, asset materialization, and rendering.
+Framepack prepares the video engineering package: source structure, scene plans, asset requirements, execution tasks, capability graphs, runtime manifests, and runtime entrypoints. HyperFrames and an agent finish preview, asset materialization, and rendering.
 
 It is the harness and compiler layer in a hybrid workflow: asset library + orchestration + generative model + post-production composition. Framepack does not become a game engine or image generator.
 
@@ -22,7 +22,7 @@ Framepack 0.4 is organized around a five-part Agent Harness model:
 - **Arsenal exposure:** MCP `exposeArsenal`, `getCapabilityGraph`, and `explainCapabilityGaps` expose workflow packs, creative direction packs, capability state, and common technology fit without making the creative decision for the agent.
 - **Motor pathways:** MCP tools and CLI commands turn agent decisions into package generation, validation, repair, capture, runtime inspection, and render actions.
 - **Reflexes:** validation, repair, runtime lint, runtime inspect, and future capability scans catch obvious drift before the model spends reasoning budget on it.
-- **Memory encoding:** the package file system persists briefs, scene plans, asset maps, execution plans, capability graphs, runtime manifests, and evidence.
+- **Memory encoding:** the package file system persists briefs, scene plans, asset maps, execution plans, capability graphs, `RUNTIME_MANIFEST.json`, and evidence.
 - **Feedback loop:** runtime inspect reports, snapshot manifests, visual QA notes, and validation reports make readiness evidence-based instead of confidence-based.
 
 In plain language: Codex or Claude Code is the brain; Framepack is the video-production nervous system; HyperFrames is the rendering body.
@@ -314,6 +314,8 @@ Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCEN
 
 `PACKAGE_MANIFEST.json` also exposes `capabilities.packageCommands` so agents and tools can discover package-level operations such as `status`, `validate`, `repair`, `sync-assets`, `capture`, `runtime-doctor`, `runtime-lint`, `runtime-inspect`, `runtime-snapshot`, `runtime-upgrade-check`, `preview`, and `render` without parsing `COMMANDS.md`.
 
+`RUNTIME_MANIFEST.json` is the agent-readable runtime contract. It records the HyperFrames backend, root entry, runtime config/meta files, composition and asset directories, detected runtime capabilities, supported command specs, and evidence paths for validation reports, guardrails, snapshots, and runtime inspect reports.
+
 `validate` writes:
 
 - `VALIDATION_REPORT.json`
@@ -327,7 +329,7 @@ Repair known, deterministic package protocol drift in place:
 npx framepack repair --project-dir out/sprite-video-demo
 ```
 
-`repair` rebuilds derived protocol files from the existing package: `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and `CAPABILITY_GRAPH.json`. It then reruns package validation and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`. It does not invent missing source content, install forge skills, or materialize image assets.
+`repair` rebuilds derived protocol files from the existing package: `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, `CAPABILITY_GRAPH.json`, and `RUNTIME_MANIFEST.json`. It then reruns package validation and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`. It does not invent missing source content, install forge skills, or materialize image assets.
 
 You can also use a project config produced by `init`:
 

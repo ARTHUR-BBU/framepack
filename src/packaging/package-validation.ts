@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { CapabilityGraph } from "../capabilities/capability-graph.js";
+import type { RuntimeManifest } from "../runtime/manifest.js";
 import type {
   AssetExecutionPlan,
   PackageManifest,
@@ -29,6 +30,7 @@ const CAPABILITY_DELIVERIES = new Set([
   "manual-external",
 ]);
 const CAPABILITY_STATUSES = new Set(["available", "planned", "not-detected", "external", "blocked"]);
+const RUNTIME_MANIFEST_VERSION = "framepack.runtime-manifest.v1";
 
 function readJsonFile<T>(projectDir: string, relativePath: string, issues: string[]): T | undefined {
   const targetPath = resolve(projectDir, relativePath);
@@ -346,6 +348,99 @@ function validateCapabilityGraph(input: {
   }
 }
 
+function validateRuntimeManifest(input: {
+  runtimeManifest?: RuntimeManifest;
+  manifest?: PackageManifest;
+  issues: string[];
+}) {
+  if (!input.runtimeManifest) {
+    return;
+  }
+
+  if (input.runtimeManifest.version !== RUNTIME_MANIFEST_VERSION) {
+    input.issues.push(`RUNTIME_MANIFEST.json version must be ${RUNTIME_MANIFEST_VERSION}.`);
+  }
+
+  if (input.runtimeManifest.backend !== "hyperframes") {
+    input.issues.push("RUNTIME_MANIFEST.json backend must be hyperframes.");
+  }
+
+  const entrypoints = input.runtimeManifest.entrypoints;
+  if (!entrypoints || typeof entrypoints !== "object") {
+    input.issues.push("RUNTIME_MANIFEST.json entrypoints must be an object.");
+  } else {
+    if (entrypoints.rootEntry !== "index.html") {
+      input.issues.push("RUNTIME_MANIFEST.json entrypoints.rootEntry must be index.html.");
+    }
+
+    if (entrypoints.runtimeConfig !== "hyperframes.json") {
+      input.issues.push("RUNTIME_MANIFEST.json entrypoints.runtimeConfig must be hyperframes.json.");
+    }
+
+    if (entrypoints.runtimeMeta !== "meta.json") {
+      input.issues.push("RUNTIME_MANIFEST.json entrypoints.runtimeMeta must be meta.json.");
+    }
+
+    if (typeof entrypoints.compositionDirectory !== "string" || entrypoints.compositionDirectory.length === 0) {
+      input.issues.push("RUNTIME_MANIFEST.json entrypoints.compositionDirectory must be a non-empty string.");
+    }
+
+    if (typeof entrypoints.assetDirectory !== "string" || entrypoints.assetDirectory.length === 0) {
+      input.issues.push("RUNTIME_MANIFEST.json entrypoints.assetDirectory must be a non-empty string.");
+    }
+  }
+
+  if (!input.runtimeManifest.capabilities || typeof input.runtimeManifest.capabilities.available !== "boolean") {
+    input.issues.push("RUNTIME_MANIFEST.json capabilities.available must be a boolean.");
+  }
+
+  if (!Array.isArray(input.runtimeManifest.commands)) {
+    input.issues.push("RUNTIME_MANIFEST.json commands must be an array.");
+  } else {
+    const packageCommands = new Set(input.manifest?.capabilities.packageCommands ?? []);
+    for (const command of input.runtimeManifest.commands) {
+      if (!command || typeof command.action !== "string") {
+        input.issues.push("RUNTIME_MANIFEST.json contains a command without a string action.");
+        continue;
+      }
+
+      const packageCommand =
+        command.action === "upgrade-check"
+          ? "runtime-upgrade-check"
+          : command.action === "preview" || command.action === "render"
+            ? command.action
+            : `runtime-${command.action}`;
+      if (!packageCommands.has(packageCommand as PackageManifest["capabilities"]["packageCommands"][number])) {
+        input.issues.push(`RUNTIME_MANIFEST.json command ${command.action} is not exposed by PACKAGE_MANIFEST.json.`);
+      }
+
+      if (typeof command.executable !== "string" || command.executable.length === 0) {
+        input.issues.push(`RUNTIME_MANIFEST.json command ${command.action} executable must be a non-empty string.`);
+      }
+
+      if (!Array.isArray(command.args)) {
+        input.issues.push(`RUNTIME_MANIFEST.json command ${command.action} args must be an array.`);
+      }
+
+      if (typeof command.cwd !== "string" || command.cwd.length === 0) {
+        input.issues.push(`RUNTIME_MANIFEST.json command ${command.action} cwd must be a non-empty string.`);
+      }
+
+      if (typeof command.summary !== "string" || command.summary.length === 0) {
+        input.issues.push(`RUNTIME_MANIFEST.json command ${command.action} summary must be a non-empty string.`);
+      }
+    }
+  }
+
+  if (input.runtimeManifest.evidence?.validationReport !== "VALIDATION_REPORT.json") {
+    input.issues.push("RUNTIME_MANIFEST.json evidence.validationReport must be VALIDATION_REPORT.json.");
+  }
+
+  if (input.runtimeManifest.evidence?.guardrails !== "GUARDRAILS.md") {
+    input.issues.push("RUNTIME_MANIFEST.json evidence.guardrails must be GUARDRAILS.md.");
+  }
+}
+
 export function validateProjectPackage(input: {
   projectDir: string;
   now?: Date;
@@ -380,12 +475,16 @@ export function validateProjectPackage(input: {
   const capabilityGraph = existsSync(resolve(input.projectDir, "CAPABILITY_GRAPH.json"))
     ? readJsonFile<CapabilityGraph>(input.projectDir, "CAPABILITY_GRAPH.json", issues)
     : undefined;
+  const runtimeManifest = existsSync(resolve(input.projectDir, "RUNTIME_MANIFEST.json"))
+    ? readJsonFile<RuntimeManifest>(input.projectDir, "RUNTIME_MANIFEST.json", issues)
+    : undefined;
 
   validateManifest({ manifest, assetExecutionPlan, projectDir: input.projectDir, issues });
   validateSceneAssetMap({ scenePlan, sceneAssetMap, assetExecutionPlan, issues });
   validateSourceSceneMap({ scenePlan, sourceSceneMap, sceneAssetMap, issues });
   validateAvailableOutputs({ projectDir: input.projectDir, assetExecutionPlan, issues });
   validateCapabilityGraph({ capabilityGraph, assetExecutionPlan, issues });
+  validateRuntimeManifest({ runtimeManifest, manifest, issues });
 
   return {
     projectName: manifest?.projectName ?? "unknown-project",
