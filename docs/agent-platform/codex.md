@@ -16,4 +16,4 @@ When generating, Codex should pass `autoRecommendPacks: true` for broad requests
 
 Codex should prefer `readiness`, `nextActionItems`, and `forgeBreakdown` over parsing human-readable command output.
 
-For release-candidate verification, Codex should run MCP `releaseSmoke` or CLI `framepack release-smoke --output-dir out/release-smoke --json`. This checks the agent workflow files, MCP surface, pack recommendation, auto-pack generation, package status, and package validation in one structured pass.
+For release-candidate verification, Codex should run MCP `releaseSmoke` or CLI `framepack release-smoke --output-dir out/release-smoke --json`. This checks the agent workflow files, MCP surface, Arsenal Exposure, pack recommendation, auto-pack generation, capability/runtime artifacts, package status, and package validation in one structured pass.

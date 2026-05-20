@@ -3882,8 +3882,10 @@ Framepack compiles content into executable video projects.
             "init-agent-codex",
             "init-agent-claude-code",
             "mcp-surface",
+            "arsenal-exposure",
             "pack-recommendation",
             "auto-pack-generation",
+            "capability-runtime-artifacts",
             "package-status",
             "package-validation",
           ],
@@ -3892,8 +3894,16 @@ Framepack compiles content into executable video projects.
         assert.equal(report.recommended.workflowPackId, "game-ad-sprite-video");
         assert.equal(report.recommended.creativeDirectionPackId, "game-ad-retro-arcade");
         assert.equal(report.generatedProjectDir, projectDir);
+        assert.equal(report.arsenal.workflowPackCount >= 4, true);
+        assert.equal(report.arsenal.creativeDirectionPackCount >= 3, true);
+        assert.equal(report.generatedArtifacts.capabilityGraph, true);
+        assert.equal(report.generatedArtifacts.runtimeManifest, true);
+        assert.equal(report.generatedArtifacts.capabilityGraphNodeCount >= 5, true);
+        assert.ok(report.generatedArtifacts.runtimeCommandActions.includes("render"));
         assert.equal(existsSync(join(projectDir, "PACKAGE_MANIFEST.json")), true);
         assert.equal(existsSync(join(projectDir, "VIDEO_BRIEF.json")), true);
+        assert.equal(existsSync(join(projectDir, "CAPABILITY_GRAPH.json")), true);
+        assert.equal(existsSync(join(projectDir, "RUNTIME_MANIFEST.json")), true);
         assert.equal(existsSync(join(tempRoot, "codex-agent", ".framepack", "agent", "codex", "SKILL.md")), true);
         assert.equal(existsSync(join(tempRoot, "claude-code-agent", "CLAUDE.md")), true);
       } finally {

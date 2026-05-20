@@ -219,7 +219,7 @@ npx framepack release-smoke --output-dir out/release-smoke
 npx framepack release-smoke --output-dir out/release-smoke --json
 ```
 
-`release-smoke` 会生成 Codex 和 Claude Code 的 agent 工作流文件，检查 MCP surface，自动推荐 workflow / creative direction packs，生成一个 `--auto-pack` 游戏风宣传片工程包，然后跑 `status` 和 `validate`。它不安装外部 forge skills，不调用图像生成，也不要求 HyperFrames 渲染可用。
+`release-smoke` 会生成 Codex 和 Claude Code 的 agent 工作流文件，检查 MCP surface，验证 Arsenal Exposure，自动推荐 workflow / creative direction packs，生成一个 `--auto-pack` 游戏风宣传片工程包，检查 `CAPABILITY_GRAPH.json` 和 `RUNTIME_MANIFEST.json`，然后跑 `status` 和 `validate`。它不安装外部 forge skills，不调用图像生成，也不要求 HyperFrames 渲染可用。
 
 更严格的发布候选版本验证可以运行：
 

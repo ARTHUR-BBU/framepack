@@ -247,7 +247,7 @@ Generate a sprite-video game-ad package from a short product, course, or brand d
 
 ### `release-smoke`
 
-Run the agent-platform RC smoke harness. This creates Codex and Claude Code agent workflow files, checks the MCP surface, recommends packs, generates a sprite-video package with `--auto-pack` behavior, then runs package status and validation.
+Run the agent-platform RC smoke harness. This creates Codex and Claude Code agent workflow files, checks the MCP surface, verifies Arsenal Exposure, recommends packs, generates a sprite-video package with `--auto-pack` behavior, verifies `CAPABILITY_GRAPH.json` and `RUNTIME_MANIFEST.json`, then runs package status and validation.
 
 ```bash
 npx framepack release-smoke --output-dir out/release-smoke

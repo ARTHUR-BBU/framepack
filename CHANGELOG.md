@@ -21,6 +21,7 @@
 - added capability graph summaries to package status and exposed the first Arsenal Exposure MCP surface with `exposeArsenal`, `getCapabilityGraph`, and `explainCapabilityGaps`
 - added strict package validation for `CAPABILITY_GRAPH.json` and repair coverage for rebuilding invalid capability graphs
 - added `RUNTIME_MANIFEST.json` as the first runtime manifest contract for HyperFrames entrypoints, commands, capabilities, and evidence paths
+- upgraded `release-smoke` into a 0.4 alpha gate that verifies Arsenal Exposure, capability graph artifacts, runtime manifest artifacts, status, and validation
 
 ## 0.2.0-rc.2
 
