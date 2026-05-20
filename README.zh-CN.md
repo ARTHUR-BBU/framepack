@@ -11,6 +11,7 @@ Framepack 是一个运行在 Codex、Claude Code 等通用 coding agent 之上�
 Framepack 0.4 按五维 Agent Harness 组织：
 
 - 感觉过滤器：`CAPABILITY_GRAPH.json` 告诉 agent 当前工程有什么能力、缺什么能力、能力从哪里来。
+- 武器库暴露：MCP `exposeArsenal`、`getCapabilityGraph` 和 `explainCapabilityGaps` 把 workflow packs、creative direction packs、能力状态和常见技术适配情况摊开给 agent 看，但不替 agent 做创意判断。
 - 运动通路：MCP tools 和 CLI commands 把 agent 的判断变成生成、校验、修复、截图、运行时检查和渲染动作。
 - 脊髓反射：`validate`、`repair`、`runtime lint`、`runtime inspect` 和后续能力扫描会自动发现明显漂移，减少 agent 猜测。
 - 记忆编码：工程包文件系统持久化 brief、scene plan、asset map、execution plan、capability graph、runtime manifest 和证据。
@@ -37,6 +38,8 @@ npx framepack packs recommend --source-type game-ad --output-type game-ad --goal
 ```
 
 MCP 里对应工具是 `recommendPacks`。
+
+如果用户只说了一个模糊目标，例如“做一个苹果发布会风格的 AI 产品视频”，agent 应先用 MCP `exposeArsenal` 看 Framepack 的完整武器库：全部 workflow packs、全部 creative direction packs、当前工程的 capability graph 摘要，以及 Three.js、GSAP、Anime.js、PixiJS、agent-sprite-forge 等常见技术是否已经在能力图里。Framepack 只提供信息场；Codex 或 Claude Code 才负责理解用户意图、追问、权衡和选择。
 
 选中路线后，可以把选择写进工程包：
 
@@ -265,6 +268,8 @@ npx framepack status --project-dir out/sprite-video-demo --json
 | `ready` | `preview` | 是 |
 
 对 forge 工程包，`status --json` 还会输出 `forgeBreakdown`，让 agent 不必先扫描 `ASSET_EXECUTION_PLAN.json` 也能分派素材工作。它会按 `executionKind`、`forgeBackend` 和 `requiredSkill` 汇总 forge 任务数量；缺失的 backend 或 skill 会归入 `unspecified`。
+
+`status --json` 也会输出 `capabilityGraph` 摘要：能力图是否存在、有哪些节点、哪些节点缺失或被阻塞、不同状态和交付方式各有多少。MCP 里对应 `getCapabilityGraph`、`explainCapabilityGaps`，以及 `framepack://project/{projectName}/capability-graph` 资源。
 
 包协议验证会检查 `PACKAGE_MANIFEST.json`、`SCENE_PLAN.json`、`SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json` 是否互相对齐。如果某个任务已经标为 `available` 或 `external`，但声明的输出文件不存在，验证会失败。
 

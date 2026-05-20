@@ -1,5 +1,9 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import {
+  summarizeCapabilityGraphFile,
+  type CapabilityGraphSummary,
+} from "../capabilities/arsenal.js";
 import type { AssetExecutionPlan, PackageManifest } from "../core/types.js";
 import { detectHyperframesCapabilities } from "../runtime/hyperframes/adapter.js";
 import { validateProjectPackage } from "./package-validation.js";
@@ -52,6 +56,7 @@ export interface PackageStatusSummary {
   assets: StatusCounts;
   forge: StatusCounts;
   forgeBreakdown: ForgeStatusBreakdown;
+  capabilityGraph: CapabilityGraphSummary;
   runtimeAvailable: boolean;
   runtimeBinary: string;
   nextActionItems: PackageStatusNextAction[];
@@ -302,6 +307,7 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
     assets,
     forge,
     forgeBreakdown,
+    capabilityGraph: summarizeCapabilityGraphFile(projectDir),
     runtimeAvailable: runtime.available,
     runtimeBinary: runtime.binary,
     nextActionItems: decision.nextActionItems,
@@ -325,6 +331,7 @@ export function formatProjectPackageStatus(summary: PackageStatusSummary): strin
     `issues: ${summary.issueCount}`,
     `assets: ${formatCounts(summary.assets)}`,
     `forge: ${formatCounts(summary.forge)}`,
+    `capabilities: ${summary.capabilityGraph.totalNodes} nodes, ${summary.capabilityGraph.gapNodeIds.length} gaps`,
     `runtime: ${summary.runtimeAvailable ? "available" : "unavailable"}`,
     `runtimeBinary: ${summary.runtimeBinary}`,
     "next actions:",

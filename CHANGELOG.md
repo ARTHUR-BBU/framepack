@@ -18,6 +18,7 @@
 - added `npm run release:gate` as the final release-candidate verification gate
 - added release-candidate notes and the next architecture learning agenda for the Framepack 0.4 uplift
 - added the Framepack 0.4 Capability Runtime Architecture proposal
+- added capability graph summaries to package status and exposed the first Arsenal Exposure MCP surface with `exposeArsenal`, `getCapabilityGraph`, and `explainCapabilityGaps`
 
 ## 0.2.0-rc.2
 

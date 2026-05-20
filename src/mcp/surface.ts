@@ -3,6 +3,9 @@ import { describeFramepackPackRegistry } from "../workflow-packs/registry.js";
 export const FRAMEPACK_MCP_TOOLS = [
   "generateProject",
   "getStatus",
+  "getCapabilityGraph",
+  "explainCapabilityGaps",
+  "exposeArsenal",
   "validatePackage",
   "repairPackage",
   "captureAssets",
@@ -26,6 +29,7 @@ export const FRAMEPACK_MCP_RESOURCES = [
   "framepack://project/{projectName}/manifest",
   "framepack://project/{projectName}/handoff",
   "framepack://project/{projectName}/asset-execution-plan",
+  "framepack://project/{projectName}/capability-graph",
   "framepack://project/{projectName}/forge-tasks",
   "framepack://project/{projectName}/status",
 ] as const;

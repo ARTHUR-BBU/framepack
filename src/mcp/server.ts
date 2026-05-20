@@ -3,6 +3,11 @@ import { join, resolve } from "node:path";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import {
+  exposeFramepackArsenal,
+  readCapabilityGraph,
+  summarizeCapabilityGraph,
+} from "../capabilities/arsenal.js";
 import { materializeProjectAssets } from "../capture/index.js";
 import { ensureProjectValidationPassed } from "../compiler/index.js";
 import { compileVideoProjectFromSource, type CompilerSourceInput } from "../compiler/pipeline-registry.js";
@@ -181,6 +186,74 @@ export function createFramepackMcpServer(): McpServer {
     (input) => textJson(getProjectPackageStatus({ projectDir: resolve(input.projectDir) })),
   );
 
+  server.registerTool(
+    "getCapabilityGraph",
+    {
+      description: "Read a package capability graph and an agent-friendly summary.",
+      inputSchema: {
+        projectDir: z.string(),
+      },
+    },
+    (input) => {
+      const projectDir = resolve(input.projectDir);
+      const graph = readCapabilityGraph(projectDir);
+
+      return textJson({
+        projectDir,
+        summary: summarizeCapabilityGraph(graph),
+        graph,
+      });
+    },
+  );
+
+  server.registerTool(
+    "explainCapabilityGaps",
+    {
+      description: "List missing or blocked capability nodes with conservative next actions.",
+      inputSchema: {
+        projectDir: z.string(),
+      },
+    },
+    (input) => {
+      const projectDir = resolve(input.projectDir);
+      const graph = readCapabilityGraph(projectDir);
+      const gapNodes =
+        graph?.nodes.filter((node) => node.status === "not-detected" || node.status === "blocked") ?? [];
+
+      return textJson({
+        projectDir,
+        summary: summarizeCapabilityGraph(graph),
+        gapNodes,
+        nextActions: gapNodes.map((node) => ({
+          nodeId: node.id,
+          action:
+            node.delivery === "codex-skill"
+              ? "Enable or install the referenced Codex skill, or route the work to manual/custom production."
+              : "Run the relevant doctor/validation command or provide the capability externally.",
+        })),
+      });
+    },
+  );
+
+  server.registerTool(
+    "exposeArsenal",
+    {
+      description:
+        "Expose Framepack workflow packs, creative direction packs, capability status, and common technology fit without making creative decisions.",
+      inputSchema: {
+        userRawInput: z.string().optional(),
+        projectDir: z.string().optional(),
+      },
+    },
+    (input) =>
+      textJson(
+        exposeFramepackArsenal({
+          userRawInput: input.userRawInput,
+          projectDir: input.projectDir ? resolve(input.projectDir) : undefined,
+        }),
+      ),
+  );
+
   server.registerTool("validatePackage", { inputSchema: { projectDir: z.string() } }, (input) => {
     const projectDir = resolve(input.projectDir);
     const report = validateProjectPackage({ projectDir });
@@ -318,6 +391,15 @@ export function createFramepackMcpServer(): McpServer {
     { title: "Framepack asset execution plan" },
     (uri, variables) => ({
       contents: [{ uri: uri.href, text: readProjectFile(String(variables.projectName), "ASSET_EXECUTION_PLAN.json") }],
+    }),
+  );
+
+  server.registerResource(
+    "capability-graph",
+    new ResourceTemplate("framepack://project/{projectName}/capability-graph", { list: undefined }),
+    { title: "Framepack capability graph" },
+    (uri, variables) => ({
+      contents: [{ uri: uri.href, text: readProjectFile(String(variables.projectName), "CAPABILITY_GRAPH.json") }],
     }),
   );
 

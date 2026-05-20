@@ -4,6 +4,9 @@ Framepack exposes an MCP stdio server with tools for the complete package lifecy
 
 - `generateProject`
 - `getStatus`
+- `getCapabilityGraph`
+- `explainCapabilityGaps`
+- `exposeArsenal`
 - `validatePackage`
 - `repairPackage`
 - `captureAssets`
@@ -20,10 +23,11 @@ Framepack exposes an MCP stdio server with tools for the complete package lifecy
 - `recommendPacks`
 - `releaseSmoke`
 
-It also exposes project resources for manifest, handoff, asset execution plan, forge tasks, and status, plus registry resources for workflow packs and creative direction packs:
+It also exposes project resources for manifest, handoff, asset execution plan, capability graph, forge tasks, and status, plus registry resources for workflow packs and creative direction packs:
 
 - `framepack://packs/workflows`
 - `framepack://packs/creative-directions`
+- `framepack://project/{projectName}/capability-graph`
 
 ## Role In The Ecosystem
 
@@ -45,7 +49,11 @@ The MCP surface now exposes the first creative direction registry.
 
 Agents should call `listWorkflowPacks` and `listCreativeDirectionPacks` before generating a project when the user request is broad or product-shaped. The workflow pack helps choose the source route and expected execution kinds. The creative direction pack helps choose visual language, motion language, template guidance, and acceptance criteria before rendering.
 
+For fuzzy user requests, call `exposeArsenal` before choosing a route. It returns the raw user signal, full workflow pack list, full creative direction pack list, capability graph summary when a project exists, and common technology fit checks for libraries or backends such as Three.js, GSAP, Anime.js, PixiJS, and agent-sprite-forge. This is intentionally not an intent resolver: Framepack shapes the information field, while Codex or Claude Code makes the creative and technical decision.
+
 For a conservative default, call `recommendPacks` with `sourceType`, `outputType`, optional `goal`, optional `audience`, and optional `format`. The response includes `workflowPack`, `creativeDirectionPack`, `packSelection`, and a human-readable `reason`. Agents should rely on IDs and `packSelection` for automation; `reason` is explanatory text.
+
+After a package exists, use `getCapabilityGraph` to read `CAPABILITY_GRAPH.json` plus its compact summary. Use `explainCapabilityGaps` when the next decision depends on missing runtime, skill, backend, or externally supplied capabilities.
 
 `generateProject` accepts optional `workflowPackId` and `creativeDirectionPackId`. When provided, Framepack validates the workflow pack against the selected source/output route and writes the pack selection into `VIDEO_BRIEF.json` and `HANDOFF.md`.
 

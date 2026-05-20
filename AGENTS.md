@@ -20,6 +20,7 @@ In the Agent Harness model, Codex or Claude Code is the general-purpose brain, F
 Framepack 0.4 uses a five-part harness structure:
 
 - Sense filter: `CAPABILITY_GRAPH.json` tells agents what capabilities are present, missing, planned, or externally produced.
+- Arsenal exposure: MCP `exposeArsenal`, `getCapabilityGraph`, and `explainCapabilityGaps` expose packs, capability state, gaps, and common technology fit without making creative decisions for the agent.
 - Motor pathways: MCP tools and CLI commands turn agent decisions into package generation, status checks, validation, repair, capture, runtime inspection, and rendering.
 - Reflexes: validation, repair, runtime lint, runtime inspect, and capability scans catch obvious drift before the model spends reasoning budget on it.
 - Memory encoding: package files persist every intermediate artifact needed for agent handoff and recovery.
@@ -49,7 +50,7 @@ npm run release:smoke:install
 npm run release:gate
 ```
 
-Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs. `packs recommend` and MCP `recommendPacks` provide a conservative default route before generating a package.
+Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs. MCP `exposeArsenal` is the broad pre-generation context tool: it exposes the raw user signal, all packs, capability graph summary when available, and common technology fit checks while leaving intent interpretation to Codex or Claude Code. `packs recommend` and MCP `recommendPacks` provide a conservative default route before generating a package.
 
 Generate a package:
 
@@ -128,10 +129,12 @@ Then inspect these files as needed:
 ## Agent Workflow
 
 0. For broad requests, run `npx framepack packs recommend --json` or use MCP `recommendPacks` to choose a workflow pack and creative direction pack before generating or continuing a package. For one-step generation, use CLI `--auto-pack` or MCP `autoRecommendPacks: true`; explicit `--workflow-pack` / `--creative-direction-pack` and MCP `workflowPackId` / `creativeDirectionPackId` still take priority.
+   For fuzzy creative requests or technology preferences, prefer MCP `exposeArsenal` first. It is an information-field tool, not an intent resolver: the agent should inspect the exposed packs, capability graph, and common technology status, then decide what to ask the user or which route to execute.
 1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
 2. Read `HANDOFF.md` to understand the current package state and pending work.
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
 4. Run `npx framepack status --project-dir <package>` to summarize protocol health, asset state, forge progress, runtime availability, readiness, and next actions. Use `--json` when another agent or tool needs structured status; prefer `readiness` and `nextActionItems` for automation. Each `nextActionItems` entry has a stable `id` for action dispatch. Treat `readiness` as the first phase decision: `blocked`, `needs-assets`, `needs-runtime`, or `ready`. For forge work, inspect `forgeBreakdown.byExecutionKind`, `forgeBreakdown.byBackend`, and `forgeBreakdown.byRequiredSkill` before assigning asset production.
+   For capability work, inspect `capabilityGraph.nodeIds`, `capabilityGraph.gapNodeIds`, `capabilityGraph.byStatus`, and `capabilityGraph.byDelivery`, or use MCP `getCapabilityGraph` / `explainCapabilityGaps`.
 5. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
 6. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
 7. Run `npx framepack repair --project-dir <package>` only when derived protocol files are stale or inconsistent but the source JSON is present.

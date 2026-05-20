@@ -14,6 +14,10 @@ import {
 import { compileVideoBrief } from "../dist/planning/brief/index.js";
 import { buildAssetPlan } from "../dist/planning/assets/index.js";
 import { buildCapabilityGraph } from "../dist/capabilities/capability-graph.js";
+import {
+  exposeFramepackArsenal,
+  summarizeCapabilityGraph,
+} from "../dist/capabilities/arsenal.js";
 import { buildAssetExecutionPlan } from "../dist/packaging/asset-execution.js";
 import { createGoldenPackageProtocolSummary } from "../dist/packaging/golden-package.js";
 import {
@@ -200,6 +204,75 @@ const tests = [
         graph.nodes.find((node) => node.id === "asset-forge.agent-sprite-forge")?.usedBy,
         ["forge-character-pack"],
       );
+    },
+  },
+  {
+    name: "summarize capability graph for agent status decisions",
+    run: () => {
+      const graph = buildCapabilityGraph({
+        sourceType: "game-ad",
+        outputType: "game-ad",
+        executionKinds: ["forge-character-pack", "forge-map-pack", "forge-fx-pack"],
+        forgeBackends: ["agent-sprite-forge"],
+        requiredSkills: ["generate2dsprite", "generate2dmap"],
+        runtimeBackend: "hyperframes",
+        runtimeStatus: "not-detected",
+        packageCommands: ["status", "runtime-lint", "runtime-snapshot", "render"],
+      });
+
+      const summary = summarizeCapabilityGraph(graph);
+
+      assert.equal(summary.present, true);
+      assert.equal(summary.version, "framepack.capability-graph.v1");
+      assert.equal(summary.totalNodes, 5);
+      assert.deepEqual(summary.byStatus, {
+        available: 1,
+        planned: 0,
+        "not-detected": 4,
+        external: 0,
+        blocked: 0,
+      });
+      assert.deepEqual(summary.byDelivery, {
+        "npm-local": 1,
+        "cdn-runtime": 0,
+        "cli-local": 0,
+        "mcp-tool": 1,
+        "remote-api": 0,
+        "codex-skill": 3,
+        "manual-external": 0,
+      });
+      assert.deepEqual(summary.gapNodeIds, [
+        "asset-forge.agent-sprite-forge",
+        "skill.generate2dmap",
+        "skill.generate2dsprite",
+        "video-runtime.hyperframes",
+      ]);
+      assert.ok(summary.nodeIds.includes("mcp.framepack"));
+    },
+  },
+  {
+    name: "expose the Framepack arsenal without making creative decisions",
+    run: () => {
+      const arsenal = exposeFramepackArsenal({
+        userRawInput: "我想做一个苹果发布会风格的 AI 产品视频，还想看看 Three.js 能不能用。",
+      });
+
+      assert.match(arsenal.userRawInput, /Three\.js/);
+      assert.ok(arsenal.workflowPacks.some((pack) => pack.id === "game-ad-sprite-video"));
+      assert.ok(
+        arsenal.creativeDirectionPacks.some((pack) => pack.id === "clean-saas-explainer"),
+      );
+      assert.equal(arsenal.capabilityGraph.present, false);
+      assert.equal(
+        arsenal.commonTechStatus.find((tech) => tech.name === "Three.js")?.inCapabilityGraph,
+        false,
+      );
+      assert.equal(
+        arsenal.commonTechStatus.find((tech) => tech.name === "Three.js")?.possibleDelivery,
+        "npm-local",
+      );
+      assert.match(arsenal.agentBoundary, /Framepack exposes context/);
+      assert.doesNotMatch(JSON.stringify(arsenal), /suggestedCommand/);
     },
   },
   {
@@ -2151,8 +2224,11 @@ Framepack compiles content into executable video projects.
       assert.equal(exitCode, 0, stderr.join("\n"));
       assert.match(output, /generateProject/);
       assert.match(output, /getStatus/);
+      assert.match(output, /getCapabilityGraph/);
+      assert.match(output, /exposeArsenal/);
       assert.match(output, /runtimeSnapshot/);
       assert.match(output, /framepack:\/\/project\/\{projectName\}\/manifest/);
+      assert.match(output, /framepack:\/\/project\/\{projectName\}\/capability-graph/);
       assert.match(output, /create-game-ad-video/);
     },
   },
@@ -4098,6 +4174,12 @@ Framepack compiles content into executable video projects.
         assert.equal(status.assets.pending, 3);
         assert.equal(status.forge.total, 3);
         assert.equal(status.forge.pending, 3);
+        assert.equal(status.capabilityGraph.present, true);
+        assert.equal(status.capabilityGraph.version, "framepack.capability-graph.v1");
+        assert.ok(status.capabilityGraph.nodeIds.includes("video-runtime.hyperframes"));
+        assert.ok(status.capabilityGraph.gapNodeIds.includes("asset-forge.agent-sprite-forge"));
+        assert.equal(status.capabilityGraph.byStatus["not-detected"], 3);
+        assert.equal(status.capabilityGraph.byDelivery["codex-skill"], 3);
         assert.deepEqual(status.forgeBreakdown.byExecutionKind, [
           {
             key: "forge-character-pack",
@@ -4172,6 +4254,58 @@ Framepack compiles content into executable video projects.
           command: "produce-forge-assets",
           reason: "3 forge tasks are pending and need manual, custom, or skill-backed production.",
         });
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "report invalid capability graph in package status without crashing",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-package-status-invalid-capability-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A course that teaches founders to ship agent-native video systems.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the course",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        writeFileSync(join(projectDir, "CAPABILITY_GRAPH.json"), "{", "utf8");
+
+        const statusExitCode = await runCli(
+          ["status", "--project-dir", projectDir, "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const status = JSON.parse(stdout.join("\n"));
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(statusExitCode, 0);
+        assert.equal(stderr.length, 0);
+        assert.equal(status.capabilityGraph.present, true);
+        assert.match(status.capabilityGraph.error, /CAPABILITY_GRAPH\.json/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

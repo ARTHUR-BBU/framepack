@@ -19,6 +19,7 @@ It is the harness and compiler layer in a hybrid workflow: asset library + orche
 Framepack 0.4 is organized around a five-part Agent Harness model:
 
 - **Sense filter:** `CAPABILITY_GRAPH.json` tells the agent what capabilities exist, what is missing, and which delivery modes are available.
+- **Arsenal exposure:** MCP `exposeArsenal`, `getCapabilityGraph`, and `explainCapabilityGaps` expose workflow packs, creative direction packs, capability state, and common technology fit without making the creative decision for the agent.
 - **Motor pathways:** MCP tools and CLI commands turn agent decisions into package generation, validation, repair, capture, runtime inspection, and render actions.
 - **Reflexes:** validation, repair, runtime lint, runtime inspect, and future capability scans catch obvious drift before the model spends reasoning budget on it.
 - **Memory encoding:** the package file system persists briefs, scene plans, asset maps, execution plans, capability graphs, runtime manifests, and evidence.
@@ -49,7 +50,7 @@ npx framepack packs
 npx framepack packs --json
 ```
 
-The same registry is exposed through MCP tools: `listWorkflowPacks`, `getWorkflowPack`, `listCreativeDirectionPacks`, and `getCreativeDirectionPack`.
+The same registry is exposed through MCP tools: `listWorkflowPacks`, `getWorkflowPack`, `listCreativeDirectionPacks`, and `getCreativeDirectionPack`. For broad natural-language requests, agents can call MCP `exposeArsenal` first. It returns the raw user signal, all workflow packs, all creative direction packs, capability graph summary when a package exists, and common technology fit checks such as Three.js, GSAP, Anime.js, PixiJS, and agent-sprite-forge. Framepack exposes the information field; Codex or Claude Code still makes the creative judgment.
 
 Agents can ask Framepack for a conservative recommendation:
 
@@ -306,6 +307,8 @@ Readiness values are intentionally coarse: `blocked` means protocol validation f
 | `ready` | `preview` | Yes |
 
 For forge packages, `status --json` also includes `forgeBreakdown` so agents can dispatch asset work without scanning `ASSET_EXECUTION_PLAN.json` first. It groups forge task counts by `executionKind`, `forgeBackend`, and `requiredSkill`; missing backend or skill values are reported as `unspecified`.
+
+`status --json` also includes `capabilityGraph`, a compact summary of `CAPABILITY_GRAPH.json`: whether it is present, node IDs, missing or blocked capability node IDs, counts by status, and counts by delivery mode. MCP exposes the same layer through `getCapabilityGraph`, `explainCapabilityGaps`, and the `framepack://project/{projectName}/capability-graph` resource.
 
 Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` stay aligned. It also fails if an item marked `available` or `external` points at a missing output file.
 
