@@ -138,12 +138,12 @@ Then inspect these files as needed:
 5. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
 6. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
 7. Run `npx framepack repair --project-dir <package>` only when derived protocol files are stale or inconsistent but the source JSON is present.
-8. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment.
+8. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment, including `CAPABILITY_GRAPH.json` structure when present.
 9. Run `npx framepack runtime doctor --project-dir <package>` before previewing or rendering with HyperFrames.
 10. Run `npx framepack runtime lint --project-dir <package>`, `npx framepack runtime inspect --project-dir <package>`, or `npx framepack runtime snapshot --project-dir <package>` when you need HyperFrames-side composition checks.
 11. Run `npx framepack runtime upgrade-check` only when explicitly checking HyperFrames updates; do not run update checks as part of ordinary package status.
 
-`repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and `CAPABILITY_GRAPH.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available.
+`repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and `CAPABILITY_GRAPH.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available. If capability graph JSON is invalid or missing derivable nodes such as `video-runtime.hyperframes`, use `repair` before continuing package work.
 
 ## Workflow And Creative Direction Packs
 

@@ -19,7 +19,7 @@ The minimal protocol surface for generated packages is:
 
 `validate --project-dir <package>` checks these files before deeper protocol validation.
 
-`repair --project-dir <package>` can rebuild derived v1 files when the source JSON still exists and is valid. Its repair surface is intentionally narrow: `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and the validation reports.
+`repair --project-dir <package>` can rebuild derived v1 files when the source JSON still exists and is valid. Its repair surface is intentionally narrow: `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, `CAPABILITY_GRAPH.json`, and the validation reports.
 
 ## Manifest Contract
 
@@ -61,6 +61,20 @@ For v1, `CAPTURE_EXECUTION_PLAN.json` remains a compatibility file. New consumer
 
 Execution statuses are `pending`, `available`, `failed`, `skipped`, and `external`. Items marked `available` or `external` must point to existing package-relative outputs.
 
+## Capability Graph Contract
+
+`CAPABILITY_GRAPH.json` is an additive v1 execution artifact. It is derivable from `PACKAGE_MANIFEST.json`, `VIDEO_BRIEF.json`, and `ASSET_EXECUTION_PLAN.json`.
+
+Validation checks:
+
+- `version` is `framepack.capability-graph.v1`
+- `nodes` and `edges` are arrays
+- `video-runtime.hyperframes` and `mcp.framepack` nodes exist
+- node `kind`, `delivery`, `status`, `required`, `provider`, and `usedBy` fields are well-formed
+- edges reference existing nodes and include a non-empty reason
+- forge backends in `ASSET_EXECUTION_PLAN.json` have `asset-forge.<backend>` nodes
+- required skills in `ASSET_EXECUTION_PLAN.json` have `skill.<requiredSkill>` nodes
+
 ## Validation And Golden Checks
 
 - `framepack status --project-dir <package>` prints package protocol health, asset execution state, forge task progress, runtime availability, readiness, and recommended next actions without writing package files. `--json` emits the same status summary as structured data for agents, UIs, and automation. Structured consumers should inspect `readiness` first, then use `nextActionItems` with stable `id`, `category`, `command`, and `reason`; `nextActions` remains a text compatibility field.
@@ -76,8 +90,8 @@ Execution statuses are `pending`, `available`, `failed`, `skipped`, and `externa
   | `needs-runtime` | `runtime-doctor` | No |
   | `ready` | `preview` | Yes |
 
-- `framepack validate --project-dir <package>` validates the package protocol and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`.
-- `framepack repair --project-dir <package>` repairs derivable v1 drift by rebuilding `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then writing validation reports. It does not generate assets, execute forge tasks, or migrate packages to a newer protocol.
+- `framepack validate --project-dir <package>` validates the package protocol, including capability graph structure when `CAPABILITY_GRAPH.json` exists, and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`.
+- `framepack repair --project-dir <package>` repairs derivable v1 drift by rebuilding `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and `CAPABILITY_GRAPH.json`, then writing validation reports. It does not generate assets, execute forge tasks, or migrate packages to a newer protocol.
 - `framepack runtime doctor --project-dir <package>` checks runtime availability and package protocol health without writing validation reports.
 - `framepack runtime lint --project-dir <package>` runs HyperFrames composition linting.
 - `framepack runtime inspect --project-dir <package>` checks visual layout and text overflow across the timeline. Agents can pass HyperFrames inspect options such as `--json`, `--samples`, `--at`, `--tolerance`, `--timeout`, `--max-issues`, `--collapse-static`, `--no-collapse-static`, and `--strict`.

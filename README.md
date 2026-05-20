@@ -308,7 +308,7 @@ Readiness values are intentionally coarse: `blocked` means protocol validation f
 
 For forge packages, `status --json` also includes `forgeBreakdown` so agents can dispatch asset work without scanning `ASSET_EXECUTION_PLAN.json` first. It groups forge task counts by `executionKind`, `forgeBackend`, and `requiredSkill`; missing backend or skill values are reported as `unspecified`.
 
-`status --json` also includes `capabilityGraph`, a compact summary of `CAPABILITY_GRAPH.json`: whether it is present, node IDs, missing or blocked capability node IDs, counts by status, and counts by delivery mode. MCP exposes the same layer through `getCapabilityGraph`, `explainCapabilityGaps`, and the `framepack://project/{projectName}/capability-graph` resource.
+`status --json` also includes `capabilityGraph`, a compact summary of `CAPABILITY_GRAPH.json`: whether it is present, node IDs, missing or blocked capability node IDs, counts by status, and counts by delivery mode. MCP exposes the same layer through `getCapabilityGraph`, `explainCapabilityGaps`, and the `framepack://project/{projectName}/capability-graph` resource. Package validation checks capability graph structure, required runtime/MCP nodes, edge references, forge backend nodes, and required skill nodes.
 
 Package validation checks that `PACKAGE_MANIFEST.json`, `SCENE_PLAN.json`, `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` stay aligned. It also fails if an item marked `available` or `external` points at a missing output file.
 
@@ -327,7 +327,7 @@ Repair known, deterministic package protocol drift in place:
 npx framepack repair --project-dir out/sprite-video-demo
 ```
 
-`repair` rebuilds derived protocol files from the existing package: `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`. It then reruns package validation and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`. It does not invent missing source content, install forge skills, or materialize image assets.
+`repair` rebuilds derived protocol files from the existing package: `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and `CAPABILITY_GRAPH.json`. It then reruns package validation and writes `VALIDATION_REPORT.json` / `VALIDATION_REPORT.md`. It does not invent missing source content, install forge skills, or materialize image assets.
 
 You can also use a project config produced by `init`:
 

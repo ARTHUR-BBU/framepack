@@ -1,5 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import type { CapabilityGraph } from "../capabilities/capability-graph.js";
 import type {
   AssetExecutionPlan,
   PackageManifest,
@@ -15,6 +16,19 @@ import {
   FRAMEPACK_PACKAGE_PROTOCOL_VERSION,
   getRequiredPackageProtocolFiles,
 } from "./package-protocol.js";
+
+const CAPABILITY_GRAPH_VERSION = "framepack.capability-graph.v1";
+const CAPABILITY_NODE_KINDS = new Set(["runtime", "library", "cli", "mcp-tool", "skill", "remote-api", "manual"]);
+const CAPABILITY_DELIVERIES = new Set([
+  "npm-local",
+  "cdn-runtime",
+  "cli-local",
+  "mcp-tool",
+  "remote-api",
+  "codex-skill",
+  "manual-external",
+]);
+const CAPABILITY_STATUSES = new Set(["available", "planned", "not-detected", "external", "blocked"]);
 
 function readJsonFile<T>(projectDir: string, relativePath: string, issues: string[]): T | undefined {
   const targetPath = resolve(projectDir, relativePath);
@@ -220,6 +234,118 @@ function validateAvailableOutputs(input: {
   }
 }
 
+function validateCapabilityGraph(input: {
+  capabilityGraph?: CapabilityGraph;
+  assetExecutionPlan?: AssetExecutionPlan;
+  issues: string[];
+}) {
+  if (!input.capabilityGraph) {
+    return;
+  }
+
+  if (input.capabilityGraph.version !== CAPABILITY_GRAPH_VERSION) {
+    input.issues.push(`CAPABILITY_GRAPH.json version must be ${CAPABILITY_GRAPH_VERSION}.`);
+  }
+
+  if (!Array.isArray(input.capabilityGraph.nodes)) {
+    input.issues.push("CAPABILITY_GRAPH.json nodes must be an array.");
+    return;
+  }
+
+  if (!Array.isArray(input.capabilityGraph.edges)) {
+    input.issues.push("CAPABILITY_GRAPH.json edges must be an array.");
+    return;
+  }
+
+  const nodeIds = new Set<string>();
+  for (const node of input.capabilityGraph.nodes) {
+    if (!node || typeof node.id !== "string" || node.id.length === 0) {
+      input.issues.push("CAPABILITY_GRAPH.json contains a node without a non-empty id.");
+      continue;
+    }
+
+    if (nodeIds.has(node.id)) {
+      input.issues.push(`CAPABILITY_GRAPH.json contains duplicate node id ${node.id}.`);
+    }
+    nodeIds.add(node.id);
+
+    if (!CAPABILITY_NODE_KINDS.has(node.kind)) {
+      input.issues.push(`CAPABILITY_GRAPH.json node ${node.id} has invalid kind ${String(node.kind)}.`);
+    }
+
+    if (typeof node.provider !== "string" || node.provider.length === 0) {
+      input.issues.push(`CAPABILITY_GRAPH.json node ${node.id} provider must be a non-empty string.`);
+    }
+
+    if (!CAPABILITY_DELIVERIES.has(node.delivery)) {
+      input.issues.push(`CAPABILITY_GRAPH.json node ${node.id} has invalid delivery ${String(node.delivery)}.`);
+    }
+
+    if (typeof node.required !== "boolean") {
+      input.issues.push(`CAPABILITY_GRAPH.json node ${node.id} required must be a boolean.`);
+    }
+
+    if (!CAPABILITY_STATUSES.has(node.status)) {
+      input.issues.push(`CAPABILITY_GRAPH.json node ${node.id} has invalid status ${String(node.status)}.`);
+    }
+
+    if (!Array.isArray(node.usedBy)) {
+      input.issues.push(`CAPABILITY_GRAPH.json node ${node.id} usedBy must be an array.`);
+    }
+  }
+
+  if (!nodeIds.has("video-runtime.hyperframes")) {
+    input.issues.push("CAPABILITY_GRAPH.json must include video-runtime.hyperframes.");
+  }
+
+  if (!nodeIds.has("mcp.framepack")) {
+    input.issues.push("CAPABILITY_GRAPH.json must include mcp.framepack.");
+  }
+
+  for (const edge of input.capabilityGraph.edges) {
+    if (!edge || typeof edge.from !== "string" || typeof edge.to !== "string") {
+      input.issues.push("CAPABILITY_GRAPH.json contains an edge without string from/to values.");
+      continue;
+    }
+
+    if (!nodeIds.has(edge.from)) {
+      input.issues.push(`CAPABILITY_GRAPH.json edge references missing from node ${edge.from}.`);
+    }
+
+    if (!nodeIds.has(edge.to)) {
+      input.issues.push(`CAPABILITY_GRAPH.json edge references missing to node ${edge.to}.`);
+    }
+
+    if (typeof edge.reason !== "string" || edge.reason.length === 0) {
+      input.issues.push(`CAPABILITY_GRAPH.json edge ${edge.from}->${edge.to} reason must be a non-empty string.`);
+    }
+  }
+
+  const forgeBackends = new Set(
+    input.assetExecutionPlan?.items
+      .map((item) => item.forgeBackend)
+      .filter((backend): backend is string => Boolean(backend)) ?? [],
+  );
+  for (const backend of forgeBackends) {
+    const nodeId = `asset-forge.${backend}`;
+    if (!nodeIds.has(nodeId)) {
+      input.issues.push(`CAPABILITY_GRAPH.json is missing ${nodeId}.`);
+    }
+  }
+
+  const requiredSkills = new Set(
+    input.assetExecutionPlan?.items
+      .map((item) => item.requiredSkill)
+      .filter((skill): skill is string => Boolean(skill)) ?? [],
+  );
+  for (const skill of requiredSkills) {
+    const nodeId = `skill.${skill}`;
+    if (!nodeIds.has(nodeId)) {
+      input.issues.push(`CAPABILITY_GRAPH.json is missing ${nodeId}.`);
+    }
+  }
+}
+
 export function validateProjectPackage(input: {
   projectDir: string;
   now?: Date;
@@ -251,11 +377,15 @@ export function validateProjectPackage(input: {
   const sourceSceneMap = existsSync(resolve(input.projectDir, "SOURCE_SCENE_MAP.json"))
     ? readJsonFile<SourceSceneMap>(input.projectDir, "SOURCE_SCENE_MAP.json", issues)
     : undefined;
+  const capabilityGraph = existsSync(resolve(input.projectDir, "CAPABILITY_GRAPH.json"))
+    ? readJsonFile<CapabilityGraph>(input.projectDir, "CAPABILITY_GRAPH.json", issues)
+    : undefined;
 
   validateManifest({ manifest, assetExecutionPlan, projectDir: input.projectDir, issues });
   validateSceneAssetMap({ scenePlan, sceneAssetMap, assetExecutionPlan, issues });
   validateSourceSceneMap({ scenePlan, sourceSceneMap, sceneAssetMap, issues });
   validateAvailableOutputs({ projectDir: input.projectDir, assetExecutionPlan, issues });
+  validateCapabilityGraph({ capabilityGraph, assetExecutionPlan, issues });
 
   return {
     projectName: manifest?.projectName ?? "unknown-project",

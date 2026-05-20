@@ -269,7 +269,7 @@ npx framepack status --project-dir out/sprite-video-demo --json
 
 对 forge 工程包，`status --json` 还会输出 `forgeBreakdown`，让 agent 不必先扫描 `ASSET_EXECUTION_PLAN.json` 也能分派素材工作。它会按 `executionKind`、`forgeBackend` 和 `requiredSkill` 汇总 forge 任务数量；缺失的 backend 或 skill 会归入 `unspecified`。
 
-`status --json` 也会输出 `capabilityGraph` 摘要：能力图是否存在、有哪些节点、哪些节点缺失或被阻塞、不同状态和交付方式各有多少。MCP 里对应 `getCapabilityGraph`、`explainCapabilityGaps`，以及 `framepack://project/{projectName}/capability-graph` 资源。
+`status --json` 也会输出 `capabilityGraph` 摘要：能力图是否存在、有哪些节点、哪些节点缺失或被阻塞、不同状态和交付方式各有多少。MCP 里对应 `getCapabilityGraph`、`explainCapabilityGaps`，以及 `framepack://project/{projectName}/capability-graph` 资源。包验证会检查能力图结构、必需的 runtime/MCP 节点、边引用、forge backend 节点和 required skill 节点。
 
 包协议验证会检查 `PACKAGE_MANIFEST.json`、`SCENE_PLAN.json`、`SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `ASSET_EXECUTION_PLAN.json` 是否互相对齐。如果某个任务已经标为 `available` 或 `external`，但声明的输出文件不存在，验证会失败。
 
@@ -283,7 +283,7 @@ npx framepack status --project-dir out/sprite-video-demo --json
 npx framepack repair --project-dir out/sprite-video-demo
 ```
 
-`repair` 会根据已有 `VIDEO_BRIEF.json`、`SCENE_PLAN.json`、`ASSET_PLAN.json`、`SOURCE_MANIFEST.json` 和 `ASSET_EXECUTION_PLAN.json`，重新生成可推导的 `SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json` 和 `PACKAGE_MANIFEST.json`，并重新写入验证报告。它不会物化素材，不会执行 forge，也不会安装外部 skill。
+`repair` 会根据已有 `VIDEO_BRIEF.json`、`SCENE_PLAN.json`、`ASSET_PLAN.json`、`SOURCE_MANIFEST.json` 和 `ASSET_EXECUTION_PLAN.json`，重新生成可推导的 `SCENE_ASSET_MAP.json`、`SOURCE_SCENE_MAP.json`、`PACKAGE_MANIFEST.json` 和 `CAPABILITY_GRAPH.json`，并重新写入验证报告。它不会物化素材，不会执行 forge，也不会安装外部 skill。
 
 给小白的说法：如果工程包像一个视频项目文件夹，`repair` 修的是目录、索引和“哪个素材服务哪个镜头”的清单；它不会替你画图、截图或生成角色，只是把这些清单重新对齐。
 

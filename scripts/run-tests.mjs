@@ -4302,10 +4302,187 @@ Framepack compiles content into executable video projects.
         const status = JSON.parse(stdout.join("\n"));
 
         assert.equal(generateExitCode, 0);
-        assert.equal(statusExitCode, 0);
+        assert.equal(statusExitCode, 1);
         assert.equal(stderr.length, 0);
         assert.equal(status.capabilityGraph.present, true);
         assert.match(status.capabilityGraph.error, /CAPABILITY_GRAPH\.json/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail project package validation when capability graph is invalid JSON",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-validation-invalid-capability-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A course that teaches founders to ship agent-native video systems.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the course",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        writeFileSync(join(projectDir, "CAPABILITY_GRAPH.json"), "{", "utf8");
+
+        const validateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(validateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /CAPABILITY_GRAPH\.json/);
+        assert.match(readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"), /"status": "failed"/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "fail project package validation when capability graph is missing runtime node",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-validation-capability-node-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A course that teaches founders to ship agent-native video systems.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the course",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        const capabilityGraphPath = join(projectDir, "CAPABILITY_GRAPH.json");
+        const capabilityGraph = JSON.parse(readFileSync(capabilityGraphPath, "utf8"));
+        capabilityGraph.nodes = capabilityGraph.nodes.filter((node) => node.id !== "video-runtime.hyperframes");
+        writeFileSync(capabilityGraphPath, JSON.stringify(capabilityGraph, null, 2), "utf8");
+
+        const validateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(validateExitCode, 1);
+        assert.equal(stdout.length, 0);
+        assert.match(stderr.join("\n"), /video-runtime\.hyperframes/);
+        assert.match(readFileSync(join(projectDir, "VALIDATION_REPORT.json"), "utf8"), /video-runtime\.hyperframes/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "repair project package rebuilds invalid capability graph",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-repair-invalid-capability-"));
+      const repairStdout = [];
+      const repairStderr = [];
+      const validateStdout = [];
+      const validateStderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A course that teaches founders to ship agent-native video systems.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the course",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "sprite-video-demo",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "sprite-video-demo");
+        writeFileSync(join(projectDir, "CAPABILITY_GRAPH.json"), "{", "utf8");
+
+        const failingValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: () => {},
+            stderr: () => {},
+          },
+        );
+        const repairExitCode = await runCli(
+          ["repair", "--project-dir", projectDir],
+          {
+            stdout: (message) => repairStdout.push(message),
+            stderr: (message) => repairStderr.push(message),
+          },
+        );
+        const finalValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => validateStdout.push(message),
+            stderr: (message) => validateStderr.push(message),
+          },
+        );
+        const repairedCapabilityGraph = JSON.parse(readFileSync(join(projectDir, "CAPABILITY_GRAPH.json"), "utf8"));
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(failingValidateExitCode, 1);
+        assert.equal(repairExitCode, 0);
+        assert.equal(finalValidateExitCode, 0);
+        assert.equal(repairStderr.length, 0);
+        assert.equal(validateStderr.length, 0);
+        assert.match(repairStdout.join("\n"), /CAPABILITY_GRAPH\.json/);
+        assert.ok(repairedCapabilityGraph.nodes.some((node) => node.id === "video-runtime.hyperframes"));
+        assert.match(validateStdout.join("\n"), /Package validation passed/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
