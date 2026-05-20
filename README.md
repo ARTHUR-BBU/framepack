@@ -2,13 +2,29 @@
 
 [中文说明](./README.zh-CN.md)
 
+Framepack is a video production Agent Harness for Codex, Claude Code, and other coding agents.
+
+It gives a general-purpose coding agent a domain-specific nervous system for video work: what to see, which tools to call, what evidence to collect, and how to keep moving without guessing from a raw file tree.
+
 Framepack turns content into executable video project packages.
 
 In practice, that output is a production-ready intermediate, not usually the final human-facing video.
 
-Framepack prepares the video engineering package: source structure, scene plans, asset requirements, execution tasks, and runtime entrypoints. HyperFrames and an agent finish preview, asset materialization, and rendering.
+Framepack prepares the video engineering package: source structure, scene plans, asset requirements, execution tasks, capability graphs, and runtime entrypoints. HyperFrames and an agent finish preview, asset materialization, and rendering.
 
-It is the compiler layer in a hybrid workflow: asset library + orchestration + generative model + post-production composition. Framepack does not become a game engine or image generator.
+It is the harness and compiler layer in a hybrid workflow: asset library + orchestration + generative model + post-production composition. Framepack does not become a game engine or image generator.
+
+## Agent Harness Model
+
+Framepack 0.4 is organized around a five-part Agent Harness model:
+
+- **Sense filter:** `CAPABILITY_GRAPH.json` tells the agent what capabilities exist, what is missing, and which delivery modes are available.
+- **Motor pathways:** MCP tools and CLI commands turn agent decisions into package generation, validation, repair, capture, runtime inspection, and render actions.
+- **Reflexes:** validation, repair, runtime lint, runtime inspect, and future capability scans catch obvious drift before the model spends reasoning budget on it.
+- **Memory encoding:** the package file system persists briefs, scene plans, asset maps, execution plans, capability graphs, runtime manifests, and evidence.
+- **Feedback loop:** runtime inspect reports, snapshot manifests, visual QA notes, and validation reports make readiness evidence-based instead of confidence-based.
+
+In plain language: Codex or Claude Code is the brain; Framepack is the video-production nervous system; HyperFrames is the rendering body.
 
 Agents should start with [AGENTS.md](./AGENTS.md).
 

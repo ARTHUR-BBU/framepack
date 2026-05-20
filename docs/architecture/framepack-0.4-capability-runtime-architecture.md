@@ -1,6 +1,8 @@
 # Framepack 0.4 Capability Runtime Architecture
 
-Framepack 0.4 should treat video production as **Capability Orchestration**.
+Framepack 0.4 should treat video production as **Capability Orchestration** inside a video production **Agent Harness**.
+
+The product thesis is not that Framepack is another video generator. The thesis is that a general-purpose coding agent needs a domain-specific nervous system before it can reliably perform video production work. Codex and Claude Code are the brain. Framepack is the video-production nervous system. HyperFrames is the rendering body.
 
 The central upgrade is not "more commands". It is a clearer runtime model:
 
@@ -16,6 +18,20 @@ user intent
 ```
 
 Framepack remains a compiler and orchestration layer. It does not become a game engine, image generator, or full video editor. Its job is to describe, connect, and verify the capabilities an agent needs to produce a video package.
+
+## Agent Harness Mapping
+
+Framepack 0.4 maps the five-part Agent Harness model into concrete package artifacts and tool surfaces:
+
+| Harness dimension | Framepack 0.4 implementation |
+| --- | --- |
+| Sense filter | `CAPABILITY_GRAPH.json` exposes available, missing, planned, external, and blocked capabilities instead of forcing the agent to infer from a raw file tree. |
+| Motor pathways | MCP tools and CLI commands such as `generateProject`, `getStatus`, `validatePackage`, `repair`, `runtimeInspect`, and `runtimeSnapshot` turn decisions into controlled actions. |
+| Reflexes | Validation, repair, runtime lint, runtime inspect, and capability scans catch drift before the model spends reasoning budget on obvious failures. |
+| Memory encoding | The package file system persists briefs, scene plans, asset maps, execution plans, capability graphs, runtime manifests, motion grammar, and evidence. |
+| Feedback loop | Runtime inspect reports, snapshot manifests, `VISUAL_QA.md`, and validation reports make readiness evidence-backed. |
+
+This is field engineering rather than a fixed rail workflow. Framepack shapes the information field around the agent so it can choose the next correct production move without being forced through one opaque script.
 
 ## Learning Input
 
@@ -34,7 +50,7 @@ The key lessons are:
 
 Framepack 0.4 should introduce a durable product concept:
 
-> Framepack is a Capability Runtime Orchestrator for agent-native video projects.
+> Framepack is a video production Agent Harness and Capability Runtime Orchestrator for agent-native video projects.
 
 This means Framepack should answer:
 

@@ -1,5 +1,21 @@
 # Framepack
 
+Framepack 是一个运行在 Codex、Claude Code 等通用 coding agent 之上的视频生产垂类 Agent Harness。
+
+它不是简单的视频生成小工具，而是给通用大脑装上的“视频生产神经系统”：告诉 agent 应该看什么、调用什么工具、缺什么能力、需要留下什么证据，以及什么时候可以继续推进。
+
+一句话理解：Codex / Claude Code 是大脑，Framepack 是视频生产神经系统，HyperFrames 是实际渲染的身体。
+
+## Agent Harness 五维架构
+
+Framepack 0.4 按五维 Agent Harness 组织：
+
+- 感觉过滤器：`CAPABILITY_GRAPH.json` 告诉 agent 当前工程有什么能力、缺什么能力、能力从哪里来。
+- 运动通路：MCP tools 和 CLI commands 把 agent 的判断变成生成、校验、修复、截图、运行时检查和渲染动作。
+- 脊髓反射：`validate`、`repair`、`runtime lint`、`runtime inspect` 和后续能力扫描会自动发现明显漂移，减少 agent 猜测。
+- 记忆编码：工程包文件系统持久化 brief、scene plan、asset map、execution plan、capability graph、runtime manifest 和证据。
+- 反馈循环：runtime inspect report、snapshot manifest、visual QA notes 和 validation report 让“完成”基于证据，而不是基于感觉。
+
 ## 当前可用的 Workflow Packs
 
 Framepack 现在有一个内置的工作流包和审美方向包注册表。用户不需要先记住所有命令，可以让 Codex 或 Claude Code 先运行：

@@ -1,10 +1,12 @@
 # Framepack Agent Guide
 
-Framepack is an agent-native video project compiler.
+Framepack is an agent-native video project compiler and video production Agent Harness.
 
 It turns content sources into executable video project packages. The package is an intermediate work surface for agents and HyperFrames, not usually the final human-facing video.
 
-Framepack is the compiler layer in a mixed workflow: asset library + orchestration + generative model + post-production composition. It defines asset requirements and execution contracts; it is not a game engine and does not directly generate images.
+Framepack is the harness and compiler layer in a mixed workflow: asset library + orchestration + generative model + post-production composition. It defines asset requirements and execution contracts; it is not a game engine and does not directly generate images.
+
+In the Agent Harness model, Codex or Claude Code is the general-purpose brain, Framepack is the video-production nervous system, and HyperFrames is the rendering body.
 
 ## Mental Model
 
@@ -12,6 +14,16 @@ Framepack is the compiler layer in a mixed workflow: asset library + orchestrati
 - Agents inspect, edit, materialize assets, run commands, and can use optional asset forge skills.
 - HyperFrames previews and renders the final video.
 - `agent-sprite-forge` is the first recommended 2D asset forge backend, but Framepack packages must remain backend-neutral.
+
+## Harness Model
+
+Framepack 0.4 uses a five-part harness structure:
+
+- Sense filter: `CAPABILITY_GRAPH.json` tells agents what capabilities are present, missing, planned, or externally produced.
+- Motor pathways: MCP tools and CLI commands turn agent decisions into package generation, status checks, validation, repair, capture, runtime inspection, and rendering.
+- Reflexes: validation, repair, runtime lint, runtime inspect, and capability scans catch obvious drift before the model spends reasoning budget on it.
+- Memory encoding: package files persist every intermediate artifact needed for agent handoff and recovery.
+- Feedback loop: validation reports, runtime inspect reports, snapshot manifests, and visual QA evidence decide readiness from evidence.
 
 ## Primary Commands
 
@@ -128,7 +140,7 @@ Then inspect these files as needed:
 10. Run `npx framepack runtime lint --project-dir <package>`, `npx framepack runtime inspect --project-dir <package>`, or `npx framepack runtime snapshot --project-dir <package>` when you need HyperFrames-side composition checks.
 11. Run `npx framepack runtime upgrade-check` only when explicitly checking HyperFrames updates; do not run update checks as part of ordinary package status.
 
-`repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `PACKAGE_MANIFEST.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available.
+`repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, and `CAPABILITY_GRAPH.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available.
 
 ## Workflow And Creative Direction Packs
 

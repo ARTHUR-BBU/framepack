@@ -2065,6 +2065,45 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "document the Framepack 0.4 Agent Harness positioning",
+    run: () => {
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+      const architectureDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "architecture", "framepack-0.4-capability-runtime-architecture.md"),
+        "utf8",
+      );
+      const planDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "superpowers", "plans", "2026-05-19-framepack-0.4-capability-runtime-foundation.md"),
+        "utf8",
+      );
+      const changelog = readFileSync(resolve(dirname(packageJsonPath), "CHANGELOG.md"), "utf8");
+
+      for (const doc of [readme, agents, architectureDoc, planDoc]) {
+        assert.match(doc, /Agent Harness/);
+        assert.match(doc, /Sense filter/);
+        assert.match(doc, /Motor pathways/);
+        assert.match(doc, /Reflexes/);
+        assert.match(doc, /Memory encoding/);
+        assert.match(doc, /Feedback loop/);
+      }
+
+      assert.match(readme, /Codex or Claude Code is the brain/);
+      assert.match(readme, /Framepack is the video-production nervous system/);
+      assert.match(architectureDoc, /field engineering rather than a fixed rail workflow/);
+      assert.match(planDoc, /video production Agent Harness/);
+      assert.match(chineseReadme, /视频生产垂类 Agent Harness/);
+      assert.match(chineseReadme, /视频生产神经系统/);
+      assert.match(chineseReadme, /感觉过滤器/);
+      assert.match(chineseReadme, /运动通路/);
+      assert.match(chineseReadme, /脊髓反射/);
+      assert.match(chineseReadme, /记忆编码/);
+      assert.match(chineseReadme, /反馈循环/);
+      assert.match(changelog, /video production Agent Harness/);
+    },
+  },
+  {
     name: "ship agent and example entry files for the published repo",
     run: () => {
       const agents = readFileSync(agentsPath, "utf8");
