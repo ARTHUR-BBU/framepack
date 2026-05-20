@@ -1,6 +1,12 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, resolve } from "node:path";
 import { initAgentProject, type AgentTarget, type PackageSource } from "../../agent/init-agent.js";
+import {
+  getCapabilityAtlasNode,
+  listCapabilityAtlasNodes,
+  listRecommendedCapabilityStacks,
+  recommendCapabilityStack,
+} from "../../capabilities/atlas.js";
 import { materializeProjectAssets } from "../../capture/index.js";
 import { syncAssetExecutionProject } from "../../packaging/asset-execution.js";
 import { repairProjectPackage } from "../../packaging/package-repair.js";
@@ -76,6 +82,7 @@ type CliCommandName =
   | "init"
   | "init-agent"
   | "mcp"
+  | "atlas"
   | "packs"
   | "release-smoke"
   | "generate"
@@ -224,6 +231,7 @@ function getCommandName(args: string[]): CliCommandName {
     command === "init" ||
     command === "init-agent" ||
     command === "mcp" ||
+    command === "atlas" ||
     command === "packs" ||
     command === "release-smoke" ||
     command === "generate" ||
@@ -239,7 +247,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, init-agent, mcp, packs, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use init, init-agent, mcp, atlas, packs, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -260,6 +268,7 @@ function getCommandArgs(args: string[]): string[] {
     first === "init" ||
     first === "init-agent" ||
     first === "mcp" ||
+    first === "atlas" ||
     first === "packs" ||
     first === "release-smoke" ||
     first === "generate" ||
@@ -619,6 +628,92 @@ function runPacksCommand(args: string[], io: CliIo): number {
   return 0;
 }
 
+function describeCapabilityAtlas(): string {
+  const nodes = listCapabilityAtlasNodes();
+  const stacks = listRecommendedCapabilityStacks();
+
+  return [
+    "Framepack Animation Capability Atlas",
+    "",
+    "Capability nodes:",
+    ...nodes.map((node) => `- ${node.id} (${node.domain}/${node.layer}, score ${node.score})`),
+    "",
+    "Recommended stacks:",
+    ...stacks.map((stack) => `- ${stack.id}: ${stack.name}`),
+  ].join("\n");
+}
+
+function runAtlasCommand(args: string[], io: CliIo): number {
+  if (args[0] === "get") {
+    const id = args[1];
+
+    if (!id || id.startsWith("--")) {
+      throw new Error("Missing required atlas node id.");
+    }
+
+    const node = getCapabilityAtlasNode(id);
+
+    if (!node) {
+      throw new Error(`Unknown capability atlas node: ${id}`);
+    }
+
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify({ node }, null, 2));
+      return 0;
+    }
+
+    io.stdout(`${node.id}: ${node.name}\nDomain: ${node.domain}\nLayer: ${node.layer}\nScore: ${node.score}`);
+    return 0;
+  }
+
+  if (args[0] === "recommend") {
+    const stack = recommendCapabilityStack({
+      workflowPackId: getOptionalArg(args, "--workflow-pack"),
+      creativeDirectionPackId: getOptionalArg(args, "--creative-direction-pack"),
+      outputType: getOptionalArg(args, "--output-type"),
+      format: getOptionalArg(args, "--format"),
+      goal: getOptionalArg(args, "--goal"),
+    });
+
+    if (!stack) {
+      throw new Error("No capability stack recommendation matched the supplied atlas context.");
+    }
+
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify({ stack }, null, 2));
+      return 0;
+    }
+
+    io.stdout(
+      [
+        `${stack.id}: ${stack.name}`,
+        "",
+        "Capabilities:",
+        ...stack.nodes.map((node) => `- ${node.capabilityId} (${node.role}${node.required ? ", required" : ""})`),
+        "",
+        "Rationale:",
+        ...stack.rationale.map((reason) => `- ${reason}`),
+      ].join("\n"),
+    );
+    return 0;
+  }
+
+  const payload = {
+    capabilityAtlas: {
+      nodes: listCapabilityAtlasNodes(),
+      recommendedStacks: listRecommendedCapabilityStacks(),
+    },
+  };
+
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify(payload, null, 2));
+    return 0;
+  }
+
+  io.stdout(describeCapabilityAtlas());
+  return 0;
+}
+
 async function runReleaseSmokeCommand(args: string[], io: CliIo, context: CliContext = {}): Promise<number> {
   const report = await runFramepackReleaseSmoke({
     outputDir: getRequiredArg(args, "--output-dir"),
@@ -913,6 +1008,10 @@ export async function runCli(
 
     if (command === "mcp") {
       return await runMcpCommand(args.slice(1), io);
+    }
+
+    if (command === "atlas") {
+      return runAtlasCommand(args.slice(1), io);
     }
 
     if (command === "packs") {

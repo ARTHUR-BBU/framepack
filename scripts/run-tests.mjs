@@ -389,6 +389,55 @@ const tests = [
     },
   },
   {
+    name: "describe the animation capability atlas through the CLI",
+    run: async () => {
+      const listStdout = [];
+      const listExitCode = await runCli(["atlas", "--json"], {
+        stdout: (message) => listStdout.push(message),
+        stderr: () => {},
+      });
+      const getStdout = [];
+      const getExitCode = await runCli(["atlas", "get", "library.animejs", "--json"], {
+        stdout: (message) => getStdout.push(message),
+        stderr: () => {},
+      });
+      const recommendStdout = [];
+      const recommendExitCode = await runCli(
+        [
+          "atlas",
+          "recommend",
+          "--workflow-pack",
+          "game-ad-sprite-video",
+          "--creative-direction-pack",
+          "game-ad-retro-arcade",
+          "--output-type",
+          "game-ad",
+          "--format",
+          "9:16",
+          "--json",
+        ],
+        {
+          stdout: (message) => recommendStdout.push(message),
+          stderr: () => {},
+        },
+      );
+
+      const listPayload = JSON.parse(listStdout.join("\n"));
+      const getPayload = JSON.parse(getStdout.join("\n"));
+      const recommendPayload = JSON.parse(recommendStdout.join("\n"));
+
+      assert.equal(listExitCode, 0);
+      assert.ok(listPayload.capabilityAtlas.nodes.some((node) => node.id === "library.animejs"));
+      assert.ok(listPayload.capabilityAtlas.recommendedStacks.some((stack) => stack.id === "web-motion-explainer-stack"));
+      assert.equal(getExitCode, 0);
+      assert.equal(getPayload.node.id, "library.animejs");
+      assert.equal(getPayload.node.domain, "programmatic-animation");
+      assert.equal(recommendExitCode, 0);
+      assert.equal(recommendPayload.stack.id, "game-ad-sprite-video-stack");
+      assert.ok(recommendPayload.stack.nodes.some((node) => node.capabilityId === "asset-forge.agent-sprite-forge"));
+    },
+  },
+  {
     name: "create golden package protocol summaries for core package routes",
     run: async () => {
       const markdownResult = await compileVideoProjectFromSource({
@@ -2345,9 +2394,13 @@ Framepack compiles content into executable video projects.
       assert.match(output, /getStatus/);
       assert.match(output, /getCapabilityGraph/);
       assert.match(output, /exposeArsenal/);
+      assert.match(output, /listCapabilityAtlas/);
+      assert.match(output, /getCapabilityAtlasNode/);
+      assert.match(output, /recommendCapabilityStack/);
       assert.match(output, /runtimeSnapshot/);
       assert.match(output, /framepack:\/\/project\/\{projectName\}\/manifest/);
       assert.match(output, /framepack:\/\/project\/\{projectName\}\/capability-graph/);
+      assert.match(output, /framepack:\/\/capabilities\/atlas/);
       assert.match(output, /create-game-ad-video/);
     },
   },
@@ -3455,9 +3508,12 @@ Framepack compiles content into executable video projects.
       assert.match(output, /listCreativeDirectionPacks/);
       assert.match(output, /getCreativeDirectionPack/);
       assert.match(output, /recommendPacks/);
+      assert.match(output, /listCapabilityAtlas/);
+      assert.match(output, /recommendCapabilityStack/);
       assert.match(output, /releaseSmoke/);
       assert.match(output, /framepack:\/\/packs\/workflows/);
       assert.match(output, /framepack:\/\/packs\/creative-directions/);
+      assert.match(output, /framepack:\/\/capabilities\/atlas/);
     },
   },
   {

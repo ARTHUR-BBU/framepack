@@ -8,6 +8,12 @@ import {
   readCapabilityGraph,
   summarizeCapabilityGraph,
 } from "../capabilities/arsenal.js";
+import {
+  getCapabilityAtlasNode,
+  listCapabilityAtlasNodes,
+  listRecommendedCapabilityStacks,
+  recommendCapabilityStack,
+} from "../capabilities/atlas.js";
 import { materializeProjectAssets } from "../capture/index.js";
 import { ensureProjectValidationPassed } from "../compiler/index.js";
 import { compileVideoProjectFromSource, type CompilerSourceInput } from "../compiler/pipeline-registry.js";
@@ -254,6 +260,33 @@ export function createFramepackMcpServer(): McpServer {
       ),
   );
 
+  server.registerTool("listCapabilityAtlas", { inputSchema: {} }, () =>
+    textJson({
+      capabilityAtlas: {
+        nodes: listCapabilityAtlasNodes(),
+        recommendedStacks: listRecommendedCapabilityStacks(),
+      },
+    }),
+  );
+
+  server.registerTool("getCapabilityAtlasNode", { inputSchema: { id: z.string() } }, (input) =>
+    textJson({ node: getCapabilityAtlasNode(input.id) }),
+  );
+
+  server.registerTool(
+    "recommendCapabilityStack",
+    {
+      inputSchema: {
+        workflowPackId: z.string().optional(),
+        creativeDirectionPackId: z.string().optional(),
+        outputType: z.string().optional(),
+        format: z.string().optional(),
+        goal: z.string().optional(),
+      },
+    },
+    (input) => textJson({ stack: recommendCapabilityStack(input) }),
+  );
+
   server.registerTool("validatePackage", { inputSchema: { projectDir: z.string() } }, (input) => {
     const projectDir = resolve(input.projectDir);
     const report = validateProjectPackage({ projectDir });
@@ -362,6 +395,29 @@ export function createFramepackMcpServer(): McpServer {
         {
           uri: uri.href,
           text: JSON.stringify({ creativeDirectionPacks: listFramepackCreativeDirectionPacks() }, null, 2),
+        },
+      ],
+    }),
+  );
+
+  server.registerResource(
+    "capability-atlas",
+    "framepack://capabilities/atlas",
+    { title: "Framepack capability atlas" },
+    (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          text: JSON.stringify(
+            {
+              capabilityAtlas: {
+                nodes: listCapabilityAtlasNodes(),
+                recommendedStacks: listRecommendedCapabilityStacks(),
+              },
+            },
+            null,
+            2,
+          ),
         },
       ],
     }),

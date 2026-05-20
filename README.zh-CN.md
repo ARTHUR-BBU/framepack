@@ -11,7 +11,7 @@ Framepack 是一个运行在 Codex、Claude Code 等通用 coding agent 之上�
 Framepack 0.4 按五维 Agent Harness 组织：
 
 - 感觉过滤器：`CAPABILITY_GRAPH.json` 告诉 agent 当前工程有什么能力、缺什么能力、能力从哪里来。
-- 武器库暴露：MCP `exposeArsenal`、`getCapabilityGraph` 和 `explainCapabilityGaps` 把 workflow packs、creative direction packs、能力状态和常见技术适配情况摊开给 agent 看，但不替 agent 做创意判断。
+- 武器库暴露：MCP `exposeArsenal`、`getCapabilityGraph`、`explainCapabilityGaps` 和 Animation Capability Atlas 把 workflow packs、creative direction packs、能力状态、技术路线和常见技术适配情况摊开给 agent 看，但不替 agent 做创意判断。
 - 运动通路：MCP tools 和 CLI commands 把 agent 的判断变成生成、校验、修复、截图、运行时检查和渲染动作。
 - 脊髓反射：`validate`、`repair`、`runtime lint`、`runtime inspect` 和后续能力扫描会自动发现明显漂移，减少 agent 猜测。
 - 记忆编码：工程包文件系统持久化 brief、scene plan、asset map、execution plan、capability graph、`RUNTIME_MANIFEST.json` 和证据。
@@ -24,6 +24,9 @@ Framepack 现在有一个内置的工作流包和审美方向包注册表。用�
 ```bash
 npx framepack packs
 npx framepack packs --json
+npx framepack atlas --json
+npx framepack atlas get library.animejs --json
+npx framepack atlas recommend --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade --output-type game-ad --format 9:16 --json
 ```
 
 `packs` 会告诉 agent：现在适合走产品解释、帖子转视频、网页转视频、游戏风 sprite 宣传片、课程宣传、发布复盘还是投资人更新；同时也会给出审美方向，比如干净 SaaS 解释片、证据叙事片、复古游戏广告片。
@@ -39,7 +42,7 @@ npx framepack packs recommend --source-type game-ad --output-type game-ad --goal
 
 MCP 里对应工具是 `recommendPacks`。
 
-如果用户只说了一个模糊目标，例如“做一个苹果发布会风格的 AI 产品视频”，agent 应先用 MCP `exposeArsenal` 看 Framepack 的完整武器库：全部 workflow packs、全部 creative direction packs、当前工程的 capability graph 摘要，以及 Three.js、GSAP、Anime.js、PixiJS、agent-sprite-forge 等常见技术是否已经在能力图里。Framepack 只提供信息场；Codex 或 Claude Code 才负责理解用户意图、追问、权衡和选择。
+如果用户只说了一个模糊目标，例如“做一个苹果发布会风格的 AI 产品视频”，agent 应先用 MCP `exposeArsenal` 看 Framepack 的完整武器库：全部 workflow packs、全部 creative direction packs、当前工程的 capability graph 摘要，以及 Three.js、GSAP、Anime.js、PixiJS、agent-sprite-forge 等常见技术是否已经在能力图里。需要判断动画/视频技术路线时，再用 CLI `framepack atlas` 或 MCP `listCapabilityAtlas` / `recommendCapabilityStack` 查看能力图谱和推荐组合。Framepack 只提供信息场；Codex 或 Claude Code 才负责理解用户意图、追问、权衡和选择。
 
 选中路线后，可以把选择写进工程包：
 
@@ -64,9 +67,16 @@ Framepack 正在演进成一个面向 agent 安装和调用的视频工作流系
 - Framepack Skills：给 Codex、Claude Code 和未来 agent 平台使用的视频生产 playbook。
 - Framepack Workflow Packs：可安装的视频工作流，比如产品解释、帖子视频、网页视频、游戏风广告、课程宣传、发布复盘和投资人更新。
 - Framepack Creative Direction Layer：设计审美、动画审美、运动语言、叙事节奏、模板选择和视觉验收标准。
+- Framepack Animation Capability Atlas：程序化动画、大模型音视频素材、运行时、asset forge、skill、plugin、MCP 和验证能力的结构化地图。
 - Framepack Connectors：内容源、asset forge 后端、渲染系统、发布系统和未来社区集成。
 
 长期目标不只是让工程包“协议正确”，而是让 agent 生成的工程包拥有清晰叙事、稳定审美、可复用动画模式，并且能被设计师、爱好者和社区持续共建。
+
+## Animation Capability Atlas 能力图谱
+
+Animation Capability Atlas 是 Framepack 的只读能力地图。它把 **程序化动画素材** 和 **大模型生成音视频素材** 分开描述：Anime.js、SVG、Canvas、PixiJS、HyperFrames 这类技术适合可控、可复现、可验证的工程动画；Seedance 2.0、Gemini Omni、Kling AI 3.0 这类模型更适合作为外部生成式媒体素材来源。
+
+agent 可以用 `framepack atlas --json` 或 MCP `listCapabilityAtlas` 查看已知能力，用 `framepack atlas recommend ... --json` 或 MCP `recommendCapabilityStack` 根据 workflow / creative direction / output type 推荐能力组合。Atlas 不负责安装外部 skill，也不直接调用 hosted model；它负责分类、打分、推荐和说明边界。
 
 [English](./README.md)
 

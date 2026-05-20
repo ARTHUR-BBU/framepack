@@ -6,6 +6,9 @@ export const FRAMEPACK_MCP_TOOLS = [
   "getCapabilityGraph",
   "explainCapabilityGaps",
   "exposeArsenal",
+  "listCapabilityAtlas",
+  "getCapabilityAtlasNode",
+  "recommendCapabilityStack",
   "validatePackage",
   "repairPackage",
   "captureAssets",
@@ -26,6 +29,7 @@ export const FRAMEPACK_MCP_TOOLS = [
 export const FRAMEPACK_MCP_RESOURCES = [
   "framepack://packs/workflows",
   "framepack://packs/creative-directions",
+  "framepack://capabilities/atlas",
   "framepack://project/{projectName}/manifest",
   "framepack://project/{projectName}/handoff",
   "framepack://project/{projectName}/asset-execution-plan",

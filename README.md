@@ -19,7 +19,7 @@ It is the harness and compiler layer in a hybrid workflow: asset library + orche
 Framepack 0.4 is organized around a five-part Agent Harness model:
 
 - **Sense filter:** `CAPABILITY_GRAPH.json` tells the agent what capabilities exist, what is missing, and which delivery modes are available.
-- **Arsenal exposure:** MCP `exposeArsenal`, `getCapabilityGraph`, and `explainCapabilityGaps` expose workflow packs, creative direction packs, capability state, and common technology fit without making the creative decision for the agent.
+- **Arsenal exposure:** MCP `exposeArsenal`, `getCapabilityGraph`, `explainCapabilityGaps`, and the Animation Capability Atlas expose workflow packs, creative direction packs, capability state, technology options, and common technology fit without making the creative decision for the agent.
 - **Motor pathways:** MCP tools and CLI commands turn agent decisions into package generation, validation, repair, capture, runtime inspection, and render actions.
 - **Reflexes:** validation, repair, runtime lint, runtime inspect, and future capability scans catch obvious drift before the model spends reasoning budget on it.
 - **Memory encoding:** the package file system persists briefs, scene plans, asset maps, execution plans, capability graphs, `RUNTIME_MANIFEST.json`, and evidence.
@@ -48,9 +48,12 @@ Agents can inspect the built-in workflow and creative direction packs before cho
 ```bash
 npx framepack packs
 npx framepack packs --json
+npx framepack atlas --json
+npx framepack atlas get library.animejs --json
+npx framepack atlas recommend --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade --output-type game-ad --format 9:16 --json
 ```
 
-The same registry is exposed through MCP tools: `listWorkflowPacks`, `getWorkflowPack`, `listCreativeDirectionPacks`, and `getCreativeDirectionPack`. For broad natural-language requests, agents can call MCP `exposeArsenal` first. It returns the raw user signal, all workflow packs, all creative direction packs, capability graph summary when a package exists, and common technology fit checks such as Three.js, GSAP, Anime.js, PixiJS, and agent-sprite-forge. Framepack exposes the information field; Codex or Claude Code still makes the creative judgment.
+The same registry is exposed through MCP tools: `listWorkflowPacks`, `getWorkflowPack`, `listCreativeDirectionPacks`, `getCreativeDirectionPack`, `listCapabilityAtlas`, `getCapabilityAtlasNode`, and `recommendCapabilityStack`. For broad natural-language requests, agents can call MCP `exposeArsenal` first. It returns the raw user signal, all workflow packs, all creative direction packs, capability graph summary when a package exists, and common technology fit checks such as Three.js, GSAP, Anime.js, PixiJS, and agent-sprite-forge. Framepack exposes the information field; Codex or Claude Code still makes the creative judgment.
 
 Agents can ask Framepack for a conservative recommendation:
 
@@ -82,6 +85,7 @@ Framepack is evolving into an agent-installable video workflow system:
 - Framepack Skills: reusable video production playbooks for Codex, Claude Code, and future agent platforms.
 - Framepack Workflow Packs: installable workflows such as product explainers, thread videos, website videos, game ads, course promos, launch reviews, and investor updates.
 - Framepack Creative Direction Layer: design taste, animation taste, motion language, pacing, template selection, and visual acceptance criteria.
+- Framepack Animation Capability Atlas: a structured map of programmatic animation, generative media, runtime, asset forge, skill, plugin, MCP, and verification capabilities.
 - Framepack Connectors: content sources, asset forge backends, render systems, publishing systems, and future community integrations.
 
 The long-term goal is not only to make video project packages valid. It is to help agents produce packages with clear narrative, strong design direction, reusable motion patterns, and enough creative structure for humans, designers, and community contributors to improve the result.
@@ -94,12 +98,19 @@ Workflow packs tell an agent what kind of video job it is doing: product explain
 
 Creative direction packs describe visual language, motion language, template guidance, and acceptance criteria. They are the first structured step toward design taste and animation taste being part of the agent workflow, not a vague afterthought.
 
+## Animation Capability Atlas
+
+The Animation Capability Atlas is Framepack's read-only capability map. It separates **programmatic animation material** such as Anime.js, SVG, Canvas, PixiJS, and runtime-controlled motion from **generative media material** such as Seedance 2.0, Gemini Omni, and Kling AI 3.0.
+
+Use `framepack atlas --json` or MCP `listCapabilityAtlas` to inspect known capabilities. Use `framepack atlas recommend ... --json` or MCP `recommendCapabilityStack` to get a conservative capability stack for a workflow and creative direction. The atlas is not an executor: it classifies, scores, and recommends capabilities so agents can choose a route without pretending every external model, library, skill, or plugin is already installed.
+
 ## Quickstart
 
 ```bash
 npm install
 npm run build
 npx framepack packs
+npx framepack atlas --json
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 npx framepack release-smoke --output-dir out/release-smoke --json
 npm run release:smoke:install

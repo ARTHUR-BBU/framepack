@@ -20,7 +20,7 @@ In the Agent Harness model, Codex or Claude Code is the general-purpose brain, F
 Framepack 0.4 uses a five-part harness structure:
 
 - Sense filter: `CAPABILITY_GRAPH.json` tells agents what capabilities are present, missing, planned, or externally produced.
-- Arsenal exposure: MCP `exposeArsenal`, `getCapabilityGraph`, and `explainCapabilityGaps` expose packs, capability state, gaps, and common technology fit without making creative decisions for the agent.
+- Arsenal exposure: MCP `exposeArsenal`, `getCapabilityGraph`, `explainCapabilityGaps`, and the Animation Capability Atlas expose packs, capability state, gaps, technology routes, and common technology fit without making creative decisions for the agent.
 - Motor pathways: MCP tools and CLI commands turn agent decisions into package generation, status checks, validation, repair, capture, runtime inspection, and rendering.
 - Reflexes: validation, repair, runtime lint, runtime inspect, and capability scans catch obvious drift before the model spends reasoning budget on it.
 - Memory encoding: package files persist every intermediate artifact needed for agent handoff and recovery.
@@ -41,6 +41,9 @@ Install Framepack into a project as an agent-facing workflow:
 npx framepack init-agent --target codex --scope project
 npx framepack init-agent --target claude-code --scope project
 npx framepack mcp --describe
+npx framepack atlas --json
+npx framepack atlas get library.animejs --json
+npx framepack atlas recommend --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade --output-type game-ad --format 9:16 --json
 npx framepack packs
 npx framepack packs --json
 npx framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course" --audience "Founders" --format 9:16 --json
@@ -50,7 +53,7 @@ npm run release:smoke:install
 npm run release:gate
 ```
 
-Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs. MCP `exposeArsenal` is the broad pre-generation context tool: it exposes the raw user signal, all packs, capability graph summary when available, and common technology fit checks while leaving intent interpretation to Codex or Claude Code. `packs recommend` and MCP `recommendPacks` provide a conservative default route before generating a package.
+Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs. `atlas` lists the Animation Capability Atlas: programmatic animation, generative media, runtime, asset forge, skill, plugin, MCP, and verification capability nodes plus recommended stacks. MCP `exposeArsenal` is the broad pre-generation context tool: it exposes the raw user signal, all packs, capability graph summary when available, and common technology fit checks while leaving intent interpretation to Codex or Claude Code. `packs recommend` and MCP `recommendPacks` provide a conservative default route before generating a package. `atlas recommend` and MCP `recommendCapabilityStack` provide a conservative technology stack recommendation for a selected route.
 
 Generate a package:
 
@@ -131,6 +134,7 @@ Then inspect these files as needed:
 
 0. For broad requests, run `npx framepack packs recommend --json` or use MCP `recommendPacks` to choose a workflow pack and creative direction pack before generating or continuing a package. For one-step generation, use CLI `--auto-pack` or MCP `autoRecommendPacks: true`; explicit `--workflow-pack` / `--creative-direction-pack` and MCP `workflowPackId` / `creativeDirectionPackId` still take priority.
    For fuzzy creative requests or technology preferences, prefer MCP `exposeArsenal` first. It is an information-field tool, not an intent resolver: the agent should inspect the exposed packs, capability graph, and common technology status, then decide what to ask the user or which route to execute.
+   For animation or media technology choices, use `npx framepack atlas --json`, `npx framepack atlas get <capability-id> --json`, `npx framepack atlas recommend ... --json`, or MCP `listCapabilityAtlas` / `getCapabilityAtlasNode` / `recommendCapabilityStack`. Treat the atlas as a recommendation map, not proof that an external model, library, skill, or plugin is installed.
 1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
 2. Read `HANDOFF.md` to understand the current package state and pending work.
 3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.

@@ -7,6 +7,9 @@ Framepack exposes an MCP stdio server with tools for the complete package lifecy
 - `getCapabilityGraph`
 - `explainCapabilityGaps`
 - `exposeArsenal`
+- `listCapabilityAtlas`
+- `getCapabilityAtlasNode`
+- `recommendCapabilityStack`
 - `validatePackage`
 - `repairPackage`
 - `captureAssets`
@@ -27,6 +30,7 @@ It also exposes project resources for manifest, handoff, asset execution plan, c
 
 - `framepack://packs/workflows`
 - `framepack://packs/creative-directions`
+- `framepack://capabilities/atlas`
 - `framepack://project/{projectName}/capability-graph`
 
 ## Role In The Ecosystem
@@ -50,6 +54,8 @@ The MCP surface now exposes the first creative direction registry.
 Agents should call `listWorkflowPacks` and `listCreativeDirectionPacks` before generating a project when the user request is broad or product-shaped. The workflow pack helps choose the source route and expected execution kinds. The creative direction pack helps choose visual language, motion language, template guidance, and acceptance criteria before rendering.
 
 For fuzzy user requests, call `exposeArsenal` before choosing a route. It returns the raw user signal, full workflow pack list, full creative direction pack list, capability graph summary when a project exists, and common technology fit checks for libraries or backends such as Three.js, GSAP, Anime.js, PixiJS, and agent-sprite-forge. This is intentionally not an intent resolver: Framepack shapes the information field, while Codex or Claude Code makes the creative and technical decision.
+
+For animation and media technology choices, call `listCapabilityAtlas`, `getCapabilityAtlasNode`, or `recommendCapabilityStack`. The Animation Capability Atlas separates programmatic animation material such as Anime.js and runtime-controlled motion from generative media material such as frontier hosted video models. It returns capability nodes, support levels, risks, scores, and recommended stacks, but it does not install external libraries, invoke hosted models, or prove local availability.
 
 For a conservative default, call `recommendPacks` with `sourceType`, `outputType`, optional `goal`, optional `audience`, and optional `format`. The response includes `workflowPack`, `creativeDirectionPack`, `packSelection`, and a human-readable `reason`. Agents should rely on IDs and `packSelection` for automation; `reason` is explanatory text.
 
