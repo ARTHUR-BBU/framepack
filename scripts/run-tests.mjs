@@ -18,6 +18,11 @@ import {
   exposeFramepackArsenal,
   summarizeCapabilityGraph,
 } from "../dist/capabilities/arsenal.js";
+import {
+  getCapabilityAtlasNode,
+  listCapabilityAtlasNodes,
+  recommendCapabilityStack,
+} from "../dist/capabilities/atlas.js";
 import { buildAssetExecutionPlan } from "../dist/packaging/asset-execution.js";
 import { createGoldenPackageProtocolSummary } from "../dist/packaging/golden-package.js";
 import {
@@ -329,6 +334,58 @@ const tests = [
       );
       assert.match(arsenal.agentBoundary, /Framepack exposes context/);
       assert.doesNotMatch(JSON.stringify(arsenal), /suggestedCommand/);
+    },
+  },
+  {
+    name: "expose an animation capability atlas with programmatic animation and frontier model nodes",
+    run: () => {
+      const atlasNodes = listCapabilityAtlasNodes();
+      const anime = getCapabilityAtlasNode("library.animejs");
+      const hyperframes = getCapabilityAtlasNode("video-runtime.hyperframes");
+      const spriteForge = getCapabilityAtlasNode("asset-forge.agent-sprite-forge");
+
+      assert.ok(atlasNodes.length >= 6);
+      assert.equal(anime?.domain, "programmatic-animation");
+      assert.equal(anime?.category, "web-motion");
+      assert.ok(anime?.techniques.includes("timeline-animation"));
+      assert.ok(anime?.techniques.includes("stagger-animation"));
+      assert.ok(anime?.invocationSurfaces.includes("typescript-api"));
+      assert.equal(anime?.lifecycle, "recommended");
+      assert.equal(anime?.framepackSupportLevel.includes("recommended"), true);
+      assert.equal(hyperframes?.domain, "composition-runtime");
+      assert.equal(hyperframes?.framepackSupportLevel.includes("verifiable"), true);
+      assert.equal(spriteForge?.domain, "asset-forge");
+      assert.equal(spriteForge?.deliveryModes.includes("codex-skill"), true);
+      assert.ok(getCapabilityAtlasNode("model.seedance-2-0"));
+      assert.ok(getCapabilityAtlasNode("model.gemini-omni"));
+      assert.ok(getCapabilityAtlasNode("model.kling-3-0"));
+      assert.equal(getCapabilityAtlasNode("missing.capability"), undefined);
+    },
+  },
+  {
+    name: "recommend capability stacks from workflow and creative direction context",
+    run: () => {
+      const gameAdStack = recommendCapabilityStack({
+        workflowPackId: "game-ad-sprite-video",
+        creativeDirectionPackId: "game-ad-retro-arcade",
+        outputType: "game-ad",
+        format: "9:16",
+      });
+      const webMotionStack = recommendCapabilityStack({
+        workflowPackId: "product-explainer",
+        creativeDirectionPackId: "clean-saas-explainer",
+        outputType: "case-explainer",
+        format: "16:9",
+        goal: "Use programmatic animation for a SaaS explainer",
+      });
+
+      assert.equal(gameAdStack?.id, "game-ad-sprite-video-stack");
+      assert.ok(gameAdStack?.nodes.some((node) => node.capabilityId === "asset-forge.agent-sprite-forge"));
+      assert.ok(gameAdStack?.nodes.some((node) => node.capabilityId === "video-runtime.hyperframes"));
+      assert.match(gameAdStack?.rationale.join(" ") ?? "", /sprite/i);
+      assert.equal(webMotionStack?.id, "web-motion-explainer-stack");
+      assert.ok(webMotionStack?.nodes.some((node) => node.capabilityId === "library.animejs"));
+      assert.ok(webMotionStack?.acceptanceCriteria.some((criterion) => criterion.includes("runtime inspect")));
     },
   },
   {
