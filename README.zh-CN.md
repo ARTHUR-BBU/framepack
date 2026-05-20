@@ -78,6 +78,8 @@ Animation Capability Atlas 是 Framepack 的只读能力地图。它把 **程序
 
 agent 可以用 `framepack atlas --json` 或 MCP `listCapabilityAtlas` 查看已知能力，用 `framepack atlas recommend ... --json` 或 MCP `recommendCapabilityStack` 根据 workflow / creative direction / output type 推荐能力组合。Atlas 不负责安装外部 skill，也不直接调用 hosted model；它负责分类、打分、推荐和说明边界。
 
+当生成流程已经选择了 workflow pack 或 creative direction pack，Framepack 会把匹配到的能力组合写入 `VIDEO_BRIEF.json` 的 `capabilityStackSelection`，并在 `HANDOFF.md` 里重复说明。没有 pack selection 的自定义/手工工程包保持中立，Framepack 不会偷偷把它们改成 agent-sprite-forge 或 Anime.js 路线。
+
 [English](./README.md)
 
 ## 让 Codex 安装 Framepack

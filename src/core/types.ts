@@ -45,6 +45,20 @@ export interface VideoPackSelection {
   acceptanceCriteria: string[];
 }
 
+export interface VideoCapabilityStackSelection {
+  id: string;
+  name: string;
+  nodes: Array<{
+    capabilityId: string;
+    role: "source" | "asset-forge" | "motion" | "composition" | "verification" | "handoff";
+    required: boolean;
+    alternatives: string[];
+  }>;
+  rationale: string[];
+  acceptanceCriteria: string[];
+  riskNotes: string[];
+}
+
 export interface MarkdownVideoBriefInput {
   inputType: "markdown";
   markdown: string;
@@ -116,6 +130,7 @@ export interface VideoBrief {
   format: VideoFormat;
   style: VideoStyle;
   packSelection?: VideoPackSelection;
+  capabilityStackSelection?: VideoCapabilityStackSelection;
   sourceMaterials: SourceMaterial[];
   constraints: VideoConstraintSet;
   outputType: OutputType;

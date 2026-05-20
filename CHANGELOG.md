@@ -24,6 +24,7 @@
 - upgraded `release-smoke` into a 0.4 alpha gate that verifies Arsenal Exposure, capability graph artifacts, runtime manifest artifacts, status, and validation
 - added the first internal Animation Capability Atlas registry with programmatic animation, HyperFrames runtime, agent-sprite-forge, frontier video model watchlist, and recommended capability stacks
 - exposed the Animation Capability Atlas through `framepack atlas`, MCP tools, and the `framepack://capabilities/atlas` resource
+- persisted Atlas capability stack selections into generated `VIDEO_BRIEF.json` and `HANDOFF.md` when packages use workflow or creative direction packs
 
 ## 0.2.0-rc.2
 

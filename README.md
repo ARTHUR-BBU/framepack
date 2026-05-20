@@ -104,6 +104,8 @@ The Animation Capability Atlas is Framepack's read-only capability map. It separ
 
 Use `framepack atlas --json` or MCP `listCapabilityAtlas` to inspect known capabilities. Use `framepack atlas recommend ... --json` or MCP `recommendCapabilityStack` to get a conservative capability stack for a workflow and creative direction. The atlas is not an executor: it classifies, scores, and recommends capabilities so agents can choose a route without pretending every external model, library, skill, or plugin is already installed.
 
+When generation uses a workflow or creative direction pack, Framepack persists the matched capability stack into `VIDEO_BRIEF.json` as `capabilityStackSelection` and repeats it in `HANDOFF.md`. Custom/manual packages without pack selection are left neutral so Framepack does not silently force an external backend.
+
 ## Quickstart
 
 ```bash

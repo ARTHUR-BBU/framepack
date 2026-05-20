@@ -3917,7 +3917,15 @@ Framepack compiles content into executable video projects.
         assert.equal(exitCode, 0, stderr.join("\n"));
         assert.equal(brief.packSelection.workflowPackId, "game-ad-sprite-video");
         assert.equal(brief.packSelection.creativeDirectionPackId, "game-ad-retro-arcade");
+        assert.equal(brief.capabilityStackSelection.id, "game-ad-sprite-video-stack");
+        assert.ok(
+          brief.capabilityStackSelection.nodes.some(
+            (node) => node.capabilityId === "asset-forge.agent-sprite-forge",
+          ),
+        );
         assert.match(handoff, /Workflow pack: game-ad-sprite-video/);
+        assert.match(handoff, /Capability stack: game-ad-sprite-video-stack/);
+        assert.match(handoff, /asset-forge\.agent-sprite-forge/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

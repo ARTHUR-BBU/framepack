@@ -19,6 +19,7 @@ import {
 } from "../../packaging/documents.js";
 import { buildAssetExecutionPlan } from "../../packaging/asset-execution.js";
 import { buildCapabilityGraph } from "../../capabilities/capability-graph.js";
+import { recommendCapabilityStack } from "../../capabilities/atlas.js";
 import { buildPackageManifest } from "../../packaging/package-manifest.js";
 import { buildSceneAssetMap } from "../../packaging/scene-asset-map.js";
 import { buildSourceSceneMap } from "../../packaging/source-scene-map.js";
@@ -39,6 +40,43 @@ export interface VideoProjectPackage {
   files: Record<string, string>;
 }
 
+function enrichBriefWithCapabilityStack(brief: VideoBrief): VideoBrief {
+  if (brief.capabilityStackSelection) {
+    return brief;
+  }
+
+  if (!brief.packSelection?.workflowPackId && !brief.packSelection?.creativeDirectionPackId) {
+    return brief;
+  }
+
+  const stack = recommendCapabilityStack({
+    workflowPackId: brief.packSelection?.workflowPackId,
+    creativeDirectionPackId: brief.packSelection?.creativeDirectionPackId,
+    outputType: brief.outputType,
+    format: brief.format,
+    goal: brief.goal,
+  });
+
+  if (!stack) {
+    return brief;
+  }
+
+  return {
+    ...brief,
+    capabilityStackSelection: {
+      id: stack.id,
+      name: stack.name,
+      nodes: stack.nodes.map((node) => ({
+        ...node,
+        alternatives: [...node.alternatives],
+      })),
+      rationale: [...stack.rationale],
+      acceptanceCriteria: [...stack.acceptanceCriteria],
+      riskNotes: [...stack.riskNotes],
+    },
+  };
+}
+
 export function createVideoProjectPackage(input: {
   projectName: string;
   brief: VideoBrief;
@@ -50,6 +88,7 @@ export function createVideoProjectPackage(input: {
   compositionHtml: string;
   sourceManifest?: SourceManifest;
 }): VideoProjectPackage {
+  const brief = enrichBriefWithCapabilityStack(input.brief);
   const capabilities = detectHyperframesCapabilities();
   const runtimeAdapter = createHyperframesRuntimeAdapter();
   const sceneAssetMap = buildSceneAssetMap({
@@ -69,14 +108,14 @@ export function createVideoProjectPackage(input: {
   });
   const packageManifest = buildPackageManifest({
     projectName: input.projectName,
-    brief: input.brief,
+    brief,
     sourceManifest: input.sourceManifest,
     assetExecutionPlan,
     validationReport: input.validationReport,
   });
   const capabilityGraph = buildCapabilityGraph({
     sourceType: packageManifest.sourceType,
-    outputType: input.brief.outputType,
+    outputType: brief.outputType,
     executionKinds: [...new Set(assetExecutionPlan.items.map((item) => item.executionKind))],
     forgeBackends: [
       ...new Set(
@@ -149,12 +188,13 @@ export function createVideoProjectPackage(input: {
         null,
         2,
       ),
-      "VIDEO_BRIEF.json": JSON.stringify(input.brief, null, 2),
+      "VIDEO_BRIEF.json": JSON.stringify(brief, null, 2),
       "SCENE_PLAN.json": JSON.stringify(input.scenePlan, null, 2),
       "SCRIPT.md": formatScriptMarkdown(input.script),
       "STORYBOARD.md": formatStoryboardMarkdown(input.storyboard),
       "HANDOFF.md": formatHandoffMarkdown({
         ...input,
+        brief,
         runtimeAvailable: capabilities.available,
         runtimeBinary: capabilities.binary,
         runtimeFallbackNotes: capabilities.fallbackNotes,

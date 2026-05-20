@@ -83,6 +83,25 @@ function formatPackSelection(input: VideoBrief): string {
   return lines.length === 0 ? "- None" : lines.join("\n");
 }
 
+function formatCapabilityStackSelection(input: VideoBrief): string {
+  const selection = input.capabilityStackSelection;
+
+  if (!selection) {
+    return "- None";
+  }
+
+  return [
+    `- Capability stack: ${selection.id} (${selection.name})`,
+    ...selection.nodes.map(
+      (node) =>
+        `- Capability: ${node.capabilityId} [${node.role}${node.required ? " / required" : ""}]`,
+    ),
+    ...selection.rationale.map((item) => `- Rationale: ${item}`),
+    ...selection.acceptanceCriteria.map((item) => `- Acceptance criterion: ${item}`),
+    ...selection.riskNotes.map((item) => `- Risk note: ${item}`),
+  ].join("\n");
+}
+
 export function formatGuardrailsMarkdown(input: {
   brief: VideoBrief;
   validationReport: ValidationReport;
@@ -158,6 +177,9 @@ export function formatHandoffMarkdown(input: {
     "",
     "Pack selection:",
     formatPackSelection(input.brief),
+    "",
+    "Capability stack:",
+    formatCapabilityStackSelection(input.brief),
     "",
     "Missing assets:",
     formatList(input.assetPlan.missingAssets),

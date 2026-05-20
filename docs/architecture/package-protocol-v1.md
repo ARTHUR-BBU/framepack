@@ -75,6 +75,20 @@ Validation checks:
 - forge backends in `ASSET_EXECUTION_PLAN.json` have `asset-forge.<backend>` nodes
 - required skills in `ASSET_EXECUTION_PLAN.json` have `skill.<requiredSkill>` nodes
 
+## Capability Stack Selection
+
+`VIDEO_BRIEF.json` may include `capabilityStackSelection` when generation used a workflow or creative direction pack that maps to an Animation Capability Atlas recommended stack.
+
+This field is guidance, not execution state. It records:
+
+- selected stack id and name
+- capability nodes and their roles
+- rationale
+- acceptance criteria
+- risk notes
+
+`HANDOFF.md` repeats this selection so agents can see the technology route before reading every JSON file. Framepack only persists a stack when a pack selection exists; custom/manual packages without pack selection should not be silently converted into an agent-sprite-forge or Anime.js route.
+
 ## Runtime Manifest Contract
 
 `RUNTIME_MANIFEST.json` is an additive v1 runtime artifact. It is derivable from HyperFrames runtime detection, package runtime entrypoints, and the command specs Framepack already emits in `meta.json` / `COMMANDS.md`.
