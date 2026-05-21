@@ -226,7 +226,7 @@ You can think about the stack like this:
 
 Package protocol versioning is documented in [`docs/architecture/package-protocol-v1.md`](docs/architecture/package-protocol-v1.md).
 
-Release-candidate notes live in [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md). The next architecture learning and uplift agenda lives in [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md).
+Release-candidate notes live in [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md). The previous `v0.3.0-rc.1` notes remain in [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md). The next architecture learning and uplift agenda lives in [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md).
 
 The concrete 0.4 architecture proposal lives in [`docs/architecture/framepack-0.4-capability-runtime-architecture.md`](docs/architecture/framepack-0.4-capability-runtime-architecture.md).
 

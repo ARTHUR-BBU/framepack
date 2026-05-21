@@ -103,7 +103,7 @@ Run `npm run release:gate` as the final RC gate. It runs typecheck, the full tes
 
 Start with `PACKAGE_MANIFEST.json`.
 
-For release-candidate context, read `docs/agent-platform/release-candidate-v0.3.0-rc.1.md`. For the next architecture learning and uplift agenda, read `docs/architecture/next-architecture-uplift.md`, then read the concrete 0.4 proposal in `docs/architecture/framepack-0.4-capability-runtime-architecture.md`.
+For release-candidate context, read `docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`. The previous `v0.3.0-rc.1` notes remain in `docs/agent-platform/release-candidate-v0.3.0-rc.1.md`. For the next architecture learning and uplift agenda, read `docs/architecture/next-architecture-uplift.md`, then read the concrete 0.4 proposal in `docs/architecture/framepack-0.4-capability-runtime-architecture.md`.
 
 It indexes:
 

@@ -2212,6 +2212,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
+      assert.equal(packageJson.version, "0.4.0-alpha.1");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "./dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -2259,10 +2260,11 @@ Framepack compiles content into executable video projects.
   {
     name: "document the release candidate and next architecture uplift",
     run: () => {
-      const releaseDoc = readFileSync(
+      const previousReleaseDoc = readFileSync(
         resolve(dirname(packageJsonPath), "docs", "agent-platform", "release-candidate-v0.3.0-rc.1.md"),
         "utf8",
       );
+      const releaseDoc = readFileSync(framepack04AlphaNotesPath, "utf8");
       const upliftDoc = readFileSync(
         resolve(dirname(packageJsonPath), "docs", "architecture", "next-architecture-uplift.md"),
         "utf8",
@@ -2273,7 +2275,9 @@ Framepack compiles content into executable video projects.
       );
 
       assert.match(releaseDoc, /npm run release:gate/);
-      assert.match(releaseDoc, /v0\.3\.0-rc\.1/);
+      assert.match(releaseDoc, /v0\.4\.0-alpha\.1/);
+      assert.match(releaseDoc, /Animation Capability Atlas/);
+      assert.match(previousReleaseDoc, /v0\.3\.0-rc\.1/);
       assert.match(releaseDoc, /MCP/);
       assert.match(releaseDoc, /agent-sprite-forge/);
       assert.match(upliftDoc, /Framepack 0\.4/);
