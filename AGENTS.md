@@ -50,6 +50,7 @@ npx framepack packs recommend --source-type game-ad --output-type game-ad --goal
 npx framepack mcp
 npx framepack release-smoke --output-dir out/release-smoke --json
 npm run release:smoke:install
+npm run release:scenarios
 npm run release:gate
 ```
 
@@ -97,13 +98,15 @@ Run `release-smoke` before tagging or publishing a release candidate. It creates
 
 Run `npm run release:smoke:install` as the stricter RC gate. It builds the repo, packs the npm tarball, installs it into a temporary empty consumer project, then runs the installed binary through MCP discovery, `release-smoke`, `generate --auto-pack`, `validate`, and `status --json`.
 
+Run `npm run release:scenarios` as the three-route product-readiness rehearsal. It generates markdown, thread, and game-ad sprite-video packages, then runs `validate` and `status --json` on each package. It does not install external forge skills, call image generation, or require HyperFrames rendering.
+
 Run `npm run release:gate` as the final RC gate. It runs typecheck, the full test suite, npm pack dry-run, and the real install smoke gate in one structured pass.
 
 ## Package Protocol
 
 Start with `PACKAGE_MANIFEST.json`.
 
-For release-candidate context, read `docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`. The previous `v0.3.0-rc.1` notes remain in `docs/agent-platform/release-candidate-v0.3.0-rc.1.md`. For the next architecture learning and uplift agenda, read `docs/architecture/next-architecture-uplift.md`, then read the concrete 0.4 proposal in `docs/architecture/framepack-0.4-capability-runtime-architecture.md`.
+For release-candidate context, read `docs/agent-platform/release-candidate-v0.4.0-alpha.1.md` and `docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`. The previous `v0.3.0-rc.1` notes remain in `docs/agent-platform/release-candidate-v0.3.0-rc.1.md`. For the next architecture learning and uplift agenda, read `docs/architecture/next-architecture-uplift.md`, then read the concrete 0.4 proposal in `docs/architecture/framepack-0.4-capability-runtime-architecture.md`.
 
 It indexes:
 

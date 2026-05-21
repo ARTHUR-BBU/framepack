@@ -100,6 +100,10 @@ const framepack04AlphaNotesPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/release-candidate-v0.4.0-alpha.1.md",
 );
+const framepack04ScenarioReportPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md",
+);
 const agentsPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../AGENTS.md",
@@ -2255,6 +2259,28 @@ Framepack compiles content into executable video projects.
       assert.match(script, /npm pack --dry-run --json/);
       assert.match(script, /npm run release:smoke:install/);
       assert.match(script, /Release gate/);
+    },
+  },
+  {
+    name: "publish a three-scenario release test harness for v0.4 alpha",
+    run: () => {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+      const scriptPath = resolve(dirname(packageJsonPath), "scripts", "run-real-scenarios.mjs");
+      const script = readFileSync(scriptPath, "utf8");
+      const scenarioReport = readFileSync(framepack04ScenarioReportPath, "utf8");
+
+      assert.equal(packageJson.scripts["release:scenarios"], "npm run build && node scripts/run-real-scenarios.mjs");
+      assert.match(script, /markdown-product-explainer/);
+      assert.match(script, /thread-editorial-video/);
+      assert.match(script, /game-ad-sprite-video/);
+      assert.match(script, /capabilityStackSelection/);
+      assert.match(script, /validate/);
+      assert.match(script, /status/);
+      assert.match(scenarioReport, /markdown-product-explainer/);
+      assert.match(scenarioReport, /thread-editorial-video/);
+      assert.match(scenarioReport, /game-ad-sprite-video/);
+      assert.match(scenarioReport, /npm run release:scenarios/);
+      assert.match(scenarioReport, /v0\.4\.0-alpha\.1/);
     },
   },
   {

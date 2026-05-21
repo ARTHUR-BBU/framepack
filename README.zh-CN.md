@@ -109,6 +109,7 @@ npm install
 npm run build
 npx framepack release-smoke --output-dir out/release-smoke --json
 npm run release:smoke:install
+npm run release:scenarios
 npm run release:gate
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 ```
@@ -204,6 +205,7 @@ npm run typecheck
 npm test
 npm run build
 npm run release:smoke:install
+npm run release:scenarios
 npm run release:gate
 ```
 
@@ -211,7 +213,7 @@ npm run release:gate
 
 工程包协议版本说明见 [`docs/architecture/package-protocol-v1.md`](docs/architecture/package-protocol-v1.md)。
 
-发布候选版本说明见 [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md)。上一版 `v0.3.0-rc.1` 说明保留在 [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md)。下一阶段架构学习和升级路线见 [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md)。
+发布候选版本说明见 [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md)。真实场景测试报告见 [`docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`](docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md)。上一版 `v0.3.0-rc.1` 说明保留在 [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md)。下一阶段架构学习和升级路线见 [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md)。
 
 0.4 的具体架构方案见 [`docs/architecture/framepack-0.4-capability-runtime-architecture.md`](docs/architecture/framepack-0.4-capability-runtime-architecture.md)。
 
@@ -248,6 +250,14 @@ npm run release:gate
 ```
 
 它会一次性运行 typecheck、全量测试、npm pack dry-run 和真实安装烟测。
+
+如果要做更接近真实用户路线的发布前演练，可以运行：
+
+```bash
+npm run release:scenarios
+```
+
+它会真实生成 markdown、thread 和 game-ad sprite-video 三类工程包，并分别运行 `validate` 和 `status --json`。这个脚本不安装外部 forge skills，不调用图像生成，也不要求 HyperFrames 渲染可用。
 
 只验证，不生成完整工程包：
 

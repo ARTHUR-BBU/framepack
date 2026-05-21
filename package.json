@@ -32,6 +32,7 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "release:gate": "node scripts/run-release-gate.mjs",
+    "release:scenarios": "npm run build && node scripts/run-real-scenarios.mjs",
     "release:smoke:install": "npm run build && node scripts/run-install-smoke.mjs",
     "test": "npm run build && node scripts/run-tests.mjs",
     "test:watch": "npm run build && node --watch scripts/run-tests.mjs"

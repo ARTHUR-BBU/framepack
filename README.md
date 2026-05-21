@@ -116,6 +116,7 @@ npx framepack atlas --json
 npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
 npx framepack release-smoke --output-dir out/release-smoke --json
 npm run release:smoke:install
+npm run release:scenarios
 npm run release:gate
 ```
 
@@ -220,13 +221,14 @@ You can think about the stack like this:
 - `npm test`
 - `npm run build`
 - `npm run release:smoke:install`
+- `npm run release:scenarios`
 - `npm run release:gate`
 
 `npm test` includes golden package protocol summaries for markdown, thread, and game-ad packages. These summaries intentionally avoid timestamps and absolute paths while checking the package manifest, scene asset map, execution kinds, forge task count, and handoff guidance.
 
 Package protocol versioning is documented in [`docs/architecture/package-protocol-v1.md`](docs/architecture/package-protocol-v1.md).
 
-Release-candidate notes live in [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md). The previous `v0.3.0-rc.1` notes remain in [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md). The next architecture learning and uplift agenda lives in [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md).
+Release-candidate notes live in [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md). The real scenario test report lives in [`docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`](docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md). The previous `v0.3.0-rc.1` notes remain in [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md). The next architecture learning and uplift agenda lives in [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md).
 
 The concrete 0.4 architecture proposal lives in [`docs/architecture/framepack-0.4-capability-runtime-architecture.md`](docs/architecture/framepack-0.4-capability-runtime-architecture.md).
 
@@ -284,6 +286,14 @@ npm run release:gate
 ```
 
 It runs typecheck, the full test suite, npm pack dry-run, and the real install smoke gate in one structured pass.
+
+For product-readiness rehearsal across the three main user routes, run:
+
+```bash
+npm run release:scenarios
+```
+
+This generates real markdown, thread, and game-ad sprite-video packages, then runs `validate` and `status --json` on each package. It is intentionally separate from `release:gate` so agents can run a clear scenario-focused check before tagging.
 
 ### `validate`
 
