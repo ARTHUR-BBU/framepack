@@ -108,6 +108,10 @@ const framepack04RealUserTrialPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md",
 );
+const framepack04BetaReadinessPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/beta-readiness-v0.4.md",
+);
 const agentsPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../AGENTS.md",
@@ -2370,6 +2374,30 @@ Framepack compiles content into executable video projects.
       assert.match(codexDoc, /first report should include package `readiness`, `nextActionItems`/);
       assert.match(claudeDoc, /Ask Claude Code/);
       assert.match(claudeDoc, /initialize the Claude Code workflow, verify version\/help\/MCP/);
+    },
+  },
+  {
+    name: "document v0.4 beta readiness criteria",
+    run: () => {
+      const betaReadiness = readFileSync(framepack04BetaReadinessPath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+
+      assert.match(betaReadiness, /BETA-READINESS-06/);
+      assert.match(betaReadiness, /beta-track candidate, not beta-ready yet/);
+      assert.match(betaReadiness, /0\.4\.0-alpha\.4/);
+      assert.match(betaReadiness, /136\/136 checks passed/);
+      assert.match(betaReadiness, /entryCount 198/);
+      assert.match(betaReadiness, /Website route should be promoted into `release:scenarios`/);
+      assert.match(betaReadiness, /clean Codex-oriented install trial/);
+      assert.match(betaReadiness, /clean Claude Code-oriented install trial/);
+      assert.match(betaReadiness, /visual QA minimum/);
+      assert.match(betaReadiness, /BETA-GATE-07/);
+      assert.match(betaReadiness, /Framepack does not claim assets are produced until outputs and metadata exist/);
+      assert.match(readme, /beta-readiness-v0\.4/);
+      assert.match(chineseReadme, /beta-readiness-v0\.4/);
+      assert.match(agents, /beta-readiness-v0\.4/);
     },
   },
   {
