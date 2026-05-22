@@ -1,21 +1,21 @@
-# Framepack v0.4.0-alpha.2 Release Candidate
+# Framepack v0.4.0-alpha.3 Release Candidate
 
-Framepack `v0.4.0-alpha.2` is the first install-experience hardening release after the initial video-production Agent Harness alpha.
+Framepack `v0.4.0-alpha.3` is a first-run documentation and CLI guidance hardening release.
 
-It keeps the `v0.4.0-alpha.1` architecture intact and tightens the first-run path for users and agents installing Framepack from npm:
+It keeps the `v0.4.0-alpha.2` install-experience work intact and fixes the public alpha command guidance so agents and users have a stable cross-platform path:
 
-- `framepack --version` returns the package version.
-- `framepack --help` prints a compact first-run command guide.
-- The npm `bin.framepack` path is normalized to `dist/cli.js` to avoid publish-time bin cleanup warnings.
-- The recommended public version/help checks are `npx -y -p framepack@alpha framepack --version` and `npx -y -p framepack@alpha framepack --help`.
-- The recommended public MCP surface check is `npm exec --yes --package=framepack@alpha -- framepack mcp --describe`.
-- The Animation Capability Atlas and `capabilityStackSelection` behavior from `v0.4.0-alpha.1` remain in scope.
+- Use `npx -y -p framepack@alpha framepack --version` for the published alpha version check.
+- Use `npx -y -p framepack@alpha framepack --help` for the first-run help check.
+- Use `npm exec --yes --package=framepack@alpha -- framepack mcp --describe` for MCP surface discovery.
+- The CLI `--help` output now prints all three checks.
+- README, Chinese README, AGENTS, Codex, Claude Code, and install-with-agent docs all use the same command set.
 
-## What Changed Since v0.4.0-alpha.1
+## What Changed Since v0.4.0-alpha.2
 
-- Added first-run CLI affordances for npm users.
-- Clarified the npm alpha execution path in README and AGENTS guidance.
-- Preserved the MCP, workflow pack, creative direction pack, release smoke, scenario, capability graph, runtime manifest, and Asset Forge Layer gates from the previous alpha.
+- Replaced unstable public `npm exec ... --version` and `npm exec ... --help` examples with stable `npx -y -p framepack@alpha ...` examples.
+- Kept `npm exec --yes --package=framepack@alpha -- framepack mcp --describe` for the MCP surface check.
+- Added regression coverage so CLI help and install smoke verification keep the stable first-run commands.
+- Preserved the MCP, workflow pack, creative direction pack, release smoke, scenario, capability graph, runtime manifest, Animation Capability Atlas, and Asset Forge Layer gates from previous alpha releases.
 
 ## Final Gate
 
@@ -38,12 +38,12 @@ The gate runs:
 - `npm pack --dry-run --json`
 - `npm run release:smoke:install`
 
-`release:smoke:install` builds the package, creates a real npm tarball, installs that tarball into a temporary empty consumer project, then runs the installed `framepack` binary through MCP discovery, Atlas discovery, `release-smoke`, `generate --auto-pack`, `validate`, and `status --json`.
+`release:smoke:install` builds the package, creates a real npm tarball, installs that tarball into a temporary empty consumer project, then runs the installed `framepack` binary through version, help, MCP discovery, Atlas discovery, `release-smoke`, `generate --auto-pack`, `validate`, and `status --json`.
 
 ## In Scope
 
-- First-run CLI help and version checks.
-- Agent-native workflow installation for Codex and Claude Code.
+- Public npm alpha first-run checks.
+- Agent-native workflow installation guidance for Codex and Claude Code.
 - Workflow and creative direction pack recommendation.
 - Animation Capability Atlas read surfaces.
 - Atlas-backed `capabilityStackSelection` in generated package context.
@@ -56,7 +56,7 @@ The gate runs:
 
 - Framepack does not install external skills automatically.
 - Framepack does not call hosted video models automatically.
-- Framepack does not publish or tag the release automatically.
+- Framepack does not publish or tag releases automatically during release smoke or release gates.
 - Framepack does not become a game engine, full video editor, or image generator.
 - Framepack does not make frontier model availability guarantees for Seedance 2.0, Gemini Omni, or Kling AI 3.0.
 
@@ -67,7 +67,7 @@ The gate runs:
 3. Run `npm run release:scenarios`.
 4. Review `CHANGELOG.md`, `README.md`, `README.zh-CN.md`, `AGENTS.md`, and this alpha note.
 5. Check `npm publish --access public --tag alpha --dry-run` for tarball contents and publish warnings.
-6. Tag `v0.4.0-alpha.2` only after human review.
+6. Tag `v0.4.0-alpha.3` only after human review.
 7. Publish with `npm publish --access public --tag alpha` only after the tag and npm tarball contents are confirmed.
 
 ## Agent Handoff

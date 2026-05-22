@@ -124,14 +124,16 @@ try {
   );
 
   const installedVersion = runFramepack("version", ["--version"]).trim();
-  if (installedVersion !== "0.4.0-alpha.2") {
+  if (installedVersion !== "0.4.0-alpha.3") {
     throw new Error(`Installed CLI version mismatch: ${installedVersion}`);
   }
 
   const installedHelp = runFramepack("help", ["--help"]);
   if (
     !installedHelp.includes("Framepack CLI") ||
-    !installedHelp.includes("npm exec --package=framepack@alpha -- framepack mcp --describe")
+    !installedHelp.includes("npx -y -p framepack@alpha framepack --version") ||
+    !installedHelp.includes("npx -y -p framepack@alpha framepack --help") ||
+    !installedHelp.includes("npm exec --yes --package=framepack@alpha -- framepack mcp --describe")
   ) {
     throw new Error("Installed CLI help is missing first-run guidance");
   }

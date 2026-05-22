@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0-alpha.3
+
+- corrected public npm alpha first-run commands to use `npx -y -p framepack@alpha framepack --version` and `npx -y -p framepack@alpha framepack --help`
+- kept `npm exec --yes --package=framepack@alpha -- framepack mcp --describe` as the recommended MCP surface check
+- updated CLI help, README, Chinese README, AGENTS, Codex, Claude Code, and install-with-agent docs with the same command set
+- added regression coverage for the stable first-run command guidance
+
 ## 0.4.0-alpha.2
 
 - added first-run CLI affordances for npm users with `framepack --version` and `framepack --help`

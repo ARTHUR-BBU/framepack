@@ -11,9 +11,9 @@ Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this pro
 The agent should:
 
 1. Install Framepack from npm.
-2. Verify the published alpha with `npm exec --package=framepack@alpha -- framepack --version`.
-3. Inspect the first-run guide with `npm exec --package=framepack@alpha -- framepack --help`.
-4. Verify the MCP surface with `npm exec --package=framepack@alpha -- framepack mcp --describe`.
+2. Verify the published alpha with `npx -y -p framepack@alpha framepack --version`.
+3. Inspect the first-run guide with `npx -y -p framepack@alpha framepack --help`.
+4. Verify the MCP surface with `npm exec --yes --package=framepack@alpha -- framepack mcp --describe`.
 5. Run `framepack init-agent --target codex --scope project`.
 6. Inspect `framepack packs recommend --json` or the MCP `recommendPacks` tool.
 7. Generate a small package.

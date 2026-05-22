@@ -13,9 +13,9 @@ Codex should install Framepack, run `framepack init-agent --target codex --scope
 For the published npm alpha, Codex can verify the install path before project setup:
 
 ```bash
-npm exec --package=framepack@alpha -- framepack --version
-npm exec --package=framepack@alpha -- framepack --help
-npm exec --package=framepack@alpha -- framepack mcp --describe
+npx -y -p framepack@alpha framepack --version
+npx -y -p framepack@alpha framepack --help
+npm exec --yes --package=framepack@alpha -- framepack mcp --describe
 ```
 
 For broad video requests, Codex should first call `recommendPacks`, or run `framepack packs recommend --json` if MCP is not connected. This makes the agent choose a workflow route and visual direction before it generates files.

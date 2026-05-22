@@ -143,7 +143,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.4.0-alpha.2";
+const FRAMEPACK_CLI_VERSION = "0.4.0-alpha.3";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -162,7 +162,9 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack runtime doctor --project-dir <package>",
   "",
   "Agent-first install check:",
-  "  npm exec --package=framepack@alpha -- framepack mcp --describe",
+  "  npx -y -p framepack@alpha framepack --version",
+  "  npx -y -p framepack@alpha framepack --help",
+  "  npm exec --yes --package=framepack@alpha -- framepack mcp --describe",
   "",
   "Release checks:",
   "  npm run release:scenarios",
