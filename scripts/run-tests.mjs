@@ -104,6 +104,10 @@ const framepack04ScenarioReportPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md",
 );
+const framepack04RealUserTrialPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md",
+);
 const agentsPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../AGENTS.md",
@@ -2311,6 +2315,29 @@ Framepack compiles content into executable video projects.
       assert.match(scenarioReport, /game-ad-sprite-video/);
       assert.match(scenarioReport, /npm run release:scenarios/);
       assert.match(scenarioReport, /v0\.4\.0-alpha\.1/);
+    },
+  },
+  {
+    name: "document the v0.4 alpha real user trial",
+    run: () => {
+      const trialReport = readFileSync(framepack04RealUserTrialPath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+
+      assert.match(trialReport, /REAL-USER-TRIAL-03/);
+      assert.match(trialReport, /0\.4\.0-alpha\.3/);
+      assert.match(trialReport, /npm install framepack@alpha/);
+      assert.match(trialReport, /npx framepack init-agent --target codex --scope project/);
+      assert.match(trialReport, /npx framepack init-agent --target claude-code --scope project/);
+      assert.match(trialReport, /forge-character-pack/);
+      assert.match(trialReport, /forge-map-pack/);
+      assert.match(trialReport, /forge-fx-pack/);
+      assert.match(trialReport, /agent-sprite-forge/);
+      assert.match(trialReport, /needs-assets/);
+      assert.match(readme, /real-user-trial-v0\.4\.0-alpha\.3/);
+      assert.match(chineseReadme, /real-user-trial-v0\.4\.0-alpha\.3/);
+      assert.match(agents, /real-user-trial-v0\.4\.0-alpha\.3/);
     },
   },
   {
