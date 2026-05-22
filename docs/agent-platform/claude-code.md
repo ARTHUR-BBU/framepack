@@ -2,6 +2,12 @@
 
 Claude Code support is preview-level in this release.
 
+Ask Claude Code:
+
+```text
+Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project. Configure its MCP server, initialize the Claude Code workflow, verify version/help/MCP, then generate and validate a small Framepack video package.
+```
+
 Run:
 
 ```bash

@@ -5,10 +5,10 @@
 Ask Codex:
 
 ```text
-Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project as an agent-native video project compiler. Configure its MCP server and verify generate/status/validate.
+Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project. Configure its MCP server, initialize the Codex workflow, verify version/help/MCP, then generate and validate a small Framepack video package.
 ```
 
-Codex should install Framepack, run `framepack init-agent --target codex --scope project`, inspect `framepack mcp --describe`, and then use the Framepack MCP tools for package generation and follow-up work.
+Codex should install Framepack, run `framepack init-agent --target codex --scope project`, inspect `framepack mcp --describe`, and then use the Framepack MCP tools for package generation and follow-up work. The expected first report should include package `readiness`, `nextActionItems`, and any missing assets or runtime gaps.
 
 For the published npm alpha, Codex can verify the install path before project setup:
 

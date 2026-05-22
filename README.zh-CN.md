@@ -82,6 +82,16 @@ agent 可以用 `framepack atlas --json` 或 MCP `listCapabilityAtlas` 查看已
 
 [English](./README.md)
 
+## 用一句话开始
+
+在 Codex 或 Claude Code 里直接说：
+
+```text
+请阅读 https://github.com/ARTHUR-BBU/framepack，把 Framepack 安装到当前项目，配置 MCP server，初始化 agent 工作流，验证 version/help/MCP，然后生成并校验一个小型 Framepack 视频工程包。
+```
+
+Framepack 的预期入口就是自然语言：agent 安装 npm 包，连接 MCP，选择 workflow pack 和 creative direction pack，生成工程包，检查 `readiness`，跟进 `nextActionItems`，最后告诉用户还缺什么。
+
 ## npm alpha 首次检查
 
 已经发布到 npm 的 alpha 包，最短检查路径是：
@@ -101,7 +111,7 @@ Framepack 的主入口是 agent-first。用户不需要先记住一串 CLI 命�
 在 Codex 里说：
 
 ```text
-请阅读 https://github.com/ARTHUR-BBU/framepack，把 Framepack 安装到当前项目，配置 MCP server，并验证 generate/status/validate 可以使用。
+请阅读 https://github.com/ARTHUR-BBU/framepack，把 Framepack 安装到当前项目，配置 MCP server，初始化 Codex 工作流，验证 version/help/MCP，然后生成并校验一个小型 Framepack 视频工程包。
 ```
 
 Codex 应运行 `framepack init-agent --target codex --scope project`，连接 Framepack MCP，然后用 `generateProject`、`getStatus`、`validatePackage`、`captureAssets`、`runtimeSnapshot` 等工具推进工程包。

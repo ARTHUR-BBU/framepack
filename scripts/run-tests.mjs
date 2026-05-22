@@ -2341,6 +2341,38 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "document one-prompt agent onboarding",
+    run: () => {
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const installDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "agent-platform", "install-with-agent.md"),
+        "utf8",
+      );
+      const codexDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "agent-platform", "codex.md"),
+        "utf8",
+      );
+      const claudeDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "agent-platform", "claude-code.md"),
+        "utf8",
+      );
+
+      assert.match(readme, /Start With One Prompt/);
+      assert.match(readme, /initialize the agent workflow, verify version\/help\/MCP/);
+      assert.match(readme, /checks `readiness`, follows `nextActionItems`/);
+      assert.match(chineseReadme, /用一句话开始/);
+      assert.match(chineseReadme, /初始化 agent 工作流，验证 version\/help\/MCP/);
+      assert.match(chineseReadme, /检查 `readiness`，跟进 `nextActionItems`/);
+      assert.match(installDoc, /initialize the agent workflow, verify version\/help\/MCP/);
+      assert.match(installDoc, /Report `readiness`, `nextActionItems`/);
+      assert.match(codexDoc, /initialize the Codex workflow, verify version\/help\/MCP/);
+      assert.match(codexDoc, /first report should include package `readiness`, `nextActionItems`/);
+      assert.match(claudeDoc, /Ask Claude Code/);
+      assert.match(claudeDoc, /initialize the Claude Code workflow, verify version\/help\/MCP/);
+    },
+  },
+  {
     name: "document the release candidate and next architecture uplift",
     run: () => {
       const previousReleaseDoc = readFileSync(

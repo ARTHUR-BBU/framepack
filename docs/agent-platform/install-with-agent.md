@@ -5,7 +5,7 @@ Framepack is designed to be installed by a coding agent.
 Recommended prompt:
 
 ```text
-Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project. Configure its MCP server and make yourself able to generate, validate, inspect, and continue Framepack video project packages.
+Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project. Configure its MCP server, initialize the agent workflow, verify version/help/MCP, then generate and validate a small Framepack video package.
 ```
 
 The agent should:
@@ -18,6 +18,7 @@ The agent should:
 6. Inspect `framepack packs recommend --json` or the MCP `recommendPacks` tool.
 7. Generate a small package.
 8. Run status and validation.
+9. Report `readiness`, `nextActionItems`, and any missing assets or runtime gaps.
 
 For release-candidate or installer verification, the agent can run `framepack release-smoke --output-dir out/release-smoke --json` or MCP `releaseSmoke`. This performs the same flow as a structured smoke harness: agent workflow files, MCP surface, Arsenal Exposure, pack recommendation, auto-pack generation, capability/runtime artifacts, package status, and package validation.
 

@@ -29,6 +29,16 @@ In plain language: Codex or Claude Code is the brain; Framepack is the video-pro
 
 Agents should start with [AGENTS.md](./AGENTS.md).
 
+## Start With One Prompt
+
+In Codex or Claude Code, paste:
+
+```text
+Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project. Configure its MCP server, initialize the agent workflow, verify version/help/MCP, then generate and validate a small Framepack video package.
+```
+
+Framepack is designed for this natural-language path: the agent installs the npm package, wires MCP, chooses workflow and creative direction packs, generates a package, checks `readiness`, follows `nextActionItems`, and reports what remains.
+
 ## First Npm Check
 
 For the published alpha package, the shortest first-run check is:
@@ -48,7 +58,7 @@ Framepack is meant to be installed and operated by coding agents, not memorized 
 In Codex, ask:
 
 ```text
-Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project as an agent-native video project compiler. Configure its MCP server and verify generate/status/validate.
+Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project. Configure its MCP server, initialize the Codex workflow, verify version/help/MCP, then generate and validate a small Framepack video package.
 ```
 
 The agent should run `framepack init-agent --target codex --scope project`, connect the Framepack MCP server, then use MCP tools such as `generateProject`, `getStatus`, `validatePackage`, `captureAssets`, and `runtimeSnapshot`.
