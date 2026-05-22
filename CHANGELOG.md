@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0-alpha.4
+
+- packaged the one-prompt agent onboarding path for npm users
+- added `Start With One Prompt` and `用一句话开始` README entries
+- updated Codex, Claude Code, and install-with-agent docs to require `readiness`, `nextActionItems`, missing asset, and runtime gap reporting
+- added regression coverage for the final onboarding copy
+
 ## 0.4.0-alpha.3
 
 - corrected public npm alpha first-run commands to use `npx -y -p framepack@alpha framepack --version` and `npx -y -p framepack@alpha framepack --help`

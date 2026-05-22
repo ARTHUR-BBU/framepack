@@ -124,7 +124,7 @@ try {
   );
 
   const installedVersion = runFramepack("version", ["--version"]).trim();
-  if (installedVersion !== "0.4.0-alpha.3") {
+  if (installedVersion !== "0.4.0-alpha.4") {
     throw new Error(`Installed CLI version mismatch: ${installedVersion}`);
   }
 

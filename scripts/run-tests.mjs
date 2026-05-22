@@ -98,7 +98,7 @@ const packageJsonPath = resolve(
 );
 const framepack04AlphaNotesPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  "../docs/agent-platform/release-candidate-v0.4.0-alpha.3.md",
+  "../docs/agent-platform/release-candidate-v0.4.0-alpha.4.md",
 );
 const framepack04ScenarioReportPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -2220,7 +2220,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.4.0-alpha.3");
+      assert.equal(packageJson.version, "0.4.0-alpha.4");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -2251,7 +2251,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.4.0-alpha.3");
+      assert.equal(versionStdout.join("\n").trim(), "0.4.0-alpha.4");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -2394,7 +2394,7 @@ Framepack compiles content into executable video projects.
       );
 
       assert.match(releaseDoc, /npm run release:gate/);
-      assert.match(releaseDoc, /v0\.4\.0-alpha\.3/);
+      assert.match(releaseDoc, /v0\.4\.0-alpha\.4/);
       assert.match(previousAlphaDoc, /v0\.4\.0-alpha\.1/);
       assert.match(releaseDoc, /Animation Capability Atlas/);
       assert.match(releaseDoc, /--help/);
