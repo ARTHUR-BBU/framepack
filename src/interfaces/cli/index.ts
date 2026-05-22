@@ -79,6 +79,8 @@ interface CliOptions {
 }
 
 type CliCommandName =
+  | "help"
+  | "version"
   | "init"
   | "init-agent"
   | "mcp"
@@ -140,6 +142,32 @@ const DEFAULT_IO: CliIo = {
   stdout: (message) => console.log(message),
   stderr: (message) => console.error(message),
 };
+
+const FRAMEPACK_CLI_VERSION = "0.4.0-alpha.2";
+
+const FRAMEPACK_CLI_HELP = [
+  "Framepack CLI",
+  "",
+  "Usage:",
+  "  framepack --help",
+  "  framepack --version",
+  "  framepack mcp --describe",
+  "  framepack packs",
+  "  framepack atlas --json",
+  "  framepack generate --input <file> --output-dir <dir> --goal <goal> --audience <audience>",
+  "  framepack generate --thread-file <file> --output-dir <dir> --goal <goal> --audience <audience>",
+  "  framepack generate --game-ad-description <text> --output-dir <dir> --goal <goal> --audience <audience> --format 9:16 --auto-pack",
+  "  framepack status --project-dir <package>",
+  "  framepack validate --project-dir <package>",
+  "  framepack runtime doctor --project-dir <package>",
+  "",
+  "Agent-first install check:",
+  "  npm exec --package=framepack@alpha -- framepack mcp --describe",
+  "",
+  "Release checks:",
+  "  npm run release:scenarios",
+  "  npm run release:gate",
+].join("\n");
 
 function getRequiredArg(args: string[], name: string): string {
   const index = args.indexOf(name);
@@ -207,6 +235,14 @@ function createDefaultConstraints() {
 function getCommandName(args: string[]): CliCommandName {
   const [command, subcommand] = args;
 
+  if (command === undefined || command === "--help" || command === "-h" || command === "help") {
+    return "help";
+  }
+
+  if (command === "--version" || command === "-v" || command === "version") {
+    return "version";
+  }
+
   if (command === "runtime" && subcommand === "doctor") {
     return "runtime-doctor";
   }
@@ -247,7 +283,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use init, init-agent, mcp, atlas, packs, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, init, init-agent, mcp, atlas, packs, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -997,6 +1033,16 @@ export async function runCli(
 ): Promise<number> {
   try {
     const command = getCommandName(args);
+
+    if (command === "help") {
+      io.stdout(FRAMEPACK_CLI_HELP);
+      return 0;
+    }
+
+    if (command === "version") {
+      io.stdout(FRAMEPACK_CLI_VERSION);
+      return 0;
+    }
 
     if (command === "init") {
       return runInitCommand(args.slice(1), io);

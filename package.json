@@ -1,11 +1,11 @@
 {
   "name": "framepack",
-  "version": "0.4.0-alpha.1",
+  "version": "0.4.0-alpha.2",
   "private": false,
   "type": "module",
   "main": "./dist/cli.js",
   "bin": {
-    "framepack": "./dist/cli.js"
+    "framepack": "dist/cli.js"
   },
   "description": "An agent-native video project compiler that turns content into executable video project packages.",
   "files": [

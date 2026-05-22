@@ -40,6 +40,9 @@ Install Framepack into a project as an agent-facing workflow:
 ```bash
 npx framepack init-agent --target codex --scope project
 npx framepack init-agent --target claude-code --scope project
+npm exec --package=framepack@alpha -- framepack --version
+npm exec --package=framepack@alpha -- framepack --help
+npm exec --package=framepack@alpha -- framepack mcp --describe
 npx framepack mcp --describe
 npx framepack atlas --json
 npx framepack atlas get library.animejs --json
@@ -106,7 +109,7 @@ Run `npm run release:gate` as the final RC gate. It runs typecheck, the full tes
 
 Start with `PACKAGE_MANIFEST.json`.
 
-For release-candidate context, read `docs/agent-platform/release-candidate-v0.4.0-alpha.1.md` and `docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`. The previous `v0.3.0-rc.1` notes remain in `docs/agent-platform/release-candidate-v0.3.0-rc.1.md`. For the next architecture learning and uplift agenda, read `docs/architecture/next-architecture-uplift.md`, then read the concrete 0.4 proposal in `docs/architecture/framepack-0.4-capability-runtime-architecture.md`.
+For release-candidate context, read `docs/agent-platform/release-candidate-v0.4.0-alpha.2.md`, `docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`, and `docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`. The previous `v0.3.0-rc.1` notes remain in `docs/agent-platform/release-candidate-v0.3.0-rc.1.md`. For the next architecture learning and uplift agenda, read `docs/architecture/next-architecture-uplift.md`, then read the concrete 0.4 proposal in `docs/architecture/framepack-0.4-capability-runtime-architecture.md`.
 
 It indexes:
 

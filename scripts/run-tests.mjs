@@ -98,7 +98,7 @@ const packageJsonPath = resolve(
 );
 const framepack04AlphaNotesPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  "../docs/agent-platform/release-candidate-v0.4.0-alpha.1.md",
+  "../docs/agent-platform/release-candidate-v0.4.0-alpha.2.md",
 );
 const framepack04ScenarioReportPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -2216,9 +2216,9 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.4.0-alpha.1");
+      assert.equal(packageJson.version, "0.4.0-alpha.2");
       assert.equal(packageJson.private, false);
-      assert.equal(packageJson.bin.framepack, "./dist/cli.js");
+      assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
       assert.ok(Array.isArray(packageJson.files));
       assert.ok(packageJson.files.includes("README.zh-CN.md"));
@@ -2227,6 +2227,32 @@ Framepack compiles content into executable video projects.
       assert.ok(packageJson.files.includes("LICENSE"));
       assert.ok(packageJson.files.includes("examples"));
       assert.ok(packageJson.files.includes("dist"));
+    },
+  },
+  {
+    name: "expose first-run version and help commands for npm users",
+    run: async () => {
+      const versionStdout = [];
+      const versionStderr = [];
+      const versionExitCode = await runCli(["--version"], {
+        stdout: (message) => versionStdout.push(message),
+        stderr: (message) => versionStderr.push(message),
+      });
+      const helpStdout = [];
+      const helpStderr = [];
+      const helpExitCode = await runCli(["--help"], {
+        stdout: (message) => helpStdout.push(message),
+        stderr: (message) => helpStderr.push(message),
+      });
+
+      assert.equal(versionExitCode, 0);
+      assert.deepEqual(versionStderr, []);
+      assert.equal(versionStdout.join("\n").trim(), "0.4.0-alpha.2");
+      assert.equal(helpExitCode, 0);
+      assert.deepEqual(helpStderr, []);
+      assert.match(helpStdout.join("\n"), /Framepack CLI/);
+      assert.match(helpStdout.join("\n"), /npm exec --package=framepack@alpha -- framepack mcp --describe/);
+      assert.match(helpStdout.join("\n"), /release:scenarios/);
     },
   },
   {
@@ -2240,6 +2266,8 @@ Framepack compiles content into executable video projects.
       assert.match(script, /npm pack/);
       assert.match(script, /npm install/);
       assert.match(script, /framepack/);
+      assert.match(script, /--version/);
+      assert.match(script, /--help/);
       assert.match(script, /release-smoke/);
       assert.match(script, /--auto-pack/);
       assert.match(script, /validate/);
@@ -2290,6 +2318,10 @@ Framepack compiles content into executable video projects.
         resolve(dirname(packageJsonPath), "docs", "agent-platform", "release-candidate-v0.3.0-rc.1.md"),
         "utf8",
       );
+      const previousAlphaDoc = readFileSync(
+        resolve(dirname(packageJsonPath), "docs", "agent-platform", "release-candidate-v0.4.0-alpha.1.md"),
+        "utf8",
+      );
       const releaseDoc = readFileSync(framepack04AlphaNotesPath, "utf8");
       const upliftDoc = readFileSync(
         resolve(dirname(packageJsonPath), "docs", "architecture", "next-architecture-uplift.md"),
@@ -2301,8 +2333,12 @@ Framepack compiles content into executable video projects.
       );
 
       assert.match(releaseDoc, /npm run release:gate/);
-      assert.match(releaseDoc, /v0\.4\.0-alpha\.1/);
+      assert.match(releaseDoc, /v0\.4\.0-alpha\.2/);
+      assert.match(previousAlphaDoc, /v0\.4\.0-alpha\.1/);
       assert.match(releaseDoc, /Animation Capability Atlas/);
+      assert.match(releaseDoc, /--help/);
+      assert.match(releaseDoc, /--version/);
+      assert.match(releaseDoc, /npm exec --package=framepack@alpha -- framepack mcp --describe/);
       assert.match(previousReleaseDoc, /v0\.3\.0-rc\.1/);
       assert.match(releaseDoc, /MCP/);
       assert.match(releaseDoc, /agent-sprite-forge/);
@@ -2383,9 +2419,10 @@ Framepack compiles content into executable video projects.
     run: () => {
       const notes = readFileSync(framepack04AlphaNotesPath, "utf8");
 
-      assert.match(notes, /v0\.4\.0-alpha\.1/);
+      assert.match(notes, /v0\.4\.0-alpha\.2/);
       assert.match(notes, /Animation Capability Atlas/);
       assert.match(notes, /capabilityStackSelection/);
+      assert.match(notes, /first-run/);
       assert.match(notes, /npm run release:gate/);
       assert.match(notes, /does not install external skills/i);
       assert.match(notes, /does not publish or tag/i);

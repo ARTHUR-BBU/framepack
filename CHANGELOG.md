@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0-alpha.2
+
+- added first-run CLI affordances for npm users with `framepack --version` and `framepack --help`
+- normalized the npm `bin.framepack` path to `dist/cli.js` to avoid publish-time bin cleanup warnings
+- documented the shortest alpha install check with `npm exec --package=framepack@alpha -- framepack mcp --describe`
+- added v0.4.0-alpha.2 release-candidate notes while preserving the v0.4.0-alpha.1 architecture release notes
+
 ## 0.4.0-alpha.1
 
 - aligned the Framepack 0.4 product thesis around a video production Agent Harness: sense filter, motor pathways, reflexes, memory encoding, and feedback loop

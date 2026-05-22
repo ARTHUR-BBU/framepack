@@ -11,11 +11,13 @@ Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this pro
 The agent should:
 
 1. Install Framepack from npm.
-2. Run `framepack init-agent --target codex --scope project`.
-3. Verify `framepack mcp --describe`.
-4. Inspect `framepack packs recommend --json` or the MCP `recommendPacks` tool.
-5. Generate a small package.
-6. Run status and validation.
+2. Verify the published alpha with `npm exec --package=framepack@alpha -- framepack --version`.
+3. Inspect the first-run guide with `npm exec --package=framepack@alpha -- framepack --help`.
+4. Verify the MCP surface with `npm exec --package=framepack@alpha -- framepack mcp --describe`.
+5. Run `framepack init-agent --target codex --scope project`.
+6. Inspect `framepack packs recommend --json` or the MCP `recommendPacks` tool.
+7. Generate a small package.
+8. Run status and validation.
 
 For release-candidate or installer verification, the agent can run `framepack release-smoke --output-dir out/release-smoke --json` or MCP `releaseSmoke`. This performs the same flow as a structured smoke harness: agent workflow files, MCP surface, Arsenal Exposure, pack recommendation, auto-pack generation, capability/runtime artifacts, package status, and package validation.
 

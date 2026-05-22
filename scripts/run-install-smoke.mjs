@@ -99,6 +99,8 @@ try {
       "Commands covered:",
       "- npm pack",
       "- npm install",
+      "- npx framepack --version",
+      "- npx framepack --help",
       "- npx framepack mcp --describe",
       "- npx framepack atlas --json",
       "- npx framepack atlas recommend --json",
@@ -120,6 +122,19 @@ try {
     npm,
     ["install", tarball, "--no-audit", "--no-fund"],
   );
+
+  const installedVersion = runFramepack("version", ["--version"]).trim();
+  if (installedVersion !== "0.4.0-alpha.2") {
+    throw new Error(`Installed CLI version mismatch: ${installedVersion}`);
+  }
+
+  const installedHelp = runFramepack("help", ["--help"]);
+  if (
+    !installedHelp.includes("Framepack CLI") ||
+    !installedHelp.includes("npm exec --package=framepack@alpha -- framepack mcp --describe")
+  ) {
+    throw new Error("Installed CLI help is missing first-run guidance");
+  }
 
   const mcpSurface = runFramepack("mcp-describe", ["mcp", "--describe"]);
   if (
