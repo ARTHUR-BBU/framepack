@@ -10,12 +10,12 @@ Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this pro
 
 Codex should install Framepack, run `framepack init-agent --target codex --scope project`, inspect `framepack mcp --describe`, and then use the Framepack MCP tools for package generation and follow-up work. The expected first report should include package `readiness`, `nextActionItems`, and any missing assets or runtime gaps.
 
-For the published npm alpha, Codex can verify the install path before project setup:
+For the published npm beta, Codex can verify the install path before project setup:
 
 ```bash
-npx -y -p framepack@alpha framepack --version
-npx -y -p framepack@alpha framepack --help
-npm exec --yes --package=framepack@alpha -- framepack mcp --describe
+npx -y -p framepack@beta framepack --version
+npx -y -p framepack@beta framepack --help
+npm exec --yes --package=framepack@beta -- framepack mcp --describe
 ```
 
 For broad video requests, Codex should first call `recommendPacks`, or run `framepack packs recommend --json` if MCP is not connected. This makes the agent choose a workflow route and visual direction before it generates files.

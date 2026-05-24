@@ -92,14 +92,14 @@ agent 可以用 `framepack atlas --json` 或 MCP `listCapabilityAtlas` 查看已
 
 Framepack 的预期入口就是自然语言：agent 安装 npm 包，连接 MCP，选择 workflow pack 和 creative direction pack，生成工程包，检查 `readiness`，跟进 `nextActionItems`，最后告诉用户还缺什么。
 
-## npm alpha 首次检查
+## npm beta 首次检查
 
 已经发布到 npm 的 alpha 包，最短检查路径是：
 
 ```bash
-npx -y -p framepack@alpha framepack --version
-npx -y -p framepack@alpha framepack --help
-npm exec --yes --package=framepack@alpha -- framepack mcp --describe
+npx -y -p framepack@beta framepack --version
+npx -y -p framepack@beta framepack --help
+npm exec --yes --package=framepack@beta -- framepack mcp --describe
 ```
 
 如果当前项目已经安装了 Framepack，可以继续使用 `npx framepack ...` 或 `framepack ...`。
@@ -235,7 +235,7 @@ npm run release:gate
 
 工程包协议版本说明见 [`docs/architecture/package-protocol-v1.md`](docs/architecture/package-protocol-v1.md)。
 
-发布候选版本说明见 [`docs/agent-platform/release-candidate-v0.4.0-alpha.4.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.4.md)。beta 准备度评估见 [`docs/agent-platform/beta-readiness-v0.4.md`](docs/agent-platform/beta-readiness-v0.4.md)，平台 onboarding 证据见 [`docs/agent-platform/beta-onboarding-trials-v0.4.md`](docs/agent-platform/beta-onboarding-trials-v0.4.md)，HyperFrames 兼容性证据见 [`docs/agent-platform/hyperframes-compat-v0.4.md`](docs/agent-platform/hyperframes-compat-v0.4.md)。alpha3 真实用户试跑报告见 [`docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md`](docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md)。上一版 `v0.4.0-alpha.3`、`v0.4.0-alpha.2` 和 `v0.4.0-alpha.1` 说明保留在 [`docs/agent-platform/release-candidate-v0.4.0-alpha.3.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.3.md)、[`docs/agent-platform/release-candidate-v0.4.0-alpha.2.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.2.md) 和 [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md)。真实场景测试报告见 [`docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`](docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md)。上一版 `v0.3.0-rc.1` 说明保留在 [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md)。下一阶段架构学习和升级路线见 [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md)。
+发布候选版本说明见 [`docs/agent-platform/release-candidate-v0.4.0-beta.1.md`](docs/agent-platform/release-candidate-v0.4.0-beta.1.md)。beta 准备度评估见 [`docs/agent-platform/beta-readiness-v0.4.md`](docs/agent-platform/beta-readiness-v0.4.md)，平台 onboarding 证据见 [`docs/agent-platform/beta-onboarding-trials-v0.4.md`](docs/agent-platform/beta-onboarding-trials-v0.4.md)，HyperFrames 兼容性证据见 [`docs/agent-platform/hyperframes-compat-v0.4.md`](docs/agent-platform/hyperframes-compat-v0.4.md)。上一版 alpha4 发布候选说明见 [`docs/agent-platform/release-candidate-v0.4.0-alpha.4.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.4.md)。alpha3 真实用户试跑报告见 [`docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md`](docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md)。上一版 `v0.4.0-alpha.3`、`v0.4.0-alpha.2` 和 `v0.4.0-alpha.1` 说明保留在 [`docs/agent-platform/release-candidate-v0.4.0-alpha.3.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.3.md)、[`docs/agent-platform/release-candidate-v0.4.0-alpha.2.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.2.md) 和 [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md)。真实场景测试报告见 [`docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`](docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md)。上一版 `v0.3.0-rc.1` 说明保留在 [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md)。下一阶段架构学习和升级路线见 [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md)。
 
 0.4 的具体架构方案见 [`docs/architecture/framepack-0.4-capability-runtime-architecture.md`](docs/architecture/framepack-0.4-capability-runtime-architecture.md)。
 

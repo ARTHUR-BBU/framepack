@@ -11,6 +11,8 @@ const appDir = join(tempRoot, "consumer");
 const packDir = join(tempRoot, "pack");
 const outDir = join(appDir, "out");
 const checks = [];
+const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"));
+const releaseTag = packageJson.version.includes("beta") ? "beta" : "alpha";
 
 function commandName(name) {
   return name;
@@ -124,16 +126,16 @@ try {
   );
 
   const installedVersion = runFramepack("version", ["--version"]).trim();
-  if (installedVersion !== "0.4.0-alpha.4") {
+  if (installedVersion !== packageJson.version) {
     throw new Error(`Installed CLI version mismatch: ${installedVersion}`);
   }
 
   const installedHelp = runFramepack("help", ["--help"]);
   if (
     !installedHelp.includes("Framepack CLI") ||
-    !installedHelp.includes("npx -y -p framepack@alpha framepack --version") ||
-    !installedHelp.includes("npx -y -p framepack@alpha framepack --help") ||
-    !installedHelp.includes("npm exec --yes --package=framepack@alpha -- framepack mcp --describe")
+    !installedHelp.includes(`npx -y -p framepack@${releaseTag} framepack --version`) ||
+    !installedHelp.includes(`npx -y -p framepack@${releaseTag} framepack --help`) ||
+    !installedHelp.includes(`npm exec --yes --package=framepack@${releaseTag} -- framepack mcp --describe`)
   ) {
     throw new Error("Installed CLI help is missing first-run guidance");
   }

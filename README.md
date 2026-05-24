@@ -41,12 +41,12 @@ Framepack is designed for this natural-language path: the agent installs the npm
 
 ## First Npm Check
 
-For the published alpha package, the shortest first-run check is:
+For the published beta package, the shortest first-run check is:
 
 ```bash
-npx -y -p framepack@alpha framepack --version
-npx -y -p framepack@alpha framepack --help
-npm exec --yes --package=framepack@alpha -- framepack mcp --describe
+npx -y -p framepack@beta framepack --version
+npx -y -p framepack@beta framepack --help
+npm exec --yes --package=framepack@beta -- framepack mcp --describe
 ```
 
 In a project where Framepack is already installed, use `npx framepack ...` or `framepack ...`.
@@ -68,7 +68,7 @@ Claude Code preview support is available with `framepack init-agent --target cla
 Agents can inspect the built-in workflow and creative direction packs before choosing a route:
 
 ```bash
-npm exec --yes --package=framepack@alpha -- framepack mcp --describe
+npm exec --yes --package=framepack@beta -- framepack mcp --describe
 npx framepack packs
 npx framepack packs --json
 npx framepack atlas --json
@@ -251,7 +251,7 @@ You can think about the stack like this:
 
 Package protocol versioning is documented in [`docs/architecture/package-protocol-v1.md`](docs/architecture/package-protocol-v1.md).
 
-Release-candidate notes live in [`docs/agent-platform/release-candidate-v0.4.0-alpha.4.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.4.md). The beta readiness review lives in [`docs/agent-platform/beta-readiness-v0.4.md`](docs/agent-platform/beta-readiness-v0.4.md), with platform onboarding evidence in [`docs/agent-platform/beta-onboarding-trials-v0.4.md`](docs/agent-platform/beta-onboarding-trials-v0.4.md) and HyperFrames compatibility evidence in [`docs/agent-platform/hyperframes-compat-v0.4.md`](docs/agent-platform/hyperframes-compat-v0.4.md). The alpha3 real user trial report lives in [`docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md`](docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md). The previous `v0.4.0-alpha.3`, `v0.4.0-alpha.2`, and `v0.4.0-alpha.1` notes remain in [`docs/agent-platform/release-candidate-v0.4.0-alpha.3.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.3.md), [`docs/agent-platform/release-candidate-v0.4.0-alpha.2.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.2.md), and [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md). The real scenario test report lives in [`docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`](docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md). The previous `v0.3.0-rc.1` notes remain in [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md). The next architecture learning and uplift agenda lives in [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md).
+Release-candidate notes live in [`docs/agent-platform/release-candidate-v0.4.0-beta.1.md`](docs/agent-platform/release-candidate-v0.4.0-beta.1.md). The beta readiness review lives in [`docs/agent-platform/beta-readiness-v0.4.md`](docs/agent-platform/beta-readiness-v0.4.md), with platform onboarding evidence in [`docs/agent-platform/beta-onboarding-trials-v0.4.md`](docs/agent-platform/beta-onboarding-trials-v0.4.md) and HyperFrames compatibility evidence in [`docs/agent-platform/hyperframes-compat-v0.4.md`](docs/agent-platform/hyperframes-compat-v0.4.md). The previous alpha4 release-candidate notes live in [`docs/agent-platform/release-candidate-v0.4.0-alpha.4.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.4.md). The alpha3 real user trial report lives in [`docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md`](docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md). The previous `v0.4.0-alpha.3`, `v0.4.0-alpha.2`, and `v0.4.0-alpha.1` notes remain in [`docs/agent-platform/release-candidate-v0.4.0-alpha.3.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.3.md), [`docs/agent-platform/release-candidate-v0.4.0-alpha.2.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.2.md), and [`docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`](docs/agent-platform/release-candidate-v0.4.0-alpha.1.md). The real scenario test report lives in [`docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`](docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md). The previous `v0.3.0-rc.1` notes remain in [`docs/agent-platform/release-candidate-v0.3.0-rc.1.md`](docs/agent-platform/release-candidate-v0.3.0-rc.1.md). The next architecture learning and uplift agenda lives in [`docs/architecture/next-architecture-uplift.md`](docs/architecture/next-architecture-uplift.md).
 
 The concrete 0.4 architecture proposal lives in [`docs/architecture/framepack-0.4-capability-runtime-architecture.md`](docs/architecture/framepack-0.4-capability-runtime-architecture.md).
 

@@ -258,7 +258,7 @@ try {
   }
 
   const report = {
-    name: "Framepack v0.4 alpha real scenario tests",
+    name: "Framepack v0.4 real scenario tests",
     status: "passed",
     outputDir: tempRoot,
     scenarios: scenarioReports,
@@ -268,7 +268,7 @@ try {
   console.log(JSON.stringify(report, null, 2));
 } catch (error) {
   const report = {
-    name: "Framepack v0.4 alpha real scenario tests",
+    name: "Framepack v0.4 real scenario tests",
     status: "failed",
     outputDir: tempRoot,
     error: error instanceof Error ? error.message : String(error),

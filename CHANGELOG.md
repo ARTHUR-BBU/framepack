@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.0-beta.1
+
+- promoted the 0.4 agent-platform line from alpha preparation to the first beta candidate
+- upgraded the HyperFrames runtime dependency to `^0.6.40`
+- added HyperFrames compatibility evidence for `runtime doctor`, `lint`, `inspect`, and `upgrade-check`
+- added separate Codex and Claude Code beta onboarding trial evidence
+- expanded the release scenario gate to four practical routes, including website-to-video
+- kept `latest` untouched and prepared beta distribution through the npm `beta` tag
+
 ## 0.4.0-alpha.4
 
 - packaged the one-prompt agent onboarding path for npm users

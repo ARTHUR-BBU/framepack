@@ -14,12 +14,12 @@ Run:
 framepack init-agent --target claude-code --scope project
 ```
 
-For the published npm alpha, verify the package before wiring the project:
+For the published npm beta, verify the package before wiring the project:
 
 ```bash
-npx -y -p framepack@alpha framepack --version
-npx -y -p framepack@alpha framepack --help
-npm exec --yes --package=framepack@alpha -- framepack mcp --describe
+npx -y -p framepack@beta framepack --version
+npx -y -p framepack@beta framepack --help
+npm exec --yes --package=framepack@beta -- framepack mcp --describe
 ```
 
 This writes `CLAUDE.md` and `.mcp.json` in the current project. On native Windows, the generated MCP config uses `cmd /c npx -y framepack mcp`, which is required for local `npx` MCP servers.

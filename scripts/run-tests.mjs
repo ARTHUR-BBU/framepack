@@ -100,6 +100,10 @@ const framepack04AlphaNotesPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/release-candidate-v0.4.0-alpha.4.md",
 );
+const framepack04BetaNotesPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/release-candidate-v0.4.0-beta.1.md",
+);
 const framepack04ScenarioReportPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md",
@@ -2232,7 +2236,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.4.0-alpha.4");
+      assert.equal(packageJson.version, "0.4.0-beta.1");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -2263,13 +2267,13 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.4.0-alpha.4");
+      assert.equal(versionStdout.join("\n").trim(), "0.4.0-beta.1");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
-      assert.match(helpStdout.join("\n"), /npx -y -p framepack@alpha framepack --version/);
-      assert.match(helpStdout.join("\n"), /npx -y -p framepack@alpha framepack --help/);
-      assert.match(helpStdout.join("\n"), /npm exec --yes --package=framepack@alpha -- framepack mcp --describe/);
+      assert.match(helpStdout.join("\n"), /npx -y -p framepack@beta framepack --version/);
+      assert.match(helpStdout.join("\n"), /npx -y -p framepack@beta framepack --help/);
+      assert.match(helpStdout.join("\n"), /npm exec --yes --package=framepack@beta -- framepack mcp --describe/);
       assert.match(helpStdout.join("\n"), /release:scenarios/);
     },
   },
@@ -2284,6 +2288,8 @@ Framepack compiles content into executable video projects.
       assert.match(script, /npm pack/);
       assert.match(script, /npm install/);
       assert.match(script, /framepack/);
+      assert.match(script, /packageJson\.version/);
+      assert.match(script, /releaseTag/);
       assert.match(script, /--version/);
       assert.match(script, /--help/);
       assert.match(script, /release-smoke/);
@@ -2398,10 +2404,11 @@ Framepack compiles content into executable video projects.
       const agents = readFileSync(agentsPath, "utf8");
 
       assert.match(betaReadiness, /BETA-READINESS-06/);
-      assert.match(betaReadiness, /beta-track candidate, beta gate progressing/);
+      assert.match(betaReadiness, /beta candidate prepared, final beta trial pending/);
       assert.match(betaReadiness, /0\.4\.0-alpha\.4/);
-      assert.match(betaReadiness, /139\/139 checks passed/);
-      assert.match(betaReadiness, /entryCount 201/);
+      assert.match(betaReadiness, /0\.4\.0-beta\.1/);
+      assert.match(betaReadiness, /140\/140 checks passed/);
+      assert.match(betaReadiness, /entryCount 202/);
       assert.match(betaReadiness, /website-product-video/);
       assert.match(betaReadiness, /four routes/);
       assert.match(betaReadiness, /BETA-ONBOARDING-08/);
@@ -2411,6 +2418,7 @@ Framepack compiles content into executable video projects.
       assert.match(betaReadiness, /runtime inspect/);
       assert.match(betaReadiness, /runtime snapshot/);
       assert.match(betaReadiness, /BETA-GATE-07/);
+      assert.match(betaReadiness, /release-candidate-v0\.4\.0-beta\.1/);
       assert.match(betaReadiness, /Framepack does not claim assets are produced until outputs and metadata exist/);
       assert.match(readme, /beta-readiness-v0\.4/);
       assert.match(chineseReadme, /beta-readiness-v0\.4/);
@@ -2468,6 +2476,31 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /hyperframes-compat-v0\.4/);
       assert.match(chineseReadme, /hyperframes-compat-v0\.4/);
       assert.match(agents, /hyperframes-compat-v0\.4/);
+    },
+  },
+  {
+    name: "document the Framepack 0.4 beta release candidate",
+    run: () => {
+      const betaNotes = readFileSync(framepack04BetaNotesPath, "utf8");
+      const changelog = readFileSync(resolve(dirname(packageJsonPath), "CHANGELOG.md"), "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+
+      assert.match(betaNotes, /v0\.4\.0-beta\.1/);
+      assert.match(betaNotes, /framepack@beta/);
+      assert.match(betaNotes, /HyperFrames `0\.6\.40`/);
+      assert.match(betaNotes, /BETA-ONBOARDING-08|separate Codex and Claude Code/);
+      assert.match(betaNotes, /HYPERFRAMES-COMPAT-09|HyperFrames compatibility/);
+      assert.match(betaNotes, /npm publish --access public --tag beta/);
+      assert.match(betaNotes, /Plain-Language Summary/);
+      assert.match(changelog, /0\.4\.0-beta\.1/);
+      assert.match(changelog, /HyperFrames runtime dependency to `\^0\.6\.40`/);
+      assert.match(readme, /release-candidate-v0\.4\.0-beta\.1/);
+      assert.match(readme, /framepack@beta/);
+      assert.match(chineseReadme, /release-candidate-v0\.4\.0-beta\.1/);
+      assert.match(agents, /release-candidate-v0\.4\.0-beta\.1/);
+      assert.match(agents, /framepack@beta/);
     },
   },
   {

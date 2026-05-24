@@ -4,13 +4,13 @@ Review ID: `BETA-READINESS-06`
 
 Date: 2026-05-22
 
-Status: beta-track candidate, beta gate progressing
+Status: beta candidate prepared, final beta trial pending
 
 This document evaluates what must be true before Framepack `0.4` should move from the npm `alpha` tag to a beta release line.
 
 ## Current Alpha Baseline
 
-The current published alpha line is `framepack@0.4.0-alpha.4`.
+The current published alpha line is `framepack@0.4.0-alpha.4`, and the local beta candidate is `framepack@0.4.0-beta.1`.
 
 The alpha line has proven:
 
@@ -24,15 +24,16 @@ The alpha line has proven:
 - Backend-neutral forge tasks are generated for character, map, and FX assets.
 - Package validation, status, repair, release smoke, scenario rehearsal, and install smoke gates are automated.
 - The one-prompt onboarding path is now packaged for npm users.
+- The beta candidate release note is recorded in [`release-candidate-v0.4.0-beta.1.md`](release-candidate-v0.4.0-beta.1.md).
 
 ## Evidence Already Collected
 
 Release gate:
 
-- `npm run release:gate` passes on `0.4.0-alpha.4`.
+- `npm run release:gate` passes on `0.4.0-beta.1`.
 - The gate includes typecheck, full test suite, npm pack dry-run, and real install smoke.
-- Latest observed full suite after `HYPERFRAMES-COMPAT-09`: `139/139 checks passed`.
-- Latest observed npm pack dry-run after `HYPERFRAMES-COMPAT-09`: `entryCount 201`.
+- Latest observed full suite for `0.4.0-beta.1`: `140/140 checks passed`.
+- Latest observed npm pack dry-run for `0.4.0-beta.1`: `entryCount 202`.
 
 Real scenario rehearsal:
 
@@ -158,7 +159,7 @@ These can remain post-beta work if they are documented clearly:
 
 ## Decision
 
-Framepack `0.4.0-alpha.4` is strong enough to serve as the alpha baseline for beta preparation.
+Framepack `0.4.0-beta.1` is prepared as the first beta candidate.
 
 It is not yet beta-ready because beta should still run a fresh trial against the actual beta candidate. `BETA-GATE-07` addressed route coverage and visual QA policy; `BETA-ONBOARDING-08` addressed separate Codex and Claude Code install trials; `HYPERFRAMES-COMPAT-09` addressed HyperFrames compatibility and updated the runtime dependency to `^0.6.40`.
 
