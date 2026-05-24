@@ -116,6 +116,10 @@ const framepack04BetaUserTrialPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/real-user-trial-v0.4.0-beta.1.md",
 );
+const framepack04BetaFeedbackLoopPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/beta-feedback-loop-v0.4.md",
+);
 const framepack04BetaReadinessPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-readiness-v0.4.md",
@@ -131,6 +135,10 @@ const framepack04HyperframesCompatPath = resolve(
 const agentsPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../AGENTS.md",
+);
+const betaFeedbackIssueTemplatePath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../.github/ISSUE_TEMPLATE/beta-feedback.md",
 );
 const threadExamplePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -2455,6 +2463,42 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /real-user-trial-v0\.4\.0-beta\.1/);
       assert.match(chineseReadme, /real-user-trial-v0\.4\.0-beta\.1/);
       assert.match(agents, /real-user-trial-v0\.4\.0-beta\.1/);
+    },
+  },
+  {
+    name: "document the v0.4 beta feedback loop",
+    run: () => {
+      const feedbackLoop = readFileSync(framepack04BetaFeedbackLoopPath, "utf8");
+      const betaReadiness = readFileSync(framepack04BetaReadinessPath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+      const issueTemplate = readFileSync(betaFeedbackIssueTemplatePath, "utf8");
+
+      assert.match(feedbackLoop, /BETA-FEEDBACK-11/);
+      assert.match(feedbackLoop, /\.github\/ISSUE_TEMPLATE\/beta-feedback\.md/);
+      assert.match(feedbackLoop, /Standard Beta Trial Script/);
+      assert.match(feedbackLoop, /npm install framepack@beta/);
+      assert.match(feedbackLoop, /npx framepack mcp --describe/);
+      assert.match(feedbackLoop, /npx framepack runtime doctor/);
+      assert.match(feedbackLoop, /runtime inspect/);
+      assert.match(feedbackLoop, /Feedback Report Template/);
+      assert.match(feedbackLoop, /P0: blocks installation/);
+      assert.match(feedbackLoop, /P1: blocks an advertised beta workflow/);
+      assert.match(feedbackLoop, /installation/);
+      assert.match(feedbackLoop, /agent-onboarding/);
+      assert.match(feedbackLoop, /asset-forge/);
+      assert.match(feedbackLoop, /What Agents Must Report/);
+      assert.match(feedbackLoop, /Plain-Language Summary/);
+      assert.match(issueTemplate, /Framepack beta feedback/);
+      assert.match(issueTemplate, /readiness/);
+      assert.match(issueTemplate, /nextActionItems/);
+      assert.match(issueTemplate, /P0: blocks installation/);
+      assert.match(issueTemplate, /runtime inspect JSON or snapshot manifest/);
+      assert.match(betaReadiness, /beta-feedback-loop-v0\.4/);
+      assert.match(readme, /beta-feedback-loop-v0\.4/);
+      assert.match(chineseReadme, /beta-feedback-loop-v0\.4/);
+      assert.match(agents, /beta-feedback-loop-v0\.4/);
     },
   },
   {

@@ -6,15 +6,15 @@ Date: 2026-05-22
 
 Status: beta published and trial passed
 
-This document evaluates what must be true before Framepack `0.4` should move from the npm `alpha` tag to a beta release line.
+This document records the evidence that moved Framepack `0.4` from the npm `alpha` tag to the first npm `beta` release line.
 
-## Current Alpha Baseline
+## Current Beta Baseline
 
 The current published beta line is `framepack@0.4.0-beta.1`.
 
-The alpha line has proven:
+The beta line has proven:
 
-- The package installs from npm through `framepack@alpha`.
+- The package installs from npm through `framepack@beta`.
 - The CLI exposes stable `--version` and `--help` first-run checks.
 - MCP discovery works through `framepack mcp --describe`.
 - Codex and Claude Code project workflow files can be initialized.
@@ -25,6 +25,7 @@ The alpha line has proven:
 - Package validation, status, repair, release smoke, scenario rehearsal, and install smoke gates are automated.
 - The one-prompt onboarding path is now packaged for npm users.
 - The beta candidate release note is recorded in [`release-candidate-v0.4.0-beta.1.md`](release-candidate-v0.4.0-beta.1.md).
+- The beta feedback loop is recorded in [`beta-feedback-loop-v0.4.md`](beta-feedback-loop-v0.4.md).
 
 ## Evidence Already Collected
 
@@ -79,9 +80,10 @@ Published beta trial:
 
 Published package verification:
 
-- npm alpha tag resolves to the latest alpha.
-- GitHub prereleases exist for the alpha line.
-- `latest` is intentionally not advanced to the alpha line.
+- npm beta tag resolves to `0.4.0-beta.1`.
+- npm alpha tag remains on `0.4.0-alpha.4`.
+- GitHub prereleases exist for the alpha and beta lines.
+- `latest` is intentionally not advanced to the beta line.
 
 ## Beta Entry Criteria
 
@@ -159,7 +161,7 @@ These can remain post-beta work if they are documented clearly:
 
 1. Tag `v0.4.0-beta.1` after this published-beta evidence is committed.
 2. Create the GitHub prerelease for `v0.4.0-beta.1`.
-3. Start the beta feedback loop with real agent users.
+3. Start the [`BETA-FEEDBACK-11`](beta-feedback-loop-v0.4.md) loop with real agent users.
 4. Plan the next beta patch around observed onboarding, runtime, and visual QA friction.
 
 ## Decision
