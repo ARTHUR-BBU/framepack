@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "hyperframes": "^0.5.5",
+    "hyperframes": "^0.6.40",
     "zod": "^4.4.3"
   }
 }

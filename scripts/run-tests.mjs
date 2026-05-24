@@ -116,6 +116,10 @@ const framepack04BetaOnboardingTrialsPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-onboarding-trials-v0.4.md",
 );
+const framepack04HyperframesCompatPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/hyperframes-compat-v0.4.md",
+);
 const agentsPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../AGENTS.md",
@@ -1176,7 +1180,7 @@ const tests = [
 
       assert.match(capabilities.binary, /hyperframes(\.cmd)?$/);
       assert.ok(capabilities.available === true || capabilities.available === false);
-      assert.ok(capabilities.version === "0.5.5" || capabilities.version === "unknown");
+      assert.ok(capabilities.version === "0.6.40" || capabilities.version === "unknown");
     },
   },
   {
@@ -1946,7 +1950,7 @@ Framepack compiles content into executable video projects.
 
       assert.ok(capabilities.available === true || capabilities.available === false);
       assert.match(capabilities.binary, /hyperframes(\.cmd)?$/);
-      assert.ok(capabilities.version === "0.5.5" || capabilities.version === "unknown");
+      assert.ok(capabilities.version === "0.6.40" || capabilities.version === "unknown");
       assert.ok(capabilities.detectedAt.length > 0);
       assert.ok(capabilities.supportedCommands.includes("preview"));
       assert.ok(capabilities.supportedCommands.includes("inspect"));
@@ -2015,7 +2019,7 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "build extended runtime command specs for HyperFrames 0.5 commands",
+    name: "build extended runtime command specs for HyperFrames 0.6-compatible commands",
     run: () => {
       const baseInput = {
         packageDirectory: "/tmp/case-video",
@@ -2396,8 +2400,8 @@ Framepack compiles content into executable video projects.
       assert.match(betaReadiness, /BETA-READINESS-06/);
       assert.match(betaReadiness, /beta-track candidate, beta gate progressing/);
       assert.match(betaReadiness, /0\.4\.0-alpha\.4/);
-      assert.match(betaReadiness, /137\/137 checks passed/);
-      assert.match(betaReadiness, /entryCount 198/);
+      assert.match(betaReadiness, /139\/139 checks passed/);
+      assert.match(betaReadiness, /entryCount 201/);
       assert.match(betaReadiness, /website-product-video/);
       assert.match(betaReadiness, /four routes/);
       assert.match(betaReadiness, /BETA-ONBOARDING-08/);
@@ -2437,6 +2441,33 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /beta-onboarding-trials-v0\.4/);
       assert.match(chineseReadme, /beta-onboarding-trials-v0\.4/);
       assert.match(agents, /beta-onboarding-trials-v0\.4/);
+    },
+  },
+  {
+    name: "document HyperFrames compatibility review for beta",
+    run: () => {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+      const hyperframesCompat = readFileSync(framepack04HyperframesCompatPath, "utf8");
+      const betaReadiness = readFileSync(framepack04BetaReadinessPath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+
+      assert.equal(packageJson.dependencies.hyperframes, "^0.6.40");
+      assert.match(hyperframesCompat, /HYPERFRAMES-COMPAT-09/);
+      assert.match(hyperframesCompat, /0\.6\.40/);
+      assert.match(hyperframesCompat, /runtime lint/);
+      assert.match(hyperframesCompat, /runtime inspect/);
+      assert.match(hyperframesCompat, /Framepack dependency after this review: `hyperframes \^0\.6\.40`/);
+      assert.match(hyperframesCompat, /`lambda`/);
+      assert.match(hyperframesCompat, /Plain-Language Summary/);
+      assert.match(betaReadiness, /HYPERFRAMES-COMPAT-09/);
+      assert.match(betaReadiness, /hyperframes-compat-v0\.4/);
+      assert.match(betaReadiness, /hyperframes \^0\.6\.40/);
+      assert.match(betaReadiness, /npm run release:gate/);
+      assert.match(readme, /hyperframes-compat-v0\.4/);
+      assert.match(chineseReadme, /hyperframes-compat-v0\.4/);
+      assert.match(agents, /hyperframes-compat-v0\.4/);
     },
   },
   {
@@ -2632,7 +2663,7 @@ Framepack compiles content into executable video projects.
       assert.equal(stderr.length, 0);
       assert.match(stdout.join("\n"), /HyperFrames runtime/);
       assert.match(stdout.join("\n"), /available: (true|false)/);
-      assert.match(stdout.join("\n"), /version: (0\.5\.5|unknown)/);
+      assert.match(stdout.join("\n"), /version: (0\.6\.40|unknown)/);
     },
   },
   {
