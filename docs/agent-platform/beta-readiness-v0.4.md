@@ -26,6 +26,7 @@ The beta line has proven:
 - The one-prompt onboarding path is now packaged for npm users.
 - The beta candidate release note is recorded in [`release-candidate-v0.4.0-beta.1.md`](release-candidate-v0.4.0-beta.1.md).
 - The beta feedback loop is recorded in [`beta-feedback-loop-v0.4.md`](beta-feedback-loop-v0.4.md).
+- The beta product-state cutoff is recorded in [`v0.4-beta-product-state-cutoff.md`](v0.4-beta-product-state-cutoff.md).
 
 ## Evidence Already Collected
 
@@ -161,8 +162,8 @@ These can remain post-beta work if they are documented clearly:
 
 1. Tag `v0.4.0-beta.1` after this published-beta evidence is committed.
 2. Create the GitHub prerelease for `v0.4.0-beta.1`.
-3. Start the [`BETA-FEEDBACK-11`](beta-feedback-loop-v0.4.md) loop with real agent users.
-4. Plan the next beta patch around observed onboarding, runtime, and visual QA friction.
+3. Treat [`BETA-CUTOFF-12`](v0.4-beta-product-state-cutoff.md) as the closed beta baseline.
+4. Start the [`BETA-PATCH-RADAR-13`](v0.4-beta-product-state-cutoff.md) loop from real `BETA-FEEDBACK-11` reports.
 
 ## Decision
 

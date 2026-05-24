@@ -120,6 +120,10 @@ const framepack04BetaFeedbackLoopPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-feedback-loop-v0.4.md",
 );
+const framepack04BetaCutoffPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/v0.4-beta-product-state-cutoff.md",
+);
 const framepack04BetaReadinessPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-readiness-v0.4.md",
@@ -2499,6 +2503,39 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /beta-feedback-loop-v0\.4/);
       assert.match(chineseReadme, /beta-feedback-loop-v0\.4/);
       assert.match(agents, /beta-feedback-loop-v0\.4/);
+    },
+  },
+  {
+    name: "document the v0.4 beta product state cutoff",
+    run: () => {
+      const cutoff = readFileSync(framepack04BetaCutoffPath, "utf8");
+      const betaReadiness = readFileSync(framepack04BetaReadinessPath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+
+      assert.match(cutoff, /BETA-CUTOFF-12/);
+      assert.match(cutoff, /0\.4\.0-beta\.1/);
+      assert.match(cutoff, /0\.4\.0-alpha\.4/);
+      assert.match(cutoff, /latest tag: intentionally not advanced/);
+      assert.match(cutoff, /BETA-READINESS-06/);
+      assert.match(cutoff, /BETA-GATE-07/);
+      assert.match(cutoff, /BETA-ONBOARDING-08/);
+      assert.match(cutoff, /HYPERFRAMES-COMPAT-09/);
+      assert.match(cutoff, /BETA-CANDIDATE-10/);
+      assert.match(cutoff, /BETA-FEEDBACK-11/);
+      assert.match(cutoff, /Closed In 0\.4 Beta/);
+      assert.match(cutoff, /Deliberately Not Closed/);
+      assert.match(cutoff, /agent-first installation guidance/);
+      assert.match(cutoff, /backend-neutral Asset Forge Layer contracts/);
+      assert.match(cutoff, /automatic installation of `agent-sprite-forge` skills/);
+      assert.match(cutoff, /BETA-PATCH-RADAR-13/);
+      assert.match(cutoff, /Plain-Language Summary/);
+      assert.match(betaReadiness, /v0\.4-beta-product-state-cutoff/);
+      assert.match(betaReadiness, /BETA-CUTOFF-12/);
+      assert.match(readme, /v0\.4-beta-product-state-cutoff/);
+      assert.match(chineseReadme, /v0\.4-beta-product-state-cutoff/);
+      assert.match(agents, /v0\.4-beta-product-state-cutoff/);
     },
   },
   {
