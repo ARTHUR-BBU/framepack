@@ -4,13 +4,13 @@ Review ID: `BETA-READINESS-06`
 
 Date: 2026-05-22
 
-Status: beta candidate prepared, final beta trial pending
+Status: beta published and trial passed
 
 This document evaluates what must be true before Framepack `0.4` should move from the npm `alpha` tag to a beta release line.
 
 ## Current Alpha Baseline
 
-The current published alpha line is `framepack@0.4.0-alpha.4`, and the local beta candidate is `framepack@0.4.0-beta.1`.
+The current published beta line is `framepack@0.4.0-beta.1`.
 
 The alpha line has proven:
 
@@ -69,6 +69,13 @@ HyperFrames compatibility:
 - Framepack dependency was updated from `hyperframes ^0.5.5` to `hyperframes ^0.6.40`.
 - A Framepack-generated markdown package passed validation, status, runtime lint, and runtime inspect with HyperFrames `0.6.40`.
 - `npm run release:gate` passed after the dependency update, including install smoke from a packed tarball.
+
+Published beta trial:
+
+- `BETA-CANDIDATE-10` published `framepack@0.4.0-beta.1` to the npm `beta` tag.
+- Trial evidence is recorded in [`real-user-trial-v0.4.0-beta.1.md`](real-user-trial-v0.4.0-beta.1.md).
+- npm dist-tags were `latest: 0.4.0-alpha.1`, `alpha: 0.4.0-alpha.4`, and `beta: 0.4.0-beta.1`.
+- A clean project installed `framepack@beta`, verified version/help/MCP, initialized Codex and Claude Code workflow files, generated a package, validated it, checked status, and detected HyperFrames `0.6.40`.
 
 Published package verification:
 
@@ -135,9 +142,7 @@ This policy does not require HyperFrames rendering in every release gate. It def
 
 ## Beta Blockers
 
-These are the main gaps before a credible beta:
-
-- A beta candidate should run a fresh real user trial against the actual beta tag, not only alpha3/alpha4.
+There are no remaining blockers for the first beta publication. Post-beta work should focus on feedback, visual QA artifacts, optional skill detection, and community pack expansion.
 
 ## Non-Blocking Alpha Debt
 
@@ -152,17 +157,17 @@ These can remain post-beta work if they are documented clearly:
 
 ## Recommended Next Work
 
-1. Run `npm run release:scenarios` and confirm all four routes pass.
-2. Run a fresh real user trial against the actual beta candidate tag.
-3. Run final release gate after the trial evidence is recorded.
-4. Publish `0.4.0-beta.1` only after the above gates pass.
+1. Tag `v0.4.0-beta.1` after this published-beta evidence is committed.
+2. Create the GitHub prerelease for `v0.4.0-beta.1`.
+3. Start the beta feedback loop with real agent users.
+4. Plan the next beta patch around observed onboarding, runtime, and visual QA friction.
 
 ## Decision
 
-Framepack `0.4.0-beta.1` is prepared as the first beta candidate.
+Framepack `0.4.0-beta.1` is the first published beta.
 
-It is not yet beta-ready because beta should still run a fresh trial against the actual beta candidate. `BETA-GATE-07` addressed route coverage and visual QA policy; `BETA-ONBOARDING-08` addressed separate Codex and Claude Code install trials; `HYPERFRAMES-COMPAT-09` addressed HyperFrames compatibility and updated the runtime dependency to `^0.6.40`.
+The beta publication criteria have been met. `BETA-GATE-07` addressed route coverage and visual QA policy; `BETA-ONBOARDING-08` addressed separate Codex and Claude Code install trials; `HYPERFRAMES-COMPAT-09` addressed HyperFrames compatibility and updated the runtime dependency to `^0.6.40`; `BETA-CANDIDATE-10` published and verified `framepack@beta`.
 
 ## Plain-Language Summary
 
-Framepack can already be installed from npm, connected to agents, and used to generate valid video project packages. `BETA-GATE-07` added the missing website scenario and a clear visual QA rule: do not call a package visually ready without validation, runtime health, and inspect or snapshot evidence when runtime is available. `BETA-ONBOARDING-08` proved Codex and Claude Code onboarding separately. `HYPERFRAMES-COMPAT-09` proved the package still works with the newer HyperFrames runtime. To call it beta, we still need a fresh trial against the actual beta candidate.
+Framepack can now be installed from npm as `framepack@beta`, connected to agents, and used to generate valid video project packages. `BETA-GATE-07` added the missing website scenario and a clear visual QA rule: do not call a package visually ready without validation, runtime health, and inspect or snapshot evidence when runtime is available. `BETA-ONBOARDING-08` proved Codex and Claude Code onboarding separately. `HYPERFRAMES-COMPAT-09` proved the package still works with the newer HyperFrames runtime. `BETA-CANDIDATE-10` proved the published beta package works in a clean project.

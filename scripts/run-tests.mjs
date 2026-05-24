@@ -112,6 +112,10 @@ const framepack04RealUserTrialPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md",
 );
+const framepack04BetaUserTrialPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/real-user-trial-v0.4.0-beta.1.md",
+);
 const framepack04BetaReadinessPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-readiness-v0.4.md",
@@ -2404,7 +2408,7 @@ Framepack compiles content into executable video projects.
       const agents = readFileSync(agentsPath, "utf8");
 
       assert.match(betaReadiness, /BETA-READINESS-06/);
-      assert.match(betaReadiness, /beta candidate prepared, final beta trial pending/);
+      assert.match(betaReadiness, /beta published and trial passed/);
       assert.match(betaReadiness, /0\.4\.0-alpha\.4/);
       assert.match(betaReadiness, /0\.4\.0-beta\.1/);
       assert.match(betaReadiness, /140\/140 checks passed/);
@@ -2419,10 +2423,38 @@ Framepack compiles content into executable video projects.
       assert.match(betaReadiness, /runtime snapshot/);
       assert.match(betaReadiness, /BETA-GATE-07/);
       assert.match(betaReadiness, /release-candidate-v0\.4\.0-beta\.1/);
+      assert.match(betaReadiness, /BETA-CANDIDATE-10/);
+      assert.match(betaReadiness, /real-user-trial-v0\.4\.0-beta\.1/);
       assert.match(betaReadiness, /Framepack does not claim assets are produced until outputs and metadata exist/);
       assert.match(readme, /beta-readiness-v0\.4/);
       assert.match(chineseReadme, /beta-readiness-v0\.4/);
       assert.match(agents, /beta-readiness-v0\.4/);
+    },
+  },
+  {
+    name: "document the published v0.4 beta real user trial",
+    run: () => {
+      const betaTrial = readFileSync(framepack04BetaUserTrialPath, "utf8");
+      const betaReadiness = readFileSync(framepack04BetaReadinessPath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+
+      assert.match(betaTrial, /BETA-CANDIDATE-10/);
+      assert.match(betaTrial, /framepack@beta/);
+      assert.match(betaTrial, /0\.4\.0-beta\.1/);
+      assert.match(betaTrial, /installedHyperFrames": "0\.6\.40/);
+      assert.match(betaTrial, /helpHasBetaCommand": true/);
+      assert.match(betaTrial, /mcpHasGenerateProject": true/);
+      assert.match(betaTrial, /recommendedWorkflow": "product-explainer/);
+      assert.match(betaTrial, /atlasStack": "web-motion-explainer-stack/);
+      assert.match(betaTrial, /readiness": "ready/);
+      assert.match(betaTrial, /runtimeDoctorHas0640": true/);
+      assert.match(betaTrial, /Npm Cache Note/);
+      assert.match(betaReadiness, /real-user-trial-v0\.4\.0-beta\.1/);
+      assert.match(readme, /real-user-trial-v0\.4\.0-beta\.1/);
+      assert.match(chineseReadme, /real-user-trial-v0\.4\.0-beta\.1/);
+      assert.match(agents, /real-user-trial-v0\.4\.0-beta\.1/);
     },
   },
   {
