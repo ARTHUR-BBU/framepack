@@ -112,6 +112,10 @@ const framepack04BetaReadinessPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-readiness-v0.4.md",
 );
+const framepack04BetaOnboardingTrialsPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/beta-onboarding-trials-v0.4.md",
+);
 const agentsPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../AGENTS.md",
@@ -2390,14 +2394,15 @@ Framepack compiles content into executable video projects.
       const agents = readFileSync(agentsPath, "utf8");
 
       assert.match(betaReadiness, /BETA-READINESS-06/);
-      assert.match(betaReadiness, /beta-track candidate, beta gate in progress/);
+      assert.match(betaReadiness, /beta-track candidate, beta gate progressing/);
       assert.match(betaReadiness, /0\.4\.0-alpha\.4/);
       assert.match(betaReadiness, /137\/137 checks passed/);
       assert.match(betaReadiness, /entryCount 198/);
       assert.match(betaReadiness, /website-product-video/);
       assert.match(betaReadiness, /four routes/);
-      assert.match(betaReadiness, /clean Codex-oriented install trial/);
-      assert.match(betaReadiness, /clean Claude Code-oriented install trial/);
+      assert.match(betaReadiness, /BETA-ONBOARDING-08/);
+      assert.match(betaReadiness, /Codex onboarding generated `AGENTS\.md`/);
+      assert.match(betaReadiness, /Claude Code onboarding generated `CLAUDE\.md`/);
       assert.match(betaReadiness, /Visual QA Minimum For Beta/);
       assert.match(betaReadiness, /runtime inspect/);
       assert.match(betaReadiness, /runtime snapshot/);
@@ -2406,6 +2411,32 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /beta-readiness-v0\.4/);
       assert.match(chineseReadme, /beta-readiness-v0\.4/);
       assert.match(agents, /beta-readiness-v0\.4/);
+    },
+  },
+  {
+    name: "document separate beta onboarding trials",
+    run: () => {
+      const onboardingTrials = readFileSync(framepack04BetaOnboardingTrialsPath, "utf8");
+      const betaReadiness = readFileSync(framepack04BetaReadinessPath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+
+      assert.match(onboardingTrials, /BETA-ONBOARDING-08/);
+      assert.match(onboardingTrials, /0\.4\.0-alpha\.4/);
+      assert.match(onboardingTrials, /Codex Clean Install Trial/);
+      assert.match(onboardingTrials, /Claude Code Clean Install Trial/);
+      assert.match(onboardingTrials, /\.framepack\/agent\/codex\/SKILL\.md/);
+      assert.match(onboardingTrials, /CLAUDE\.md/);
+      assert.match(onboardingTrials, /\.mcp\.json/);
+      assert.match(onboardingTrials, /`CLAUDE\.md` was absent/);
+      assert.match(onboardingTrials, /Codex skill file was absent/);
+      assert.match(onboardingTrials, /product-explainer/);
+      assert.match(onboardingTrials, /thread-to-video/);
+      assert.match(betaReadiness, /beta-onboarding-trials-v0\.4/);
+      assert.match(readme, /beta-onboarding-trials-v0\.4/);
+      assert.match(chineseReadme, /beta-onboarding-trials-v0\.4/);
+      assert.match(agents, /beta-onboarding-trials-v0\.4/);
     },
   },
   {
