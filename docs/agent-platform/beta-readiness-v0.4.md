@@ -4,7 +4,7 @@ Review ID: `BETA-READINESS-06`
 
 Date: 2026-05-22
 
-Status: beta-track candidate, not beta-ready yet
+Status: beta-track candidate, beta gate in progress
 
 This document evaluates what must be true before Framepack `0.4` should move from the npm `alpha` tag to a beta release line.
 
@@ -31,16 +31,19 @@ Release gate:
 
 - `npm run release:gate` passes on `0.4.0-alpha.4`.
 - The gate includes typecheck, full test suite, npm pack dry-run, and real install smoke.
-- Latest observed full suite: `136/136 checks passed`.
-- Latest observed npm pack dry-run: `entryCount 198`.
+- Latest observed full suite before `BETA-GATE-07`: `137/137 checks passed`.
+- Latest observed npm pack dry-run before `BETA-GATE-07`: `entryCount 198`.
 
 Real scenario rehearsal:
 
 - `npm run release:scenarios` passes.
 - `markdown-product-explainer` validates and reaches readiness `ready`.
 - `thread-editorial-video` validates and reaches readiness `needs-assets`.
+- `website-product-video` validates and reaches readiness `needs-assets`.
 - `game-ad-sprite-video` validates and reaches readiness `needs-assets`.
 - Game-ad next actions include `sync-assets` and `produce-forge-assets`.
+
+BETA-GATE-07 promotes the website route into `release:scenarios`, turning the rehearsal from three routes into four routes.
 
 Real user trial:
 
@@ -73,7 +76,7 @@ Framepack can enter beta when these criteria are true:
    - Markdown/product explainer route passes.
    - Thread/editorial route passes.
    - Game-ad sprite-video route passes.
-   - Website route remains covered by existing unit and CLI tests, or gets added to the scenario rehearsal before beta.
+   - Website route passes in the scenario rehearsal.
 
 4. Agent-first MCP surface is coherent.
    - MCP `generateProject`, `getStatus`, `validatePackage`, `repairPackage`, `captureAssets`, `syncAssets`, `runtimeDoctor`, `listWorkflowPacks`, `recommendPacks`, `listCapabilityAtlas`, and `recommendCapabilityStack` remain discoverable.
@@ -89,15 +92,36 @@ Framepack can enter beta when these criteria are true:
    - HyperFrames runtime commands remain discoverable.
    - `runtime doctor`, `lint`, `inspect`, and `snapshot` behavior is documented.
    - Beta documentation must not imply a finished video exists when only a project package exists.
+   - Visual-ready claims require package validation plus runtime/visual evidence when HyperFrames is available.
+
+## Visual QA Minimum For Beta
+
+Before an agent may say a Framepack package is visually ready or render-ready in beta, it must have evidence for:
+
+1. Package protocol health.
+   - `framepack validate --project-dir <package>` passes.
+   - `framepack status --project-dir <package> --json` reports `protocolStatus: "passed"`.
+
+2. Runtime health.
+   - `framepack runtime doctor --project-dir <package>` passes, or the agent reports that runtime availability is the blocker.
+
+3. Visual inspection evidence when runtime is available.
+   - Run `framepack runtime inspect --project-dir <package> --json`, or
+   - run `framepack runtime snapshot --project-dir <package>` and preserve snapshot evidence.
+
+4. Asset honesty.
+   - Pending capture or forge assets prevent render-ready claims.
+   - Forge outputs must have existing files and synced metadata before being treated as available.
+
+This policy does not require HyperFrames rendering in every release gate. It defines the minimum evidence an agent must collect before making visual-readiness claims to a user.
 
 ## Beta Blockers
 
 These are the main gaps before a credible beta:
 
-- Website route should be promoted into `release:scenarios` or a separate four-route rehearsal.
+- Separate beta-tag real user trials remain required after a beta candidate exists.
 - A beta candidate should run a fresh real user trial against the actual beta tag, not only alpha3/alpha4.
 - HyperFrames compatibility should be checked explicitly near beta tagging, including `runtime upgrade-check` or a documented manual check.
-- Visual QA evidence should have a minimum beta policy: what must be inspected or snapshotted before an agent says a package is render-ready.
 - Agent onboarding should be tested in one clean Codex-oriented project and one clean Claude Code-oriented project, not only initialized in the same trial workspace.
 
 ## Non-Blocking Alpha Debt
@@ -113,18 +137,17 @@ These can remain post-beta work if they are documented clearly:
 
 ## Recommended Next Work
 
-1. Add website to real scenario rehearsal.
-2. Define beta visual QA minimum: package validation, runtime doctor, and at least one inspect or snapshot evidence path when HyperFrames runtime is available.
-3. Run a clean Codex-oriented install trial and a clean Claude Code-oriented install trial separately.
-4. Run HyperFrames compatibility review.
-5. Publish `0.4.0-beta.1` only after the above gates pass.
+1. Run `npm run release:scenarios` and confirm all four routes pass.
+2. Run a clean Codex-oriented install trial and a clean Claude Code-oriented install trial separately.
+3. Run HyperFrames compatibility review.
+4. Publish `0.4.0-beta.1` only after the above gates pass.
 
 ## Decision
 
 Framepack `0.4.0-alpha.4` is strong enough to serve as the alpha baseline for beta preparation.
 
-It is not yet beta-ready because beta should prove one more level of route coverage, platform onboarding separation, and runtime/visual evidence policy. The next recommended implementation round is `BETA-GATE-07`: add the missing beta gates instead of publishing another alpha immediately.
+It is not yet beta-ready because beta should still prove platform onboarding separation and HyperFrames compatibility near the beta tag. `BETA-GATE-07` addresses route coverage and visual QA policy; the next gate should address separate Codex and Claude Code install trials.
 
 ## Plain-Language Summary
 
-Framepack can already be installed from npm, connected to agents, and used to generate valid video project packages. That is a major alpha milestone. To call it beta, we should prove a bit more: website scenarios, separate Codex and Claude Code onboarding trials, and clearer rules for when a project is visually ready. In simple terms, alpha proves "it works"; beta should prove "new users and agents can rely on it repeatedly."
+Framepack can already be installed from npm, connected to agents, and used to generate valid video project packages. `BETA-GATE-07` adds the missing website scenario and a clear visual QA rule: do not call a package visually ready without validation, runtime health, and inspect or snapshot evidence when runtime is available. To call it beta, we still need separate Codex and Claude Code install trials and a near-release HyperFrames compatibility check.

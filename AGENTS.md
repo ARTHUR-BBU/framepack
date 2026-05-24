@@ -101,7 +101,7 @@ Run `release-smoke` before tagging or publishing a release candidate. It creates
 
 Run `npm run release:smoke:install` as the stricter RC gate. It builds the repo, packs the npm tarball, installs it into a temporary empty consumer project, then runs the installed binary through MCP discovery, `release-smoke`, `generate --auto-pack`, `validate`, and `status --json`.
 
-Run `npm run release:scenarios` as the three-route product-readiness rehearsal. It generates markdown, thread, and game-ad sprite-video packages, then runs `validate` and `status --json` on each package. It does not install external forge skills, call image generation, or require HyperFrames rendering.
+Run `npm run release:scenarios` as the four-route product-readiness rehearsal. It generates markdown, thread, website, and game-ad sprite-video packages, then runs `validate` and `status --json` on each package. It does not install external forge skills, call image generation, or require HyperFrames rendering.
 
 Run `npm run release:gate` as the final RC gate. It runs typecheck, the full test suite, npm pack dry-run, and the real install smoke gate in one structured pass.
 

@@ -2300,7 +2300,7 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "publish a three-scenario release test harness for v0.4 alpha",
+    name: "publish a four-route release test harness for v0.4 alpha",
     run: () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
       const scriptPath = resolve(dirname(packageJsonPath), "scripts", "run-real-scenarios.mjs");
@@ -2310,13 +2310,18 @@ Framepack compiles content into executable video projects.
       assert.equal(packageJson.scripts["release:scenarios"], "npm run build && node scripts/run-real-scenarios.mjs");
       assert.match(script, /markdown-product-explainer/);
       assert.match(script, /thread-editorial-video/);
+      assert.match(script, /website-product-video/);
       assert.match(script, /game-ad-sprite-video/);
+      assert.match(script, /createServer/);
+      assert.match(script, /capture-screenshot/);
       assert.match(script, /capabilityStackSelection/);
       assert.match(script, /validate/);
       assert.match(script, /status/);
       assert.match(scenarioReport, /markdown-product-explainer/);
       assert.match(scenarioReport, /thread-editorial-video/);
+      assert.match(scenarioReport, /website-product-video/);
       assert.match(scenarioReport, /game-ad-sprite-video/);
+      assert.match(scenarioReport, /four practical user routes/);
       assert.match(scenarioReport, /npm run release:scenarios/);
       assert.match(scenarioReport, /v0\.4\.0-alpha\.1/);
     },
@@ -2385,14 +2390,17 @@ Framepack compiles content into executable video projects.
       const agents = readFileSync(agentsPath, "utf8");
 
       assert.match(betaReadiness, /BETA-READINESS-06/);
-      assert.match(betaReadiness, /beta-track candidate, not beta-ready yet/);
+      assert.match(betaReadiness, /beta-track candidate, beta gate in progress/);
       assert.match(betaReadiness, /0\.4\.0-alpha\.4/);
-      assert.match(betaReadiness, /136\/136 checks passed/);
+      assert.match(betaReadiness, /137\/137 checks passed/);
       assert.match(betaReadiness, /entryCount 198/);
-      assert.match(betaReadiness, /Website route should be promoted into `release:scenarios`/);
+      assert.match(betaReadiness, /website-product-video/);
+      assert.match(betaReadiness, /four routes/);
       assert.match(betaReadiness, /clean Codex-oriented install trial/);
       assert.match(betaReadiness, /clean Claude Code-oriented install trial/);
-      assert.match(betaReadiness, /visual QA minimum/);
+      assert.match(betaReadiness, /Visual QA Minimum For Beta/);
+      assert.match(betaReadiness, /runtime inspect/);
+      assert.match(betaReadiness, /runtime snapshot/);
       assert.match(betaReadiness, /BETA-GATE-07/);
       assert.match(betaReadiness, /Framepack does not claim assets are produced until outputs and metadata exist/);
       assert.match(readme, /beta-readiness-v0\.4/);

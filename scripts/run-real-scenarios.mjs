@@ -1,4 +1,5 @@
-import { execFileSync } from "node:child_process";
+import { execFile } from "node:child_process";
+import { createServer } from "node:http";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -13,13 +14,45 @@ const tempRoot =
     : mkdtempSync(join(tmpdir(), "framepack-real-scenarios-"));
 
 const checks = [];
+const websiteHtml = readFileSync(join(repoRoot, "examples", "website.html"), "utf8");
+const websiteServer = createServer((request, response) => {
+  if (request.url === "/" || request.url === "/website.html") {
+    response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    response.end(websiteHtml);
+    return;
+  }
 
-function runStep(id, commandLabel, args) {
+  response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+  response.end("Not found");
+});
+
+await new Promise((resolveListen, rejectListen) => {
+  websiteServer.once("error", rejectListen);
+  websiteServer.listen(0, "127.0.0.1", resolveListen);
+});
+
+const websiteAddress = websiteServer.address();
+if (!websiteAddress || typeof websiteAddress === "string") {
+  throw new Error("Unable to start local website scenario server");
+}
+const websiteUrl = `http://127.0.0.1:${websiteAddress.port}/website.html`;
+
+async function runStep(id, commandLabel, args) {
   try {
-    const stdout = execFileSync("node", [join(repoRoot, "dist", "cli.js"), ...args], {
-      cwd: repoRoot,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
+    const stdout = await new Promise((resolveExec, rejectExec) => {
+      execFile("node", [join(repoRoot, "dist", "cli.js"), ...args], {
+        cwd: repoRoot,
+        encoding: "utf8",
+      }, (error, stdoutValue, stderrValue) => {
+        if (error) {
+          error.stdout = stdoutValue;
+          error.stderr = stderrValue;
+          rejectExec(error);
+          return;
+        }
+
+        resolveExec(stdoutValue);
+      });
     });
 
     checks.push({
@@ -110,6 +143,38 @@ const scenarios = [
     },
   },
   {
+    id: "website-product-video",
+    projectName: "website-product-video",
+    args: [
+      "generate",
+      "--url",
+      websiteUrl,
+      "--output-dir",
+      tempRoot,
+      "--goal",
+      "Explain the website",
+      "--audience",
+      "Founders",
+      "--project-name",
+      "website-product-video",
+      "--auto-pack",
+    ],
+    assertions: (projectDir) => {
+      const manifest = readPackageJson(projectDir, "PACKAGE_MANIFEST.json");
+      const sourceManifest = readPackageJson(projectDir, "SOURCE_MANIFEST.json");
+      const assetExecutionPlan = readPackageJson(projectDir, "ASSET_EXECUTION_PLAN.json");
+      if (!manifest.artifacts?.planning?.includes("SOURCE_SCENE_MAP.json")) {
+        throw new Error("Website scenario package is missing SOURCE_SCENE_MAP.json in planning artifacts");
+      }
+      if (sourceManifest.sourceType !== "website") {
+        throw new Error("Website scenario package did not preserve website source type");
+      }
+      if (!assetExecutionPlan.items?.some((item) => item.executionKind === "capture-screenshot")) {
+        throw new Error("Website scenario is missing capture-screenshot execution items");
+      }
+    },
+  },
+  {
     id: "game-ad-sprite-video",
     projectName: "game-ad-sprite-video",
     args: [
@@ -148,8 +213,10 @@ const scenarios = [
 ];
 
 try {
-  const scenarioReports = scenarios.map((scenario) => {
-    runStep(
+  const scenarioReports = [];
+
+  for (const scenario of scenarios) {
+    await runStep(
       `generate-${scenario.id}`,
       `framepack ${scenario.args.join(" ")}`,
       scenario.args,
@@ -160,7 +227,7 @@ try {
       throw new Error(`Scenario project was not generated: ${projectDir}`);
     }
 
-    runStep(
+    await runStep(
       `validate-${scenario.id}`,
       `framepack validate --project-dir ${projectDir}`,
       ["validate", "--project-dir", projectDir],
@@ -168,7 +235,7 @@ try {
 
     const status = parseJson(
       `parse-status-${scenario.id}`,
-      runStep(
+      await runStep(
         `status-${scenario.id}`,
         `framepack status --project-dir ${projectDir} --json`,
         ["status", "--project-dir", projectDir, "--json"],
@@ -181,14 +248,14 @@ try {
 
     scenario.assertions(projectDir);
 
-    return {
+    scenarioReports.push({
       id: scenario.id,
       projectDir,
       protocolStatus: status.protocolStatus,
       readiness: status.readiness,
       nextActionItems: status.nextActionItems?.map((item) => item.id) ?? [],
-    };
-  });
+    });
+  }
 
   const report = {
     name: "Framepack v0.4 alpha real scenario tests",
@@ -211,6 +278,7 @@ try {
   console.error(JSON.stringify(report, null, 2));
   process.exitCode = 1;
 } finally {
+  await new Promise((resolveClose) => websiteServer.close(resolveClose));
   if (!keepOutput && outputDirArgIndex < 0 && process.exitCode !== 1) {
     rmSync(tempRoot, { recursive: true, force: true });
   }
