@@ -124,6 +124,10 @@ const framepack04BetaCutoffPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/v0.4-beta-product-state-cutoff.md",
 );
+const framepack04BetaPatchRadarPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/beta-patch-radar-v0.4.md",
+);
 const framepack04BetaReadinessPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-readiness-v0.4.md",
@@ -2530,12 +2534,48 @@ Framepack compiles content into executable video projects.
       assert.match(cutoff, /backend-neutral Asset Forge Layer contracts/);
       assert.match(cutoff, /automatic installation of `agent-sprite-forge` skills/);
       assert.match(cutoff, /BETA-PATCH-RADAR-13/);
+      assert.match(cutoff, /beta-patch-radar-v0\.4/);
       assert.match(cutoff, /Plain-Language Summary/);
       assert.match(betaReadiness, /v0\.4-beta-product-state-cutoff/);
       assert.match(betaReadiness, /BETA-CUTOFF-12/);
       assert.match(readme, /v0\.4-beta-product-state-cutoff/);
       assert.match(chineseReadme, /v0\.4-beta-product-state-cutoff/);
       assert.match(agents, /v0\.4-beta-product-state-cutoff/);
+    },
+  },
+  {
+    name: "document the v0.4 beta patch radar",
+    run: () => {
+      const radar = readFileSync(framepack04BetaPatchRadarPath, "utf8");
+      const cutoff = readFileSync(framepack04BetaCutoffPath, "utf8");
+      const betaReadiness = readFileSync(framepack04BetaReadinessPath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+
+      assert.match(radar, /BETA-PATCH-RADAR-13/);
+      assert.match(radar, /framepack@0\.4\.0-beta\.1/);
+      assert.match(radar, /npm view framepack dist-tags version --json/);
+      assert.match(radar, /"beta": "0\.4\.0-beta\.1"/);
+      assert.match(radar, /Trial A: Clean Markdown Project/);
+      assert.match(radar, /Trial B: Clean Game-Ad Forge Project/);
+      assert.match(radar, /"version": "0\.4\.0-beta\.1"/);
+      assert.match(radar, /"statusReady": true/);
+      assert.match(radar, /"statusNeedsAssets": true/);
+      assert.match(radar, /forge-character-pack/);
+      assert.match(radar, /forge-map-pack/);
+      assert.match(radar, /forge-fx-pack/);
+      assert.match(radar, /Beta Patch Queue/);
+      assert.match(radar, /No `beta\.2` trigger/);
+      assert.match(radar, /0\.4\.0-beta\.2` Trigger Rules/);
+      assert.match(radar, /User Test Project Entry/);
+      assert.match(radar, /Do not claim visual-ready output/);
+      assert.match(radar, /Plain-Language Summary/);
+      assert.match(cutoff, /beta-patch-radar-v0\.4/);
+      assert.match(betaReadiness, /beta-patch-radar-v0\.4/);
+      assert.match(readme, /beta-patch-radar-v0\.4/);
+      assert.match(chineseReadme, /beta-patch-radar-v0\.4/);
+      assert.match(agents, /beta-patch-radar-v0\.4/);
     },
   },
   {

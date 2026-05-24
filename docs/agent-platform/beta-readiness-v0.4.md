@@ -163,7 +163,7 @@ These can remain post-beta work if they are documented clearly:
 1. Tag `v0.4.0-beta.1` after this published-beta evidence is committed.
 2. Create the GitHub prerelease for `v0.4.0-beta.1`.
 3. Treat [`BETA-CUTOFF-12`](v0.4-beta-product-state-cutoff.md) as the closed beta baseline.
-4. Start the [`BETA-PATCH-RADAR-13`](v0.4-beta-product-state-cutoff.md) loop from real `BETA-FEEDBACK-11` reports.
+4. Start the [`BETA-PATCH-RADAR-13`](beta-patch-radar-v0.4.md) loop from real `BETA-FEEDBACK-11` reports.
 
 ## Decision
 
