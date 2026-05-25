@@ -128,6 +128,10 @@ const framepack04BetaPatchRadarPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-patch-radar-v0.4.md",
 );
+const framepack04ManualBetaTestGuidePath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md",
+);
 const framepack04BetaReadinessPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-readiness-v0.4.md",
@@ -2576,6 +2580,37 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /beta-patch-radar-v0\.4/);
       assert.match(chineseReadme, /beta-patch-radar-v0\.4/);
       assert.match(agents, /beta-patch-radar-v0\.4/);
+    },
+  },
+  {
+    name: "document the v0.4 beta manual test guide",
+    run: () => {
+      const guide = readFileSync(framepack04ManualBetaTestGuidePath, "utf8");
+      const readme = readFileSync(readmePath, "utf8");
+      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const agents = readFileSync(agentsPath, "utf8");
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+
+      assert.match(guide, /BETA-MANUAL-TEST-14/);
+      assert.match(guide, /framepack@0\.4\.0-beta\.1/);
+      assert.match(guide, /npm install framepack@beta --no-audit --no-fund/);
+      assert.match(guide, /npx framepack mcp --describe/);
+      assert.match(guide, /init-agent --target codex/);
+      assert.match(guide, /init-agent --target claude-code/);
+      assert.match(guide, /Markdown 产品说明转视频项目/);
+      assert.match(guide, /游戏风广告 \/ Asset Forge/);
+      assert.match(guide, /forge-character-pack/);
+      assert.match(guide, /forge-map-pack/);
+      assert.match(guide, /forge-fx-pack/);
+      assert.match(guide, /问题记录模板/);
+      assert.match(guide, /P0: 安装、CLI、MCP、generate、validate、status 直接坏/);
+      assert.match(guide, /小白总结/);
+      assert.ok(packageJson.files.includes("README.zh-CN.md"));
+      assert.ok(packageJson.files.includes("docs/agent-platform"));
+      assert.match(readme, /README\.zh-CN\.md/);
+      assert.match(readme, /manual-beta-test-guide-v0\.4\.zh-CN/);
+      assert.match(chineseReadme, /manual-beta-test-guide-v0\.4\.zh-CN/);
+      assert.match(agents, /manual-beta-test-guide-v0\.4\.zh-CN/);
     },
   },
   {

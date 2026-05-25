@@ -1,5 +1,7 @@
 # Framepack
 
+Beta 手工测试指引见：[docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md](./docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md)。
+
 Framepack 是一个运行在 Codex、Claude Code 等通用 coding agent 之上的视频生产垂类 Agent Harness。
 
 它不是简单的视频生成小工具，而是给通用大脑装上的“视频生产神经系统”：告诉 agent 应该看什么、调用什么工具、缺什么能力、需要留下什么证据，以及什么时候可以继续推进。

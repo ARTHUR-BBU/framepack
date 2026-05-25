@@ -1,5 +1,7 @@
 # Framepack
 
+中文用户请看：[README.zh-CN.md](./README.zh-CN.md)。Beta 手工测试指引：[docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md](./docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md)。
+
 [中文说明](./README.zh-CN.md)
 
 Framepack is a video production Agent Harness for Codex, Claude Code, and other coding agents.
