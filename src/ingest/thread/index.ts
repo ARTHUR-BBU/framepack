@@ -8,6 +8,37 @@ function stripLeadingMarker(value: string) {
   return value.replace(/^\s*(?:[-*]\s+|\d+[.)]\s+)/, "").trim();
 }
 
+function isMarkdownSectionHeading(value: string) {
+  return /^#{2,6}\s+\S/.test(value.trim());
+}
+
+function isMarkdownHeading(value: string) {
+  return /^#{1,6}\s+\S/.test(value.trim());
+}
+
+function mergeMarkdownHeadingBlocks(blocks: string[]) {
+  const merged: string[] = [];
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const block = blocks[index];
+    const nextBlock = blocks[index + 1];
+
+    if (
+      isMarkdownSectionHeading(block) &&
+      nextBlock &&
+      !isMarkdownHeading(nextBlock)
+    ) {
+      merged.push(`${block}\n\n${nextBlock}`);
+      index += 1;
+      continue;
+    }
+
+    merged.push(block);
+  }
+
+  return merged;
+}
+
 function parseThreadPosts(text: string): ThreadPost[] {
   const normalized = normalizeThreadText(text);
 
@@ -15,10 +46,12 @@ function parseThreadPosts(text: string): ThreadPost[] {
     throw new Error("Thread input is empty.");
   }
 
-  const posts = normalized
+  const blocks = normalized
     .split(/\n\s*\n+/)
     .map((block) => stripLeadingMarker(block).trim())
-    .filter((block) => block.length > 0)
+    .filter((block) => block.length > 0);
+
+  const posts = mergeMarkdownHeadingBlocks(blocks)
     .map((text, index) => ({
       index: index + 1,
       text,

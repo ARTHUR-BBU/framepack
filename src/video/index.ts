@@ -3,6 +3,8 @@ import { normalizeVideoBriefInput } from "./brief/normalize.js";
 import { buildAssetPlan } from "../planning/assets/index.js";
 import { buildScript } from "../planning/script/index.js";
 import { buildStoryboard } from "../planning/storyboard/index.js";
+import { buildCreativePlanningArtifacts } from "../creative/harness.js";
+import { buildCompositionProposal } from "../creative/composition-proposal.js";
 import { compileCompositionSpec } from "./compile/composition-spec.js";
 import { createVideoProjectPackage } from "./package/project-package.js";
 import { planCaseExplainerScenes } from "./planning/scene-planner.js";
@@ -40,6 +42,14 @@ function buildCaseExplainerVideoProjectFromBrief(input: {
   const scenePlan = planCaseExplainerScenes(brief);
   const script = buildScript({ scenePlan });
   const storyboard = buildStoryboard({ scenePlan });
+  const creativePlanningArtifacts = buildCreativePlanningArtifacts({
+    brief,
+    scenePlan,
+  });
+  const compositionProposal = buildCompositionProposal({
+    ...creativePlanningArtifacts,
+    scenePlan,
+  });
   const assetPlan = buildAssetPlan({
     scenePlan,
     sourceManifest: input.sourceManifest,
@@ -54,6 +64,7 @@ function buildCaseExplainerVideoProjectFromBrief(input: {
     ...scenePlan,
     format: brief.format,
     themePalette: input.defaults.theme?.palette,
+    compositionProposal,
   });
   const composition = emitHyperframesComposition(spec);
   const projectPackage = createVideoProjectPackage({
@@ -65,6 +76,7 @@ function buildCaseExplainerVideoProjectFromBrief(input: {
     assetPlan,
     validationReport,
     compositionHtml: composition.html,
+    compositionProposal,
     sourceManifest: input.sourceManifest,
   });
 
@@ -75,6 +87,7 @@ function buildCaseExplainerVideoProjectFromBrief(input: {
     storyboard,
     assetPlan,
     validationReport,
+    compositionProposal,
     spec,
     composition,
     package: projectPackage,

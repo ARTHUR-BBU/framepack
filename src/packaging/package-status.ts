@@ -30,6 +30,7 @@ export interface ForgeStatusBreakdown {
 export interface PackageStatusNextAction {
   id:
     | "repair-protocol"
+    | "review-creative-quality"
     | "validate-protocol"
     | "inspect-failed-assets"
     | "sync-assets"
@@ -49,6 +50,13 @@ export interface PackageStatusSummary {
   projectName: string;
   readiness: PackageReadiness;
   protocolStatus: "passed" | "failed";
+  quality: {
+    present: boolean;
+    status: "passed" | "failed" | "unknown";
+    checkIds: string[];
+    failedChecks: number;
+    findings: string[];
+  };
   issueCount: number;
   issues: string[];
   sourceType: string;
@@ -127,6 +135,7 @@ function buildForgeBreakdown(items: AssetExecutionPlan["items"]): ForgeStatusBre
 
 function buildNextActionItems(input: {
   protocolStatus: "passed" | "failed";
+  qualityStatus?: "passed" | "failed" | "unknown";
   assets: StatusCounts;
   forge: StatusCounts;
   runtimeAvailable: boolean;
@@ -145,6 +154,15 @@ function buildNextActionItems(input: {
       category: "protocol",
       command: "framepack validate --project-dir <path>",
       reason: "Re-run validation after repair or manual protocol fixes.",
+    });
+  }
+
+  if (input.qualityStatus === "failed") {
+    actions.push({
+      id: "review-creative-quality",
+      category: "protocol",
+      command: "review QUALITY_REPORT.json",
+      reason: "Creative Harness quality checks failed and should be revised before preview/render.",
     });
   }
 
@@ -206,6 +224,10 @@ function buildNextActionItems(input: {
 }
 
 function formatNextAction(action: PackageStatusNextAction): string {
+  if (action.id === "review-creative-quality") {
+    return "review QUALITY_REPORT.json before preview or render";
+  }
+
   if (action.id === "inspect-failed-assets") {
     return "inspect failed asset execution items before preview or render";
   }
@@ -239,11 +261,16 @@ function formatNextAction(action: PackageStatusNextAction): string {
 
 function determineReadiness(input: {
   protocolStatus: "passed" | "failed";
+  qualityStatus?: "passed" | "failed" | "unknown";
   assets: StatusCounts;
   forge: StatusCounts;
   runtimeAvailable: boolean;
 }): PackageReadiness {
   if (input.protocolStatus === "failed") {
+    return "blocked";
+  }
+
+  if (input.qualityStatus === "failed") {
     return "blocked";
   }
 
@@ -264,6 +291,7 @@ function determineReadiness(input: {
 
 export function createPackageStatusDecision(input: {
   protocolStatus: "passed" | "failed";
+  qualityStatus?: "passed" | "failed" | "unknown";
   assets: StatusCounts;
   forge: StatusCounts;
   runtimeAvailable: boolean;
@@ -271,6 +299,34 @@ export function createPackageStatusDecision(input: {
   return {
     readiness: determineReadiness(input),
     nextActionItems: buildNextActionItems(input),
+  };
+}
+
+function readQualitySummary(projectDir: string): PackageStatusSummary["quality"] {
+  const report = readOptionalJsonFile<{
+    status?: string;
+    checks?: Array<{ id?: string; status?: string }>;
+    findings?: string[];
+  }>(projectDir, "QUALITY_REPORT.json");
+
+  if (!report) {
+    return {
+      present: false,
+      status: "unknown",
+      checkIds: [],
+      failedChecks: 0,
+      findings: [],
+    };
+  }
+
+  const checks = Array.isArray(report.checks) ? report.checks : [];
+
+  return {
+    present: true,
+    status: report.status === "passed" || report.status === "failed" ? report.status : "unknown",
+    checkIds: checks.map((check) => check.id).filter((id): id is string => Boolean(id)),
+    failedChecks: checks.filter((check) => check.status === "failed").length,
+    findings: Array.isArray(report.findings) ? report.findings : [],
   };
 }
 
@@ -285,11 +341,13 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
   const items = assetExecutionPlan?.items ?? [];
   const forgeItems = items.filter((item) => item.executionKind.startsWith("forge-"));
   const runtime = detectHyperframesCapabilities();
+  const quality = readQualitySummary(projectDir);
   const assets = countItems(items);
   const forge = countItems(forgeItems);
   const forgeBreakdown = buildForgeBreakdown(forgeItems);
   const decision = createPackageStatusDecision({
     protocolStatus: validationReport.status,
+    qualityStatus: quality.status,
     assets,
     forge,
     runtimeAvailable: runtime.available,
@@ -300,6 +358,7 @@ export function getProjectPackageStatus(input: { projectDir: string }): PackageS
     projectName: manifest?.projectName ?? validationReport.projectName,
     readiness: decision.readiness,
     protocolStatus: validationReport.status,
+    quality,
     issueCount: validationReport.issues.length,
     issues: validationReport.issues,
     sourceType: manifest?.sourceType ?? "unknown",
@@ -328,6 +387,7 @@ export function formatProjectPackageStatus(summary: PackageStatusSummary): strin
     `sourceType: ${summary.sourceType}`,
     `outputType: ${summary.outputType}`,
     `protocol: ${summary.protocolStatus}`,
+    `quality: ${summary.quality.status}`,
     `issues: ${summary.issueCount}`,
     `assets: ${formatCounts(summary.assets)}`,
     `forge: ${formatCounts(summary.forge)}`,

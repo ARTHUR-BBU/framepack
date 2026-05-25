@@ -32,6 +32,12 @@ export const FRAMEPACK_PACKAGE_PROTOCOL_V1: Pick<
     source: [],
     planning: [
       "VIDEO_BRIEF.json",
+      "CREATIVE_BRIEF.json",
+      "NARRATIVE_ARC.json",
+      "VISUAL_DIRECTION.json",
+      "MOTION_PLAN.json",
+      "COMPOSITION_PROPOSAL.json",
+      "QUALITY_REPORT.json",
       "SCENE_PLAN.json",
       "SCRIPT.md",
       "STORYBOARD.md",

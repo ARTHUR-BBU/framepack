@@ -8,16 +8,29 @@ interface ExecutionProbeResult {
   error?: Error;
 }
 
+function quoteWindowsCommandArg(value: string) {
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
 function runCommand(
   command: HyperframesCommandSpec,
   args: string[],
 ): ExecutionProbeResult {
   const isWindowsCmd = process.platform === "win32" && command.executable.toLowerCase().endsWith(".cmd");
-  const result = spawnSync(command.executable, args, {
-    cwd: command.cwd,
-    encoding: "utf8",
-    shell: isWindowsCmd,
-  });
+  const result = isWindowsCmd
+    ? spawnSync(
+        [quoteWindowsCommandArg(command.executable), ...args.map(quoteWindowsCommandArg)].join(" "),
+        {
+        cwd: command.cwd,
+        encoding: "utf8",
+        shell: true,
+        },
+      )
+    : spawnSync(command.executable, args, {
+        cwd: command.cwd,
+        encoding: "utf8",
+        shell: false,
+      });
 
   return {
     status: result.status,

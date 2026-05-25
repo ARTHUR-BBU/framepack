@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0-beta.2
+
+- added the beta.2 Creative Harness composition proposal layer with `COMPOSITION_PROPOSAL.json`
+- routed HyperFrames composition emission through proposal scene treatments, layouts, visual hierarchy, and motion recipes
+- expanded creative package artifacts and quality checks for proposal scene coverage and motion variety
+- improved generated compositions with visible proposal metadata, directed fallback cards, and treatment-specific scene content
+- kept `latest` untouched and prepared beta distribution through the npm `beta` tag
+
 ## 0.4.0-beta.1
 
 - promoted the 0.4 agent-platform line from alpha preparation to the first beta candidate

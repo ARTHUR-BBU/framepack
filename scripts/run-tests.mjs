@@ -38,6 +38,7 @@ import { buildScript } from "../dist/planning/script/index.js";
 import { buildStoryboard } from "../dist/planning/storyboard/index.js";
 import { parseMarkdownSourceMaterials } from "../dist/video/brief/markdown.js";
 import { compileCompositionSpec } from "../dist/video/compile/composition-spec.js";
+import { buildCompositionProposal } from "../dist/creative/composition-proposal.js";
 import {
   createVideoProjectPackage,
   writeVideoProjectPackage,
@@ -1180,6 +1181,35 @@ const tests = [
     },
   },
   {
+    name: "detect local HyperFrames cmd when project path contains spaces",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes path spaces "));
+
+      try {
+        const binDir = join(tempRoot, "node_modules", ".bin");
+        mkdirSync(binDir, { recursive: true });
+        writeFileSync(
+          join(binDir, "hyperframes.cmd"),
+          "@echo off\r\necho hyperframes 0.6.42\r\n",
+          "utf8",
+        );
+
+        const capabilities = detectLocalHyperframesCapabilities({
+          cwd: tempRoot,
+          now: () => "2026-05-25T00:00:00.000Z",
+          platform: "win32",
+        });
+
+        assert.equal(capabilities.available, true);
+        assert.equal(capabilities.version, "0.6.42");
+        assert.match(capabilities.binary, /hyperframes\.cmd$/);
+        assert.equal(capabilities.fallbackNotes.length, 0);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "fallback to plain hyperframes binary when no local install exists",
     run: () => {
       const capabilities = detectLocalHyperframesCapabilities({
@@ -1325,6 +1355,37 @@ const tests = [
       assert.equal(sourceBundle.collectedArtifacts.length, 3);
       assert.equal(sourceBundle.collectedArtifacts[0]?.title, "Post 1");
       assert.match(sourceBundle.collectedArtifacts[2]?.body ?? "", /Framepack compiles content/);
+    },
+  },
+  {
+    name: "compile markdown-like thread headings with their following body",
+    run: () => {
+      const sourceBundle = compileThreadSourceBundle({
+        text: `
+# Agent-Native Video Sprint
+
+## Problem
+
+Teams waste time moving between scripts, screenshots, image generation, and editing tools.
+
+## Solution
+
+Framepack gives agents a package protocol, asset plan, runtime manifest, and validation loop.
+
+## Offer
+
+Join a practical sprint and ship your first agent-native video workflow.
+        `,
+      });
+
+      assert.equal(sourceBundle.sourceType, "thread");
+      assert.equal(sourceBundle.collectedArtifacts.length, 4);
+      assert.equal(sourceBundle.collectedArtifacts[0]?.title, "Post 1");
+      assert.equal(sourceBundle.collectedArtifacts[0]?.body, "# Agent-Native Video Sprint");
+      assert.match(sourceBundle.collectedArtifacts[1]?.body ?? "", /^## Problem\n\nTeams waste time/);
+      assert.match(sourceBundle.collectedArtifacts[2]?.body ?? "", /^## Solution\n\nFramepack gives agents/);
+      assert.match(sourceBundle.collectedArtifacts[3]?.body ?? "", /^## Offer\n\nJoin a practical sprint/);
+      assert.doesNotMatch(sourceBundle.collectedArtifacts[1]?.body ?? "", /^## Problem$/);
     },
   },
   {
@@ -1783,6 +1844,67 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "build purpose-specific script and storyboard notes",
+    run: () => {
+      const scenePlan = {
+        totalDurationSec: 18,
+        scenes: [
+          {
+            sceneId: "scene-1",
+            purpose: "cover",
+            startTimeSec: 0,
+            durationSec: 6,
+            narration: "Explain the course - Agent-Native Video Sprint",
+            onScreenText: ["Agent-Native Video Sprint", "Ship agent-native video systems"],
+            visualType: "cover",
+            assets: [],
+            transition: "fade",
+            validationNotes: [],
+          },
+          {
+            sceneId: "scene-2",
+            purpose: "problem",
+            startTimeSec: 6,
+            durationSec: 6,
+            narration: "Explain the course - Teams waste time moving between scripts and tools.",
+            onScreenText: ["The problem", "Teams waste time moving between scripts and tools."],
+            visualType: "problem",
+            assets: [],
+            transition: "fade",
+            validationNotes: [],
+          },
+          {
+            sceneId: "scene-3",
+            purpose: "ending",
+            startTimeSec: 12,
+            durationSec: 6,
+            narration: "Explain the course - Join the sprint.",
+            onScreenText: ["Join the sprint", "Ship your first agent-native video workflow."],
+            visualType: "ending",
+            assets: [],
+            transition: "fade",
+            validationNotes: [],
+          },
+        ],
+      };
+      const script = buildScript({ scenePlan });
+      const storyboard = buildStoryboard({ scenePlan });
+
+      assert.match(script.scenes[0].voiceoverLines[0], /Meet Agent-Native Video Sprint/);
+      assert.match(script.scenes[1].voiceoverLines[0], /The problem/);
+      assert.match(script.scenes[2].voiceoverLines[0], /Join the sprint/);
+      assert.doesNotMatch(script.scenes[0].voiceoverLines[0], /Explain the course -/);
+      assert.deepEqual(
+        storyboard.scenes.map((scene) => scene.motionNote),
+        [
+          "Title reveal with a slow push.",
+          "Contrast emphasis with a sharp text beat.",
+          "CTA punch with a confident final hold.",
+        ],
+      );
+    },
+  },
+  {
     name: "build website asset plan with capture targets from source manifest",
     run: () => {
       const scenePlan = planCaseExplainerScenes({
@@ -1965,6 +2087,161 @@ Framepack compiles content into executable video projects.
         validate: "npx hyperframes validate",
         render: "npx hyperframes render",
       });
+    },
+  },
+  {
+    name: "compile composition scenes into visible directed sections",
+    run: () => {
+      const spec = compileCompositionSpec({
+        format: "16:9",
+        totalDurationSec: 24,
+        scenes: [
+          {
+            sceneId: "scene-1",
+            purpose: "cover",
+            startTimeSec: 0,
+            durationSec: 6,
+            narration: "Meet the Agent-Native Video Sprint.",
+            onScreenText: ["Agent-Native Video Sprint", "Ship video systems with agents"],
+            visualType: "cover",
+            assets: ["post-1-card"],
+            transition: "fade",
+            validationNotes: [],
+          },
+        ],
+      });
+      const output = emitHyperframesComposition(spec);
+
+      assert.doesNotMatch(spec.scenes[0].htmlTemplate, /<section[^>]*><\/section>/);
+      assert.match(spec.scenes[0].htmlTemplate, /Agent-Native Video Sprint/);
+      assert.match(spec.scenes[0].htmlTemplate, /Ship video systems with agents/);
+      assert.match(spec.scenes[0].htmlTemplate, /assets\/generated\/post-1-card\.png/);
+      assert.match(output.html, /class="scene scene-cover/);
+      assert.match(output.html, /data-motion-intent="title reveal"/);
+    },
+  },
+  {
+    name: "build a composition proposal that drives scene treatment and motion",
+    run: () => {
+      const scenePlan = {
+        totalDurationSec: 24,
+        scenes: [
+          {
+            sceneId: "scene-1",
+            purpose: "cover",
+            startTimeSec: 0,
+            durationSec: 6,
+            narration: "A sharp opening promise.",
+            onScreenText: ["Agent Video Sprint", "Ship a usable package"],
+            visualType: "cover",
+            assets: ["hero-card"],
+            transition: "fade",
+            validationNotes: ["Open with the commercial promise."],
+          },
+          {
+            sceneId: "scene-2",
+            purpose: "problem",
+            startTimeSec: 6,
+            durationSec: 6,
+            narration: "Teams lose time across tools.",
+            onScreenText: ["Production breaks across tools"],
+            visualType: "problem",
+            assets: [],
+            transition: "cut",
+            validationNotes: ["Make the cost visible."],
+          },
+        ],
+      };
+      const proposal = buildCompositionProposal({
+        creativeBrief: {
+          version: "framepack.creative-brief.v1",
+          sourceType: "thread",
+          outputType: "case-explainer",
+          goal: "Promote Agent Video Sprint",
+          audience: "Founders",
+          commercialIntent: "conversion",
+          contentType: "course-promo",
+          emotionalEnergy: ["credible", "forward-moving"],
+          narrativePattern: "hook-problem-solution-proof-cta",
+          visualSeeds: ["high contrast"],
+          motionSeeds: ["title reveal"],
+          constraints: ["no empty scenes"],
+        },
+        narrativeArc: {
+          version: "framepack.narrative-arc.v1",
+          pattern: "hook-problem-solution-proof-cta",
+          beats: [
+            {
+              sceneId: "scene-1",
+              role: "hook",
+              intent: "Create immediate recognition.",
+              tension: "Video production feels scattered.",
+              release: "A sprint gives the team a route.",
+            },
+            {
+              sceneId: "scene-2",
+              role: "problem",
+              intent: "Make the hidden cost obvious.",
+              tension: "Tools do not line up.",
+              release: "Move toward a harness.",
+            },
+          ],
+        },
+        visualDirection: {
+          version: "framepack.visual-direction.v1",
+          style: "clean-saas-explainer",
+          paletteIntent: "credible dark base with high-energy accent",
+          typographyIntent: "large hook, compact proof text, strong CTA",
+          sceneTreatments: [
+            {
+              sceneId: "scene-1",
+              treatment: "hero-hook",
+              layout: "centered title with kinetic subtitle",
+              visualHierarchy: ["title", "promise", "source badge"],
+            },
+            {
+              sceneId: "scene-2",
+              treatment: "contrast-problem",
+              layout: "large pain statement with warning accent",
+              visualHierarchy: ["pain", "cost", "contrast"],
+            },
+          ],
+        },
+        motionPlan: {
+          version: "framepack.motion-plan.v1",
+          motionLanguage: "controlled kinetic explainer",
+          beats: [
+            {
+              sceneId: "scene-1",
+              entry: "title reveal",
+              hold: "slow push",
+              exit: "fast fade",
+              intensity: "medium",
+            },
+            {
+              sceneId: "scene-2",
+              entry: "contrast cut",
+              hold: "sharp text beat",
+              exit: "snap toward solution",
+              intensity: "high",
+            },
+          ],
+        },
+        scenePlan,
+      });
+      const spec = compileCompositionSpec({
+        ...scenePlan,
+        format: "16:9",
+        compositionProposal: proposal,
+      });
+
+      assert.equal(proposal.version, "framepack.composition-proposal.v1");
+      assert.equal(proposal.scenes[0].treatment, "hero-hook");
+      assert.equal(proposal.scenes[1].motion.entry, "contrast cut");
+      assert.match(spec.scenes[0].htmlTemplate, /data-proposal-id="proposal-scene-1"/);
+      assert.match(spec.scenes[0].htmlTemplate, /data-treatment="hero-hook"/);
+      assert.match(spec.scenes[0].htmlTemplate, /centered title with kinetic subtitle/);
+      assert.match(spec.scenes[1].htmlTemplate, /data-motion-intent="contrast cut"/);
     },
   },
   {
@@ -2163,6 +2440,16 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(writtenDir, "FLYWHEEL.md"), "utf8"), /Intake -> Plan/);
         assert.match(readFileSync(join(writtenDir, "SCRIPT.md"), "utf8"), /# Script/);
         assert.match(readFileSync(join(writtenDir, "STORYBOARD.md"), "utf8"), /# Storyboard/);
+        assert.match(readFileSync(join(writtenDir, "CREATIVE_BRIEF.json"), "utf8"), /framepack\.creative-brief\.v1/);
+        assert.match(readFileSync(join(writtenDir, "NARRATIVE_ARC.json"), "utf8"), /hook-problem-solution-proof-cta/);
+        assert.match(readFileSync(join(writtenDir, "VISUAL_DIRECTION.json"), "utf8"), /framepack\.visual-direction\.v1/);
+        assert.match(readFileSync(join(writtenDir, "MOTION_PLAN.json"), "utf8"), /framepack\.motion-plan\.v1/);
+        assert.match(readFileSync(join(writtenDir, "COMPOSITION_PROPOSAL.json"), "utf8"), /framepack\.composition-proposal\.v1/);
+        assert.match(readFileSync(join(writtenDir, "QUALITY_REPORT.json"), "utf8"), /composition-visible-content/);
+        assert.match(readFileSync(join(writtenDir, "QUALITY_REPORT.json"), "utf8"), /proposal-scene-coverage/);
+        assert.match(readFileSync(join(writtenDir, "PACKAGE_MANIFEST.json"), "utf8"), /CREATIVE_BRIEF\.json/);
+        assert.match(readFileSync(join(writtenDir, "PACKAGE_MANIFEST.json"), "utf8"), /COMPOSITION_PROPOSAL\.json/);
+        assert.match(readFileSync(join(writtenDir, "PACKAGE_MANIFEST.json"), "utf8"), /QUALITY_REPORT\.json/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Validation status: passed/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /Runtime available: (true|false)/);
         assert.match(readFileSync(join(writtenDir, "HANDOFF.md"), "utf8"), /framepack repair --project-dir <path>/);
@@ -2223,6 +2510,13 @@ Framepack compiles content into executable video projects.
       assert.equal(result.spec.width, 1920);
       assert.equal(result.validationReport.status, "passed");
       assert.match(result.package.files["index.html"], /data-composition-id/);
+      assert.match(result.package.files["CREATIVE_BRIEF.json"], /commercialIntent/);
+      assert.match(result.package.files["NARRATIVE_ARC.json"], /"role": "hook"/);
+      assert.match(result.package.files["VISUAL_DIRECTION.json"], /sceneTreatments/);
+      assert.match(result.package.files["MOTION_PLAN.json"], /motionLanguage/);
+      assert.match(result.package.files["COMPOSITION_PROPOSAL.json"], /proposal-scene-/);
+      assert.match(result.package.files["index.html"], /data-treatment=/);
+      assert.match(result.package.files["QUALITY_REPORT.json"], /"status": "passed"/);
       assert.match(result.package.files["VALIDATION_REPORT.json"], /"status": "passed"/);
     },
   },
@@ -2260,7 +2554,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.4.0-beta.1");
+      assert.equal(packageJson.version, "0.4.0-beta.2");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -2291,7 +2585,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.4.0-beta.1");
+      assert.equal(versionStdout.join("\n").trim(), "0.4.0-beta.2");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -4828,6 +5122,9 @@ Framepack compiles content into executable video projects.
         assert.equal(status.projectName, "sprite-video-demo");
         assert.equal(status.readiness, "needs-assets");
         assert.equal(status.protocolStatus, "passed");
+        assert.equal(status.quality.status, "passed");
+        assert.equal(status.quality.failedChecks, 0);
+        assert.ok(status.quality.checkIds.includes("proposal-scene-coverage"));
         assert.equal(status.assets.total, 3);
         assert.equal(status.assets.pending, 3);
         assert.equal(status.forge.total, 3);
@@ -5140,6 +5437,75 @@ Framepack compiles content into executable video projects.
         assert.equal(validateStderr.length, 0);
         assert.match(repairStdout.join("\n"), /CAPABILITY_GRAPH\.json/);
         assert.ok(repairedCapabilityGraph.nodes.some((node) => node.id === "video-runtime.hyperframes"));
+        assert.match(validateStdout.join("\n"), /Package validation passed/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "repair project package rebuilds malformed asset execution plan",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-repair-asset-execution-"));
+      const repairStdout = [];
+      const repairStderr = [];
+      const validateStdout = [];
+      const validateStderr = [];
+
+      try {
+        const generateExitCode = await runCli(
+          [
+            "generate",
+            "--game-ad-description",
+            "A course that teaches founders to ship agent-native video systems.",
+            "--output-dir",
+            tempRoot,
+            "--goal",
+            "Promote the course",
+            "--audience",
+            "Founders",
+            "--project-name",
+            "repair-asset-execution-package",
+            "--format",
+            "9:16",
+            "--auto-pack",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+
+        const projectDir = join(tempRoot, "repair-asset-execution-package");
+        const assetExecutionPlanPath = join(projectDir, "ASSET_EXECUTION_PLAN.json");
+        writeFileSync(assetExecutionPlanPath, '{"broken": true}', "utf8");
+
+        const repairExitCode = await runCli(
+          ["repair", "--project-dir", projectDir],
+          {
+            stdout: (message) => repairStdout.push(message),
+            stderr: (message) => repairStderr.push(message),
+          },
+        );
+        const finalValidateExitCode = await runCli(
+          ["validate", "--project-dir", projectDir],
+          {
+            stdout: (message) => validateStdout.push(message),
+            stderr: (message) => validateStderr.push(message),
+          },
+        );
+        const repairedAssetExecutionPlan = JSON.parse(readFileSync(assetExecutionPlanPath, "utf8"));
+
+        assert.equal(generateExitCode, 0);
+        assert.equal(repairExitCode, 0);
+        assert.equal(finalValidateExitCode, 0);
+        assert.equal(repairStderr.length, 0);
+        assert.equal(validateStderr.length, 0);
+        assert.ok(Array.isArray(repairedAssetExecutionPlan.items));
+        assert.ok(repairedAssetExecutionPlan.items.length > 0);
+        assert.match(repairStdout.join("\n"), /ASSET_EXECUTION_PLAN\.json/);
         assert.match(validateStdout.join("\n"), /Package validation passed/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });

@@ -48,6 +48,10 @@ const DEFAULT_SUPPORTED_RENDER_OPTIONS = [
   "max-concurrent-renders",
 ];
 
+function quoteWindowsCommandArg(value: string) {
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
 export function resolveHyperframesBinary(input?: {
   binary?: string;
   cwd?: string;
@@ -72,10 +76,15 @@ export function resolveHyperframesBinary(input?: {
 
 function runVersionProbe(binary: string, args: string[]): VersionProbeResult {
   const isWindowsCmd = process.platform === "win32" && binary.toLowerCase().endsWith(".cmd");
-  const result = spawnSync(binary, args, {
-    encoding: "utf8",
-    shell: isWindowsCmd,
-  });
+  const result = isWindowsCmd
+    ? spawnSync([quoteWindowsCommandArg(binary), ...args.map(quoteWindowsCommandArg)].join(" "), {
+        encoding: "utf8",
+        shell: true,
+      })
+    : spawnSync(binary, args, {
+        encoding: "utf8",
+        shell: false,
+      });
 
   return {
     status: result.status,

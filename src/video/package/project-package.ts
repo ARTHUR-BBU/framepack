@@ -33,6 +33,11 @@ import {
   PACKAGE_RUNTIME_ACTIONS,
 } from "../../runtime/manifest.js";
 import { formatValidationReportMarkdown } from "../validation/validation-report.js";
+import { buildCompositionProposal, type CompositionProposal } from "../../creative/composition-proposal.js";
+import {
+  buildCreativeHarnessArtifacts,
+  buildCreativePlanningArtifacts,
+} from "../../creative/harness.js";
 
 export interface VideoProjectPackage {
   directories: string[];
@@ -86,6 +91,7 @@ export function createVideoProjectPackage(input: {
   assetPlan: AssetPlan;
   validationReport: ValidationReport;
   compositionHtml: string;
+  compositionProposal?: CompositionProposal;
   sourceManifest?: SourceManifest;
 }): VideoProjectPackage {
   const brief = enrichBriefWithCapabilityStack(input.brief);
@@ -155,6 +161,24 @@ export function createVideoProjectPackage(input: {
     capabilities,
     commands: runtimeCommands,
   });
+  const creativePlanningArtifacts = buildCreativePlanningArtifacts({
+    brief,
+    scenePlan: input.scenePlan,
+  });
+  const compositionProposal =
+    input.compositionProposal ??
+    buildCompositionProposal({
+      ...creativePlanningArtifacts,
+      scenePlan: input.scenePlan,
+    });
+  const creativeArtifacts = buildCreativeHarnessArtifacts({
+    brief,
+    scenePlan: input.scenePlan,
+    script: input.script,
+    storyboard: input.storyboard,
+    compositionHtml: input.compositionHtml,
+    compositionProposal,
+  });
 
   return {
     directories: ["assets", "assets/captures", "assets/generated", "assets/forge", "compositions"],
@@ -189,6 +213,12 @@ export function createVideoProjectPackage(input: {
         2,
       ),
       "VIDEO_BRIEF.json": JSON.stringify(brief, null, 2),
+      "CREATIVE_BRIEF.json": JSON.stringify(creativeArtifacts.creativeBrief, null, 2),
+      "NARRATIVE_ARC.json": JSON.stringify(creativeArtifacts.narrativeArc, null, 2),
+      "VISUAL_DIRECTION.json": JSON.stringify(creativeArtifacts.visualDirection, null, 2),
+      "MOTION_PLAN.json": JSON.stringify(creativeArtifacts.motionPlan, null, 2),
+      "COMPOSITION_PROPOSAL.json": JSON.stringify(compositionProposal, null, 2),
+      "QUALITY_REPORT.json": JSON.stringify(creativeArtifacts.qualityReport, null, 2),
       "SCENE_PLAN.json": JSON.stringify(input.scenePlan, null, 2),
       "SCRIPT.md": formatScriptMarkdown(input.script),
       "STORYBOARD.md": formatStoryboardMarkdown(input.storyboard),

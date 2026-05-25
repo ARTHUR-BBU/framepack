@@ -21,6 +21,7 @@ import {
 } from "../runtime/manifest.js";
 import { buildSceneAssetMap } from "./scene-asset-map.js";
 import { buildSourceSceneMap } from "./source-scene-map.js";
+import { buildAssetExecutionPlan } from "./asset-execution.js";
 import { buildPackageManifest } from "./package-manifest.js";
 import {
   validateProjectPackage,
@@ -65,6 +66,28 @@ function readOptionalJsonFile<T>(projectDir: string, relativePath: string): T | 
   }
 }
 
+function readOptionalAssetExecutionPlan(
+  projectDir: string,
+): AssetExecutionPlan | undefined {
+  const targetPath = resolve(projectDir, "ASSET_EXECUTION_PLAN.json");
+
+  if (!existsSync(targetPath)) {
+    return undefined;
+  }
+
+  try {
+    const parsed = JSON.parse(readFileSync(targetPath, "utf8")) as Partial<AssetExecutionPlan>;
+
+    if (!Array.isArray(parsed.items)) {
+      return undefined;
+    }
+
+    return parsed as AssetExecutionPlan;
+  } catch {
+    return undefined;
+  }
+}
+
 function writeJsonFile(projectDir: string, relativePath: string, value: unknown): boolean {
   const targetPath = resolve(projectDir, relativePath);
   const nextContent = `${JSON.stringify(value, null, 2)}\n`;
@@ -78,18 +101,31 @@ function writeJsonFile(projectDir: string, relativePath: string, value: unknown)
   return true;
 }
 
+function validatePackageForRepair(projectDir: string): ValidationReport {
+  try {
+    return validateProjectPackage({ projectDir });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    return {
+      projectName: basename(projectDir),
+      status: "failed",
+      sceneCount: 0,
+      totalDurationSec: 0,
+      issues: [message],
+      generatedAt: new Date().toISOString(),
+    };
+  }
+}
+
 export function repairProjectPackage(input: { projectDir: string }): PackageRepairResult {
   const projectDir = resolve(input.projectDir);
-  const beforeReport = validateProjectPackage({ projectDir });
+  const beforeReport = validatePackageForRepair(projectDir);
   const manifest = readOptionalJsonFile<PackageManifest>(projectDir, "PACKAGE_MANIFEST.json");
   const brief = readRequiredJsonFile<VideoBrief>(projectDir, "VIDEO_BRIEF.json");
   const scenePlan = readRequiredJsonFile<ScenePlan>(projectDir, "SCENE_PLAN.json");
   const assetPlan = readRequiredJsonFile<AssetPlan>(projectDir, "ASSET_PLAN.json");
   const sourceManifest = readOptionalJsonFile<SourceManifest>(projectDir, "SOURCE_MANIFEST.json");
-  const assetExecutionPlan = readRequiredJsonFile<AssetExecutionPlan>(
-    projectDir,
-    "ASSET_EXECUTION_PLAN.json",
-  );
   const projectName = manifest?.projectName ?? basename(projectDir);
   const repairedFiles: string[] = [];
 
@@ -109,6 +145,21 @@ export function repairProjectPackage(input: { projectDir: string }): PackageRepa
   });
   if (writeJsonFile(projectDir, "SOURCE_SCENE_MAP.json", sourceSceneMap)) {
     repairedFiles.push("SOURCE_SCENE_MAP.json");
+  }
+
+  const existingAssetExecutionPlan = readOptionalAssetExecutionPlan(projectDir);
+  const assetExecutionPlan =
+    existingAssetExecutionPlan ??
+    buildAssetExecutionPlan({
+      assetPlan,
+      sourceManifest,
+      sourceSceneMap,
+    });
+  if (writeJsonFile(projectDir, "ASSET_EXECUTION_PLAN.json", assetExecutionPlan)) {
+    repairedFiles.push("ASSET_EXECUTION_PLAN.json");
+  }
+  if (writeJsonFile(projectDir, "CAPTURE_EXECUTION_PLAN.json", assetExecutionPlan)) {
+    repairedFiles.push("CAPTURE_EXECUTION_PLAN.json");
   }
 
   const packageManifest = buildPackageManifest({
@@ -173,7 +224,7 @@ export function repairProjectPackage(input: { projectDir: string }): PackageRepa
     repairedFiles.push("RUNTIME_MANIFEST.json");
   }
 
-  const afterReport = validateProjectPackage({ projectDir });
+  const afterReport = validatePackageForRepair(projectDir);
   writeProjectPackageValidationReport({
     projectDir,
     report: afterReport,

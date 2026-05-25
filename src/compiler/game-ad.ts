@@ -5,6 +5,8 @@ import type {
   VideoBrief,
   VideoBriefDefaults,
 } from "../core/types.js";
+import { buildCompositionProposal } from "../creative/composition-proposal.js";
+import { buildCreativePlanningArtifacts } from "../creative/harness.js";
 import { buildScript } from "../planning/script/index.js";
 import { buildStoryboard } from "../planning/storyboard/index.js";
 import { compileCompositionSpec } from "../video/compile/composition-spec.js";
@@ -68,7 +70,7 @@ function buildGameAdScenePlan(brief: VideoBrief): ScenePlan {
       sceneId: "scene-1",
       purpose: "arcade hook",
       visualType: "cover" as const,
-      narration: `${brief.goal} - arcade hook`,
+      narration: `Open with ${brief.style.brandName} as a playable promise for ${brief.audience}.`,
       onScreenText: [brief.style.brandName, brief.goal],
       assets: ["hero-character-pack", "pixel-world-map-pack"],
     },
@@ -76,7 +78,7 @@ function buildGameAdScenePlan(brief: VideoBrief): ScenePlan {
       sceneId: "scene-2",
       purpose: "challenge setup",
       visualType: "problem" as const,
-      narration: `${brief.goal} - challenge setup`,
+      narration: `Show the challenge ${brief.audience} must beat before the product becomes the power-up.`,
       onScreenText: ["Challenge", brief.audience],
       assets: ["pixel-world-map-pack", "impact-fx-pack"],
     },
@@ -84,7 +86,7 @@ function buildGameAdScenePlan(brief: VideoBrief): ScenePlan {
       sceneId: "scene-3",
       purpose: "power-up reveal",
       visualType: "workflow" as const,
-      narration: `${brief.goal} - power-up reveal`,
+      narration: `Reveal the mechanism as a power-up that turns the source promise into momentum.`,
       onScreenText: ["Power-up", brief.sourceMaterials[0]?.body.slice(0, 72) ?? ""],
       assets: ["hero-character-pack", "impact-fx-pack"],
     },
@@ -92,7 +94,7 @@ function buildGameAdScenePlan(brief: VideoBrief): ScenePlan {
       sceneId: "scene-4",
       purpose: "call to action",
       visualType: "ending" as const,
-      narration: `${brief.goal} - call to action`,
+      narration: `Close with a direct quest invitation and make the next action feel immediate.`,
       onScreenText: [brief.style.brandName, "Start the quest"],
       assets: ["hero-character-pack", "pixel-world-map-pack", "impact-fx-pack"],
     },
@@ -203,6 +205,14 @@ export function compileGameAdProject(input: {
   const scenePlan = buildGameAdScenePlan(brief);
   const script = buildScript({ scenePlan });
   const storyboard = buildStoryboard({ scenePlan });
+  const creativePlanningArtifacts = buildCreativePlanningArtifacts({
+    brief,
+    scenePlan,
+  });
+  const compositionProposal = buildCompositionProposal({
+    ...creativePlanningArtifacts,
+    scenePlan,
+  });
   const assetPlan = buildGameAdAssetPlan({
     brief,
     description: input.description,
@@ -216,6 +226,7 @@ export function compileGameAdProject(input: {
     ...scenePlan,
     format: brief.format,
     themePalette: input.defaults.theme?.palette,
+    compositionProposal,
   });
   const composition = emitHyperframesComposition(spec);
   const sourceManifest = createGameAdSourceManifest({
@@ -232,6 +243,7 @@ export function compileGameAdProject(input: {
     assetPlan,
     validationReport,
     compositionHtml: composition.html,
+    compositionProposal,
     sourceManifest,
   });
 
@@ -242,6 +254,7 @@ export function compileGameAdProject(input: {
     storyboard,
     assetPlan,
     validationReport,
+    compositionProposal,
     spec,
     composition,
     package: projectPackage,
