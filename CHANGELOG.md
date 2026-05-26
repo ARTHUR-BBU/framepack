@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-alpha.2
+
+- added npm postinstall agent setup for Codex and Claude Code, with `FRAMEPACK_SKIP_AGENT_INSTALL=1` opt-out
+- changed `init-agent --target auto` to install Codex skill instructions, Claude Code instructions, and MCP config together
+- slimmed `framepack create` output to five agent-readable workbench files plus hidden `.framepack/state.json`
+- added the Workbench Arsenal template registry and Polish Arsenal recommender for translating fuzzy user taste into professional video direction
+- updated workbench guidance around HyperFrames-safe GSAP rules, Remotion routes, templates, and polish recommendations
+
 ## 0.5.0-alpha.1
 
 - reborn Framepack as a lightweight HyperFrames creative workbench for agents

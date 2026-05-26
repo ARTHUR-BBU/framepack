@@ -148,7 +148,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.1";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.2";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -611,14 +611,14 @@ function runCreateCommand(args: string[], io: CliIo): number {
     [
       `Created Framepack workbench at ${project.projectDir}`,
       `assets: ${project.assets.length}`,
-      "next: open prompts/hyperframes-prompt.md with your agent, then generate or refine the HyperFrames composition.",
+      "next: open FRAMEPACK.md with your agent, then refine COMPOSITION.md and build the HyperFrames or Remotion composition.",
     ].join("\n"),
   );
   return 0;
 }
 
 function runInitAgentCommand(args: string[], io: CliIo, context: CliContext = {}): number {
-  const target = (getOptionalArg(args, "--target") ?? "codex") as AgentTarget;
+  const target = (getOptionalArg(args, "--target") ?? "auto") as AgentTarget;
   const scope = getOptionalArg(args, "--scope") ?? "project";
   const packageSource = (getOptionalArg(args, "--package-source") ?? "npm") as PackageSource;
 

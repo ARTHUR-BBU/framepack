@@ -16,25 +16,21 @@ export interface InitAgentOptions {
 
 export interface InitAgentResult {
   projectDir: string;
-  target: Exclude<AgentTarget, "auto">;
+  target: AgentTarget;
   writtenFiles: string[];
 }
 
 const MANAGED_START = "<!-- FRAMEPACK MANAGED BLOCK START -->";
 const MANAGED_END = "<!-- FRAMEPACK MANAGED BLOCK END -->";
 
-function resolveTarget(target: AgentTarget | undefined): Exclude<AgentTarget, "auto"> {
-  if (target === "claude-code") {
-    return "claude-code";
-  }
-
-  return "codex";
+function targetsFor(target: AgentTarget | undefined): Exclude<AgentTarget, "auto">[] {
+  if (target === "codex") return ["codex"];
+  if (target === "claude-code") return ["claude-code"];
+  return ["codex", "claude-code"];
 }
 
 function packageCommand(packageSource: PackageSource): string {
-  return packageSource === "github"
-    ? "npx -y github:ARTHUR-BBU/framepack"
-    : "npx -y framepack";
+  return packageSource === "github" ? "npx -y github:ARTHUR-BBU/framepack" : "npx -y framepack";
 }
 
 function writeManagedMarkdown(path: string, title: string, managedContent: string, force: boolean): void {
@@ -50,16 +46,29 @@ function writeManagedMarkdown(path: string, title: string, managedContent: strin
   const end = current.indexOf(MANAGED_END);
 
   if (start !== -1 && end !== -1 && end > start) {
-    if (!force) {
-      return;
-    }
-
-    const next = `${current.slice(0, start)}${block}${current.slice(end + MANAGED_END.length).replace(/^\s*/, "")}`;
-    writeFileSync(path, next, "utf8");
+    if (!force) return;
+    writeFileSync(path, `${current.slice(0, start)}${block}${current.slice(end + MANAGED_END.length).replace(/^\s*/, "")}`, "utf8");
     return;
   }
 
   writeFileSync(path, `${current.trimEnd()}\n\n${block}`, "utf8");
+}
+
+function stripUtf8Bom(value: string): string {
+  return value.replace(/^\uFEFF+/, "");
+}
+
+function writeMcpConfig(path: string, framepackConfig: object): void {
+  const current = existsSync(path) ? JSON.parse(stripUtf8Bom(readFileSync(path, "utf8"))) as Record<string, unknown> : {};
+  const mcpServers = current.mcpServers && typeof current.mcpServers === "object" && !Array.isArray(current.mcpServers)
+    ? current.mcpServers as Record<string, unknown>
+    : {};
+
+  writeFileSync(
+    path,
+    `${JSON.stringify({ ...current, mcpServers: { ...mcpServers, framepack: framepackConfig } }, null, 2)}\n`,
+    "utf8",
+  );
 }
 
 function codexSkill(packageSource: PackageSource): string {
@@ -67,23 +76,25 @@ function codexSkill(packageSource: PackageSource): string {
 
   return `---
 name: framepack
-description: Use Framepack to compile content into executable video project packages for agents and HyperFrames.
+description: Use Framepack when a user wants a polished HyperFrames or Remotion video from vague creative intent, assets, references, or prompt/composition work.
 ---
 
 # Framepack Codex Skill
 
-Use Framepack when the user asks for a video project package, case explainer, thread video, website video, game-style ad, or HyperFrames-ready project.
+Use Framepack when the user asks for video creative work, asset-to-video planning, HyperFrames or Remotion composition, more polish, more motion, a business-looking video, a game-style ad, or a result inspired by a reference.
+
+## Trigger
+
+If the user says things like cool, premium, business, dynamic, polished, bigger text, faster, more animated, or like this reference, call Framepack instead of asking the user to name libraries or templates.
 
 ## Workflow
 
-1. Prefer the Framepack MCP server. If it is not configured, run \`${command} mcp --describe\` to inspect the surface.
-2. Use \`generateProject\` to create the package.
-3. Use \`getStatus\` and \`validatePackage\` immediately after generation.
-4. Read \`readiness\` and \`nextActionItems\`; do not parse human status text.
-5. If \`readiness\` is \`needs-assets\`, use \`captureAssets\` for source captures or inspect forge tasks for manual/custom/skill-backed production.
-6. If the package is ready, run \`runtimeLint\`; run \`runtimeSnapshot\` when visual evidence is useful.
-
-For game-ad packages, read \`FORGE_TASKS.md\`. For agent-sprite-forge tasks, use $generate2dsprite for character, sprite, prop, and FX packs, and $generate2dmap for maps when those skills are installed. Do not auto-install external forge skills.
+1. Prefer the MCP server. If unavailable, inspect \`${command} mcp --describe\`.
+2. Create the workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
+3. Read \`FRAMEPACK.md\` first, then \`ASSETS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
+4. Translate fuzzy user taste into concrete visual language, motion language, template route, and HyperFrames/Remotion implementation choices.
+5. Keep project state in the workbench files; do not rely on model memory.
+6. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
 `;
 }
 
@@ -95,16 +106,16 @@ function codexInstall(packageSource: PackageSource): string {
 Ask Codex:
 
 \`\`\`text
-Read the Framepack repository or project instructions, install Framepack for this project, configure the Framepack MCP server, then generate and validate a video project package from my content.
+Read the Framepack project instructions, install Framepack for this project, configure the MCP server, then create a workbench from my idea and assets.
 \`\`\`
 
 Agent checklist:
 
 1. Install or use Framepack with \`${command}\`.
 2. Verify \`${command} mcp --describe\`.
-3. Generate a package with the Framepack MCP \`generateProject\` tool.
-4. Run \`getStatus\` and \`validatePackage\`.
-5. Continue from \`nextActionItems\`.
+3. Create a workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
+4. Read \`FRAMEPACK.md\` and continue from the workbench files.
+5. Use MCP/CLI only when files need to be created, inspected, or refreshed.
 `;
 }
 
@@ -113,73 +124,53 @@ function codexAgentsBlock(packageSource: PackageSource): string {
 
   return `## Framepack Agent Workflow
 
-Framepack is installed as an agent-native video project compiler for this project.
+Framepack is installed as an agent-native video creative workbench for this project.
 
-- Prefer MCP tools over memorized shell commands.
-- Start by checking \`${command} mcp --describe\` if MCP is not already connected.
-- For content-to-video requests, generate a package, then run status and validation.
-- Treat \`readiness\` as the phase gate: \`blocked\`, \`needs-assets\`, \`needs-runtime\`, or \`ready\`.
-- Use \`nextActionItems\` for dispatch.
-- For game-ad packages, inspect \`FORGE_TASKS.md\` and preserve backend-neutral forge contracts.
+- Trigger Framepack for vague video requests, asset-to-video work, HyperFrames/Remotion composition, template selection, or polish direction.
+- Prefer MCP tools over memorized shell commands; check \`${command} mcp --describe\` if MCP is not connected.
+- Create workbenches with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
+- Start every Framepack project by reading \`FRAMEPACK.md\`.
+- Use \`ASSETS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
+- Recommend animation libraries, templates, game-asset tools, HyperFrames, or Remotion only when the current project needs them.
 `;
 }
 
 function claudeInstructions(packageSource: PackageSource): string {
   const command = packageCommand(packageSource);
 
-  return `# Framepack Claude Code Preview
+  return `# Framepack Claude Code Instructions
 
 Framepack is available through the project MCP server.
 
-Use Framepack when the user asks to turn markdown, threads, websites, or product descriptions into executable video project packages.
+Use Framepack when the user asks for a polished video, HyperFrames or Remotion composition, asset-to-video planning, template selection, or vague creative improvements such as cooler, more business, more dynamic, bigger text, faster pacing, or like this reference.
 
 Suggested flow:
 
-1. Use the Framepack MCP \`generateProject\` tool.
-2. Use \`getStatus\` and \`validatePackage\`.
-3. Follow \`nextActionItems\`.
-4. Use \`runtimeLint\` and \`runtimeSnapshot\` before preview or render.
+1. Create a workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
+2. Read \`FRAMEPACK.md\`, then \`ASSETS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
+3. Translate fuzzy user intent into concrete visual language, motion language, template route, and implementation plan.
+4. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
+5. Record render feedback and next actions in \`ITERATIONS.md\`.
 
 Fallback command surface: \`${command} mcp --describe\`.
 `;
 }
 
-function createMcpConfig(packageSource: PackageSource, platform: NodeJS.Platform): object {
+function createMcpServerConfig(packageSource: PackageSource, platform: NodeJS.Platform): object {
   if (packageSource === "github") {
-    return {
-      mcpServers: {
-        framepack: {
-          command: "npx",
-          args: ["-y", "github:ARTHUR-BBU/framepack", "mcp"],
-        },
-      },
-    };
+    return { command: "npx", args: ["-y", "github:ARTHUR-BBU/framepack", "mcp"] };
   }
 
   if (platform === "win32") {
-    return {
-      mcpServers: {
-        framepack: {
-          command: "cmd",
-          args: ["/c", "npx", "-y", "framepack", "mcp"],
-        },
-      },
-    };
+    return { command: "cmd", args: ["/c", "npx", "-y", "framepack", "mcp"] };
   }
 
-  return {
-    mcpServers: {
-      framepack: {
-        command: "npx",
-        args: ["-y", "framepack", "mcp"],
-      },
-    },
-  };
+  return { command: "npx", args: ["-y", "framepack", "mcp"] };
 }
 
 export function initAgentProject(options: InitAgentOptions = {}): InitAgentResult {
   const projectDir = resolve(options.cwd ?? process.cwd());
-  const target = resolveTarget(options.target);
+  const target = options.target ?? "auto";
   const packageSource = options.packageSource ?? "npm";
   const platform = options.platform ?? process.platform;
   const force = options.force ?? false;
@@ -187,7 +178,7 @@ export function initAgentProject(options: InitAgentOptions = {}): InitAgentResul
 
   mkdirSync(projectDir, { recursive: true });
 
-  if (target === "codex") {
+  if (targetsFor(target).includes("codex")) {
     const agentDir = join(projectDir, ".framepack", "agent", "codex");
     mkdirSync(agentDir, { recursive: true });
     writeFileSync(join(agentDir, "SKILL.md"), codexSkill(packageSource), "utf8");
@@ -196,15 +187,11 @@ export function initAgentProject(options: InitAgentOptions = {}): InitAgentResul
     writtenFiles.push("AGENTS.md", ".framepack/agent/codex/SKILL.md", ".framepack/agent/codex/INSTALL.md");
   }
 
-  if (target === "claude-code") {
+  if (targetsFor(target).includes("claude-code")) {
     writeManagedMarkdown(join(projectDir, "CLAUDE.md"), "# Claude Code Project Guide", claudeInstructions(packageSource), force);
-    writeFileSync(join(projectDir, ".mcp.json"), `${JSON.stringify(createMcpConfig(packageSource, platform), null, 2)}\n`, "utf8");
+    writeMcpConfig(join(projectDir, ".mcp.json"), createMcpServerConfig(packageSource, platform));
     writtenFiles.push("CLAUDE.md", ".mcp.json");
   }
 
-  return {
-    projectDir,
-    target,
-    writtenFiles,
-  };
+  return { projectDir, target, writtenFiles };
 }

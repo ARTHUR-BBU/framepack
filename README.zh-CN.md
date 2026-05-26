@@ -1,31 +1,57 @@
 # Framepack
 
-Framepack 是面向 agent 的轻量 HyperFrames 创意视频工作台。
+Framepack 让不懂动画技术的用户，也可以用自然语言获得专业的视频生产方案。
 
-它帮助 Codex、Claude Code 和其他 coding agent，把用户不成熟的想法和已有素材，整理成一个可以继续生产的视频工作区：素材库、创意简报、HyperFrames prompt、composition 方案和迭代记录。
+用户只需要说“更酷一点”“更商务”“字大一点”“节奏快一点”“像这个参考视频”，Framepack 会把这些模糊愿望翻译成 Codex、Claude Code、HyperFrames 和 Remotion 能执行的工作台：模板路线、动效语言、动画技术、composition 方案、polish 规则和迭代记忆。
 
-Framepack 不替代 HyperFrames。Framepack 的目标是让 agent 更好地使用 HyperFrames。
+## 为什么需要 Framepack
 
-## 核心逻辑
+大多数用户并不知道自己需要什么动画库、模板、动效语法或渲染运行时。用户通常只会说：
 
-真实工作流是：
+- 更酷一点
+- 更商务一点
+- 字更大
+- 节奏更快
+- 动画更多
+- 像这个参考视频
+
+Framepack 的价值，就是把外行人的自然语言翻译成专业视频方案，让 agent 能继续执行，让 HyperFrames / Remotion 能继续生产。
+
+## 三层机制
+
+Framepack 通过三层工作：
+
+1. **Agent instructions / skills**：让 Codex 和 Claude Code 知道什么时候触发 Framepack。
+2. **MCP / CLI**：创建工作台，并暴露工具调用入口。
+3. **Workbench files**：把项目上下文保存成文件，让 agent 下次恢复时不依赖模型记忆。
+
+通过 npm 安装时，Framepack 会运行一个小的 postinstall 钩子，在项目中写入 Codex 和 Claude Code 的 agent 指令：
 
 ```text
-想法 + 素材
--> Framepack 工作台
--> 创意简报
--> HyperFrames prompt
--> composition 方案
--> 预览 / 渲染 / 反馈
--> 下一轮迭代
+AGENTS.md
+CLAUDE.md
+.mcp.json
+.framepack/agent/codex/SKILL.md
 ```
 
-Framepack 不是视频大模型，不是游戏引擎，也不是封闭创意流水线。用户和 agent 可以自由讨论创意，Framepack 负责把讨论结果收束成可执行的视频生产表面。
+如果不想自动写入项目文件，可以设置 `FRAMEPACK_SKIP_AGENT_INSTALL=1`。
 
 ## 开始使用
 
 ```bash
-npx -y -p framepack@alpha framepack create \
+npm install framepack
+```
+
+然后直接对 Codex 或 Claude Code 说：
+
+```text
+用 Framepack 读取我的 assets 文件夹，创建一个高级、动感、商务感强、焦点文字清晰的 HyperFrames 视频工作台。
+```
+
+也可以直接运行：
+
+```bash
+npx framepack create \
   --idea "一个面向创业者的 45 秒 agent-native workflow 发布视频" \
   --assets ./assets \
   --output-dir ./out \
@@ -37,49 +63,62 @@ npx -y -p framepack@alpha framepack create \
 
 ```text
 launch-video/
-  framepack.json
-  ASSET_LIBRARY.md
-  prompts/
-    creative-brief.md
-    hyperframes-prompt.md
-  hyperframes/
-    composition-plan.md
-  iterations/
-    v001.md
+  FRAMEPACK.md
+  ASSETS.md
+  DIRECTION.md
+  COMPOSITION.md
+  ITERATIONS.md
+  .framepack/
+    state.json
 ```
 
-然后把 `prompts/hyperframes-prompt.md` 交给你的 agent，让它继续生成或修改 HyperFrames composition。
+从 `FRAMEPACK.md` 开始读。
 
-## Framepack 管什么
+## Workbench Arsenal
 
-- 用户素材：图片、视频、音频、文字、截图、logo、参考资料。
-- 创意方向：目标、风格、节奏、张力、结尾、场景逻辑。
-- HyperFrames prompt 工程：composition 结构、动画语言、素材引用、渲染检查。
-- 多轮迭代：改了什么、失败了什么、下一轮怎么改。
+`framepack create` 默认只输出 5 个核心 Markdown 文件，不再制造旧式目录负担：
 
-Framepack 默认不评价用户提供的素材。用户选择的素材先视为有意图。只有在 review loop 中发现素材影响清晰度、节奏或渲染质量时，Framepack 才给出建议。
+- `FRAMEPACK.md`：agent 工作流和三层机制。
+- `ASSETS.md`：用户素材和素材角色。
+- `DIRECTION.md`：把用户模糊表达翻译成专业创意语言。
+- `COMPOSITION.md`：HyperFrames / Remotion 生产路线和验收标准。
+- `ITERATIONS.md`：渲染反馈和下一轮修改。
 
-## Agent-First 用法
+内置模板 registry 包含：
 
-你可以直接对 Codex 或 Claude Code 说：
+- `saas-launch`
+- `news-explainer`
+- `course-promo`
+- `game-ad`
+- `founder-story`
+- `data-shock`
 
-> 读取我的素材文件夹，用 Framepack 创建一个 HyperFrames 工作台，先和我讨论三套创意方向，然后生成高质量 HyperFrames prompt 和 composition 方案。
+Polish Arsenal 推荐器会根据 idea、style、format、duration 输出：
 
-CLI 只是工具表面。主要入口应该是你和 agent 的自然语言协作。
+- 推荐模板
+- 动画技术
+- 动效语言
+- 审美方向
+- 禁忌清单
+- 验收标准
 
-## 和 HyperFrames 的关系
+## HyperFrames 和 Remotion
 
-Framepack 专注于帮助 agent 吃透并用好 HyperFrames：
+Framepack 不要求用户自己选择底层技术。它会在项目需要时推荐合适路线：
 
-- composition 结构
-- 素材引用
-- timeline 和程序化动效
-- preview、lint、inspect、snapshot、render
-- 基于反馈的多轮修改
+- HyperFrames：适合程序化商业视频。
+- Remotion：适合可复用模板和社交视频工作流。
+- GSAP：适合 HyperFrames 安全的 timeline 动效。
+- Anime.js、SVG、Canvas、PixiJS、asset forge：在创意目标需要时按需使用。
 
-## 旧版说明
+## HyperFrames 安全规则
 
-Framepack `0.4.x` 探索过更重的 Agent Harness 和 package protocol。这部分经验仍然有价值，但从 `0.5` 开始，公开产品方向回到更轻的主线：素材、Prompt、编排、迭代、HyperFrames。
+Framepack 工作台会提醒 agent 避免常见渲染坑：
+
+- 首场景用 CSS 保证可见。
+- 场景切换用 `tl.set()`，不要用极短 `.to()`。
+- 不要让多个动画引擎控制同一个元素。
+- timeline 注册到 `window.__timelines`。
 
 ## 命令
 
@@ -87,7 +126,8 @@ Framepack `0.4.x` 探索过更重的 Agent Harness 和 package protocol。这部
 framepack --version
 framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
+framepack init-agent --target auto --scope project
 framepack mcp --describe
 ```
 
-旧兼容命令如 `generate`、`validate`、`status`、`runtime doctor` 暂时保留，但新版主线是 `create` 工作台。
+旧的 `generate`、`validate`、`status` 和 runtime 命令在过渡期可能保留，但 0.5 的公开主线是 workbench。

@@ -1,9 +1,11 @@
-# Framepack Claude Code Preview
+# Framepack Claude Code Instructions
 
-Use the Framepack MCP server for video project package generation.
+Use Framepack when the user asks for a polished video, HyperFrames or Remotion composition, asset-to-video planning, template selection, or vague creative improvements such as cooler, more business, more dynamic, bigger text, faster pacing, or like this reference.
 
-For broad requests, inspect `recommendPacks` first.
+Suggested flow:
 
-Then start with `generateProject` using `autoRecommendPacks: true`, or explicit `workflowPackId` and `creativeDirectionPackId` when the route is already chosen. Inspect `getStatus`, run `validatePackage`, and follow `nextActionItems`.
-
-Before publishing, tagging, or verifying a Framepack release candidate, run MCP `releaseSmoke` or CLI `framepack release-smoke --output-dir out/release-smoke --json`.
+1. Create a workbench with `framepack create --idea "<idea>" --assets <dir> --output-dir <dir>`.
+2. Read `FRAMEPACK.md`, then `ASSETS.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md`.
+3. Translate fuzzy user intent into concrete visual language, motion language, template route, and implementation plan.
+4. Use HyperFrames-safe rules: CSS first frame visible, scene switches with `tl.set()`, one animation engine per element, and timeline registration on `window.__timelines`.
+5. Record render feedback and next actions in `ITERATIONS.md`.

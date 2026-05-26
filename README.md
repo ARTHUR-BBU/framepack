@@ -1,33 +1,59 @@
 # Framepack
 
-Framepack is a lightweight HyperFrames creative workbench for agents.
+Framepack lets non-expert users describe the video they want in natural language, then gives Codex, Claude Code, HyperFrames, and Remotion a professional production workbench.
 
-It helps Codex, Claude Code, and other coding agents turn an immature idea plus user-provided assets into a clean HyperFrames production package: asset library, creative brief, composition prompt, composition plan, and iteration log.
-
-Framepack does not replace HyperFrames. It helps agents use HyperFrames better.
+It translates fuzzy taste words, user assets, references, and rough ideas into executable creative direction: template route, motion language, animation techniques, composition plan, polish rules, and iteration memory.
 
 Chinese README: [README.zh-CN.md](README.zh-CN.md).
 
-## Core Idea
+## The Problem
 
-The practical workflow is:
+Most users do not know which animation library, template, motion grammar, or render runtime they need. They say things like:
+
+- make it cooler
+- more business
+- bigger text
+- faster pacing
+- more animation
+- like this reference video
+
+Framepack turns that outsider language into a professional video plan an agent can execute.
+
+## Three Layers
+
+Framepack works through three layers:
+
+1. **Agent instructions / skills** trigger Framepack inside Codex and Claude Code.
+2. **MCP / CLI** creates workbenches and exposes tool surfaces.
+3. **Workbench files** persist context so agents can resume without relying on model memory.
+
+When installed from npm, Framepack runs a small postinstall hook that creates project agent instructions for Codex and Claude Code:
 
 ```text
-idea + assets
--> Framepack workbench
--> creative brief
--> HyperFrames prompt
--> composition plan
--> preview / render / feedback
--> next iteration
+AGENTS.md
+CLAUDE.md
+.mcp.json
+.framepack/agent/codex/SKILL.md
 ```
 
-Framepack is not a video model, game engine, or closed creative pipeline. Users and agents can brainstorm freely. Framepack only turns the decisions into a useful production surface.
+Set `FRAMEPACK_SKIP_AGENT_INSTALL=1` to skip that automatic project setup.
 
 ## Start
 
 ```bash
-npx -y -p framepack@alpha framepack create \
+npm install framepack
+```
+
+Then ask Codex or Claude Code:
+
+```text
+Use Framepack to turn my assets folder into a polished HyperFrames video workbench. Make it premium, dynamic, business-ready, with strong motion and clear focal text.
+```
+
+Or call it directly:
+
+```bash
+npx framepack create \
   --idea "A 45 second founder-facing launch video for an agent-native workflow" \
   --assets ./assets \
   --output-dir ./out \
@@ -39,49 +65,62 @@ This creates:
 
 ```text
 launch-video/
-  framepack.json
-  ASSET_LIBRARY.md
-  prompts/
-    creative-brief.md
-    hyperframes-prompt.md
-  hyperframes/
-    composition-plan.md
-  iterations/
-    v001.md
+  FRAMEPACK.md
+  ASSETS.md
+  DIRECTION.md
+  COMPOSITION.md
+  ITERATIONS.md
+  .framepack/
+    state.json
 ```
 
-Open `prompts/hyperframes-prompt.md` with your agent and ask it to create or refine the HyperFrames composition.
+Start with `FRAMEPACK.md`.
 
-## What Framepack Manages
+## Workbench Arsenal
 
-- User assets: images, video, audio, text, screenshots, logos, references.
-- Creative direction: goal, style, pacing, tension, payoff, scene logic.
-- HyperFrames prompt engineering: composition structure, animation language, asset references, render checks.
-- Iteration memory: what changed, what failed, what to improve next.
+`framepack create` writes five core Markdown files, not a heavy legacy package tree:
 
-Framepack does not judge user-provided assets by default. If the user chose them, they are treated as intentional. Framepack may suggest improvements during the review loop when an asset blocks clarity, pacing, or render quality.
+- `FRAMEPACK.md`: agent workflow and three-layer mental model.
+- `ASSETS.md`: user-provided assets and their role.
+- `DIRECTION.md`: fuzzy user language translated into professional creative language.
+- `COMPOSITION.md`: HyperFrames / Remotion production route and acceptance criteria.
+- `ITERATIONS.md`: render feedback and next changes.
 
-## Agent-First Usage
+The built-in template registry includes:
 
-Ask Codex or Claude Code:
+- `saas-launch`
+- `news-explainer`
+- `course-promo`
+- `game-ad`
+- `founder-story`
+- `data-shock`
 
-> Read my asset folder, use Framepack to create a HyperFrames workbench, discuss three creative directions with me, then generate a strong HyperFrames prompt and composition plan.
+The Polish Arsenal recommender reads the idea, style, format, and duration, then recommends:
 
-The CLI is a tool surface. The primary interface is natural language through your agent.
+- template route
+- animation techniques
+- motion language
+- aesthetic direction
+- avoid list
+- acceptance criteria
 
-## HyperFrames Fit
+## HyperFrames And Remotion
 
-Framepack focuses on helping agents use HyperFrames features well:
+Framepack does not ask users to choose low-level tools. It recommends the right route when the project needs it:
 
-- composition structure
-- asset references
-- timeline and programmed motion
-- preview, lint, inspect, snapshot, render
-- feedback-driven iteration
+- HyperFrames for programmed commercial video.
+- Remotion for reusable template and social-video workflows.
+- GSAP for HyperFrames-safe timeline motion.
+- Anime.js, SVG, Canvas, PixiJS, and asset-forge tools when they fit the creative goal.
 
-## Legacy
+## HyperFrames Safety
 
-Framepack `0.4.x` explored a heavier Agent Harness and package protocol. That work remains useful as internal learning, but the public product direction from `0.5` is simpler: assets, prompts, composition, iteration, HyperFrames.
+Framepack workbenches remind agents to avoid common render traps:
+
+- make the first scene visible in CSS
+- switch scenes with `tl.set()`, not tiny-duration `.to()`
+- do not mix animation engines on the same element
+- register timelines on `window.__timelines`
 
 ## Commands
 
@@ -89,7 +128,8 @@ Framepack `0.4.x` explored a heavier Agent Harness and package protocol. That wo
 framepack --version
 framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
+framepack init-agent --target auto --scope project
 framepack mcp --describe
 ```
 
-Older compatibility commands such as `generate`, `validate`, `status`, and `runtime doctor` remain available while the new workbench path matures.
+Older `generate`, `validate`, `status`, and runtime commands may remain during the transition, but the 0.5 public path is the workbench.

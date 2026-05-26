@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
-import { basename, extname, join, resolve } from "node:path";
+import { basename, dirname, extname, join, resolve } from "node:path";
 
 export type WorkbenchAssetKind = "image" | "video" | "audio" | "text" | "other";
 
@@ -15,10 +15,165 @@ export interface WorkbenchProject {
   files: Record<string, string>;
 }
 
+export type WorkbenchTemplateId =
+  | "saas-launch"
+  | "news-explainer"
+  | "course-promo"
+  | "game-ad"
+  | "founder-story"
+  | "data-shock";
+
+export interface WorkbenchTemplate {
+  id: WorkbenchTemplateId;
+  label: string;
+  match: string[];
+  visualLanguage: string[];
+  motionLanguage: string[];
+  templateGuidance: string[];
+  acceptanceCriteria: string[];
+}
+
+export interface PolishArsenalRecommendation {
+  template: WorkbenchTemplate;
+  professionalCreativeLanguage: string;
+  animationTechniques: string[];
+  aestheticDirection: string[];
+  avoid: string[];
+  acceptanceCriteria: string[];
+}
+
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm", ".mkv"]);
 const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".m4a", ".aac", ".ogg"]);
 const TEXT_EXTENSIONS = new Set([".md", ".txt", ".json", ".csv"]);
+
+const WORKBENCH_TEMPLATES: WorkbenchTemplate[] = [
+  {
+    id: "saas-launch",
+    label: "SaaS Launch",
+    match: ["saas", "software", "product", "launch", "startup", "tool", "platform"],
+    visualLanguage: ["clean product UI focus", "confident whitespace", "large benefit-led headlines"],
+    motionLanguage: ["interface reveals", "proof-card stack", "smooth camera push"],
+    templateGuidance: ["open on the product promise", "show workflow proof", "close with outcome"],
+    acceptanceCriteria: ["first frame states the value clearly", "UI or product asset is visible early"],
+  },
+  {
+    id: "news-explainer",
+    label: "News Explainer",
+    match: ["news", "policy", "case", "explain", "timeline", "analysis", "report"],
+    visualLanguage: ["editorial contrast", "source-first hierarchy", "caption-led clarity"],
+    motionLanguage: ["timeline build", "headline wipes", "evidence zoom"],
+    templateGuidance: ["start with the headline", "sequence context before opinion", "end with implication"],
+    acceptanceCriteria: ["viewer understands the event in five seconds", "claims stay source-shaped"],
+  },
+  {
+    id: "course-promo",
+    label: "Course Promo",
+    match: ["course", "training", "lesson", "learn", "coach", "bootcamp", "education"],
+    visualLanguage: ["premium education funnel", "expert signal", "bold promise plus proof"],
+    motionLanguage: ["kinetic typography", "module ladder", "before-after transformation"],
+    templateGuidance: ["promise the transformation", "show learning path", "make the outcome concrete"],
+    acceptanceCriteria: ["offer is readable on mobile", "benefit and audience are unmistakable"],
+  },
+  {
+    id: "game-ad",
+    label: "Game Ad",
+    match: ["game", "sprite", "arcade", "battle", "quest", "character", "play"],
+    visualLanguage: ["arcade energy", "character-first framing", "reward-heavy contrast"],
+    motionLanguage: ["impact pops", "parallax map move", "FX bursts"],
+    templateGuidance: ["open with action", "show progression", "end with reward or challenge"],
+    acceptanceCriteria: ["motion feels playable", "main character or reward is never visually lost"],
+  },
+  {
+    id: "founder-story",
+    label: "Founder Story",
+    match: ["founder", "journey", "story", "mission", "why", "build", "startup"],
+    visualLanguage: ["human stakes", "documentary polish", "intimate but commercial framing"],
+    motionLanguage: ["photo parallax", "quote emphasis", "chapter transitions"],
+    templateGuidance: ["start with tension", "connect struggle to product", "close on conviction"],
+    acceptanceCriteria: ["emotional arc is clear", "business takeaway lands before the ending"],
+  },
+  {
+    id: "data-shock",
+    label: "Data Shock",
+    match: ["data", "metric", "growth", "shock", "numbers", "chart", "report"],
+    visualLanguage: ["oversized numbers", "high-contrast proof", "minimal chart clutter"],
+    motionLanguage: ["count-up numbers", "chart snap", "comparison reveal"],
+    templateGuidance: ["lead with the surprising number", "explain why it matters", "turn data into action"],
+    acceptanceCriteria: ["key number is legible instantly", "chart motion supports the argument"],
+  },
+];
+
+export function listWorkbenchTemplates(): WorkbenchTemplate[] {
+  return WORKBENCH_TEMPLATES.map((template) => ({
+    ...template,
+    match: [...template.match],
+    visualLanguage: [...template.visualLanguage],
+    motionLanguage: [...template.motionLanguage],
+    templateGuidance: [...template.templateGuidance],
+    acceptanceCriteria: [...template.acceptanceCriteria],
+  }));
+}
+
+function scoreTemplate(template: WorkbenchTemplate, signal: string): number {
+  return template.match.reduce((score, keyword) => score + (signal.includes(keyword) ? 1 : 0), 0);
+}
+
+function selectTemplate(input: { idea: string; style: string }): WorkbenchTemplate {
+  const signal = `${input.idea} ${input.style}`.toLowerCase();
+
+  return WORKBENCH_TEMPLATES
+    .map((template) => ({ template, score: scoreTemplate(template, signal) }))
+    .sort((left, right) => right.score - left.score)[0].template;
+}
+
+export function recommendPolishArsenal(input: {
+  idea: string;
+  style?: string;
+  format: "16:9" | "9:16";
+  durationSec: number;
+}): PolishArsenalRecommendation {
+  const style = input.style ?? "";
+  const template = selectTemplate({ idea: input.idea, style });
+  const signal = `${input.idea} ${style}`.toLowerCase();
+  const fast = signal.includes("fast") || signal.includes("dynamic") || input.durationSec <= 35;
+  const premium = signal.includes("premium") || signal.includes("business") || signal.includes("polished");
+  const mobile = input.format === "9:16";
+
+  return {
+    template,
+    professionalCreativeLanguage: `${template.visualLanguage[0]} with ${premium ? "premium commercial restraint" : "clear editorial confidence"} and ${fast ? "compressed high-energy pacing" : "measured narrative pacing"}.`,
+    animationTechniques: [
+      ...new Set([
+        ...template.motionLanguage,
+        "kinetic typography",
+        mobile ? "vertical focal framing" : "wide composition staging",
+        fast ? "hard scene snaps" : "smooth scene dissolves",
+      ]),
+    ],
+    aestheticDirection: [
+      ...template.visualLanguage,
+      premium ? "restrained color with sharp contrast" : "direct contrast with readable hierarchy",
+      mobile ? "oversized mobile-safe type" : "balanced headline and proof layout",
+    ],
+    avoid: [
+      "tiny text or dense subtitles",
+      "mixing animation engines on the same element",
+      "invisible first frames",
+      "decorative motion that does not clarify the offer",
+    ],
+    acceptanceCriteria: [
+      ...template.acceptanceCriteria,
+      "first frame is visible without waiting for JavaScript animation",
+      "main message is readable within three seconds",
+      "each motion choice supports attention, proof, or transition",
+    ],
+  };
+}
+
+function bulletList(items: string[]) {
+  return items.map((item) => `- ${item}`).join("\n");
+}
 
 function assetKind(fileName: string): WorkbenchAssetKind {
   const extension = extname(fileName).toLowerCase();
@@ -60,70 +215,110 @@ function buildFiles(input: {
   assets: WorkbenchAsset[];
 }) {
   const assetList = formatAssets(input.assets);
+  const recommendation = recommendPolishArsenal(input);
+  const recommendedStack = [
+    "- Runtime: HyperFrames first; Remotion is a good route for reusable social/template video.",
+    "- Motion: GSAP timeline for HyperFrames-safe scene control.",
+    `- Template: ${recommendation.template.id} (${recommendation.template.label}).`,
+    `- Professional translation: ${recommendation.professionalCreativeLanguage}`,
+    `- Animation techniques: ${recommendation.animationTechniques.join(", ")}.`,
+    `- Aesthetic direction: ${recommendation.aestheticDirection.join(", ")}.`,
+    `- Avoid: ${recommendation.avoid.join(", ")}.`,
+    "- Verification: CSS first scene visible, scene switches with tl.set(), timeline registered on window.__timelines.",
+  ].join("\n");
 
   return {
-    "framepack.json": JSON.stringify(
-      {
-        version: "framepack.workbench.v1",
-        mode: "hyperframes-creative-workbench",
-        projectName: input.projectName,
-        format: input.format,
-        durationSec: input.durationSec,
-        entrypoints: {
-          assets: "ASSET_LIBRARY.md",
-          creativeBrief: "prompts/creative-brief.md",
-          hyperframesPrompt: "prompts/hyperframes-prompt.md",
-          compositionPlan: "hyperframes/composition-plan.md",
-          iterationLog: "iterations/v001.md",
-        },
-      },
-      null,
-      2,
-    ),
-    "ASSET_LIBRARY.md": [
-      "# Asset Library",
+    "FRAMEPACK.md": [
+      "# Framepack Workbench",
       "",
-      "User-provided assets are treated as intentional source material. Do not judge them by default; arrange them around the user's creative goal.",
+      "Start here. This folder is the durable context for Codex, Claude Code, and other coding agents.",
+      "",
+      "## Agent Workflow",
+      "",
+      "1. Read `ASSETS.md`, `DIRECTION.md`, and `COMPOSITION.md` before writing code.",
+      "2. Discuss unclear creative choices with the user in natural language.",
+      "3. Use Framepack recommendations as a production brief, not as rigid rails.",
+      "4. Build or refine the HyperFrames or Remotion composition.",
+      "5. Record each render/review loop in `ITERATIONS.md`.",
+      "",
+      "## Three Layers",
+      "",
+      "- Skill/instructions: trigger Framepack for vague video, asset, prompt, template, or composition work.",
+      "- MCP/CLI: call Framepack tools when files need to be created or refreshed.",
+      "- Workbench files: keep the state in markdown so agents can resume without relying on model memory.",
+      "",
+    ].join("\n"),
+    "ASSETS.md": [
+      "# Assets",
+      "",
+      "User-provided assets are intentional source material. Do not judge them by default; arrange them around the user's creative goal.",
       "",
       assetList,
       "",
     ].join("\n"),
-    "prompts/creative-brief.md": [
-      "# Creative Brief",
+    "DIRECTION.md": [
+      "# Creative Direction",
       "",
       `Idea: ${input.idea}`,
-      `Style: ${input.style}`,
+      `Style words: ${input.style}`,
       `Format: ${input.format}`,
       `Duration: ${input.durationSec} seconds`,
       "",
-      "Creative task: turn the user's idea and assets into a commercially useful programmed-video direction with clear scenes, tension, rhythm, and payoff.",
+      "## Translation",
+      "",
+      "Turn vague user language such as cool, premium, business, dynamic, cinematic, polished, bigger text, tighter pacing, more animation, or like this reference into concrete visual and motion decisions.",
+      "",
+      "## Polish Arsenal",
+      "",
+      recommendedStack,
+      "",
+      "## Professional Creative Translation",
+      "",
+      `Template: ${recommendation.template.id} (${recommendation.template.label})`,
+      "",
+      recommendation.professionalCreativeLanguage,
+      "",
+      "## Motion Language",
+      "",
+      bulletList(recommendation.animationTechniques),
+      "",
+      "## Aesthetic Direction",
+      "",
+      bulletList(recommendation.aestheticDirection),
+      "",
+      "## Avoid",
+      "",
+      bulletList(recommendation.avoid),
       "",
     ].join("\n"),
-    "prompts/hyperframes-prompt.md": [
-      "# HyperFrames Prompt",
+    "COMPOSITION.md": [
+      "# Composition Plan",
       "",
       `Use HyperFrames to create a ${input.durationSec}-second ${input.format} programmed commercial video.`,
       "",
       "Do not judge user-provided assets. Use them according to the user's intent, and only suggest improvements in the review loop if they block clarity, pacing, or render quality.",
       "",
-      "User idea:",
+      "## User Idea",
+      "",
       input.idea,
       "",
-      "Asset library:",
+      "## Asset Library",
+      "",
       assetList,
       "",
-      "Composition direction:",
-      `- Style: ${input.style}`,
-      "- Build a real composition, not a static slide deck.",
-      "- Use visible hierarchy, camera rhythm, kinetic text, and asset-led transitions.",
-      "- Keep agent-facing notes out of visible rendered text.",
-      "- Use HyperFrames preview, lint, inspect, snapshot, and render feedback during iteration.",
+      "## Recommended Stack",
       "",
-    ].join("\n"),
-    "hyperframes/composition-plan.md": [
-      "# HyperFrames Composition Plan",
+      recommendedStack,
       "",
-      `Target: ${input.durationSec} seconds, ${input.format}.`,
+      "## Recommended Template",
+      "",
+      `Use the ${recommendation.template.id} route: ${recommendation.template.templateGuidance.join(" ")}`,
+      "",
+      "## Acceptance Criteria",
+      "",
+      bulletList(recommendation.acceptanceCriteria),
+      "",
+      "## Scene Shape",
       "",
       "1. Open with a strong visual promise.",
       "2. Build tension around the user's problem or opportunity.",
@@ -132,17 +327,37 @@ function buildFiles(input: {
       "5. End with a clear payoff or next action.",
       "",
     ].join("\n"),
-    "iterations/v001.md": [
-      "# Iteration v001",
+    "ITERATIONS.md": [
+      "# Iterations",
+      "",
+      "## v001",
       "",
       "Initial creative package.",
       "",
       "- Review the asset library with the user.",
       "- Refine the creative direction through conversation.",
-      "- Generate or update the HyperFrames composition.",
+      "- Generate or update the HyperFrames or Remotion composition.",
       "- Record render feedback and next changes here.",
       "",
     ].join("\n"),
+    ".framepack/state.json": JSON.stringify(
+      {
+        version: "framepack.workbench.v1",
+        mode: "hyperframes-creative-workbench",
+        projectName: input.projectName,
+        format: input.format,
+        durationSec: input.durationSec,
+        entrypoints: {
+          guide: "FRAMEPACK.md",
+          assets: "ASSETS.md",
+          direction: "DIRECTION.md",
+          composition: "COMPOSITION.md",
+          iterations: "ITERATIONS.md",
+        },
+      },
+      null,
+      2,
+    ),
   };
 }
 
@@ -166,11 +381,8 @@ export function createWorkbenchProject(input: {
     assets,
   });
 
-  for (const directory of ["prompts", "hyperframes", "iterations"]) {
-    mkdirSync(join(projectDir, directory), { recursive: true });
-  }
-
   for (const [filePath, content] of Object.entries(files)) {
+    mkdirSync(dirname(join(projectDir, filePath)), { recursive: true });
     writeFileSync(join(projectDir, filePath), content, "utf8");
   }
 

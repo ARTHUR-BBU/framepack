@@ -80,7 +80,11 @@ import {
   recommendFramepackPacks,
   resolveFramepackPackSelection,
 } from "../dist/workflow-packs/registry.js";
-import { createWorkbenchProject } from "../dist/workbench/index.js";
+import {
+  createWorkbenchProject,
+  listWorkbenchTemplates,
+  recommendPolishArsenal,
+} from "../dist/workbench/index.js";
 
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -2531,15 +2535,17 @@ Framepack compiles content into executable video projects.
         "utf8",
       );
 
-      assert.match(readme, /lightweight HyperFrames creative workbench/);
+      assert.match(readme, /non-expert users describe the video/);
+      assert.match(readme, /outsider language into a professional video plan/);
       assert.match(readme, /framepack create --idea/);
-      assert.match(readme, /asset library/i);
-      assert.match(readme, /HyperFrames prompt/i);
-      assert.match(readme, /does not judge user-provided assets/i);
-      assert.match(readme, /0\.4\.x` explored a heavier Agent Harness/);
-      assert.match(chineseReadme, /轻量 HyperFrames 创意视频工作台/);
+      assert.match(readme, /ASSETS\.md/);
+      assert.match(readme, /COMPOSITION\.md/);
+      assert.match(readme, /postinstall hook/);
+      assert.match(readme, /Polish Arsenal/);
+      assert.match(chineseReadme, /不懂动画技术的用户/);
       assert.match(chineseReadme, /framepack create --idea/);
-      assert.match(chineseReadme, /默认不评价用户提供的素材/);
+      assert.match(chineseReadme, /三层机制/);
+      assert.match(chineseReadme, /内置模板 registry/);
       assert.match(charter, /Framepack 0\.5 Rebirth Charter/);
       assert.match(charter, /HyperFrames creative workbench/);
       assert.match(charter, /One line beats two when one line is enough/);
@@ -2552,7 +2558,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.1");
+      assert.equal(packageJson.version, "0.5.0-alpha.2");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -2560,8 +2566,10 @@ Framepack compiles content into executable video projects.
       assert.ok(packageJson.files.includes("README.zh-CN.md"));
       assert.ok(packageJson.files.includes("AGENTS.md"));
       assert.ok(packageJson.files.includes("docs/rebirth"));
+      assert.ok(packageJson.files.includes("scripts/postinstall.mjs"));
       assert.equal(packageJson.files.includes("docs/architecture"), false);
       assert.equal(packageJson.files.includes("docs/agent-platform"), false);
+      assert.equal(packageJson.scripts.postinstall, "node scripts/postinstall.mjs");
       assert.ok(packageJson.files.includes("LICENSE"));
       assert.ok(packageJson.files.includes("examples"));
       assert.ok(packageJson.files.includes("dist"));
@@ -2585,7 +2593,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.1");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.2");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -2624,12 +2632,70 @@ Framepack compiles content into executable video projects.
           project.assets.map((asset) => asset.kind).sort(),
           ["audio", "image", "video"],
         );
-        assert.match(project.files["framepack.json"], /"mode": "hyperframes-creative-workbench"/);
-        assert.match(project.files["ASSET_LIBRARY.md"], /logo\.png/);
-        assert.match(project.files["prompts/hyperframes-prompt.md"], /Use HyperFrames/);
-        assert.match(project.files["prompts/hyperframes-prompt.md"], /Do not judge user-provided assets/);
-        assert.match(project.files["hyperframes/composition-plan.md"], /45 seconds/);
-        assert.match(project.files["iterations/v001.md"], /Initial creative package/);
+        assert.match(project.files["FRAMEPACK.md"], /Start here/);
+        assert.match(project.files["ASSETS.md"], /logo\.png/);
+        assert.match(project.files["DIRECTION.md"], /Polish Arsenal/);
+        assert.match(project.files["COMPOSITION.md"], /Use HyperFrames/);
+        assert.match(project.files["COMPOSITION.md"], /Do not judge user-provided assets/);
+        assert.match(project.files["COMPOSITION.md"], /45-second/);
+        assert.match(project.files["ITERATIONS.md"], /Initial creative package/);
+        assert.match(project.files[".framepack/state.json"], /"mode": "hyperframes-creative-workbench"/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "expose built-in workbench template registry for outsider-friendly video routes",
+    run: () => {
+      const templates = listWorkbenchTemplates();
+
+      assert.deepEqual(
+        templates.map((template) => template.id),
+        ["saas-launch", "news-explainer", "course-promo", "game-ad", "founder-story", "data-shock"],
+      );
+      assert.ok(templates.every((template) => template.visualLanguage.length > 0));
+      assert.ok(templates.every((template) => template.motionLanguage.length > 0));
+      assert.ok(templates.every((template) => template.acceptanceCriteria.length > 0));
+    },
+  },
+  {
+    name: "translate fuzzy user taste into a professional Polish Arsenal recommendation",
+    run: () => {
+      const recommendation = recommendPolishArsenal({
+        idea: "A premium course promo for founders learning agent video systems.",
+        style: "business, dynamic, polished, bigger text, fast pacing",
+        format: "9:16",
+        durationSec: 35,
+      });
+
+      assert.equal(recommendation.template.id, "course-promo");
+      assert.match(recommendation.professionalCreativeLanguage, /premium education funnel/i);
+      assert.ok(recommendation.animationTechniques.includes("kinetic typography"));
+      assert.ok(recommendation.avoid.some((item) => /tiny text/i.test(item)));
+      assert.ok(recommendation.acceptanceCriteria.some((item) => /first frame/i.test(item)));
+    },
+  },
+  {
+    name: "write Polish Arsenal recommendations into direction and composition files",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-polish-workbench-"));
+
+      try {
+        const project = createWorkbenchProject({
+          projectName: "course-promo-polish",
+          idea: "A premium course promo for founders learning agent video systems.",
+          outputDir: tempRoot,
+          style: "business, dynamic, polished, bigger text, fast pacing",
+          format: "9:16",
+          durationSec: 35,
+        });
+
+        assert.match(project.files["DIRECTION.md"], /Template: course-promo/);
+        assert.match(project.files["DIRECTION.md"], /Professional Creative Translation/);
+        assert.match(project.files["COMPOSITION.md"], /Recommended Template/);
+        assert.match(project.files["COMPOSITION.md"], /Kinetic typography/i);
+        assert.match(project.files["COMPOSITION.md"], /Acceptance Criteria/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -2672,8 +2738,9 @@ Framepack compiles content into executable video projects.
         const projectDir = join(tempRoot, "course-promo-workbench");
 
         assert.equal(exitCode, 0, stderr.join("\n"));
-        assert.equal(existsSync(join(projectDir, "framepack.json")), true);
-        assert.equal(existsSync(join(projectDir, "prompts", "hyperframes-prompt.md")), true);
+        assert.equal(existsSync(join(projectDir, "FRAMEPACK.md")), true);
+        assert.equal(existsSync(join(projectDir, "COMPOSITION.md")), true);
+        assert.equal(existsSync(join(projectDir, ".framepack", "state.json")), true);
         assert.match(stdout.join("\n"), /Created Framepack workbench/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
@@ -3175,8 +3242,8 @@ Framepack compiles content into executable video projects.
       assert.ok(packageJson.files.includes("templates"));
       assert.ok(packageJson.files.includes("docs/rebirth"));
       assert.equal(packageJson.files.includes("docs/agent-platform"), false);
-      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.md"), "utf8"), /Agent-First Usage/);
-      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.zh-CN.md"), "utf8"), /Agent-First/);
+      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.md"), "utf8"), /Three Layers/);
+      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.zh-CN.md"), "utf8"), /三层机制/);
     },
   },
   {
@@ -4118,7 +4185,8 @@ Framepack compiles content into executable video projects.
         assert.equal(exitCode, 0, stderr.join("\n"));
         assert.match(stdout.join("\n"), /Initialized Framepack agent workflow/);
         assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /FRAMEPACK MANAGED BLOCK/);
-        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /generateProject/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack create/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /FRAMEPACK\.md/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "INSTALL.md"), "utf8"), /npx -y framepack mcp/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
@@ -4145,9 +4213,74 @@ Framepack compiles content into executable video projects.
 
         assert.equal(exitCode, 0, stderr.join("\n"));
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /Framepack/);
+        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /FRAMEPACK\.md/);
         const mcpConfig = JSON.parse(readFileSync(join(tempRoot, ".mcp.json"), "utf8"));
         assert.equal(mcpConfig.mcpServers.framepack.command, "cmd");
         assert.deepEqual(mcpConfig.mcpServers.framepack.args, ["/c", "npx", "-y", "framepack", "mcp"]);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "initialize all agent surfaces with auto target",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-agent-auto-"));
+
+      try {
+        const stdout = [];
+        const stderr = [];
+        const exitCode = await runCli(
+          ["init-agent", "--target", "auto", "--scope", "project", "--package-source", "npm"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+          {},
+          { cwd: tempRoot, platform: "win32" },
+        );
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.match(stdout.join("\n"), /target: auto/);
+        assert.equal(existsSync(join(tempRoot, "AGENTS.md")), true);
+        assert.equal(existsSync(join(tempRoot, "CLAUDE.md")), true);
+        assert.equal(existsSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md")), true);
+        assert.equal(existsSync(join(tempRoot, ".mcp.json")), true);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "merge Framepack MCP config without removing existing servers",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "hyperframes-agent-mcp-merge-"));
+
+      try {
+        writeFileSync(
+          join(tempRoot, ".mcp.json"),
+          `\uFEFF\uFEFF${JSON.stringify({ mcpServers: { existing: { command: "node", args: ["server.js"] } }, custom: true }, null, 2)}\n`,
+          "utf8",
+        );
+
+        const stdout = [];
+        const stderr = [];
+        const exitCode = await runCli(
+          ["init-agent", "--target", "claude-code", "--scope", "project", "--package-source", "npm"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+          {},
+          { cwd: tempRoot, platform: "win32" },
+        );
+
+        const mcpConfig = JSON.parse(readFileSync(join(tempRoot, ".mcp.json"), "utf8"));
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.equal(mcpConfig.custom, true);
+        assert.deepEqual(mcpConfig.mcpServers.existing, { command: "node", args: ["server.js"] });
+        assert.equal(mcpConfig.mcpServers.framepack.command, "cmd");
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
