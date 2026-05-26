@@ -46,6 +46,8 @@ import {
 import {
   createWorkbenchProject,
   defaultWorkbenchProjectName,
+  listTemplateMarket,
+  recommendTemplateRoute,
 } from "../../workbench/index.js";
 
 export interface CliIo {
@@ -91,6 +93,7 @@ type CliCommandName =
   | "mcp"
   | "atlas"
   | "packs"
+  | "templates"
   | "release-smoke"
   | "generate"
   | "status"
@@ -148,7 +151,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.2";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.3";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -158,6 +161,8 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack --version",
   "  framepack create --idea <idea> --assets <dir> --output-dir <dir>",
   "  framepack mcp --describe",
+  "  framepack templates",
+  "  framepack templates recommend --idea <idea> --style <style>",
   "  framepack packs",
   "  framepack atlas --json",
   "  framepack generate --input <file> --output-dir <dir> --goal <goal> --audience <audience>",
@@ -278,6 +283,7 @@ function getCommandName(args: string[]): CliCommandName {
     command === "mcp" ||
     command === "atlas" ||
     command === "packs" ||
+    command === "templates" ||
     command === "release-smoke" ||
     command === "generate" ||
     command === "status" ||
@@ -292,7 +298,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, packs, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, packs, templates, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -316,6 +322,7 @@ function getCommandArgs(args: string[]): string[] {
     first === "mcp" ||
     first === "atlas" ||
     first === "packs" ||
+    first === "templates" ||
     first === "release-smoke" ||
     first === "generate" ||
     first === "status" ||
@@ -705,6 +712,59 @@ function runPacksCommand(args: string[], io: CliIo): number {
   }
 
   io.stdout(describeFramepackPackRegistry());
+  return 0;
+}
+
+function runTemplatesCommand(args: string[], io: CliIo): number {
+  if (args[0] === "recommend") {
+    const durationArg = getOptionalArg(args, "--duration");
+    const durationSec = durationArg ? Number(durationArg) : 45;
+
+    if (!Number.isFinite(durationSec) || durationSec < 5) {
+      throw new Error("Invalid --duration value. Use a number of at least 5 seconds.");
+    }
+
+    const recommendation = recommendTemplateRoute({
+      idea: getRequiredArg(args, "--idea"),
+      style: getOptionalArg(args, "--style"),
+      format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
+      durationSec,
+    });
+
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify({ recommendation }, null, 2));
+      return 0;
+    }
+
+    io.stdout(
+      [
+        "Framepack template recommendation",
+        "",
+        `Template: ${recommendation.template.id} (${recommendation.template.label})`,
+        `Access: ${recommendation.template.access}`,
+        `Reason: ${recommendation.reason}`,
+        "",
+        "Implementation routes:",
+        ...recommendation.template.implementationRoutes.map((route) => `- ${route}`),
+      ].join("\n"),
+    );
+    return 0;
+  }
+
+  const payload = { templates: listTemplateMarket() };
+
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify(payload, null, 2));
+    return 0;
+  }
+
+  io.stdout(
+    [
+      "Framepack Template Market",
+      "",
+      ...payload.templates.map((template) => `- ${template.id}: ${template.label} (${template.access}, ${template.license})`),
+    ].join("\n"),
+  );
   return 0;
 }
 
@@ -1110,6 +1170,10 @@ export async function runCli(
 
     if (command === "packs") {
       return runPacksCommand(args.slice(1), io);
+    }
+
+    if (command === "templates") {
+      return runTemplatesCommand(args.slice(1), io);
     }
 
     if (command === "release-smoke") {

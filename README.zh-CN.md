@@ -93,6 +93,31 @@ launch-video/
 - `founder-story`
 - `data-shock`
 
+## 模板市场
+
+Framepack 现在已经有第一版本地 Template Market index。它刻意保持很小、很适合 agent 阅读：这一版不做远程下载、不做支付系统、不做账号层。
+
+每个模板都带着未来生态需要的字段：
+
+- access 和 license
+- 价格元数据
+- tags 和模糊匹配词
+- HyperFrames / Remotion 实现路线
+- 所需素材
+- 画面语言
+- 动效语言
+- 验收标准
+
+可以通过 CLI 使用：
+
+```bash
+framepack templates
+framepack templates --json
+framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
+```
+
+未来付费模板可以接入同一套形状。当前版本只发布内置免费模板，方便你马上开始测试。
+
 Polish Arsenal 推荐器会根据 idea、style、format、duration 输出：
 
 - 推荐模板

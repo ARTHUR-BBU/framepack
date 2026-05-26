@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-alpha.3
+
+- added the first local Template Market index with built-in access, included license, free price metadata, tags, implementation routes, and asset needs
+- added `framepack templates` and `framepack templates recommend` for agent-readable template discovery and recommendation
+- routed Workbench Arsenal recommendations through the same template market data used by the CLI
+- documented Template Market as the future ecosystem and paid-template foundation without adding remote download or payment code
+
 ## 0.5.0-alpha.2
 
 - added npm postinstall agent setup for Codex and Claude Code, with `FRAMEPACK_SKIP_AGENT_INSTALL=1` opt-out

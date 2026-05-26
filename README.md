@@ -95,6 +95,31 @@ The built-in template registry includes:
 - `founder-story`
 - `data-shock`
 
+## Template Market
+
+Framepack now includes the first local Template Market index. It is intentionally small and agent-readable: no remote download, no payment system, no account layer yet.
+
+Each template carries the fields needed for a future ecosystem:
+
+- access and license
+- price metadata
+- tags and fuzzy-match words
+- HyperFrames / Remotion implementation routes
+- asset needs
+- visual language
+- motion language
+- acceptance criteria
+
+Use it from the CLI:
+
+```bash
+framepack templates
+framepack templates --json
+framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
+```
+
+Future paid templates can plug into this same shape. The current release only ships built-in free templates so user testing stays simple.
+
 The Polish Arsenal recommender reads the idea, style, format, and duration, then recommends:
 
 - template route

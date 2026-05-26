@@ -1,5 +1,11 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
+import {
+  listTemplateMarket,
+  recommendTemplateRoute,
+  type TemplateMarketItem,
+  type TemplateRouteId,
+} from "./template-market.js";
 
 export type WorkbenchAssetKind = "image" | "video" | "audio" | "text" | "other";
 
@@ -15,23 +21,9 @@ export interface WorkbenchProject {
   files: Record<string, string>;
 }
 
-export type WorkbenchTemplateId =
-  | "saas-launch"
-  | "news-explainer"
-  | "course-promo"
-  | "game-ad"
-  | "founder-story"
-  | "data-shock";
+export type WorkbenchTemplateId = TemplateRouteId;
 
-export interface WorkbenchTemplate {
-  id: WorkbenchTemplateId;
-  label: string;
-  match: string[];
-  visualLanguage: string[];
-  motionLanguage: string[];
-  templateGuidance: string[];
-  acceptanceCriteria: string[];
-}
+export type WorkbenchTemplate = TemplateMarketItem;
 
 export interface PolishArsenalRecommendation {
   template: WorkbenchTemplate;
@@ -47,84 +39,8 @@ const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm", ".mkv"]);
 const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".m4a", ".aac", ".ogg"]);
 const TEXT_EXTENSIONS = new Set([".md", ".txt", ".json", ".csv"]);
 
-const WORKBENCH_TEMPLATES: WorkbenchTemplate[] = [
-  {
-    id: "saas-launch",
-    label: "SaaS Launch",
-    match: ["saas", "software", "product", "launch", "startup", "tool", "platform"],
-    visualLanguage: ["clean product UI focus", "confident whitespace", "large benefit-led headlines"],
-    motionLanguage: ["interface reveals", "proof-card stack", "smooth camera push"],
-    templateGuidance: ["open on the product promise", "show workflow proof", "close with outcome"],
-    acceptanceCriteria: ["first frame states the value clearly", "UI or product asset is visible early"],
-  },
-  {
-    id: "news-explainer",
-    label: "News Explainer",
-    match: ["news", "policy", "case", "explain", "timeline", "analysis", "report"],
-    visualLanguage: ["editorial contrast", "source-first hierarchy", "caption-led clarity"],
-    motionLanguage: ["timeline build", "headline wipes", "evidence zoom"],
-    templateGuidance: ["start with the headline", "sequence context before opinion", "end with implication"],
-    acceptanceCriteria: ["viewer understands the event in five seconds", "claims stay source-shaped"],
-  },
-  {
-    id: "course-promo",
-    label: "Course Promo",
-    match: ["course", "training", "lesson", "learn", "coach", "bootcamp", "education"],
-    visualLanguage: ["premium education funnel", "expert signal", "bold promise plus proof"],
-    motionLanguage: ["kinetic typography", "module ladder", "before-after transformation"],
-    templateGuidance: ["promise the transformation", "show learning path", "make the outcome concrete"],
-    acceptanceCriteria: ["offer is readable on mobile", "benefit and audience are unmistakable"],
-  },
-  {
-    id: "game-ad",
-    label: "Game Ad",
-    match: ["game", "sprite", "arcade", "battle", "quest", "character", "play"],
-    visualLanguage: ["arcade energy", "character-first framing", "reward-heavy contrast"],
-    motionLanguage: ["impact pops", "parallax map move", "FX bursts"],
-    templateGuidance: ["open with action", "show progression", "end with reward or challenge"],
-    acceptanceCriteria: ["motion feels playable", "main character or reward is never visually lost"],
-  },
-  {
-    id: "founder-story",
-    label: "Founder Story",
-    match: ["founder", "journey", "story", "mission", "why", "build", "startup"],
-    visualLanguage: ["human stakes", "documentary polish", "intimate but commercial framing"],
-    motionLanguage: ["photo parallax", "quote emphasis", "chapter transitions"],
-    templateGuidance: ["start with tension", "connect struggle to product", "close on conviction"],
-    acceptanceCriteria: ["emotional arc is clear", "business takeaway lands before the ending"],
-  },
-  {
-    id: "data-shock",
-    label: "Data Shock",
-    match: ["data", "metric", "growth", "shock", "numbers", "chart", "report"],
-    visualLanguage: ["oversized numbers", "high-contrast proof", "minimal chart clutter"],
-    motionLanguage: ["count-up numbers", "chart snap", "comparison reveal"],
-    templateGuidance: ["lead with the surprising number", "explain why it matters", "turn data into action"],
-    acceptanceCriteria: ["key number is legible instantly", "chart motion supports the argument"],
-  },
-];
-
 export function listWorkbenchTemplates(): WorkbenchTemplate[] {
-  return WORKBENCH_TEMPLATES.map((template) => ({
-    ...template,
-    match: [...template.match],
-    visualLanguage: [...template.visualLanguage],
-    motionLanguage: [...template.motionLanguage],
-    templateGuidance: [...template.templateGuidance],
-    acceptanceCriteria: [...template.acceptanceCriteria],
-  }));
-}
-
-function scoreTemplate(template: WorkbenchTemplate, signal: string): number {
-  return template.match.reduce((score, keyword) => score + (signal.includes(keyword) ? 1 : 0), 0);
-}
-
-function selectTemplate(input: { idea: string; style: string }): WorkbenchTemplate {
-  const signal = `${input.idea} ${input.style}`.toLowerCase();
-
-  return WORKBENCH_TEMPLATES
-    .map((template) => ({ template, score: scoreTemplate(template, signal) }))
-    .sort((left, right) => right.score - left.score)[0].template;
+  return listTemplateMarket();
 }
 
 export function recommendPolishArsenal(input: {
@@ -134,7 +50,7 @@ export function recommendPolishArsenal(input: {
   durationSec: number;
 }): PolishArsenalRecommendation {
   const style = input.style ?? "";
-  const template = selectTemplate({ idea: input.idea, style });
+  const template = recommendTemplateRoute({ ...input, style }).template;
   const signal = `${input.idea} ${style}`.toLowerCase();
   const fast = signal.includes("fast") || signal.includes("dynamic") || input.durationSec <= 35;
   const premium = signal.includes("premium") || signal.includes("business") || signal.includes("polished");
@@ -170,6 +86,8 @@ export function recommendPolishArsenal(input: {
     ],
   };
 }
+
+export { listTemplateMarket, recommendTemplateRoute };
 
 function bulletList(items: string[]) {
   return items.map((item) => `- ${item}`).join("\n");

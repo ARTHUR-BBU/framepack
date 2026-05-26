@@ -82,8 +82,10 @@ import {
 } from "../dist/workflow-packs/registry.js";
 import {
   createWorkbenchProject,
+  listTemplateMarket,
   listWorkbenchTemplates,
   recommendPolishArsenal,
+  recommendTemplateRoute,
 } from "../dist/workbench/index.js";
 
 const fixturePath = resolve(
@@ -2558,7 +2560,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.2");
+      assert.equal(packageJson.version, "0.5.0-alpha.3");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -2593,7 +2595,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.2");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.3");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -2660,6 +2662,35 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "expose a local template market index with future paid-template metadata",
+    run: () => {
+      const templates = listTemplateMarket();
+
+      assert.equal(templates.length, 6);
+      assert.ok(templates.every((template) => template.access === "built-in"));
+      assert.ok(templates.every((template) => template.license === "included"));
+      assert.ok(templates.every((template) => template.priceCents === null));
+      assert.ok(templates.every((template) => template.implementationRoutes.includes("hyperframes")));
+      assert.ok(templates.every((template) => template.assetNeeds.length > 0));
+    },
+  },
+  {
+    name: "recommend a template route from fuzzy market intent",
+    run: () => {
+      const recommendation = recommendTemplateRoute({
+        idea: "A shocking data video about revenue growth for founders.",
+        style: "big numbers, fast, premium, dramatic",
+        format: "9:16",
+        durationSec: 30,
+      });
+
+      assert.equal(recommendation.template.id, "data-shock");
+      assert.ok(recommendation.reason.includes("data"));
+      assert.ok(recommendation.template.tags.includes("data"));
+      assert.ok(recommendation.score > 0);
+    },
+  },
+  {
     name: "translate fuzzy user taste into a professional Polish Arsenal recommendation",
     run: () => {
       const recommendation = recommendPolishArsenal({
@@ -2699,6 +2730,57 @@ Framepack compiles content into executable video projects.
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
+    },
+  },
+  {
+    name: "describe template market through the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        ["templates", "--json"],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+      const payload = JSON.parse(stdout.join("\n"));
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      assert.equal(payload.templates.length, 6);
+      assert.equal(payload.templates[0].access, "built-in");
+      assert.ok(payload.templates.some((template) => template.id === "course-promo"));
+    },
+  },
+  {
+    name: "recommend template market routes through the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        [
+          "templates",
+          "recommend",
+          "--idea",
+          "A premium course promo for founders learning agent video systems.",
+          "--style",
+          "business dynamic polished",
+          "--format",
+          "9:16",
+          "--duration",
+          "35",
+          "--json",
+        ],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+      const payload = JSON.parse(stdout.join("\n"));
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      assert.equal(payload.recommendation.template.id, "course-promo");
+      assert.ok(payload.recommendation.template.implementationRoutes.includes("hyperframes"));
     },
   },
   {
