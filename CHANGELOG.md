@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-alpha.1
+
+- reborn Framepack as a lightweight HyperFrames creative workbench for agents
+- added `framepack create` for idea + asset folder -> asset library, creative brief, HyperFrames prompt, composition plan, and iteration log
+- shifted public README and npm positioning away from the heavier 0.4 Agent Harness surface
+- stopped packaging old architecture and agent-platform docs in the npm artifact; they remain in the repository as legacy learning material
+- kept older compatibility commands available while the new workbench path matures
+
 ## 0.4.0-beta.2
 
 - added the beta.2 Creative Harness composition proposal layer with `COMPOSITION_PROPOSAL.json`

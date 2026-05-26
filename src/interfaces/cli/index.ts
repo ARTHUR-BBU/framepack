@@ -43,6 +43,10 @@ import {
   recommendFramepackPacks,
   resolveFramepackPackSelection,
 } from "../../workflow-packs/registry.js";
+import {
+  createWorkbenchProject,
+  defaultWorkbenchProjectName,
+} from "../../workbench/index.js";
 
 export interface CliIo {
   stdout: (message: string) => void;
@@ -81,6 +85,7 @@ interface CliOptions {
 type CliCommandName =
   | "help"
   | "version"
+  | "create"
   | "init"
   | "init-agent"
   | "mcp"
@@ -143,7 +148,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.4.0-beta.2";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.1";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -151,6 +156,7 @@ const FRAMEPACK_CLI_HELP = [
   "Usage:",
   "  framepack --help",
   "  framepack --version",
+  "  framepack create --idea <idea> --assets <dir> --output-dir <dir>",
   "  framepack mcp --describe",
   "  framepack packs",
   "  framepack atlas --json",
@@ -162,9 +168,9 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack runtime doctor --project-dir <package>",
   "",
   "Agent-first install check:",
-  "  npx -y -p framepack@beta framepack --version",
-  "  npx -y -p framepack@beta framepack --help",
-  "  npm exec --yes --package=framepack@beta -- framepack mcp --describe",
+  "  npx -y -p framepack@alpha framepack --version",
+  "  npx -y -p framepack@alpha framepack --help",
+  "  npm exec --yes --package=framepack@alpha -- framepack mcp --describe",
   "",
   "Release checks:",
   "  npm run release:scenarios",
@@ -266,6 +272,7 @@ function getCommandName(args: string[]): CliCommandName {
   }
 
   if (
+    command === "create" ||
     command === "init" ||
     command === "init-agent" ||
     command === "mcp" ||
@@ -285,7 +292,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use --help, --version, init, init-agent, mcp, atlas, packs, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, packs, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -303,6 +310,7 @@ function getCommandArgs(args: string[]): string[] {
   }
 
   if (
+    first === "create" ||
     first === "init" ||
     first === "init-agent" ||
     first === "mcp" ||
@@ -572,6 +580,40 @@ function runInitCommand(args: string[], io: CliIo): number {
   );
 
   io.stdout(`Initialized project template at ${targetDir}`);
+  return 0;
+}
+
+function runCreateCommand(args: string[], io: CliIo): number {
+  const idea = getRequiredArg(args, "--idea");
+  const outputDir = getRequiredArg(args, "--output-dir");
+  const format = (getOptionalArg(args, "--format") ?? "16:9") as "16:9" | "9:16";
+  const durationSec = Number(getOptionalArg(args, "--duration") ?? "45");
+
+  if (format !== "16:9" && format !== "9:16") {
+    throw new Error("Invalid --format value. Use 16:9 or 9:16.");
+  }
+
+  if (!Number.isFinite(durationSec) || durationSec < 5) {
+    throw new Error("Invalid --duration value. Use a number of at least 5 seconds.");
+  }
+
+  const project = createWorkbenchProject({
+    projectName: getOptionalArg(args, "--project-name") ?? defaultWorkbenchProjectName(idea),
+    idea,
+    outputDir,
+    assetDir: getOptionalArg(args, "--assets"),
+    style: getOptionalArg(args, "--style"),
+    format,
+    durationSec,
+  });
+
+  io.stdout(
+    [
+      `Created Framepack workbench at ${project.projectDir}`,
+      `assets: ${project.assets.length}`,
+      "next: open prompts/hyperframes-prompt.md with your agent, then generate or refine the HyperFrames composition.",
+    ].join("\n"),
+  );
   return 0;
 }
 
@@ -1044,6 +1086,10 @@ export async function runCli(
     if (command === "version") {
       io.stdout(FRAMEPACK_CLI_VERSION);
       return 0;
+    }
+
+    if (command === "create") {
+      return runCreateCommand(args.slice(1), io);
     }
 
     if (command === "init") {

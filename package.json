@@ -1,21 +1,20 @@
 {
   "name": "framepack",
-  "version": "0.4.0-beta.2",
+  "version": "0.5.0-alpha.1",
   "private": false,
   "type": "module",
   "main": "./dist/cli.js",
   "bin": {
     "framepack": "dist/cli.js"
   },
-  "description": "An agent-native video project compiler that turns content into executable video project packages.",
+  "description": "A lightweight HyperFrames creative workbench for assets, prompts, composition, and iteration.",
   "files": [
     "dist",
     "examples",
     "README.md",
     "README.zh-CN.md",
     "AGENTS.md",
-    "docs/architecture",
-    "docs/agent-platform",
+    "docs/rebirth",
     "templates",
     "LICENSE",
     "CHANGELOG.md"
