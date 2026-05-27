@@ -359,6 +359,189 @@ Example:
 | `game-ad` | transitions, captions, logo outro; custom sprite assets remain core |
 | `founder-story` | editorial captions, clean title cards, logo outro |
 
+## Template Market Item Kinds
+
+HyperFrames Catalog uses `block` and `component` because it is a prefab supply layer for runtime-usable video parts.
+
+Framepack Template Market should not copy those categories directly. It operates one layer higher: it packages workflow, direction, structure, technical assembly, and review judgment for agents.
+
+Recommended market item kinds:
+
+```ts
+type FramepackMarketItemKind =
+  | "workflow-template"
+  | "direction-template"
+  | "composition-template"
+  | "arsenal-recipe"
+  | "review-template";
+```
+
+### `workflow-template`
+
+Answers:
+
+```text
+What kind of video job is this?
+```
+
+Examples:
+
+- `saas-launch`
+- `course-promo`
+- `news-explainer`
+- `game-ad`
+- `founder-story`
+- `data-shock`
+- `investor-update`
+
+It should define:
+
+- source type
+- business goal
+- audience fit
+- expected scene pattern
+- asset needs
+- default acceptance criteria
+
+### `direction-template`
+
+Answers:
+
+```text
+What taste, emotion, and director language should guide this video?
+```
+
+Examples:
+
+- `premium-saas-launch`
+- `editorial-proof-story`
+- `retro-arcade-ad`
+- `cinematic-founder-note`
+- `high-energy-data-shock`
+
+It should define:
+
+- visual language
+- motion language
+- pacing
+- typography behavior
+- negative guardrails
+- taste-specific acceptance criteria
+
+### `composition-template`
+
+Answers:
+
+```text
+How should the video be organized across time?
+```
+
+Examples:
+
+- `hook-proof-cta-20s`
+- `problem-solution-demo-30s`
+- `three-beat-launch-film`
+- `social-short-fast-cut`
+
+It should define:
+
+- scene roles
+- duration allocation
+- transition pattern
+- primary focus per scene
+- fallback layout strategy
+
+### `arsenal-recipe`
+
+Answers:
+
+```text
+Which technical modules should be combined?
+```
+
+It should define:
+
+- HyperFrames Catalog blocks
+- HyperFrames Catalog components
+- animation libraries or techniques
+- custom composition areas
+- asset production routes
+- fallback routes
+
+This is the bridge between Director Translation and actual technical execution.
+
+### `review-template`
+
+Answers:
+
+```text
+How do we judge whether this video direction is good enough?
+```
+
+Examples:
+
+- `business-polish-check`
+- `short-video-hook-check`
+- `text-readability-check`
+- `motion-density-check`
+- `catalog-fit-check`
+
+It should define:
+
+- review questions
+- evidence requirements
+- failure modes
+- iteration prompts
+- readiness criteria
+
+## Template Market Contribution Model
+
+Framepack Template Market should follow the same ecosystem spirit as HyperFrames Catalog: community contribution through GitHub, review, and publishing.
+
+The market should eventually support this contribution flow:
+
+```text
+template folder
+  -> template.json
+  -> README.md
+  -> example input
+  -> expected Workbench output
+  -> optional preview evidence
+  -> framepack template validate
+  -> GitHub pull request
+  -> review
+  -> merge
+  -> release
+```
+
+A contributed template should be judged by whether it helps an agent produce a better video workflow, not merely whether it contains pretty words.
+
+Minimum contribution expectations:
+
+- clear market item kind
+- explicit compatible workflow routes
+- concrete input and output contract
+- agent-readable instructions
+- HyperFrames Catalog fit notes when relevant
+- fallback strategy
+- acceptance criteria
+- at least one example prompt or use case
+
+Long-term monetization can sit on top of the same structure:
+
+- free core templates
+- community templates
+- professional direction packs
+- paid industry workflow packs
+- paid arsenal recipes from designers, studios, or technical creators
+
+The stable boundary remains:
+
+```text
+HyperFrames Catalog contributes runtime-usable video parts.
+Framepack Template Market contributes director workflows, creative engineering templates, and review systems for agents.
+```
+
 ## Recommended Package Shape
 
 The 0.5 Workbench should keep the lean file model, but make each file more purposeful.
@@ -610,4 +793,3 @@ Human taste words
   -> technical video assembly plan
   -> HyperFrames-ready production loop
 ```
-
