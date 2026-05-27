@@ -88,6 +88,7 @@ import {
   recommendPolishArsenal,
   recommendHyperframesCatalogPrefabs,
   recommendTemplateRoute,
+  validateWorkbenchFiles,
 } from "../dist/workbench/index.js";
 
 const fixturePath = resolve(
@@ -2761,6 +2762,7 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["DIRECTION.md"], /Template: course-promo/);
         assert.match(project.files["DIRECTION.md"], /Director Translation/);
         assert.match(project.files["DIRECTION.md"], /Human Checkpoints/);
+        assert.match(project.files["DIRECTION.md"], /Proposal Options/);
         assert.match(project.files["DIRECTION.md"], /Professional Creative Translation/);
         assert.match(project.files["COMPOSITION.md"], /Recommended Template/);
         assert.match(project.files["COMPOSITION.md"], /HyperFrames Catalog Plan/);
@@ -2770,9 +2772,49 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["COMPOSITION.md"], /Acceptance Criteria/);
         assert.match(project.files[".framepack/state.json"], /"directorTranslation"/);
         assert.match(project.files[".framepack/state.json"], /"catalogRecommendation"/);
+        assert.match(project.files[".framepack/state.json"], /"hitlLoop"/);
+        assert.match(project.files["ITERATIONS.md"], /HITL Loop/);
+        assert.match(project.files["ITERATIONS.md"], /Decision Log/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
+    },
+  },
+  {
+    name: "validate workbench files for agentic loop readiness",
+    run: () => {
+      const project = createWorkbenchProject({
+        projectName: "qa-ready-workbench",
+        idea: "A premium SaaS launch video for founders.",
+        outputDir: mkdtempSync(join(tmpdir(), "framepack-qa-ready-")),
+        style: "business dynamic polished",
+        format: "9:16",
+        durationSec: 30,
+      });
+      const report = validateWorkbenchFiles(project.files);
+
+      assert.equal(report.status, "passed");
+      assert.equal(report.checks.every((check) => check.status === "passed"), true);
+      assert.ok(report.checks.some((check) => check.id === "hitl-loop"));
+      assert.ok(report.checks.some((check) => check.id === "catalog-plan"));
+    },
+  },
+  {
+    name: "fail workbench validation when core loop files are generic or missing",
+    run: () => {
+      const report = validateWorkbenchFiles({
+        "FRAMEPACK.md": "# Framepack Workbench\n",
+        "DIRECTION.md": "# Creative Direction\n",
+        "COMPOSITION.md": "# Composition Plan\n",
+        "ITERATIONS.md": "# Iterations\n",
+        "ASSETS.md": "# Assets\n",
+        ".framepack/state.json": "{}",
+      });
+
+      assert.equal(report.status, "failed");
+      assert.ok(report.findings.some((finding) => /Director Translation/i.test(finding)));
+      assert.ok(report.findings.some((finding) => /HITL Loop/i.test(finding)));
+      assert.ok(report.findings.some((finding) => /HyperFrames Catalog Plan/i.test(finding)));
     },
   },
   {
@@ -4394,6 +4436,51 @@ Framepack compiles content into executable video projects.
         const mcpConfig = JSON.parse(readFileSync(join(tempRoot, ".mcp.json"), "utf8"));
         assert.equal(mcpConfig.mcpServers.framepack.command, "cmd");
         assert.deepEqual(mcpConfig.mcpServers.framepack.args, ["/c", "npx", "-y", "framepack", "mcp"]);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "check a workbench package from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-workbench-check-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const createExitCode = await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium SaaS launch video for founders.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "checked-workbench",
+            "--style",
+            "business dynamic polished",
+            "--duration",
+            "30",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const checkExitCode = await runCli(
+          ["workbench", "check", "--project-dir", join(tempRoot, "checked-workbench"), "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const payload = JSON.parse(stdout.join("\n"));
+
+        assert.equal(createExitCode, 0, stderr.join("\n"));
+        assert.equal(checkExitCode, 0, stderr.join("\n"));
+        assert.equal(payload.report.status, "passed");
+        assert.ok(payload.report.checks.some((check) => check.id === "hitl-loop"));
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

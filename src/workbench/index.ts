@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import {
   listTemplateMarket,
@@ -51,6 +51,27 @@ export interface DirectorTranslation {
   humanCheckpoints: string[];
 }
 
+export interface HitlLoop {
+  currentPhase: "proposal";
+  nextAction: string;
+  proposalOptions: string[];
+  decisionLog: string[];
+  feedbackPrompts: string[];
+}
+
+export interface WorkbenchQaCheck {
+  id: string;
+  status: "passed" | "failed";
+  summary: string;
+}
+
+export interface WorkbenchQaReport {
+  version: "framepack.workbench-qa.v1";
+  status: "passed" | "failed";
+  checks: WorkbenchQaCheck[];
+  findings: string[];
+}
+
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm", ".mkv"]);
 const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".m4a", ".aac", ".ogg"]);
@@ -98,6 +119,24 @@ function createDirectorTranslation(input: {
       "Direction choice: confirm whether this route should feel more premium, faster, more cinematic, or more proof-heavy.",
       "Asset choice: confirm which user assets are mandatory and which gaps can use Catalog, generated, or custom assets.",
       "Preview feedback: translate user reactions into timing, text, motion, and prefab substitutions.",
+    ],
+  };
+}
+
+function createHitlLoop(template: WorkbenchTemplate): HitlLoop {
+  return {
+    currentPhase: "proposal",
+    nextAction: "Ask the user to choose or modify the direction before building the first HyperFrames composition.",
+    proposalOptions: [
+      `A: ${template.label} with premium polish and controlled business pacing.`,
+      `B: ${template.label} with faster social-first momentum and bigger focal text.`,
+      `C: ${template.label} with proof-heavy structure and stronger technical credibility.`,
+    ],
+    decisionLog: ["v001 initialized: direction options prepared; user decision pending."],
+    feedbackPrompts: [
+      "Should the next pass feel more premium, faster, more cinematic, or more proof-heavy?",
+      "Which assets are mandatory, and which gaps may use Catalog, generated, or custom assets?",
+      "After preview, what should change first: pacing, text, motion, visuals, or CTA?",
     ],
   };
 }
@@ -221,6 +260,94 @@ function catalogPlan(recommendation: HyperframesCatalogRecommendation) {
   ].join("\n");
 }
 
+function numberedList(items: string[]) {
+  return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
+}
+
+function validateContains(input: {
+  files: Record<string, string>;
+  file: string;
+  pattern: RegExp;
+  id: string;
+  summary: string;
+  finding: string;
+}): WorkbenchQaCheck {
+  const content = input.files[input.file] ?? "";
+  const passed = input.pattern.test(content);
+  return {
+    id: input.id,
+    status: passed ? "passed" : "failed",
+    summary: passed ? input.summary : input.finding,
+  };
+}
+
+export function validateWorkbenchFiles(files: Record<string, string>): WorkbenchQaReport {
+  const checks = [
+    validateContains({
+      files,
+      file: "DIRECTION.md",
+      pattern: /Director Translation/,
+      id: "director-translation",
+      summary: "DIRECTION.md includes a Director Translation section.",
+      finding: "DIRECTION.md is missing Director Translation.",
+    }),
+    validateContains({
+      files,
+      file: "DIRECTION.md",
+      pattern: /Proposal Options/,
+      id: "proposal-options",
+      summary: "DIRECTION.md includes proposal options for HITL choice.",
+      finding: "DIRECTION.md is missing Proposal Options.",
+    }),
+    validateContains({
+      files,
+      file: "ITERATIONS.md",
+      pattern: /HITL Loop/,
+      id: "hitl-loop",
+      summary: "ITERATIONS.md includes the HITL Loop.",
+      finding: "ITERATIONS.md is missing HITL Loop.",
+    }),
+    validateContains({
+      files,
+      file: "COMPOSITION.md",
+      pattern: /HyperFrames Catalog Plan/,
+      id: "catalog-plan",
+      summary: "COMPOSITION.md includes a HyperFrames Catalog Plan.",
+      finding: "COMPOSITION.md is missing HyperFrames Catalog Plan.",
+    }),
+    validateContains({
+      files,
+      file: ".framepack/state.json",
+      pattern: /"hitlLoop"/,
+      id: "state-hitl-loop",
+      summary: "State JSON includes hitlLoop.",
+      finding: ".framepack/state.json is missing hitlLoop.",
+    }),
+  ];
+  const findings = checks
+    .filter((check) => check.status === "failed")
+    .map((check) => check.summary);
+
+  return {
+    version: "framepack.workbench-qa.v1",
+    status: findings.length === 0 ? "passed" : "failed",
+    checks,
+    findings,
+  };
+}
+
+export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport {
+  const files = Object.fromEntries(
+    ["FRAMEPACK.md", "ASSETS.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"]
+      .map((filePath) => [
+        filePath,
+        existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
+      ]),
+  );
+
+  return validateWorkbenchFiles(files);
+}
+
 function buildFiles(input: {
   projectName: string;
   idea: string;
@@ -232,6 +359,7 @@ function buildFiles(input: {
   const assetList = formatAssets(input.assets);
   const recommendation = recommendPolishArsenal(input);
   const direction = recommendation.directorTranslation;
+  const hitlLoop = createHitlLoop(recommendation.template);
   const recommendedStack = [
     "- Runtime: HyperFrames first; Remotion is a good route for reusable social/template video.",
     "- Motion: GSAP timeline for HyperFrames-safe scene control.",
@@ -257,6 +385,13 @@ function buildFiles(input: {
       "3. Use Framepack recommendations as a production brief, not as rigid rails.",
       "4. Build or refine the HyperFrames or Remotion composition.",
       "5. Record each render/review loop in `ITERATIONS.md`.",
+      "6. Use the HITL loop before committing to a composition direction when the user's taste is fuzzy.",
+      "",
+      "## Current Agentic Loop",
+      "",
+      `Phase: ${hitlLoop.currentPhase}`,
+      "",
+      `Next action: ${hitlLoop.nextAction}`,
       "",
       "## Three Layers",
       "",
@@ -312,6 +447,10 @@ function buildFiles(input: {
       "## Human Checkpoints",
       "",
       bulletList(direction.humanCheckpoints),
+      "",
+      "## Proposal Options",
+      "",
+      bulletList(hitlLoop.proposalOptions),
       "",
       "## Motion Language",
       "",
@@ -376,6 +515,24 @@ function buildFiles(input: {
       "- Generate or update the HyperFrames or Remotion composition.",
       "- Record render feedback and next changes here.",
       "",
+      "## HITL Loop",
+      "",
+      `Current phase: ${hitlLoop.currentPhase}`,
+      "",
+      `Next action: ${hitlLoop.nextAction}`,
+      "",
+      "### Proposal Options",
+      "",
+      numberedList(hitlLoop.proposalOptions),
+      "",
+      "### Decision Log",
+      "",
+      bulletList(hitlLoop.decisionLog),
+      "",
+      "### Feedback Prompts",
+      "",
+      bulletList(hitlLoop.feedbackPrompts),
+      "",
     ].join("\n"),
     ".framepack/state.json": JSON.stringify(
       {
@@ -393,6 +550,7 @@ function buildFiles(input: {
         },
         directorTranslation: recommendation.directorTranslation,
         catalogRecommendation: recommendation.catalogRecommendation,
+        hitlLoop,
       },
       null,
       2,

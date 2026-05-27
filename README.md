@@ -76,6 +76,13 @@ launch-video/
 
 Start with `FRAMEPACK.md`.
 
+Check the generated workbench before building the first composition:
+
+```bash
+framepack workbench check --project-dir ./out/launch-video
+framepack workbench check --project-dir ./out/launch-video --json
+```
+
 ## Workbench Arsenal
 
 `framepack create` writes five core Markdown files, not a heavy legacy package tree:
@@ -149,6 +156,17 @@ The Polish Arsenal recommender reads the idea, style, format, and duration, then
 - avoid list
 - acceptance criteria
 
+## Agentic HITL Loop
+
+Framepack workbenches include a human-in-the-loop production loop:
+
+- `DIRECTION.md` gives proposal options, director translation, and human checkpoints.
+- `COMPOSITION.md` turns the approved direction into HyperFrames/Catalog/animation assembly guidance.
+- `ITERATIONS.md` records decisions, preview feedback, and next changes.
+- `.framepack/state.json` stores the same loop in machine-readable form.
+
+Agents should ask the user to choose or modify the direction before locking the first composition when taste is still fuzzy.
+
 ## HyperFrames And Remotion
 
 Framepack does not ask users to choose low-level tools. It recommends the right route when the project needs it:
@@ -174,6 +192,7 @@ framepack --version
 framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
 framepack init-agent --target auto --scope project
+framepack workbench check --project-dir <dir>
 framepack mcp --describe
 ```
 

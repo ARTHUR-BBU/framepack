@@ -74,6 +74,13 @@ launch-video/
 
 从 `FRAMEPACK.md` 开始读。
 
+在开始写第一个 composition 之前，可以先检查工作台是否可用：
+
+```bash
+framepack workbench check --project-dir ./out/launch-video
+framepack workbench check --project-dir ./out/launch-video --json
+```
+
 ## Workbench Arsenal
 
 `framepack create` 默认只输出 5 个核心 Markdown 文件，不再制造旧式目录负担：
@@ -147,6 +154,17 @@ Polish Arsenal 推荐器会根据 idea、style、format、duration 输出：
 - 禁忌清单
 - 验收标准
 
+## Agentic HITL Loop
+
+Framepack 工作台内置人类参与决策的生产循环：
+
+- `DIRECTION.md` 给出方案选项、导演翻译和需要用户确认的检查点。
+- `COMPOSITION.md` 把确认后的方向拆成 HyperFrames / Catalog / 动画技术组合。
+- `ITERATIONS.md` 记录用户选择、预览反馈和下一轮修改。
+- `.framepack/state.json` 保存同一套机器可读状态。
+
+当用户审美表达还比较模糊时，agent 应该先让用户选择或修改方向，再锁定第一版 composition。
+
 ## HyperFrames 和 Remotion
 
 Framepack 不要求用户自己选择底层技术。它会在项目需要时推荐合适路线：
@@ -172,6 +190,7 @@ framepack --version
 framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
 framepack init-agent --target auto --scope project
+framepack workbench check --project-dir <dir>
 framepack mcp --describe
 ```
 

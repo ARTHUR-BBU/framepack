@@ -50,6 +50,7 @@ import {
   listTemplateMarket,
   recommendHyperframesCatalogPrefabs,
   recommendTemplateRoute,
+  validateWorkbenchProject,
 } from "../../workbench/index.js";
 
 export interface CliIo {
@@ -97,6 +98,7 @@ type CliCommandName =
   | "catalog"
   | "packs"
   | "templates"
+  | "workbench"
   | "release-smoke"
   | "generate"
   | "status"
@@ -168,6 +170,7 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack catalog recommend --template <template-id> --idea <idea>",
   "  framepack templates",
   "  framepack templates recommend --idea <idea> --style <style>",
+  "  framepack workbench check --project-dir <dir>",
   "  framepack packs",
   "  framepack atlas --json",
   "  framepack generate --input <file> --output-dir <dir> --goal <goal> --audience <audience>",
@@ -290,6 +293,7 @@ function getCommandName(args: string[]): CliCommandName {
     command === "catalog" ||
     command === "packs" ||
     command === "templates" ||
+    command === "workbench" ||
     command === "release-smoke" ||
     command === "generate" ||
     command === "status" ||
@@ -304,7 +308,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -330,6 +334,7 @@ function getCommandArgs(args: string[]): string[] {
     first === "catalog" ||
     first === "packs" ||
     first === "templates" ||
+    first === "workbench" ||
     first === "release-smoke" ||
     first === "generate" ||
     first === "status" ||
@@ -824,6 +829,30 @@ function runCatalogCommand(args: string[], io: CliIo): number {
   return 0;
 }
 
+function runWorkbenchCommand(args: string[], io: CliIo): number {
+  if (args[0] !== "check") {
+    throw new Error("Invalid workbench command. Use: framepack workbench check --project-dir <dir>");
+  }
+
+  const projectDir = resolve(getRequiredArg(args, "--project-dir"));
+  const report = validateWorkbenchProject(projectDir);
+
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify({ projectDir, report }, null, 2));
+  } else {
+    io.stdout(
+      [
+        `Framepack workbench check: ${report.status}`,
+        `projectDir: ${projectDir}`,
+        "",
+        ...report.checks.map((check) => `- ${check.status}: ${check.id} - ${check.summary}`),
+      ].join("\n"),
+    );
+  }
+
+  return report.status === "passed" ? 0 : 1;
+}
+
 function describeCapabilityAtlas(): string {
   const nodes = listCapabilityAtlasNodes();
   const stacks = listRecommendedCapabilityStacks();
@@ -1234,6 +1263,10 @@ export async function runCli(
 
     if (command === "templates") {
       return runTemplatesCommand(args.slice(1), io);
+    }
+
+    if (command === "workbench") {
+      return runWorkbenchCommand(args.slice(1), io);
     }
 
     if (command === "release-smoke") {
