@@ -101,6 +101,8 @@ Framepack now includes the first local Template Market index. It is intentionall
 
 Each template carries the fields needed for a future ecosystem:
 
+- market item kind, starting with `workflow-template`
+- GitHub PR reviewed contribution model
 - access and license
 - price metadata
 - tags and fuzzy-match words
@@ -120,9 +122,27 @@ framepack templates recommend --idea "A course promo for founders" --style "prem
 
 Future paid templates can plug into this same shape. The current release only ships built-in free templates so user testing stays simple.
 
+## HyperFrames Catalog Bridge
+
+HyperFrames Catalog is the official prefab supply layer. Framepack treats it as a source of runtime-usable video parts, not as a replacement for the Template Market.
+
+- HyperFrames Catalog contributes `block` and `component` prefabs.
+- Framepack Template Market contributes director workflows, creative engineering templates, and review systems for agents.
+
+Use the bridge from the CLI:
+
+```bash
+framepack catalog
+framepack catalog --json
+framepack catalog recommend --template course-promo --idea "A premium course promo for founders" --style "business dynamic" --format 9:16 --json
+```
+
+Workbench `COMPOSITION.md` tells the agent to inspect the live official Catalog with `npx hyperframes catalog --json` before installing any candidate. Framepack recommends Catalog items; it does not auto-install them.
+
 The Polish Arsenal recommender reads the idea, style, format, and duration, then recommends:
 
 - template route
+- HyperFrames Catalog blocks and components
 - animation techniques
 - motion language
 - aesthetic direction

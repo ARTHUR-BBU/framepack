@@ -6,6 +6,11 @@ import {
   type TemplateMarketItem,
   type TemplateRouteId,
 } from "./template-market.js";
+import {
+  listHyperframesCatalogPrefabs,
+  recommendHyperframesCatalogPrefabs,
+  type HyperframesCatalogRecommendation,
+} from "./hyperframes-catalog.js";
 
 export type WorkbenchAssetKind = "image" | "video" | "audio" | "text" | "other";
 
@@ -27,11 +32,23 @@ export type WorkbenchTemplate = TemplateMarketItem;
 
 export interface PolishArsenalRecommendation {
   template: WorkbenchTemplate;
+  directorTranslation: DirectorTranslation;
+  catalogRecommendation: HyperframesCatalogRecommendation;
   professionalCreativeLanguage: string;
   animationTechniques: string[];
   aestheticDirection: string[];
   avoid: string[];
   acceptanceCriteria: string[];
+}
+
+export interface DirectorTranslation {
+  creativeIntent: string;
+  narrativePattern: string;
+  emotionalEnergy: string[];
+  visualLanguage: string[];
+  motionLanguage: string[];
+  technicalModules: string[];
+  humanCheckpoints: string[];
 }
 
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
@@ -41,6 +58,48 @@ const TEXT_EXTENSIONS = new Set([".md", ".txt", ".json", ".csv"]);
 
 export function listWorkbenchTemplates(): WorkbenchTemplate[] {
   return listTemplateMarket();
+}
+
+function createDirectorTranslation(input: {
+  idea: string;
+  style: string;
+  format: "16:9" | "9:16";
+  durationSec: number;
+  template: WorkbenchTemplate;
+  fast: boolean;
+  premium: boolean;
+}): DirectorTranslation {
+  const narrativePatterns: Record<TemplateRouteId, string> = {
+    "saas-launch": "hook-product-proof-cta",
+    "news-explainer": "headline-context-implication",
+    "course-promo": "promise-path-proof-cta",
+    "game-ad": "action-progression-reward",
+    "founder-story": "tension-origin-conviction",
+    "data-shock": "number-context-action",
+  };
+
+  return {
+    creativeIntent: `Turn the user's idea into a ${input.durationSec}-second ${input.format} ${input.template.label} video that feels ${input.premium ? "premium and commercially credible" : "clear and audience-focused"} with ${input.fast ? "compressed momentum" : "controlled pacing"}.`,
+    narrativePattern: narrativePatterns[input.template.id],
+    emotionalEnergy: [
+      input.premium ? "premium restraint" : "direct clarity",
+      input.fast ? "forward momentum" : "measured confidence",
+      "credible payoff",
+    ],
+    visualLanguage: [...input.template.visualLanguage],
+    motionLanguage: [...input.template.motionLanguage],
+    technicalModules: [
+      "HyperFrames timeline composition",
+      "HyperFrames Catalog prefabs where they fit",
+      "custom brand-critical scenes",
+      input.fast ? "kinetic caption emphasis" : "controlled transition pacing",
+    ],
+    humanCheckpoints: [
+      "Direction choice: confirm whether this route should feel more premium, faster, more cinematic, or more proof-heavy.",
+      "Asset choice: confirm which user assets are mandatory and which gaps can use Catalog, generated, or custom assets.",
+      "Preview feedback: translate user reactions into timing, text, motion, and prefab substitutions.",
+    ],
+  };
 }
 
 export function recommendPolishArsenal(input: {
@@ -55,9 +114,18 @@ export function recommendPolishArsenal(input: {
   const fast = signal.includes("fast") || signal.includes("dynamic") || input.durationSec <= 35;
   const premium = signal.includes("premium") || signal.includes("business") || signal.includes("polished");
   const mobile = input.format === "9:16";
+  const directorTranslation = createDirectorTranslation({ ...input, style, template, fast, premium });
+  const catalogRecommendation = recommendHyperframesCatalogPrefabs({
+    templateId: template.id,
+    idea: input.idea,
+    style,
+    format: input.format,
+  });
 
   return {
     template,
+    directorTranslation,
+    catalogRecommendation,
     professionalCreativeLanguage: `${template.visualLanguage[0]} with ${premium ? "premium commercial restraint" : "clear editorial confidence"} and ${fast ? "compressed high-energy pacing" : "measured narrative pacing"}.`,
     animationTechniques: [
       ...new Set([
@@ -87,7 +155,12 @@ export function recommendPolishArsenal(input: {
   };
 }
 
-export { listTemplateMarket, recommendTemplateRoute };
+export {
+  listHyperframesCatalogPrefabs,
+  listTemplateMarket,
+  recommendHyperframesCatalogPrefabs,
+  recommendTemplateRoute,
+};
 
 function bulletList(items: string[]) {
   return items.map((item) => `- ${item}`).join("\n");
@@ -124,6 +197,30 @@ function formatAssets(assets: WorkbenchAsset[]) {
   return assets.map((asset) => `- ${asset.name} (${asset.kind})`).join("\n");
 }
 
+function catalogPlan(recommendation: HyperframesCatalogRecommendation) {
+  const prefabLines = recommendation.prefabs.length > 0
+    ? recommendation.prefabs.map((prefab) => `- ${prefab.id} (${prefab.kind}): ${prefab.bestUse} Install: \`${prefab.installCommand}\`.`).join("\n")
+    : "- No strong Catalog prefab match. Keep the route custom and inspect the live Catalog before writing from scratch.";
+
+  return [
+    "## HyperFrames Catalog Plan",
+    "",
+    "Official Catalog check:",
+    "",
+    "- Run `npx hyperframes catalog --json` before installing any prefab.",
+    "- Treat recommendations as candidates; do not auto-install without an agent/user execution decision.",
+    "- Use blocks as mounted composition segments and components as copied CSS/GSAP snippets.",
+    "",
+    "Recommended prefabs:",
+    "",
+    prefabLines,
+    "",
+    "Fallback:",
+    "",
+    recommendation.fallbackStrategy,
+  ].join("\n");
+}
+
 function buildFiles(input: {
   projectName: string;
   idea: string;
@@ -134,6 +231,7 @@ function buildFiles(input: {
 }) {
   const assetList = formatAssets(input.assets);
   const recommendation = recommendPolishArsenal(input);
+  const direction = recommendation.directorTranslation;
   const recommendedStack = [
     "- Runtime: HyperFrames first; Remotion is a good route for reusable social/template video.",
     "- Motion: GSAP timeline for HyperFrames-safe scene control.",
@@ -141,6 +239,7 @@ function buildFiles(input: {
     `- Professional translation: ${recommendation.professionalCreativeLanguage}`,
     `- Animation techniques: ${recommendation.animationTechniques.join(", ")}.`,
     `- Aesthetic direction: ${recommendation.aestheticDirection.join(", ")}.`,
+    `- Catalog prefabs: ${recommendation.catalogRecommendation.prefabs.map((prefab) => prefab.id).join(", ") || "inspect live Catalog before custom work"}.`,
     `- Avoid: ${recommendation.avoid.join(", ")}.`,
     "- Verification: CSS first scene visible, scene switches with tl.set(), timeline registered on window.__timelines.",
   ].join("\n");
@@ -196,6 +295,24 @@ function buildFiles(input: {
       "",
       recommendation.professionalCreativeLanguage,
       "",
+      "## Director Translation",
+      "",
+      `Creative intent: ${direction.creativeIntent}`,
+      "",
+      `Narrative pattern: ${direction.narrativePattern}`,
+      "",
+      "Emotional energy:",
+      "",
+      bulletList(direction.emotionalEnergy),
+      "",
+      "Technical modules:",
+      "",
+      bulletList(direction.technicalModules),
+      "",
+      "## Human Checkpoints",
+      "",
+      bulletList(direction.humanCheckpoints),
+      "",
       "## Motion Language",
       "",
       bulletList(recommendation.animationTechniques),
@@ -231,6 +348,8 @@ function buildFiles(input: {
       "## Recommended Template",
       "",
       `Use the ${recommendation.template.id} route: ${recommendation.template.templateGuidance.join(" ")}`,
+      "",
+      catalogPlan(recommendation.catalogRecommendation),
       "",
       "## Acceptance Criteria",
       "",
@@ -272,6 +391,8 @@ function buildFiles(input: {
           composition: "COMPOSITION.md",
           iterations: "ITERATIONS.md",
         },
+        directorTranslation: recommendation.directorTranslation,
+        catalogRecommendation: recommendation.catalogRecommendation,
       },
       null,
       2,

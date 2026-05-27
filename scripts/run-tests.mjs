@@ -82,9 +82,11 @@ import {
 } from "../dist/workflow-packs/registry.js";
 import {
   createWorkbenchProject,
+  listHyperframesCatalogPrefabs,
   listTemplateMarket,
   listWorkbenchTemplates,
   recommendPolishArsenal,
+  recommendHyperframesCatalogPrefabs,
   recommendTemplateRoute,
 } from "../dist/workbench/index.js";
 
@@ -2670,8 +2672,39 @@ Framepack compiles content into executable video projects.
       assert.ok(templates.every((template) => template.access === "built-in"));
       assert.ok(templates.every((template) => template.license === "included"));
       assert.ok(templates.every((template) => template.priceCents === null));
+      assert.ok(templates.every((template) => template.kind === "workflow-template"));
+      assert.ok(templates.every((template) => template.contributionModel === "github-pr-reviewed"));
       assert.ok(templates.every((template) => template.implementationRoutes.includes("hyperframes")));
       assert.ok(templates.every((template) => template.assetNeeds.length > 0));
+    },
+  },
+  {
+    name: "expose HyperFrames Catalog prefabs as official block and component supply",
+    run: () => {
+      const prefabs = listHyperframesCatalogPrefabs();
+
+      assert.ok(prefabs.some((prefab) => prefab.id === "caption-editorial-emphasis"));
+      assert.ok(prefabs.some((prefab) => prefab.kind === "block"));
+      assert.ok(prefabs.some((prefab) => prefab.kind === "component"));
+      assert.ok(prefabs.every((prefab) => prefab.source === "hyperframes-catalog"));
+      assert.ok(prefabs.every((prefab) => prefab.installCommand.startsWith("npx hyperframes add ")));
+    },
+  },
+  {
+    name: "recommend HyperFrames Catalog prefabs for template routes without auto-installing them",
+    run: () => {
+      const recommendation = recommendHyperframesCatalogPrefabs({
+        templateId: "course-promo",
+        idea: "A premium course promo for founders learning agent video systems.",
+        style: "business dynamic polished bigger text",
+        format: "9:16",
+      });
+
+      assert.equal(recommendation.templateId, "course-promo");
+      assert.ok(recommendation.prefabs.some((prefab) => prefab.id === "caption-editorial-emphasis"));
+      assert.ok(recommendation.prefabs.some((prefab) => prefab.kind === "component"));
+      assert.match(recommendation.agentInstructions.join("\n"), /npx hyperframes catalog --json/);
+      assert.match(recommendation.agentInstructions.join("\n"), /do not auto-install/i);
     },
   },
   {
@@ -2701,6 +2734,9 @@ Framepack compiles content into executable video projects.
       });
 
       assert.equal(recommendation.template.id, "course-promo");
+      assert.equal(recommendation.directorTranslation.narrativePattern, "promise-path-proof-cta");
+      assert.ok(recommendation.directorTranslation.humanCheckpoints.some((item) => /direction/i.test(item)));
+      assert.ok(recommendation.catalogRecommendation.prefabs.some((prefab) => prefab.id === "caption-editorial-emphasis"));
       assert.match(recommendation.professionalCreativeLanguage, /premium education funnel/i);
       assert.ok(recommendation.animationTechniques.includes("kinetic typography"));
       assert.ok(recommendation.avoid.some((item) => /tiny text/i.test(item)));
@@ -2723,10 +2759,17 @@ Framepack compiles content into executable video projects.
         });
 
         assert.match(project.files["DIRECTION.md"], /Template: course-promo/);
+        assert.match(project.files["DIRECTION.md"], /Director Translation/);
+        assert.match(project.files["DIRECTION.md"], /Human Checkpoints/);
         assert.match(project.files["DIRECTION.md"], /Professional Creative Translation/);
         assert.match(project.files["COMPOSITION.md"], /Recommended Template/);
+        assert.match(project.files["COMPOSITION.md"], /HyperFrames Catalog Plan/);
+        assert.match(project.files["COMPOSITION.md"], /caption-editorial-emphasis/);
+        assert.match(project.files["COMPOSITION.md"], /npx hyperframes catalog --json/);
         assert.match(project.files["COMPOSITION.md"], /Kinetic typography/i);
         assert.match(project.files["COMPOSITION.md"], /Acceptance Criteria/);
+        assert.match(project.files[".framepack/state.json"], /"directorTranslation"/);
+        assert.match(project.files[".framepack/state.json"], /"catalogRecommendation"/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -2781,6 +2824,58 @@ Framepack compiles content into executable video projects.
       assert.equal(exitCode, 0, stderr.join("\n"));
       assert.equal(payload.recommendation.template.id, "course-promo");
       assert.ok(payload.recommendation.template.implementationRoutes.includes("hyperframes"));
+    },
+  },
+  {
+    name: "describe HyperFrames Catalog bridge through the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        ["catalog", "--json"],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+      const payload = JSON.parse(stdout.join("\n"));
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      assert.ok(payload.prefabs.some((prefab) => prefab.id === "caption-editorial-emphasis"));
+      assert.ok(payload.prefabs.some((prefab) => prefab.kind === "block"));
+      assert.ok(payload.prefabs.some((prefab) => prefab.kind === "component"));
+    },
+  },
+  {
+    name: "recommend HyperFrames Catalog prefabs through the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        [
+          "catalog",
+          "recommend",
+          "--template",
+          "course-promo",
+          "--idea",
+          "A premium course promo for founders learning agent video systems.",
+          "--style",
+          "business dynamic polished",
+          "--format",
+          "9:16",
+          "--json",
+        ],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+      const payload = JSON.parse(stdout.join("\n"));
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      assert.equal(payload.recommendation.templateId, "course-promo");
+      assert.ok(payload.recommendation.prefabs.some((prefab) => prefab.id === "caption-editorial-emphasis"));
+      assert.match(payload.recommendation.agentInstructions.join("\n"), /npx hyperframes catalog --json/);
     },
   },
   {

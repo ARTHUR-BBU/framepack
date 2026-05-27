@@ -9,9 +9,11 @@ export type TemplateRouteId =
 export interface TemplateMarketItem {
   id: TemplateRouteId;
   label: string;
+  kind: "workflow-template";
   access: "built-in";
   license: "included";
   priceCents: null;
+  contributionModel: "github-pr-reviewed";
   tags: string[];
   match: string[];
   visualLanguage: string[];
@@ -32,9 +34,11 @@ const TEMPLATE_MARKET: TemplateMarketItem[] = [
   {
     id: "saas-launch",
     label: "SaaS Launch",
+    kind: "workflow-template",
     access: "built-in",
     license: "included",
     priceCents: null,
+    contributionModel: "github-pr-reviewed",
     tags: ["saas", "launch", "product", "startup"],
     match: ["saas", "software", "product", "launch", "startup", "tool", "platform"],
     visualLanguage: ["clean product UI focus", "confident whitespace", "large benefit-led headlines"],
@@ -47,9 +51,11 @@ const TEMPLATE_MARKET: TemplateMarketItem[] = [
   {
     id: "news-explainer",
     label: "News Explainer",
+    kind: "workflow-template",
     access: "built-in",
     license: "included",
     priceCents: null,
+    contributionModel: "github-pr-reviewed",
     tags: ["news", "explainer", "timeline", "analysis"],
     match: ["news", "policy", "case", "explain", "timeline", "analysis", "report"],
     visualLanguage: ["editorial contrast", "source-first hierarchy", "caption-led clarity"],
@@ -62,9 +68,11 @@ const TEMPLATE_MARKET: TemplateMarketItem[] = [
   {
     id: "course-promo",
     label: "Course Promo",
+    kind: "workflow-template",
     access: "built-in",
     license: "included",
     priceCents: null,
+    contributionModel: "github-pr-reviewed",
     tags: ["course", "education", "promo", "founders"],
     match: ["course", "training", "lesson", "learn", "coach", "bootcamp", "education"],
     visualLanguage: ["premium education funnel", "expert signal", "bold promise plus proof"],
@@ -77,9 +85,11 @@ const TEMPLATE_MARKET: TemplateMarketItem[] = [
   {
     id: "game-ad",
     label: "Game Ad",
+    kind: "workflow-template",
     access: "built-in",
     license: "included",
     priceCents: null,
+    contributionModel: "github-pr-reviewed",
     tags: ["game", "ad", "sprite", "arcade"],
     match: ["game", "sprite", "arcade", "battle", "quest", "character", "play"],
     visualLanguage: ["arcade energy", "character-first framing", "reward-heavy contrast"],
@@ -92,9 +102,11 @@ const TEMPLATE_MARKET: TemplateMarketItem[] = [
   {
     id: "founder-story",
     label: "Founder Story",
+    kind: "workflow-template",
     access: "built-in",
     license: "included",
     priceCents: null,
+    contributionModel: "github-pr-reviewed",
     tags: ["founder", "story", "mission", "brand"],
     match: ["founder", "journey", "story", "mission", "why", "build", "startup"],
     visualLanguage: ["human stakes", "documentary polish", "intimate but commercial framing"],
@@ -107,9 +119,11 @@ const TEMPLATE_MARKET: TemplateMarketItem[] = [
   {
     id: "data-shock",
     label: "Data Shock",
+    kind: "workflow-template",
     access: "built-in",
     license: "included",
     priceCents: null,
+    contributionModel: "github-pr-reviewed",
     tags: ["data", "numbers", "growth", "chart"],
     match: ["data", "metric", "growth", "shock", "numbers", "chart", "report", "revenue"],
     visualLanguage: ["oversized numbers", "high-contrast proof", "minimal chart clutter"],

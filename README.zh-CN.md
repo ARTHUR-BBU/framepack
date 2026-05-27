@@ -99,6 +99,8 @@ Framepack 现在已经有第一版本地 Template Market index。它刻意保持
 
 每个模板都带着未来生态需要的字段：
 
+- market item kind，目前从 `workflow-template` 开始
+- GitHub PR review 式贡献模型
 - access 和 license
 - 价格元数据
 - tags 和模糊匹配词
@@ -118,9 +120,27 @@ framepack templates recommend --idea "A course promo for founders" --style "prem
 
 未来付费模板可以接入同一套形状。当前版本只发布内置免费模板，方便你马上开始测试。
 
+## HyperFrames Catalog Bridge
+
+HyperFrames Catalog 是官方视频预制件仓库。Framepack 把它当成“可被 runtime 使用的视频零部件来源”，而不是拿它替代 Template Market。
+
+- HyperFrames Catalog 贡献 `block` 和 `component`。
+- Framepack Template Market 贡献导演工作流、创意工程模板和 agent review 系统。
+
+可以通过 CLI 使用：
+
+```bash
+framepack catalog
+framepack catalog --json
+framepack catalog recommend --template course-promo --idea "A premium course promo for founders" --style "business dynamic" --format 9:16 --json
+```
+
+Workbench 的 `COMPOSITION.md` 会提醒 agent：先用 `npx hyperframes catalog --json` 检查官方实时 Catalog，再决定是否安装候选组件。Framepack 只做推荐，不自动安装 Catalog 组件。
+
 Polish Arsenal 推荐器会根据 idea、style、format、duration 输出：
 
 - 推荐模板
+- HyperFrames Catalog blocks / components
 - 动画技术
 - 动效语言
 - 审美方向

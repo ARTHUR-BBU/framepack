@@ -46,7 +46,9 @@ import {
 import {
   createWorkbenchProject,
   defaultWorkbenchProjectName,
+  listHyperframesCatalogPrefabs,
   listTemplateMarket,
+  recommendHyperframesCatalogPrefabs,
   recommendTemplateRoute,
 } from "../../workbench/index.js";
 
@@ -92,6 +94,7 @@ type CliCommandName =
   | "init-agent"
   | "mcp"
   | "atlas"
+  | "catalog"
   | "packs"
   | "templates"
   | "release-smoke"
@@ -161,6 +164,8 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack --version",
   "  framepack create --idea <idea> --assets <dir> --output-dir <dir>",
   "  framepack mcp --describe",
+  "  framepack catalog",
+  "  framepack catalog recommend --template <template-id> --idea <idea>",
   "  framepack templates",
   "  framepack templates recommend --idea <idea> --style <style>",
   "  framepack packs",
@@ -282,6 +287,7 @@ function getCommandName(args: string[]): CliCommandName {
     command === "init-agent" ||
     command === "mcp" ||
     command === "atlas" ||
+    command === "catalog" ||
     command === "packs" ||
     command === "templates" ||
     command === "release-smoke" ||
@@ -298,7 +304,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, packs, templates, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -321,6 +327,7 @@ function getCommandArgs(args: string[]): string[] {
     first === "init-agent" ||
     first === "mcp" ||
     first === "atlas" ||
+    first === "catalog" ||
     first === "packs" ||
     first === "templates" ||
     first === "release-smoke" ||
@@ -768,6 +775,55 @@ function runTemplatesCommand(args: string[], io: CliIo): number {
   return 0;
 }
 
+function runCatalogCommand(args: string[], io: CliIo): number {
+  if (args[0] === "recommend") {
+    const recommendation = recommendHyperframesCatalogPrefabs({
+      templateId: getRequiredArg(args, "--template") as Parameters<typeof recommendHyperframesCatalogPrefabs>[0]["templateId"],
+      idea: getRequiredArg(args, "--idea"),
+      style: getOptionalArg(args, "--style"),
+      format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
+    });
+
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify({ recommendation }, null, 2));
+      return 0;
+    }
+
+    io.stdout(
+      [
+        "HyperFrames Catalog recommendation",
+        "",
+        `Template route: ${recommendation.templateId}`,
+        "",
+        "Prefabs:",
+        ...recommendation.prefabs.map((prefab) => `- ${prefab.id} (${prefab.kind}): ${prefab.bestUse}`),
+        "",
+        "Agent instructions:",
+        ...recommendation.agentInstructions.map((instruction) => `- ${instruction}`),
+      ].join("\n"),
+    );
+    return 0;
+  }
+
+  const payload = { prefabs: listHyperframesCatalogPrefabs() };
+
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify(payload, null, 2));
+    return 0;
+  }
+
+  io.stdout(
+    [
+      "HyperFrames Catalog Bridge",
+      "",
+      ...payload.prefabs.map((prefab) => `- ${prefab.id}: ${prefab.label} (${prefab.kind})`),
+      "",
+      "Inspect the live official Catalog before installing: npx hyperframes catalog --json",
+    ].join("\n"),
+  );
+  return 0;
+}
+
 function describeCapabilityAtlas(): string {
   const nodes = listCapabilityAtlasNodes();
   const stacks = listRecommendedCapabilityStacks();
@@ -1166,6 +1222,10 @@ export async function runCli(
 
     if (command === "atlas") {
       return runAtlasCommand(args.slice(1), io);
+    }
+
+    if (command === "catalog") {
+      return runCatalogCommand(args.slice(1), io);
     }
 
     if (command === "packs") {
