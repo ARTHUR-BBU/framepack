@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0-alpha.5
+
+- fixed npm package README metadata by publishing only root `README.md` as the npm display README
+- embedded a Chinese quick-start section directly in the npm-facing README
+- kept the full Chinese README in the GitHub repository and linked to it from the npm README
+
 ## 0.5.0-alpha.4
 
 - added the Human Digest layer with `HUMAN.md` for plain-language project status, video structure, progress, next user decision, and technology explanation

@@ -4,7 +4,21 @@ Framepack lets non-expert users describe the video they want in natural language
 
 It translates fuzzy taste words, user assets, references, and rough ideas into executable creative direction: template route, motion language, animation techniques, composition plan, polish rules, and iteration memory.
 
-Chinese README: [README.zh-CN.md](README.zh-CN.md).
+Chinese README: [docs/README.zh-CN.md](https://github.com/ARTHUR-BBU/framepack/blob/framepack-agent-platform/docs/README.zh-CN.md).
+
+## 中文快速说明
+
+Framepack 是给 Codex、Claude Code、HyperFrames 和 Remotion 使用的视频创意工作台。你可以用普通话描述想要的视频，比如“更商务一点”“节奏更快”“字大一点”“动画多一点”“像这个参考视频”。Framepack 会把这些模糊表达翻译成素材说明、用户摘要、风格方向、视频结构、模板路线、动效语言、composition 方案和迭代记录。
+
+最短用法：
+
+```bash
+npm install framepack
+npx framepack create --idea "一个高级、动感、商务感强的产品发布视频" --assets ./assets --output-dir ./out --project-name launch-video
+npx framepack workbench brief --project-dir ./out/launch-video
+```
+
+生成后先读 `FRAMEPACK.md` 和 `HUMAN.md`。`HUMAN.md` 是给人看的小白摘要，说明当前进度、视频结构、下一步要用户决定什么，以及技术选择是什么意思。
 
 ## The Problem
 

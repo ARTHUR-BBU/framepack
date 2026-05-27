@@ -101,7 +101,7 @@ const readmePath = resolve(
 );
 const chineseReadmePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  "../README.zh-CN.md",
+  "../docs/README.zh-CN.md",
 );
 const packageJsonPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -2563,12 +2563,12 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.4");
+      assert.equal(packageJson.version, "0.5.0-alpha.5");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
       assert.ok(Array.isArray(packageJson.files));
-      assert.ok(packageJson.files.includes("README.zh-CN.md"));
+      assert.equal(packageJson.files.includes("README.zh-CN.md"), false);
       assert.ok(packageJson.files.includes("AGENTS.md"));
       assert.ok(packageJson.files.includes("docs/rebirth"));
       assert.ok(packageJson.files.includes("scripts/postinstall.mjs"));
@@ -2598,7 +2598,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.4");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.5");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -3281,8 +3281,8 @@ Framepack compiles content into executable video projects.
       assert.match(guide, /问题记录模板/);
       assert.match(guide, /P0: 安装、CLI、MCP、generate、validate、status 直接坏/);
       assert.match(guide, /小白总结/);
-      assert.ok(packageJson.files.includes("README.zh-CN.md"));
-      assert.match(readme, /README\.zh-CN\.md/);
+      assert.equal(packageJson.files.includes("README.zh-CN.md"), false);
+      assert.match(readme, /docs\/README\.zh-CN\.md/);
       assert.match(agents, /manual-beta-test-guide-v0\.4\.zh-CN/);
     },
   },
@@ -3491,7 +3491,7 @@ Framepack compiles content into executable video projects.
       assert.ok(packageJson.files.includes("docs/rebirth"));
       assert.equal(packageJson.files.includes("docs/agent-platform"), false);
       assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.md"), "utf8"), /Three Layers/);
-      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.zh-CN.md"), "utf8"), /三层机制/);
+      assert.match(readFileSync(resolve(dirname(packageJsonPath), "docs", "README.zh-CN.md"), "utf8"), /三层机制/);
     },
   },
   {
