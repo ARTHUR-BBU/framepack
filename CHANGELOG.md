@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-alpha.4
+
+- added the Human Digest layer with `HUMAN.md` for plain-language project status, video structure, progress, next user decision, and technology explanation
+- added `framepack workbench brief --project-dir <dir>` for user-facing progress recaps during agentic video production
+- added human-readable structure summaries to `DIRECTION.md`, human explanations to `COMPOSITION.md`, and review-note guidance to `ITERATIONS.md`
+- extended workbench validation to require human digest and structure-summary coverage
+- updated Codex and Claude Code agent instructions to read `HUMAN.md` and use the brief command when users need a clearer recap
+
 ## 0.5.0-alpha.3
 
 - added the first local Template Market index with built-in access, included license, free price metadata, tags, implementation routes, and asset needs

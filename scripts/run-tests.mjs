@@ -2563,7 +2563,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.3");
+      assert.equal(packageJson.version, "0.5.0-alpha.4");
       assert.equal(packageJson.private, false);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -2598,7 +2598,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.3");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.4");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -2638,13 +2638,21 @@ Framepack compiles content into executable video projects.
           ["audio", "image", "video"],
         );
         assert.match(project.files["FRAMEPACK.md"], /Start here/);
+        assert.match(project.files["FRAMEPACK.md"], /For Human/);
         assert.match(project.files["ASSETS.md"], /logo\.png/);
+        assert.match(project.files["HUMAN.md"], /Current Summary/);
+        assert.match(project.files["HUMAN.md"], /Video Structure/);
+        assert.match(project.files["HUMAN.md"], /What I need from you/);
         assert.match(project.files["DIRECTION.md"], /Polish Arsenal/);
+        assert.match(project.files["DIRECTION.md"], /Structure Summary/);
         assert.match(project.files["COMPOSITION.md"], /Use HyperFrames/);
         assert.match(project.files["COMPOSITION.md"], /Do not judge user-provided assets/);
+        assert.match(project.files["COMPOSITION.md"], /Human Explanation/);
         assert.match(project.files["COMPOSITION.md"], /45-second/);
         assert.match(project.files["ITERATIONS.md"], /Initial creative package/);
+        assert.match(project.files["ITERATIONS.md"], /Human Review Notes/);
         assert.match(project.files[".framepack/state.json"], /"mode": "hyperframes-creative-workbench"/);
+        assert.match(project.files[".framepack/state.json"], /"humanDigest"/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -2764,11 +2772,15 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["DIRECTION.md"], /Human Checkpoints/);
         assert.match(project.files["DIRECTION.md"], /Proposal Options/);
         assert.match(project.files["DIRECTION.md"], /Professional Creative Translation/);
+        assert.match(project.files["DIRECTION.md"], /Structure Summary/);
         assert.match(project.files["STYLE.md"], /Brand Direction/);
         assert.match(project.files["STYLE.md"], /Tuning Parameters/);
         assert.match(project.files["STYLE.md"], /motionIntensity/);
+        assert.match(project.files["HUMAN.md"], /course-promo/);
+        assert.match(project.files["HUMAN.md"], /Next user decision/);
         assert.match(project.files["COMPOSITION.md"], /Recommended Template/);
         assert.match(project.files["COMPOSITION.md"], /Tuning Parameters/);
+        assert.match(project.files["COMPOSITION.md"], /Human Explanation/);
         assert.match(project.files["COMPOSITION.md"], /HyperFrames Catalog Plan/);
         assert.match(project.files["COMPOSITION.md"], /caption-editorial-emphasis/);
         assert.match(project.files["COMPOSITION.md"], /npx hyperframes catalog --json/);
@@ -2778,7 +2790,9 @@ Framepack compiles content into executable video projects.
         assert.match(project.files[".framepack/state.json"], /"catalogRecommendation"/);
         assert.match(project.files[".framepack/state.json"], /"hitlLoop"/);
         assert.match(project.files[".framepack/state.json"], /"tuningParameters"/);
+        assert.match(project.files[".framepack/state.json"], /"humanDigest"/);
         assert.match(project.files["ITERATIONS.md"], /HITL Loop/);
+        assert.match(project.files["ITERATIONS.md"], /Human Review Notes/);
         assert.match(project.files["ITERATIONS.md"], /Decision Log/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
@@ -2804,6 +2818,8 @@ Framepack compiles content into executable video projects.
       assert.ok(report.checks.some((check) => check.id === "catalog-plan"));
       assert.ok(report.checks.some((check) => check.id === "style-direction"));
       assert.ok(report.checks.some((check) => check.id === "tuning-parameters"));
+      assert.ok(report.checks.some((check) => check.id === "human-digest"));
+      assert.ok(report.checks.some((check) => check.id === "structure-summary"));
     },
   },
   {
@@ -2812,6 +2828,7 @@ Framepack compiles content into executable video projects.
       const report = validateWorkbenchFiles({
         "FRAMEPACK.md": "# Framepack Workbench\n",
         "DIRECTION.md": "# Creative Direction\n",
+        "HUMAN.md": "# Human\n",
         "STYLE.md": "# Style\n",
         "COMPOSITION.md": "# Composition Plan\n",
         "ITERATIONS.md": "# Iterations\n",
@@ -2825,6 +2842,8 @@ Framepack compiles content into executable video projects.
       assert.ok(report.findings.some((finding) => /HyperFrames Catalog Plan/i.test(finding)));
       assert.ok(report.findings.some((finding) => /STYLE\.md/i.test(finding)));
       assert.ok(report.findings.some((finding) => /tuningParameters/i.test(finding)));
+      assert.ok(report.findings.some((finding) => /HUMAN\.md/i.test(finding)));
+      assert.ok(report.findings.some((finding) => /Structure Summary/i.test(finding)));
     },
   },
   {
@@ -4491,6 +4510,56 @@ Framepack compiles content into executable video projects.
         assert.equal(checkExitCode, 0, stderr.join("\n"));
         assert.equal(payload.report.status, "passed");
         assert.ok(payload.report.checks.some((check) => check.id === "hitl-loop"));
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "summarize a workbench package for human review from the CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-workbench-brief-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const createExitCode = await runCli(
+          [
+            "create",
+            "--idea",
+            "A fast founder story video about learning to ship polished programmed video.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "briefed-workbench",
+            "--style",
+            "cinematic, business, fast, bigger text",
+            "--duration",
+            "35",
+            "--format",
+            "9:16",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const briefExitCode = await runCli(
+          ["workbench", "brief", "--project-dir", join(tempRoot, "briefed-workbench")],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const output = stdout.join("\n");
+
+        assert.equal(createExitCode, 0, stderr.join("\n"));
+        assert.equal(briefExitCode, 0, stderr.join("\n"));
+        assert.match(output, /Framepack human brief/);
+        assert.match(output, /Current Summary/);
+        assert.match(output, /Video Structure/);
+        assert.match(output, /Next user decision/);
+        assert.match(output, /Technology in plain words/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

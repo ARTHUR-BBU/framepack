@@ -68,6 +68,15 @@ export interface TuningParameter {
   agentUse: string;
 }
 
+export interface HumanDigest {
+  currentSummary: string;
+  currentPhase: string;
+  videoStructure: string[];
+  nextUserDecision: string;
+  progress: string[];
+  technologyPlainWords: string[];
+}
+
 export interface WorkbenchQaCheck {
   id: string;
   status: "passed" | "failed";
@@ -198,6 +207,45 @@ function createTuningParameters(input: {
       agentUse: "Tune restraint, whitespace, contrast, and proof-first hierarchy.",
     },
   ];
+}
+
+function createHumanDigest(input: {
+  idea: string;
+  assets: WorkbenchAsset[];
+  recommendation: PolishArsenalRecommendation;
+  hitlLoop: HitlLoop;
+  tuningParameters: TuningParameter[];
+}): HumanDigest {
+  const template = input.recommendation.template;
+  const catalogNames = input.recommendation.catalogRecommendation.prefabs.map((prefab) => prefab.label);
+  const pace = input.tuningParameters.find((parameter) => parameter.id === "pace")?.defaultValue ?? "medium";
+  const motion = input.tuningParameters.find((parameter) => parameter.id === "motionIntensity")?.defaultValue ?? "medium";
+
+  return {
+    currentSummary: `We are turning the idea "${input.idea}" into a ${template.label} video plan. Framepack has translated the rough request into structure, style, assets, motion direction, and production checks that a coding agent can execute.`,
+    currentPhase: "proposal",
+    videoStructure: [
+      "Open with a clear promise so the viewer understands the point immediately.",
+      `Build the middle around the ${template.id} route: ${template.templateGuidance.join(" ")}`,
+      "Use supplied assets as proof or texture, then fill gaps with Catalog, custom composition, or generated material only after user approval.",
+      "End with a concrete payoff, CTA, or memorable takeaway.",
+    ],
+    nextUserDecision: input.hitlLoop.nextAction,
+    progress: [
+      "Creative route selected.",
+      "Visual and motion language drafted.",
+      "Asset library scanned.",
+      "Composition route prepared for HyperFrames or Remotion.",
+    ],
+    technologyPlainWords: [
+      `Template route: ${template.label} means the video has a proven story shape instead of random scenes.`,
+      `Pace is currently ${pace}; motion intensity is ${motion}. These are the main knobs for making the video calmer, faster, more premium, or more explosive.`,
+      catalogNames.length > 0
+        ? `HyperFrames Catalog candidates: ${catalogNames.join(", ")}. These are reusable video blocks/components, not mandatory installs.`
+        : "No strong Catalog match yet. The agent should inspect the live Catalog before building custom pieces.",
+      "HyperFrames/Remotion are the production targets; Framepack is the planning and agentic workflow layer.",
+    ],
+  };
 }
 
 export function recommendPolishArsenal(input: {
@@ -334,6 +382,41 @@ function formatTuningParameters(parameters: TuningParameter[]) {
     .join("\n");
 }
 
+function formatHumanDigest(digest: HumanDigest) {
+  return [
+    "# Human Brief",
+    "",
+    "## Current Summary",
+    "",
+    digest.currentSummary,
+    "",
+    "## Current Phase",
+    "",
+    digest.currentPhase,
+    "",
+    "## Video Structure",
+    "",
+    numberedList(digest.videoStructure),
+    "",
+    "## Next user decision",
+    "",
+    digest.nextUserDecision,
+    "",
+    "## Progress",
+    "",
+    bulletList(digest.progress),
+    "",
+    "## Technology in plain words",
+    "",
+    bulletList(digest.technologyPlainWords),
+    "",
+    "## What I need from you",
+    "",
+    "Tell the agent what feels wrong or right in ordinary language: faster, calmer, more premium, bigger text, more action, less clutter, stronger opening, clearer CTA, or closer to a reference video.",
+    "",
+  ].join("\n");
+}
+
 function validateContains(input: {
   files: Record<string, string>;
   file: string;
@@ -409,6 +492,22 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
       summary: "State JSON includes tuningParameters.",
       finding: ".framepack/state.json is missing tuningParameters.",
     }),
+    validateContains({
+      files,
+      file: "HUMAN.md",
+      pattern: /Current Summary/,
+      id: "human-digest",
+      summary: "HUMAN.md includes a Current Summary for user-facing review.",
+      finding: "HUMAN.md is missing Current Summary.",
+    }),
+    validateContains({
+      files,
+      file: "DIRECTION.md",
+      pattern: /Structure Summary/,
+      id: "structure-summary",
+      summary: "DIRECTION.md includes a user-readable Structure Summary.",
+      finding: "DIRECTION.md is missing Structure Summary.",
+    }),
   ];
   const findings = checks
     .filter((check) => check.status === "failed")
@@ -424,7 +523,7 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
 
 export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport {
   const files = Object.fromEntries(
-    ["FRAMEPACK.md", "ASSETS.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"]
+    ["FRAMEPACK.md", "ASSETS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"]
       .map((filePath) => [
         filePath,
         existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
@@ -452,6 +551,14 @@ function buildFiles(input: {
     premium: direction.emotionalEnergy.includes("premium restraint"),
     catalogCount: recommendation.catalogRecommendation.prefabs.length,
   });
+  const humanDigest = createHumanDigest({
+    idea: input.idea,
+    assets: input.assets,
+    recommendation,
+    hitlLoop,
+    tuningParameters,
+  });
+  const humanDigestMarkdown = formatHumanDigest(humanDigest);
   const recommendedStack = [
     "- Runtime: HyperFrames first; Remotion is a good route for reusable social/template video.",
     "- Motion: GSAP timeline for HyperFrames-safe scene control.",
@@ -470,9 +577,17 @@ function buildFiles(input: {
       "",
       "Start here. This folder is the durable context for Codex, Claude Code, and other coding agents.",
       "",
+      "## For Human",
+      "",
+      humanDigest.currentSummary,
+      "",
+      "Next user decision:",
+      "",
+      humanDigest.nextUserDecision,
+      "",
       "## Agent Workflow",
       "",
-      "1. Read `ASSETS.md`, `STYLE.md`, `DIRECTION.md`, and `COMPOSITION.md` before writing code.",
+      "1. Read `HUMAN.md`, `ASSETS.md`, `STYLE.md`, `DIRECTION.md`, and `COMPOSITION.md` before writing code.",
       "2. Discuss unclear creative choices with the user in natural language.",
       "3. Use Framepack recommendations as a production brief, not as rigid rails.",
       "4. Build or refine the HyperFrames or Remotion composition.",
@@ -500,6 +615,7 @@ function buildFiles(input: {
       assetList,
       "",
     ].join("\n"),
+    "HUMAN.md": humanDigestMarkdown,
     "STYLE.md": [
       "# Style Direction",
       "",
@@ -550,6 +666,10 @@ function buildFiles(input: {
       `Template: ${recommendation.template.id} (${recommendation.template.label})`,
       "",
       recommendation.professionalCreativeLanguage,
+      "",
+      "## Structure Summary",
+      "",
+      numberedList(humanDigest.videoStructure),
       "",
       "## Director Translation",
       "",
@@ -605,6 +725,10 @@ function buildFiles(input: {
       "",
       recommendedStack,
       "",
+      "## Human Explanation",
+      "",
+      bulletList(humanDigest.technologyPlainWords),
+      "",
       "## Tuning Parameters",
       "",
       formatTuningParameters(tuningParameters),
@@ -630,6 +754,10 @@ function buildFiles(input: {
     ].join("\n"),
     "ITERATIONS.md": [
       "# Iterations",
+      "",
+      "## Human Review Notes",
+      "",
+      "After each preview or render, explain changes to the user in plain language: what changed, why it changed, what to review, and what decision is needed next.",
       "",
       "## v001",
       "",
@@ -668,6 +796,7 @@ function buildFiles(input: {
         durationSec: input.durationSec,
         entrypoints: {
           guide: "FRAMEPACK.md",
+          human: "HUMAN.md",
           assets: "ASSETS.md",
           style: "STYLE.md",
           direction: "DIRECTION.md",
@@ -678,11 +807,44 @@ function buildFiles(input: {
         catalogRecommendation: recommendation.catalogRecommendation,
         hitlLoop,
         tuningParameters,
+        humanDigest,
       },
       null,
       2,
     ),
   };
+}
+
+export function formatWorkbenchHumanBrief(projectDir: string): string {
+  const resolvedProjectDir = resolve(projectDir);
+  const humanPath = join(resolvedProjectDir, "HUMAN.md");
+  const statePath = join(resolvedProjectDir, ".framepack", "state.json");
+
+  if (existsSync(humanPath)) {
+    return [
+      "Framepack human brief",
+      `projectDir: ${resolvedProjectDir}`,
+      "",
+      readFileSync(humanPath, "utf8").trim(),
+    ].join("\n");
+  }
+
+  if (!existsSync(statePath)) {
+    throw new Error(`Missing HUMAN.md and .framepack/state.json in ${resolvedProjectDir}`);
+  }
+
+  const state = JSON.parse(readFileSync(statePath, "utf8")) as { humanDigest?: HumanDigest };
+
+  if (!state.humanDigest) {
+    throw new Error(`Missing humanDigest in ${statePath}`);
+  }
+
+  return [
+    "Framepack human brief",
+    `projectDir: ${resolvedProjectDir}`,
+    "",
+    formatHumanDigest(state.humanDigest).trim(),
+  ].join("\n");
 }
 
 export function createWorkbenchProject(input: {

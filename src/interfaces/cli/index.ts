@@ -46,6 +46,7 @@ import {
 import {
   createWorkbenchProject,
   defaultWorkbenchProjectName,
+  formatWorkbenchHumanBrief,
   listHyperframesCatalogPrefabs,
   listTemplateMarket,
   recommendHyperframesCatalogPrefabs,
@@ -156,7 +157,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.3";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.4";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -171,6 +172,7 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack templates",
   "  framepack templates recommend --idea <idea> --style <style>",
   "  framepack workbench check --project-dir <dir>",
+  "  framepack workbench brief --project-dir <dir>",
   "  framepack packs",
   "  framepack atlas --json",
   "  framepack generate --input <file> --output-dir <dir> --goal <goal> --audience <audience>",
@@ -830,8 +832,13 @@ function runCatalogCommand(args: string[], io: CliIo): number {
 }
 
 function runWorkbenchCommand(args: string[], io: CliIo): number {
-  if (args[0] !== "check") {
-    throw new Error("Invalid workbench command. Use: framepack workbench check --project-dir <dir>");
+  if (args[0] !== "check" && args[0] !== "brief") {
+    throw new Error("Invalid workbench command. Use: framepack workbench check --project-dir <dir> or framepack workbench brief --project-dir <dir>");
+  }
+
+  if (args[0] === "brief") {
+    io.stdout(formatWorkbenchHumanBrief(getRequiredArg(args, "--project-dir")));
+    return 0;
   }
 
   const projectDir = resolve(getRequiredArg(args, "--project-dir"));

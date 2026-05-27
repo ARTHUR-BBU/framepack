@@ -67,6 +67,7 @@ This creates:
 launch-video/
   FRAMEPACK.md
   ASSETS.md
+  HUMAN.md
   STYLE.md
   DIRECTION.md
   COMPOSITION.md
@@ -82,14 +83,16 @@ Check the generated workbench before building the first composition:
 ```bash
 framepack workbench check --project-dir ./out/launch-video
 framepack workbench check --project-dir ./out/launch-video --json
+framepack workbench brief --project-dir ./out/launch-video
 ```
 
 ## Workbench Arsenal
 
-`framepack create` writes five core Markdown files, not a heavy legacy package tree:
+`framepack create` writes six core Markdown files, not a heavy legacy package tree:
 
 - `FRAMEPACK.md`: agent workflow and three-layer mental model.
 - `ASSETS.md`: user-provided assets and their role.
+- `HUMAN.md`: plain-language status, structure, next decision, and technology explanation for the user.
 - `STYLE.md`: brand direction, visual tokens, motion tokens, and tuning parameters.
 - `DIRECTION.md`: fuzzy user language translated into professional creative language.
 - `COMPOSITION.md`: HyperFrames / Remotion production route and acceptance criteria.
@@ -163,12 +166,19 @@ The Polish Arsenal recommender reads the idea, style, format, and duration, then
 
 Framepack workbenches include a human-in-the-loop production loop:
 
+- `HUMAN.md` tells the user what is happening in plain language: current summary, video structure, progress, next decision, and technology choices.
 - `DIRECTION.md` gives proposal options, director translation, and human checkpoints.
 - `COMPOSITION.md` turns the approved direction into HyperFrames/Catalog/animation assembly guidance.
 - `ITERATIONS.md` records decisions, preview feedback, and next changes.
 - `.framepack/state.json` stores the same loop in machine-readable form.
 
 Agents should ask the user to choose or modify the direction before locking the first composition when taste is still fuzzy.
+
+For a quick user-facing recap at any point:
+
+```bash
+framepack workbench brief --project-dir ./out/launch-video
+```
 
 ## HyperFrames And Remotion
 
@@ -196,6 +206,7 @@ framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
 framepack init-agent --target auto --scope project
 framepack workbench check --project-dir <dir>
+framepack workbench brief --project-dir <dir>
 framepack mcp --describe
 ```
 

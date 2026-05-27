@@ -1,8 +1,8 @@
 # Framepack
 
-Framepack 让不懂动画技术的用户，也可以用自然语言获得专业的视频生产方案。
+Framepack 让不懂动画技术的用户，也可以用自然语言获得专业的视频生产工作台。
 
-用户只需要说“更酷一点”“更商务”“字大一点”“节奏快一点”“像这个参考视频”，Framepack 会把这些模糊愿望翻译成 Codex、Claude Code、HyperFrames 和 Remotion 能执行的工作台：模板路线、动效语言、动画技术、composition 方案、polish 规则和迭代记忆。
+用户只需要说“更酷一点”“更商务”“字大一点”“节奏快一点”“动画多一点”“像这个参考视频”，Framepack 会把这些模糊愿望翻译成 Codex、Claude Code、HyperFrames 和 Remotion 能执行的工作台：素材说明、用户摘要、风格方向、视频结构、模板路线、动效语言、composition 方案、验收标准和迭代记忆。
 
 ## 为什么需要 Framepack
 
@@ -15,7 +15,7 @@ Framepack 让不懂动画技术的用户，也可以用自然语言获得专业�
 - 动画更多
 - 像这个参考视频
 
-Framepack 的价值，就是把外行人的自然语言翻译成专业视频方案，让 agent 能继续执行，让 HyperFrames / Remotion 能继续生产。
+Framepack 的价值，是把外行人的自然语言翻译成专业视频方案，让 agent 能继续执行，让 HyperFrames / Remotion 能继续生产。
 
 ## 三层机制
 
@@ -65,6 +65,7 @@ npx framepack create \
 launch-video/
   FRAMEPACK.md
   ASSETS.md
+  HUMAN.md
   STYLE.md
   DIRECTION.md
   COMPOSITION.md
@@ -75,19 +76,21 @@ launch-video/
 
 从 `FRAMEPACK.md` 开始读。
 
-在开始写第一个 composition 之前，可以先检查工作台是否可用：
+在开始写第一个 composition 前，可以先检查工作台是否可用，也可以输出给人看的摘要：
 
 ```bash
 framepack workbench check --project-dir ./out/launch-video
 framepack workbench check --project-dir ./out/launch-video --json
+framepack workbench brief --project-dir ./out/launch-video
 ```
 
 ## Workbench Arsenal
 
-`framepack create` 默认只输出 5 个核心 Markdown 文件，不再制造旧式目录负担：
+`framepack create` 默认输出 6 个核心 Markdown 文件，不再制造旧式目录负担：
 
 - `FRAMEPACK.md`：agent 工作流和三层机制。
 - `ASSETS.md`：用户素材和素材角色。
+- `HUMAN.md`：给用户看的通俗摘要，包括当前进度、视频结构、下一步决策和技术解释。
 - `STYLE.md`：品牌方向、视觉令牌、动效令牌和可调参数。
 - `DIRECTION.md`：把用户模糊表达翻译成专业创意语言。
 - `COMPOSITION.md`：HyperFrames / Remotion 生产路线和验收标准。
@@ -127,7 +130,7 @@ framepack templates --json
 framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
 ```
 
-未来付费模板可以接入同一套形状。当前版本只发布内置免费模板，方便你马上开始测试。
+未来付费模板可以接入同一套形状。当前版本只发布内置免费模板，方便马上开始测试。
 
 ## HyperFrames Catalog Bridge
 
@@ -161,12 +164,19 @@ Polish Arsenal 推荐器会根据 idea、style、format、duration 输出：
 
 Framepack 工作台内置人类参与决策的生产循环：
 
-- `DIRECTION.md` 给出方案选项、导演翻译和需要用户确认的检查点。
-- `COMPOSITION.md` 把确认后的方向拆成 HyperFrames / Catalog / 动画技术组合。
-- `ITERATIONS.md` 记录用户选择、预览反馈和下一轮修改。
+- `HUMAN.md` 用小白语言告诉用户：现在在做什么、视频结构是什么、进度到哪里、下一步要用户决定什么、技术选择是什么意思。
+- `DIRECTION.md` 给出方案选项、导演翻译、结构摘要和需要用户确认的检查点。
+- `COMPOSITION.md` 把确认后的方向拆成 HyperFrames / Catalog / 动画技术组合，并附带“人话解释”。
+- `ITERATIONS.md` 记录用户选择、预览反馈、每轮改了什么、为什么改、下一轮怎么改。
 - `.framepack/state.json` 保存同一套机器可读状态。
 
 当用户审美表达还比较模糊时，agent 应该先让用户选择或修改方向，再锁定第一版 composition。
+
+随时查看用户友好的当前摘要：
+
+```bash
+framepack workbench brief --project-dir ./out/launch-video
+```
 
 ## HyperFrames 和 Remotion
 
@@ -194,6 +204,7 @@ framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
 framepack init-agent --target auto --scope project
 framepack workbench check --project-dir <dir>
+framepack workbench brief --project-dir <dir>
 framepack mcp --describe
 ```
 
