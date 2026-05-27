@@ -2563,8 +2563,11 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.5");
+      assert.equal(packageJson.version, "0.5.0-alpha.6");
       assert.equal(packageJson.private, false);
+      assert.match(packageJson.readme, /Framepack is an agent-native/);
+      assert.match(packageJson.readme, /中文/);
+      assert.match(packageJson.readme, /workbench brief/);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
       assert.ok(Array.isArray(packageJson.files));
@@ -2598,7 +2601,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.5");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.6");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);

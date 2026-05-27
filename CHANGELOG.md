@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0-alpha.6
+
+- added an explicit npm metadata README fallback with English and Chinese quick-start copy
+- kept the full repository README and Chinese docs intact while ensuring the npm registry page cannot render as an empty README
+
 ## 0.5.0-alpha.5
 
 - fixed npm package README metadata by publishing only root `README.md` as the npm display README
