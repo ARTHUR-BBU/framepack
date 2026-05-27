@@ -2764,7 +2764,11 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["DIRECTION.md"], /Human Checkpoints/);
         assert.match(project.files["DIRECTION.md"], /Proposal Options/);
         assert.match(project.files["DIRECTION.md"], /Professional Creative Translation/);
+        assert.match(project.files["STYLE.md"], /Brand Direction/);
+        assert.match(project.files["STYLE.md"], /Tuning Parameters/);
+        assert.match(project.files["STYLE.md"], /motionIntensity/);
         assert.match(project.files["COMPOSITION.md"], /Recommended Template/);
+        assert.match(project.files["COMPOSITION.md"], /Tuning Parameters/);
         assert.match(project.files["COMPOSITION.md"], /HyperFrames Catalog Plan/);
         assert.match(project.files["COMPOSITION.md"], /caption-editorial-emphasis/);
         assert.match(project.files["COMPOSITION.md"], /npx hyperframes catalog --json/);
@@ -2773,6 +2777,7 @@ Framepack compiles content into executable video projects.
         assert.match(project.files[".framepack/state.json"], /"directorTranslation"/);
         assert.match(project.files[".framepack/state.json"], /"catalogRecommendation"/);
         assert.match(project.files[".framepack/state.json"], /"hitlLoop"/);
+        assert.match(project.files[".framepack/state.json"], /"tuningParameters"/);
         assert.match(project.files["ITERATIONS.md"], /HITL Loop/);
         assert.match(project.files["ITERATIONS.md"], /Decision Log/);
       } finally {
@@ -2797,6 +2802,8 @@ Framepack compiles content into executable video projects.
       assert.equal(report.checks.every((check) => check.status === "passed"), true);
       assert.ok(report.checks.some((check) => check.id === "hitl-loop"));
       assert.ok(report.checks.some((check) => check.id === "catalog-plan"));
+      assert.ok(report.checks.some((check) => check.id === "style-direction"));
+      assert.ok(report.checks.some((check) => check.id === "tuning-parameters"));
     },
   },
   {
@@ -2805,6 +2812,7 @@ Framepack compiles content into executable video projects.
       const report = validateWorkbenchFiles({
         "FRAMEPACK.md": "# Framepack Workbench\n",
         "DIRECTION.md": "# Creative Direction\n",
+        "STYLE.md": "# Style\n",
         "COMPOSITION.md": "# Composition Plan\n",
         "ITERATIONS.md": "# Iterations\n",
         "ASSETS.md": "# Assets\n",
@@ -2815,6 +2823,8 @@ Framepack compiles content into executable video projects.
       assert.ok(report.findings.some((finding) => /Director Translation/i.test(finding)));
       assert.ok(report.findings.some((finding) => /HITL Loop/i.test(finding)));
       assert.ok(report.findings.some((finding) => /HyperFrames Catalog Plan/i.test(finding)));
+      assert.ok(report.findings.some((finding) => /STYLE\.md/i.test(finding)));
+      assert.ok(report.findings.some((finding) => /tuningParameters/i.test(finding)));
     },
   },
   {

@@ -67,6 +67,7 @@ This creates:
 launch-video/
   FRAMEPACK.md
   ASSETS.md
+  STYLE.md
   DIRECTION.md
   COMPOSITION.md
   ITERATIONS.md
@@ -89,6 +90,7 @@ framepack workbench check --project-dir ./out/launch-video --json
 
 - `FRAMEPACK.md`: agent workflow and three-layer mental model.
 - `ASSETS.md`: user-provided assets and their role.
+- `STYLE.md`: brand direction, visual tokens, motion tokens, and tuning parameters.
 - `DIRECTION.md`: fuzzy user language translated into professional creative language.
 - `COMPOSITION.md`: HyperFrames / Remotion production route and acceptance criteria.
 - `ITERATIONS.md`: render feedback and next changes.
@@ -150,6 +152,7 @@ The Polish Arsenal recommender reads the idea, style, format, and duration, then
 
 - template route
 - HyperFrames Catalog blocks and components
+- tuning parameters for pace, text density, motion intensity, Catalog usage, and business polish
 - animation techniques
 - motion language
 - aesthetic direction

@@ -65,6 +65,7 @@ npx framepack create \
 launch-video/
   FRAMEPACK.md
   ASSETS.md
+  STYLE.md
   DIRECTION.md
   COMPOSITION.md
   ITERATIONS.md
@@ -87,6 +88,7 @@ framepack workbench check --project-dir ./out/launch-video --json
 
 - `FRAMEPACK.md`：agent 工作流和三层机制。
 - `ASSETS.md`：用户素材和素材角色。
+- `STYLE.md`：品牌方向、视觉令牌、动效令牌和可调参数。
 - `DIRECTION.md`：把用户模糊表达翻译成专业创意语言。
 - `COMPOSITION.md`：HyperFrames / Remotion 生产路线和验收标准。
 - `ITERATIONS.md`：渲染反馈和下一轮修改。
@@ -148,6 +150,7 @@ Polish Arsenal 推荐器会根据 idea、style、format、duration 输出：
 
 - 推荐模板
 - HyperFrames Catalog blocks / components
+- 节奏、文字密度、动效强度、Catalog 使用程度、商务质感等可调参数
 - 动画技术
 - 动效语言
 - 审美方向

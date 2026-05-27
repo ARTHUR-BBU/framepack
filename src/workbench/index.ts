@@ -59,6 +59,15 @@ export interface HitlLoop {
   feedbackPrompts: string[];
 }
 
+export interface TuningParameter {
+  id: "pace" | "textDensity" | "motionIntensity" | "catalogUsage" | "businessPolish";
+  label: string;
+  type: "scale" | "choice";
+  defaultValue: string;
+  options: string[];
+  agentUse: string;
+}
+
 export interface WorkbenchQaCheck {
   id: string;
   status: "passed" | "failed";
@@ -139,6 +148,56 @@ function createHitlLoop(template: WorkbenchTemplate): HitlLoop {
       "After preview, what should change first: pacing, text, motion, visuals, or CTA?",
     ],
   };
+}
+
+function createTuningParameters(input: {
+  format: "16:9" | "9:16";
+  fast: boolean;
+  premium: boolean;
+  catalogCount: number;
+}): TuningParameter[] {
+  return [
+    {
+      id: "pace",
+      label: "Pace",
+      type: "scale",
+      defaultValue: input.fast ? "fast" : "medium",
+      options: ["slow", "medium", "fast"],
+      agentUse: "Adjust scene duration, transition speed, and caption reveal density.",
+    },
+    {
+      id: "textDensity",
+      label: "Text Density",
+      type: "scale",
+      defaultValue: input.format === "9:16" ? "large-sparse" : "balanced",
+      options: ["minimal", "balanced", "large-sparse"],
+      agentUse: "Control headline size, subtitle count, and mobile readability.",
+    },
+    {
+      id: "motionIntensity",
+      label: "Motion Intensity",
+      type: "scale",
+      defaultValue: input.fast ? "medium-high" : "medium",
+      options: ["low", "medium", "medium-high", "high"],
+      agentUse: "Tune kinetic typography, camera push, transition force, and animation overlap.",
+    },
+    {
+      id: "catalogUsage",
+      label: "Catalog Usage",
+      type: "choice",
+      defaultValue: input.catalogCount > 0 ? "balanced" : "inspect-first",
+      options: ["minimal", "balanced", "catalog-forward", "inspect-first"],
+      agentUse: "Decide how aggressively to use HyperFrames Catalog blocks/components versus custom composition.",
+    },
+    {
+      id: "businessPolish",
+      label: "Business Polish",
+      type: "scale",
+      defaultValue: input.premium ? "high" : "medium",
+      options: ["low", "medium", "high"],
+      agentUse: "Tune restraint, whitespace, contrast, and proof-first hierarchy.",
+    },
+  ];
 }
 
 export function recommendPolishArsenal(input: {
@@ -264,6 +323,17 @@ function numberedList(items: string[]) {
   return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
 }
 
+function formatTuningParameters(parameters: TuningParameter[]) {
+  return parameters
+    .map((parameter) => [
+      `- ${parameter.id} (${parameter.label})`,
+      `  - default: ${parameter.defaultValue}`,
+      `  - options: ${parameter.options.join(", ")}`,
+      `  - agent use: ${parameter.agentUse}`,
+    ].join("\n"))
+    .join("\n");
+}
+
 function validateContains(input: {
   files: Record<string, string>;
   file: string;
@@ -323,6 +393,22 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
       summary: "State JSON includes hitlLoop.",
       finding: ".framepack/state.json is missing hitlLoop.",
     }),
+    validateContains({
+      files,
+      file: "STYLE.md",
+      pattern: /Brand Direction/,
+      id: "style-direction",
+      summary: "STYLE.md includes Brand Direction.",
+      finding: "STYLE.md is missing Brand Direction.",
+    }),
+    validateContains({
+      files,
+      file: ".framepack/state.json",
+      pattern: /"tuningParameters"/,
+      id: "tuning-parameters",
+      summary: "State JSON includes tuningParameters.",
+      finding: ".framepack/state.json is missing tuningParameters.",
+    }),
   ];
   const findings = checks
     .filter((check) => check.status === "failed")
@@ -338,7 +424,7 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
 
 export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport {
   const files = Object.fromEntries(
-    ["FRAMEPACK.md", "ASSETS.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"]
+    ["FRAMEPACK.md", "ASSETS.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"]
       .map((filePath) => [
         filePath,
         existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
@@ -360,6 +446,12 @@ function buildFiles(input: {
   const recommendation = recommendPolishArsenal(input);
   const direction = recommendation.directorTranslation;
   const hitlLoop = createHitlLoop(recommendation.template);
+  const tuningParameters = createTuningParameters({
+    format: input.format,
+    fast: direction.emotionalEnergy.includes("forward momentum"),
+    premium: direction.emotionalEnergy.includes("premium restraint"),
+    catalogCount: recommendation.catalogRecommendation.prefabs.length,
+  });
   const recommendedStack = [
     "- Runtime: HyperFrames first; Remotion is a good route for reusable social/template video.",
     "- Motion: GSAP timeline for HyperFrames-safe scene control.",
@@ -380,7 +472,7 @@ function buildFiles(input: {
       "",
       "## Agent Workflow",
       "",
-      "1. Read `ASSETS.md`, `DIRECTION.md`, and `COMPOSITION.md` before writing code.",
+      "1. Read `ASSETS.md`, `STYLE.md`, `DIRECTION.md`, and `COMPOSITION.md` before writing code.",
       "2. Discuss unclear creative choices with the user in natural language.",
       "3. Use Framepack recommendations as a production brief, not as rigid rails.",
       "4. Build or refine the HyperFrames or Remotion composition.",
@@ -406,6 +498,35 @@ function buildFiles(input: {
       "User-provided assets are intentional source material. Do not judge them by default; arrange them around the user's creative goal.",
       "",
       assetList,
+      "",
+    ].join("\n"),
+    "STYLE.md": [
+      "# Style Direction",
+      "",
+      "This file is the stable visual and motion constraint layer for agents. Treat it like a lightweight video DESIGN.md.",
+      "",
+      "## Brand Direction",
+      "",
+      `- Route: ${recommendation.template.id} (${recommendation.template.label})`,
+      `- Format: ${input.format}`,
+      `- Duration: ${input.durationSec} seconds`,
+      `- User style words: ${input.style}`,
+      "",
+      "## Visual Tokens",
+      "",
+      bulletList(recommendation.aestheticDirection),
+      "",
+      "## Motion Tokens",
+      "",
+      bulletList(recommendation.animationTechniques),
+      "",
+      "## Tuning Parameters",
+      "",
+      formatTuningParameters(tuningParameters),
+      "",
+      "## Guardrails",
+      "",
+      bulletList(recommendation.avoid),
       "",
     ].join("\n"),
     "DIRECTION.md": [
@@ -484,6 +605,10 @@ function buildFiles(input: {
       "",
       recommendedStack,
       "",
+      "## Tuning Parameters",
+      "",
+      formatTuningParameters(tuningParameters),
+      "",
       "## Recommended Template",
       "",
       `Use the ${recommendation.template.id} route: ${recommendation.template.templateGuidance.join(" ")}`,
@@ -544,6 +669,7 @@ function buildFiles(input: {
         entrypoints: {
           guide: "FRAMEPACK.md",
           assets: "ASSETS.md",
+          style: "STYLE.md",
           direction: "DIRECTION.md",
           composition: "COMPOSITION.md",
           iterations: "ITERATIONS.md",
@@ -551,6 +677,7 @@ function buildFiles(input: {
         directorTranslation: recommendation.directorTranslation,
         catalogRecommendation: recommendation.catalogRecommendation,
         hitlLoop,
+        tuningParameters,
       },
       null,
       2,

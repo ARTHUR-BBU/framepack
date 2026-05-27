@@ -11,8 +11,8 @@ Use Framepack when the user asks for video creative work, asset-to-video plannin
 
 1. Inspect `framepack mcp --describe` when MCP is not connected.
 2. Create a workbench with `framepack create --idea "<idea>" --assets <dir> --output-dir <dir>`.
-3. Read `FRAMEPACK.md`, `ASSETS.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md`.
-4. Translate fuzzy user language into concrete visual language, motion language, template route, and HyperFrames/Remotion implementation choices.
+3. Read `FRAMEPACK.md`, `ASSETS.md`, `STYLE.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md`.
+4. Translate fuzzy user language into concrete visual language, motion language, template route, tuning parameters, and HyperFrames/Remotion implementation choices.
 5. Use the HITL loop in `DIRECTION.md` / `ITERATIONS.md`: ask the user to choose or modify the proposal before locking the first composition when taste is fuzzy.
 6. Run `framepack workbench check --project-dir <dir>` before claiming the workbench is ready.
 7. Keep state in workbench files, not model memory.
