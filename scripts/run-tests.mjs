@@ -83,10 +83,12 @@ import {
 import {
   createWorkbenchProject,
   listHyperframesCatalogPrefabs,
+  listHyperframesPromptTemplates,
   listTemplateMarket,
   listWorkbenchTemplates,
   recommendPolishArsenal,
   recommendHyperframesCatalogPrefabs,
+  recommendHyperframesPromptTemplate,
   recommendTemplateRoute,
   validateWorkbenchFiles,
 } from "../dist/workbench/index.js";
@@ -2563,7 +2565,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.6");
+      assert.equal(packageJson.version, "0.5.0-alpha.7");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /Framepack is an agent-native/);
       assert.match(packageJson.readme, /中文/);
@@ -2601,7 +2603,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.6");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.7");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -2651,10 +2653,14 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["COMPOSITION.md"], /Use HyperFrames/);
         assert.match(project.files["COMPOSITION.md"], /Do not judge user-provided assets/);
         assert.match(project.files["COMPOSITION.md"], /Human Explanation/);
+        assert.match(project.files["COMPOSITION.md"], /HyperFrames Prompt Template/);
+        assert.match(project.files["COMPOSITION.md"], /Template Fusion Plan/);
         assert.match(project.files["COMPOSITION.md"], /45-second/);
+        assert.match(project.files["HUMAN.md"], /Recommended HyperFrames prompt template/);
         assert.match(project.files["ITERATIONS.md"], /Initial creative package/);
         assert.match(project.files["ITERATIONS.md"], /Human Review Notes/);
         assert.match(project.files[".framepack/state.json"], /"mode": "hyperframes-creative-workbench"/);
+        assert.match(project.files[".framepack/state.json"], /"promptTemplateRecommendation"/);
         assert.match(project.files[".framepack/state.json"], /"humanDigest"/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
@@ -2688,6 +2694,49 @@ Framepack compiles content into executable video projects.
       assert.ok(templates.every((template) => template.contributionModel === "github-pr-reviewed"));
       assert.ok(templates.every((template) => template.implementationRoutes.includes("hyperframes")));
       assert.ok(templates.every((template) => template.assetNeeds.length > 0));
+    },
+  },
+  {
+    name: "expose Open Design HyperFrames prompt templates as built-in director blueprints",
+    run: () => {
+      const templates = listHyperframesPromptTemplates();
+
+      assert.deepEqual(
+        templates.map((template) => template.id),
+        [
+          "hyperframes-saas-product-promo-30s",
+          "hyperframes-app-showcase-three-phones",
+          "hyperframes-product-reveal-minimal",
+          "hyperframes-website-to-video-promo",
+          "hyperframes-tiktok-karaoke-talking-head",
+          "hyperframes-data-bar-chart-race",
+          "hyperframes-brand-sizzle-reel",
+          "hyperframes-logo-outro-cinematic",
+          "hyperframes-social-overlay-stack",
+          "hyperframes-money-counter-hype",
+          "hyperframes-flight-map-route",
+        ],
+      );
+      assert.ok(templates.every((template) => template.kind === "prompt-template"));
+      assert.ok(templates.every((template) => template.source === "open-design-hyperframes"));
+      assert.ok(templates.every((template) => template.catalogCommands.every((command) => command.startsWith("npx hyperframes add "))));
+      assert.ok(templates.every((template) => template.directorNotes.length > 0));
+      assert.ok(templates.every((template) => template.hyperframesRules.includes("Register timelines on window.__timelines.")));
+    },
+  },
+  {
+    name: "recommend HyperFrames prompt templates for fuzzy creative intent",
+    run: () => {
+      const recommendation = recommendHyperframesPromptTemplate({
+        idea: "A vertical founder short with karaoke captions and a talking head hook.",
+        style: "fast TikTok subtitles big text social proof",
+        format: "9:16",
+        durationSec: 20,
+      });
+
+      assert.equal(recommendation.template.id, "hyperframes-tiktok-karaoke-talking-head");
+      assert.ok(recommendation.score > 0);
+      assert.match(recommendation.reason, /tiktok|talking|karaoke/i);
     },
   },
   {
@@ -2823,6 +2872,7 @@ Framepack compiles content into executable video projects.
       assert.ok(report.checks.some((check) => check.id === "tuning-parameters"));
       assert.ok(report.checks.some((check) => check.id === "human-digest"));
       assert.ok(report.checks.some((check) => check.id === "structure-summary"));
+      assert.ok(report.checks.some((check) => check.id === "prompt-template-plan"));
     },
   },
   {
@@ -2847,6 +2897,7 @@ Framepack compiles content into executable video projects.
       assert.ok(report.findings.some((finding) => /tuningParameters/i.test(finding)));
       assert.ok(report.findings.some((finding) => /HUMAN\.md/i.test(finding)));
       assert.ok(report.findings.some((finding) => /Structure Summary/i.test(finding)));
+      assert.ok(report.findings.some((finding) => /HyperFrames Prompt Template/i.test(finding)));
     },
   },
   {
@@ -2898,6 +2949,55 @@ Framepack compiles content into executable video projects.
       assert.equal(exitCode, 0, stderr.join("\n"));
       assert.equal(payload.recommendation.template.id, "course-promo");
       assert.ok(payload.recommendation.template.implementationRoutes.includes("hyperframes"));
+    },
+  },
+  {
+    name: "describe HyperFrames prompt templates through the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        ["templates", "prompt", "--json"],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+      const payload = JSON.parse(stdout.join("\n"));
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      assert.equal(payload.promptTemplates.length, 11);
+      assert.ok(payload.promptTemplates.some((template) => template.id === "hyperframes-brand-sizzle-reel"));
+    },
+  },
+  {
+    name: "recommend HyperFrames prompt templates through the CLI",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        [
+          "templates",
+          "prompt",
+          "recommend",
+          "--idea",
+          "A vertical founder short with karaoke captions.",
+          "--style",
+          "TikTok subtitles big text talking head",
+          "--format",
+          "9:16",
+          "--json",
+        ],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+      const payload = JSON.parse(stdout.join("\n"));
+
+      assert.equal(exitCode, 0, stderr.join("\n"));
+      assert.equal(payload.recommendation.template.id, "hyperframes-tiktok-karaoke-talking-head");
+      assert.ok(payload.recommendation.template.catalogCommands.includes("npx hyperframes add tiktok-follow"));
     },
   },
   {
@@ -4436,8 +4536,16 @@ Framepack compiles content into executable video projects.
         assert.equal(exitCode, 0, stderr.join("\n"));
         assert.match(stdout.join("\n"), /Initialized Framepack agent workflow/);
         assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /FRAMEPACK MANAGED BLOCK/);
+        assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /framepack-director/);
+        assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /VIDEO_DNA\.md/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack create/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /FRAMEPACK\.md/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack-director/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack-template-fuser/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack-hyperframes-builder/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack-reference-miner/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /HUMAN\.md/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /TEMPLATE_BLUEPRINT\.md/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "INSTALL.md"), "utf8"), /npx -y framepack mcp/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
@@ -4465,6 +4573,9 @@ Framepack compiles content into executable video projects.
         assert.equal(exitCode, 0, stderr.join("\n"));
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /Framepack/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /FRAMEPACK\.md/);
+        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /framepack-template-fuser/);
+        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /framepack-reference-miner/);
+        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /VIDEO_DNA\.md/);
         const mcpConfig = JSON.parse(readFileSync(join(tempRoot, ".mcp.json"), "utf8"));
         assert.equal(mcpConfig.mcpServers.framepack.command, "cmd");
         assert.deepEqual(mcpConfig.mcpServers.framepack.args, ["/c", "npx", "-y", "framepack", "mcp"]);

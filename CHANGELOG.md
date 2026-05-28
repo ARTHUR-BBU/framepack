@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0-alpha.7
+
+- added 11 built-in HyperFrames prompt-template blueprints adapted from the Open Design template pattern
+- added prompt-template recommendation through the workbench arsenal and `framepack templates prompt`
+- wrote the selected HyperFrames Prompt Template and Template Fusion Plan into generated `COMPOSITION.md`
+- extended `HUMAN.md` with plain-language template explanations for non-expert users
+- upgraded `init-agent` Codex and Claude Code instructions with four Framepack playbooks: director, template fuser, HyperFrames builder, and reference miner
+- introduced `VIDEO_DNA.md` and `TEMPLATE_BLUEPRINT.md` as the reference-video-to-template workflow targets
+
 ## 0.5.0-alpha.6
 
 - added an explicit npm metadata README fallback with English and Chinese quick-start copy

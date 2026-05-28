@@ -1,5 +1,27 @@
 # Framepack
 
+## 0.5 Skill Layer 与 HyperFrames Prompt Templates
+
+Framepack 现在不是只给用户一堆命令，而是给 Codex / Claude Code 安装一套视频制作 playbook：`framepack-director`、`framepack-template-fuser`、`framepack-hyperframes-builder`、`framepack-reference-miner`。
+
+这四个 playbook 分别负责：把外行人的模糊审美愿望翻译成专业导演方案；把用户素材、模板和要求融合成 `COMPOSITION.md`；把方案交给 HyperFrames 安全实现；把参考视频沉淀成 `VIDEO_DNA.md` 和 `TEMPLATE_BLUEPRINT.md`。
+
+Framepack 也内置了 11 个 HyperFrames prompt-template 蓝图：
+
+- `hyperframes-saas-product-promo-30s`
+- `hyperframes-app-showcase-three-phones`
+- `hyperframes-product-reveal-minimal`
+- `hyperframes-website-to-video-promo`
+- `hyperframes-tiktok-karaoke-talking-head`
+- `hyperframes-data-bar-chart-race`
+- `hyperframes-brand-sizzle-reel`
+- `hyperframes-logo-outro-cinematic`
+- `hyperframes-social-overlay-stack`
+- `hyperframes-money-counter-hype`
+- `hyperframes-flight-map-route`
+
+这些不是最终视频，也不是远程下载的付费模板，而是给 agent 使用的导演蓝图。`COMPOSITION.md` 会把推荐模板、用户资产、用户要求、Catalog 候选、动效规则和验收标准融合到一起。
+
 Framepack 让不懂动画技术的用户，也可以用自然语言获得专业的视频生产工作台。
 
 用户只需要说“更酷一点”“更商务”“字大一点”“节奏快一点”“动画多一点”“像这个参考视频”，Framepack 会把这些模糊愿望翻译成 Codex、Claude Code、HyperFrames 和 Remotion 能执行的工作台：素材说明、用户摘要、风格方向、视频结构、模板路线、动效语言、composition 方案、验收标准和迭代记忆。

@@ -11,6 +11,11 @@ import {
   recommendHyperframesCatalogPrefabs,
   type HyperframesCatalogRecommendation,
 } from "./hyperframes-catalog.js";
+import {
+  listHyperframesPromptTemplates,
+  recommendHyperframesPromptTemplate,
+  type HyperframesPromptTemplateRecommendation,
+} from "./hyperframes-prompt-templates.js";
 
 export type WorkbenchAssetKind = "image" | "video" | "audio" | "text" | "other";
 
@@ -34,6 +39,7 @@ export interface PolishArsenalRecommendation {
   template: WorkbenchTemplate;
   directorTranslation: DirectorTranslation;
   catalogRecommendation: HyperframesCatalogRecommendation;
+  promptTemplateRecommendation: HyperframesPromptTemplateRecommendation;
   professionalCreativeLanguage: string;
   animationTechniques: string[];
   aestheticDirection: string[];
@@ -217,6 +223,7 @@ function createHumanDigest(input: {
   tuningParameters: TuningParameter[];
 }): HumanDigest {
   const template = input.recommendation.template;
+  const promptTemplate = input.recommendation.promptTemplateRecommendation.template;
   const catalogNames = input.recommendation.catalogRecommendation.prefabs.map((prefab) => prefab.label);
   const pace = input.tuningParameters.find((parameter) => parameter.id === "pace")?.defaultValue ?? "medium";
   const motion = input.tuningParameters.find((parameter) => parameter.id === "motionIntensity")?.defaultValue ?? "medium";
@@ -239,6 +246,7 @@ function createHumanDigest(input: {
     ],
     technologyPlainWords: [
       `Template route: ${template.label} means the video has a proven story shape instead of random scenes.`,
+      `Recommended HyperFrames prompt template: ${promptTemplate.title}. This gives the agent a production-tested scene rhythm and HyperFrames rules to adapt.`,
       `Pace is currently ${pace}; motion intensity is ${motion}. These are the main knobs for making the video calmer, faster, more premium, or more explosive.`,
       catalogNames.length > 0
         ? `HyperFrames Catalog candidates: ${catalogNames.join(", ")}. These are reusable video blocks/components, not mandatory installs.`
@@ -267,11 +275,19 @@ export function recommendPolishArsenal(input: {
     style,
     format: input.format,
   });
+  const promptTemplateRecommendation = recommendHyperframesPromptTemplate({
+    templateId: template.id,
+    idea: input.idea,
+    style,
+    format: input.format,
+    durationSec: input.durationSec,
+  });
 
   return {
     template,
     directorTranslation,
     catalogRecommendation,
+    promptTemplateRecommendation,
     professionalCreativeLanguage: `${template.visualLanguage[0]} with ${premium ? "premium commercial restraint" : "clear editorial confidence"} and ${fast ? "compressed high-energy pacing" : "measured narrative pacing"}.`,
     animationTechniques: [
       ...new Set([
@@ -303,8 +319,10 @@ export function recommendPolishArsenal(input: {
 
 export {
   listHyperframesCatalogPrefabs,
+  listHyperframesPromptTemplates,
   listTemplateMarket,
   recommendHyperframesCatalogPrefabs,
+  recommendHyperframesPromptTemplate,
   recommendTemplateRoute,
 };
 
@@ -364,6 +382,53 @@ function catalogPlan(recommendation: HyperframesCatalogRecommendation) {
     "Fallback:",
     "",
     recommendation.fallbackStrategy,
+  ].join("\n");
+}
+
+function promptTemplatePlan(recommendation: HyperframesPromptTemplateRecommendation) {
+  const template = recommendation.template;
+
+  return [
+    "## HyperFrames Prompt Template",
+    "",
+    `Selected blueprint: ${template.id} (${template.title})`,
+    "",
+    `Source: ${template.source}`,
+    `Aspect: ${template.aspect}`,
+    `Reason: ${recommendation.reason}`,
+    "",
+    "Scene shape:",
+    "",
+    numberedList(template.sceneShape),
+    "",
+    "Director notes:",
+    "",
+    bulletList(template.directorNotes),
+    "",
+    "Catalog commands to consider:",
+    "",
+    bulletList(template.catalogCommands.map((command) => `\`${command}\``)),
+    "",
+    "HyperFrames rules:",
+    "",
+    bulletList(template.hyperframesRules),
+    "",
+    "Template acceptance criteria:",
+    "",
+    bulletList(template.acceptanceCriteria),
+  ].join("\n");
+}
+
+function templateFusionPlan(recommendation: PolishArsenalRecommendation) {
+  return [
+    "## Template Fusion Plan",
+    "",
+    "- Treat the prompt template as a director blueprint, not a finished video.",
+    "- Keep user assets and user intent as the source of truth.",
+    "- Borrow scene rhythm, Catalog candidates, motion rules, and QA checks from the selected template.",
+    "- Replace generic template copy with the user's offer, proof, audience, and CTA.",
+    "- If the user gives a reference video, mine it into `VIDEO_DNA.md` and then update `TEMPLATE_BLUEPRINT.md` before changing the composition.",
+    `- Current workflow route: ${recommendation.template.id} (${recommendation.template.label}).`,
   ].join("\n");
 }
 
@@ -508,6 +573,14 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
       summary: "DIRECTION.md includes a user-readable Structure Summary.",
       finding: "DIRECTION.md is missing Structure Summary.",
     }),
+    validateContains({
+      files,
+      file: "COMPOSITION.md",
+      pattern: /HyperFrames Prompt Template/,
+      id: "prompt-template-plan",
+      summary: "COMPOSITION.md includes a HyperFrames Prompt Template plan.",
+      finding: "COMPOSITION.md is missing a HyperFrames Prompt Template plan.",
+    }),
   ];
   const findings = checks
     .filter((check) => check.status === "failed")
@@ -563,6 +636,7 @@ function buildFiles(input: {
     "- Runtime: HyperFrames first; Remotion is a good route for reusable social/template video.",
     "- Motion: GSAP timeline for HyperFrames-safe scene control.",
     `- Template: ${recommendation.template.id} (${recommendation.template.label}).`,
+    `- HyperFrames prompt template: ${recommendation.promptTemplateRecommendation.template.id} (${recommendation.promptTemplateRecommendation.template.title}).`,
     `- Professional translation: ${recommendation.professionalCreativeLanguage}`,
     `- Animation techniques: ${recommendation.animationTechniques.join(", ")}.`,
     `- Aesthetic direction: ${recommendation.aestheticDirection.join(", ")}.`,
@@ -737,6 +811,10 @@ function buildFiles(input: {
       "",
       `Use the ${recommendation.template.id} route: ${recommendation.template.templateGuidance.join(" ")}`,
       "",
+      promptTemplatePlan(recommendation.promptTemplateRecommendation),
+      "",
+      templateFusionPlan(recommendation),
+      "",
       catalogPlan(recommendation.catalogRecommendation),
       "",
       "## Acceptance Criteria",
@@ -805,6 +883,7 @@ function buildFiles(input: {
         },
         directorTranslation: recommendation.directorTranslation,
         catalogRecommendation: recommendation.catalogRecommendation,
+        promptTemplateRecommendation: recommendation.promptTemplateRecommendation,
         hitlLoop,
         tuningParameters,
         humanDigest,

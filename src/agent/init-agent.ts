@@ -71,6 +71,26 @@ function writeMcpConfig(path: string, framepackConfig: object): void {
   );
 }
 
+function skillPlaybooks(): string {
+  return `## Framepack Playbooks
+
+### framepack-director
+
+Use when the user gives fuzzy taste words, a rough idea, or a reference. Translate the request into audience, story structure, visual language, motion language, template route, risks, and acceptance criteria. Explain the current choice in \`HUMAN.md\` before locking a direction.
+
+### framepack-template-fuser
+
+Use when a template, user assets, and user requirements must become a custom video plan. Treat templates as director blueprints, not finished videos. Keep user assets and intent as source of truth, then write the adapted scene rhythm, Catalog candidates, copy roles, and acceptance criteria into \`COMPOSITION.md\`.
+
+### framepack-hyperframes-builder
+
+Use when turning \`COMPOSITION.md\` into HyperFrames code. Keep the first frame visible, switch scenes with \`tl.set()\`, register timelines on \`window.__timelines\`, avoid multiple animation engines on one element, then run lint, inspect, and snapshot checks before final render.
+
+### framepack-reference-miner
+
+Use when the user provides a finished video, reference video, or wants to turn a result into a reusable template. Extract the structure into \`VIDEO_DNA.md\`, convert reusable production rules into \`TEMPLATE_BLUEPRINT.md\`, then update \`DIRECTION.md\` and \`COMPOSITION.md\` from that blueprint.`;
+}
+
 function codexSkill(packageSource: PackageSource): string {
   const command = packageCommand(packageSource);
 
@@ -95,6 +115,8 @@ If the user says things like cool, premium, business, dynamic, polished, bigger 
 4. Translate fuzzy user taste into concrete visual language, motion language, template route, and HyperFrames/Remotion implementation choices.
 5. Keep project state in the workbench files; do not rely on model memory.
 6. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
+
+${skillPlaybooks()}
 `;
 }
 
@@ -115,7 +137,8 @@ Agent checklist:
 2. Verify \`${command} mcp --describe\`.
 3. Create a workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
 4. Read \`FRAMEPACK.md\` and continue from the workbench files.
-5. Use MCP/CLI only when files need to be created, inspected, or refreshed.
+5. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
+6. Use MCP/CLI only when files need to be created, inspected, or refreshed.
 `;
 }
 
@@ -130,8 +153,10 @@ Framepack is installed as an agent-native video creative workbench for this proj
 - Prefer MCP tools over memorized shell commands; check \`${command} mcp --describe\` if MCP is not connected.
 - Create workbenches with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
 - Start every Framepack project by reading \`FRAMEPACK.md\`.
-- Use \`ASSETS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
+- Use \`HUMAN.md\`, \`ASSETS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
 - Recommend animation libraries, templates, game-asset tools, HyperFrames, or Remotion only when the current project needs them.
+
+${skillPlaybooks()}
 `;
 }
 
@@ -147,10 +172,13 @@ Use Framepack when the user asks for a polished video, HyperFrames or Remotion c
 Suggested flow:
 
 1. Create a workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
-2. Read \`FRAMEPACK.md\`, then \`ASSETS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
+2. Read \`FRAMEPACK.md\`, then \`HUMAN.md\`, \`ASSETS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
 3. Translate fuzzy user intent into concrete visual language, motion language, template route, and implementation plan.
 4. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
 5. Record render feedback and next actions in \`ITERATIONS.md\`.
+6. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
+
+${skillPlaybooks()}
 
 Fallback command surface: \`${command} mcp --describe\`.
 `;

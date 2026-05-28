@@ -144,9 +144,40 @@ Use it from the CLI:
 framepack templates
 framepack templates --json
 framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
+framepack templates prompt --json
+framepack templates prompt recommend --idea "A TikTok founder video with karaoke captions" --style "big text fast social" --format 9:16 --json
 ```
 
 Future paid templates can plug into this same shape. The current release only ships built-in free templates so user testing stays simple.
+
+## HyperFrames Prompt Templates
+
+Framepack also ships 11 built-in HyperFrames prompt-template blueprints adapted from the Open Design HyperFrames template pattern. These are not final videos and not remote downloads. They are director-ready production blueprints that help an agent fuse user assets, user taste, Catalog candidates, scene rhythm, and HyperFrames safety rules into `COMPOSITION.md`.
+
+Included prompt templates:
+
+- `hyperframes-saas-product-promo-30s`
+- `hyperframes-app-showcase-three-phones`
+- `hyperframes-product-reveal-minimal`
+- `hyperframes-website-to-video-promo`
+- `hyperframes-tiktok-karaoke-talking-head`
+- `hyperframes-data-bar-chart-race`
+- `hyperframes-brand-sizzle-reel`
+- `hyperframes-logo-outro-cinematic`
+- `hyperframes-social-overlay-stack`
+- `hyperframes-money-counter-hype`
+- `hyperframes-flight-map-route`
+
+`COMPOSITION.md` now includes a Template Fusion Plan: the selected prompt template is treated as a reusable directing pattern, while the user's assets, offer, proof, audience, and CTA remain the source of truth.
+
+## Skill Playbooks
+
+`init-agent` installs Framepack as an agent-facing skill pack, not just a command list. The installed Codex and Claude Code instructions include four playbooks:
+
+- `framepack-director`: translate fuzzy user taste into professional structure, visual language, motion language, risks, and acceptance criteria.
+- `framepack-template-fuser`: fuse user assets, user requirements, workflow templates, prompt templates, and Catalog candidates into a custom `COMPOSITION.md`.
+- `framepack-hyperframes-builder`: turn the composition plan into HyperFrames code with first-frame, timeline, lint, inspect, and snapshot rules.
+- `framepack-reference-miner`: turn a finished or reference video into `VIDEO_DNA.md` and `TEMPLATE_BLUEPRINT.md` so strong work can become a reusable template.
 
 ## HyperFrames Catalog Bridge
 

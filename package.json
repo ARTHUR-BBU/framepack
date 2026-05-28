@@ -1,6 +1,6 @@
 {
   "name": "framepack",
-  "version": "0.5.0-alpha.6",
+  "version": "0.5.0-alpha.7",
   "private": false,
   "type": "module",
   "main": "./dist/cli.js",
@@ -8,7 +8,7 @@
     "framepack": "dist/cli.js"
   },
   "description": "A lightweight HyperFrames creative workbench for assets, prompts, composition, and iteration.",
-  "readme": "# Framepack\n\nFramepack is an agent-native HyperFrames and Remotion video workbench. It turns rough user ideas, assets, and fuzzy taste words into a professional video plan that Codex or Claude Code can execute.\n\n中文：Framepack 可以把“更商务一点、节奏更快、字大一点、动画多一点、像这个参考视频”这类普通表达，翻译成素材说明、用户摘要、风格方向、视频结构、模板路线、动效语言、composition 方案和迭代记录。\n\nQuick start:\n\n```bash\nnpm install framepack\nnpx framepack create --idea \"A premium launch video\" --assets ./assets --output-dir ./out --project-name launch-video\nnpx framepack workbench brief --project-dir ./out/launch-video\n```\n\nRead `FRAMEPACK.md` and `HUMAN.md` first. `HUMAN.md` is the plain-language user summary: current progress, video structure, next decision, and technology explanation.\n\nFull docs: https://github.com/ARTHUR-BBU/framepack\n",
+  "readme": "# Framepack\n\nFramepack is an agent-native HyperFrames and Remotion video workbench. It turns rough user ideas, assets, references, and fuzzy taste words into a professional video plan that Codex or Claude Code can execute.\n\n中文: Framepack turns requests like more business, faster pacing, bigger text, more animation, or like this reference into asset notes, human brief, style direction, template route, HyperFrames prompt-template, composition plan, and iteration memory.\n\nQuick start:\n\n```bash\nnpm install framepack\nnpx framepack create --idea \"A premium launch video\" --assets ./assets --output-dir ./out --project-name launch-video\nnpx framepack workbench brief --project-dir ./out/launch-video\nnpx framepack templates prompt --json\n```\n\nRead `FRAMEPACK.md` and `HUMAN.md` first. `HUMAN.md` is the plain-language user summary. `COMPOSITION.md` includes the selected Template Fusion Plan and HyperFrames Prompt Template.\n\nFull docs: https://github.com/ARTHUR-BBU/framepack\n",
   "files": [
     "dist",
     "examples",

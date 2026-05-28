@@ -48,8 +48,10 @@ import {
   defaultWorkbenchProjectName,
   formatWorkbenchHumanBrief,
   listHyperframesCatalogPrefabs,
+  listHyperframesPromptTemplates,
   listTemplateMarket,
   recommendHyperframesCatalogPrefabs,
+  recommendHyperframesPromptTemplate,
   recommendTemplateRoute,
   validateWorkbenchProject,
 } from "../../workbench/index.js";
@@ -157,7 +159,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.6";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.7";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -170,6 +172,7 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack catalog",
   "  framepack catalog recommend --template <template-id> --idea <idea>",
   "  framepack templates",
+  "  framepack templates prompt",
   "  framepack templates recommend --idea <idea> --style <style>",
   "  framepack workbench check --project-dir <dir>",
   "  framepack workbench brief --project-dir <dir>",
@@ -730,6 +733,53 @@ function runPacksCommand(args: string[], io: CliIo): number {
 }
 
 function runTemplatesCommand(args: string[], io: CliIo): number {
+  if (args[0] === "prompt") {
+    if (args[1] === "recommend") {
+      const durationArg = getOptionalArg(args, "--duration");
+      const durationSec = durationArg ? Number(durationArg) : 45;
+      const recommendation = recommendHyperframesPromptTemplate({
+        idea: getRequiredArg(args, "--idea"),
+        style: getOptionalArg(args, "--style"),
+        format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
+        durationSec,
+      });
+
+      if (args.includes("--json")) {
+        io.stdout(JSON.stringify({ recommendation }, null, 2));
+        return 0;
+      }
+
+      io.stdout(
+        [
+          "Framepack HyperFrames prompt-template recommendation",
+          "",
+          `Template: ${recommendation.template.id} (${recommendation.template.title})`,
+          `Reason: ${recommendation.reason}`,
+          "",
+          "Scene shape:",
+          ...recommendation.template.sceneShape.map((scene) => `- ${scene}`),
+        ].join("\n"),
+      );
+      return 0;
+    }
+
+    const payload = { promptTemplates: listHyperframesPromptTemplates() };
+
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify(payload, null, 2));
+      return 0;
+    }
+
+    io.stdout(
+      [
+        "Framepack HyperFrames Prompt Templates",
+        "",
+        ...payload.promptTemplates.map((template) => `- ${template.id}: ${template.title} (${template.aspect}, ${template.category})`),
+      ].join("\n"),
+    );
+    return 0;
+  }
+
   if (args[0] === "recommend") {
     const durationArg = getOptionalArg(args, "--duration");
     const durationSec = durationArg ? Number(durationArg) : 45;
