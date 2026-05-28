@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0-alpha.9
+
+- rewrote all four skills with HOW-level detail following HyperFrames progressive disclosure pattern (SKILL.md is a concise index, details loaded on demand from references/)
+- framepack-director: design system index with 22 curated design.md files in references/designs/ (spacex, nike, ferrari, stripe, apple, etc.)
+- framepack-hyperframes-builder: 15 HyperFrames compatibility rules in references/compatibility-rules.md, 8 animation code templates in references/code-templates.md
+- framepack-template-fuser: catalog install guide and pre-flight checklist in references/catalog-usage.md
+- added ASSET_GAPS.md to workbench output with blocking/optional gap analysis and tool recommendations
+- enhanced COMPOSITION.md with Code Templates section (impact pop, kinetic type, hard snap, dissolve, scale reveal, number counter)
+- enhanced COMPOSITION.md with HyperFrames Safety Checklist and Preview Before Render sections
+- upgraded Catalog Plan to Catalog Pre-Flight with mandatory install-before-code steps
+- fixed CLAUDE.md managed block to not inject FramePack title on fresh files
+- fixed initAgentProject with independent try-catch per target (codex failure no longer blocks claude-code)
+- fixed postinstall.mjs with INIT_CWD fallback and install guidance message listing skills and next steps
+- 174/174 tests pass
+
 ## 0.5.0-alpha.8
 
 - installed the four Framepack playbooks as real project skills for Claude Code under `.claude/skills`

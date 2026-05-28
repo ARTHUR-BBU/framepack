@@ -361,19 +361,117 @@ function formatAssets(assets: WorkbenchAsset[]) {
   return assets.map((asset) => `- ${asset.name} (${asset.kind})`).join("\n");
 }
 
+function buildAssetGaps(input: {
+  assets: WorkbenchAsset[];
+  idea: string;
+  templateId: TemplateRouteId;
+  catalogPrefabs: HyperframesCatalogRecommendation["prefabs"];
+}): string {
+  const assetKinds = new Set(input.assets.map((a) => a.kind));
+  const signal = `${input.idea}`.toLowerCase();
+  const gaps: { asset: string; blocking: boolean; recommend: string }[] = [];
+
+  if (!assetKinds.has("image")) {
+    gaps.push({ asset: "Brand/product images or screenshots", blocking: true, recommend: "Ask the user to provide logos, product photos, or screenshots. AI image generators can create backgrounds." });
+  }
+
+  if (!assetKinds.has("video")) {
+    const needsVideo = signal.includes("game") || signal.includes("demo") || signal.includes("trailer") || signal.includes("gameplay");
+    if (needsVideo) {
+      gaps.push({ asset: "Video clips (gameplay, demo, trailer footage)", blocking: true, recommend: "Ask the user to provide video files. Pre-transcode with ffmpeg: `ffmpeg -i input.mp4 -c:v libx264 -r 30 -g 30 -keyint_min 30 output.mp4`" });
+    }
+  }
+
+  if (!assetKinds.has("audio")) {
+    gaps.push({ asset: "Background music or voiceover audio", blocking: false, recommend: "Optional. If needed: ask user for audio file, or use TTS tools like `npx hyperframes tts` for narration." });
+  }
+
+  if (signal.includes("game") || signal.includes("pixel") || signal.includes("sprite")) {
+    gaps.push({ asset: "Sprite/pixel art animations", blocking: false, recommend: "Consider `agent-sprite-forge` for generating pixel art sprite sheets." });
+  }
+
+  if (signal.includes("brand") || signal.includes("logo")) {
+    if (!input.assets.some((a) => a.name.toLowerCase().includes("logo"))) {
+      gaps.push({ asset: "Brand logo file (PNG/SVG with transparency)", blocking: true, recommend: "Ask the user to provide their logo file. PNG with transparent background preferred." });
+    }
+  }
+
+  if (input.catalogPrefabs.length > 0) {
+    gaps.push({ asset: "HyperFrames Catalog components", blocking: false, recommend: `Install recommended prefabs: ${input.catalogPrefabs.map((p) => `\`${p.installCommand}\``).join(", ")}` });
+  }
+
+  if (gaps.length === 0) {
+    return [
+      "# Asset Gap Analysis",
+      "",
+      "No critical gaps detected. User-provided assets cover the basic needs for this composition.",
+      "",
+      "- Proceed with Catalog Pre-Flight in COMPOSITION.md before writing code.",
+      "- Ask the user to confirm the assets are correct and up to date.",
+      "",
+    ].join("\n");
+  }
+
+  const blocking = gaps.filter((g) => g.blocking);
+  const optional = gaps.filter((g) => !g.blocking);
+
+  const lines = [
+    "# Asset Gap Analysis",
+    "",
+    `Template route: ${input.templateId}`,
+    `User assets scanned: ${input.assets.length}`,
+    `Gaps found: ${gaps.length} (${blocking.length} blocking, ${optional.length} optional)`,
+    "",
+  ];
+
+  if (blocking.length > 0) {
+    lines.push("## Blocking (must resolve before composition)", "");
+    for (const gap of blocking) {
+      lines.push(`- **${gap.asset}**`);
+      lines.push(`  Recommend: ${gap.recommend}`);
+      lines.push("");
+    }
+  }
+
+  if (optional.length > 0) {
+    lines.push("## Optional (can proceed without)", "");
+    for (const gap of optional) {
+      lines.push(`- **${gap.asset}**`);
+      lines.push(`  Recommend: ${gap.recommend}`);
+      lines.push("");
+    }
+  }
+
+  lines.push("## Next Step", "");
+  lines.push("Resolve blocking gaps with the user, then proceed to COMPOSITION.md Catalog Pre-Flight and composition building.", "");
+
+  return lines.join("\n");
+}
+
 function catalogPlan(recommendation: HyperframesCatalogRecommendation) {
   const prefabLines = recommendation.prefabs.length > 0
     ? recommendation.prefabs.map((prefab) => `- ${prefab.id} (${prefab.kind}): ${prefab.bestUse} Install: \`${prefab.installCommand}\`.`).join("\n")
     : "- No strong Catalog prefab match. Keep the route custom and inspect the live Catalog before writing from scratch.";
 
   return [
-    "## HyperFrames Catalog Plan",
+    "## Catalog Pre-Flight",
     "",
-    "Official Catalog check:",
+    "**Before writing any custom composition code, complete these steps:**",
     "",
-    "- Run `npx hyperframes catalog --json` before installing any prefab.",
-    "- Treat recommendations as candidates; do not auto-install without an agent/user execution decision.",
-    "- Use blocks as mounted composition segments and components as copied CSS/GSAP snippets.",
+    "1. `npx hyperframes catalog --json` — list all available components",
+    "2. For each recommended prefab: `npx hyperframes add <component-id>`",
+    "3. Use installed components as building blocks first",
+    "4. Only write custom code for what catalog does not cover",
+    "",
+    "Block type (sub-composition):",
+    "```html",
+    "<div data-composition-id=\"caption-clip-wipe\"",
+    "     data-composition-src=\"compositions/caption-clip-wipe.html\"",
+    "     data-start=\"3\" data-duration=\"4\" data-track-index=\"2\">",
+    "</div>",
+    "```",
+    "",
+    "Component type: copy the CSS class and GSAP tween from the installed component source.",
     "",
     "Recommended prefabs:",
     "",
@@ -528,10 +626,10 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
     validateContains({
       files,
       file: "COMPOSITION.md",
-      pattern: /HyperFrames Catalog Plan/,
+      pattern: /Catalog Pre-Flight/,
       id: "catalog-plan",
-      summary: "COMPOSITION.md includes a HyperFrames Catalog Plan.",
-      finding: "COMPOSITION.md is missing HyperFrames Catalog Plan.",
+      summary: "COMPOSITION.md includes a Catalog Pre-Flight section.",
+      finding: "COMPOSITION.md is missing Catalog Pre-Flight.",
     }),
     validateContains({
       files,
@@ -596,7 +694,7 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
 
 export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport {
   const files = Object.fromEntries(
-    ["FRAMEPACK.md", "ASSETS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"]
+    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"]
       .map((filePath) => [
         filePath,
         existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
@@ -829,7 +927,48 @@ function buildFiles(input: {
       "4. Add programmed motion with readable pacing.",
       "5. End with a clear payoff or next action.",
       "",
+      "## Code Templates",
+      "",
+      "Impact Pop (text shock): `tl.from(\".headline\", { scale: 5, ease: \"back.out(1.7)\", duration: 0.3 }, sceneStart + 0.2)`",
+      "",
+      "Kinetic Typography (word-by-word): `tl.from(\".word\", { y: 80, opacity: 0, stagger: 0.05, duration: 0.4, ease: \"power3.out\" }, sceneStart)`",
+      "",
+      "Hard Scene Snap: `tl.set(\"#prev .content\", { opacity: 0 }, cutTime); tl.from(\"#next .content\", { opacity: 0, duration: 0.15 }, cutTime)`",
+      "",
+      "Smooth Dissolve: `tl.to(\"#prev .content\", { opacity: 0, duration: 0.5 }, cutTime - 0.5); tl.from(\"#next .content\", { opacity: 0, duration: 0.5 }, cutTime)`",
+      "",
+      "Scale Reveal: `tl.from(\".panel\", { scale: 0, ease: \"back.out(1.4)\", duration: 0.5, stagger: 0.1 }, sceneStart + 0.3)`",
+      "",
+      "Number Counter: animate a proxy object `{ val: 0 }` to target with `onUpdate` setting `textContent`.",
+      "",
+      "## HyperFrames Safety Checklist",
+      "",
+      "Before render, verify every rule:",
+      "- `<video>` has `data-start` + `data-media-start`",
+      "- No `Math.random()` (use mulberry32 seeded PRNG)",
+      "- No `repeat: -1` (calculate finite: `Math.floor(total / cycle) - 1`)",
+      "- First scene visible via CSS (`[data-scene-id=\"scene-1\"]{opacity:1}`)",
+      "- Scene switches use `tl.set()`, not `tl.to({duration:0.01})`",
+      "- Timeline registered: `window.__timelines[\"id\"] = tl`",
+      "- No async timeline construction",
+      "- Transitions between every scene (no jump cuts)",
+      "- No exit animations except on final scene",
+      "",
+      "## Preview Before Render",
+      "",
+      "1. `npx hyperframes preview --port 3002`",
+      "2. Open `http://localhost:3002/#project/<project-name>`",
+      "3. User confirms visual quality",
+      "4. Record feedback in ITERATIONS.md",
+      "5. `npx hyperframes render` only after user approval",
+      "",
     ].join("\n"),
+    "ASSET_GAPS.md": buildAssetGaps({
+      assets: input.assets,
+      idea: input.idea,
+      templateId: recommendation.template.id,
+      catalogPrefabs: recommendation.catalogRecommendation.prefabs,
+    }),
     "ITERATIONS.md": [
       "# Iterations",
       "",
@@ -876,6 +1015,7 @@ function buildFiles(input: {
           guide: "FRAMEPACK.md",
           human: "HUMAN.md",
           assets: "ASSETS.md",
+          assetGaps: "ASSET_GAPS.md",
           style: "STYLE.md",
           direction: "DIRECTION.md",
           composition: "COMPOSITION.md",

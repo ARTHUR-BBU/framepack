@@ -2833,7 +2833,7 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["COMPOSITION.md"], /Recommended Template/);
         assert.match(project.files["COMPOSITION.md"], /Tuning Parameters/);
         assert.match(project.files["COMPOSITION.md"], /Human Explanation/);
-        assert.match(project.files["COMPOSITION.md"], /HyperFrames Catalog Plan/);
+        assert.match(project.files["COMPOSITION.md"], /Catalog Pre-Flight/);
         assert.match(project.files["COMPOSITION.md"], /caption-editorial-emphasis/);
         assert.match(project.files["COMPOSITION.md"], /npx hyperframes catalog --json/);
         assert.match(project.files["COMPOSITION.md"], /Kinetic typography/i);
@@ -2892,7 +2892,7 @@ Framepack compiles content into executable video projects.
       assert.equal(report.status, "failed");
       assert.ok(report.findings.some((finding) => /Director Translation/i.test(finding)));
       assert.ok(report.findings.some((finding) => /HITL Loop/i.test(finding)));
-      assert.ok(report.findings.some((finding) => /HyperFrames Catalog Plan/i.test(finding)));
+      assert.ok(report.findings.some((finding) => /Catalog Pre-Flight/i.test(finding)));
       assert.ok(report.findings.some((finding) => /STYLE\.md/i.test(finding)));
       assert.ok(report.findings.some((finding) => /tuningParameters/i.test(finding)));
       assert.ok(report.findings.some((finding) => /HUMAN\.md/i.test(finding)));
