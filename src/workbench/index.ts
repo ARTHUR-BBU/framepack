@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, dirname, extname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   listTemplateMarket,
   recommendTemplateRoute,
@@ -704,6 +705,128 @@ export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport 
   return validateWorkbenchFiles(files);
 }
 
+const DESIGN_SYSTEM_SIGNALS: { id: string; keywords: string[] }[] = [
+  { id: "spacex", keywords: ["space", "dark", "cinematic", "futuristic", "rocket", "tech", "black", "white"] },
+  { id: "tesla", keywords: ["automotive", "electric", "clean", "car", "vehicle", "photography", "minimal"] },
+  { id: "nvidia", keywords: ["ai", "gpu", "green", "dark", "data", "computing", "chip"] },
+  { id: "apple", keywords: ["premium", "elegant", "minimal", "apple", "refined", "polished", "ios"] },
+  { id: "stripe", keywords: ["fintech", "professional", "purple", "corporate", "payment", "finance"] },
+  { id: "nike", keywords: ["sport", "athletic", "energy", "bold", "monochrome", "fitness", "running"] },
+  { id: "ferrari", keywords: ["luxury", "automotive", "red", "cinematic", "editorial", "racing", "italian"] },
+  { id: "lamborghini", keywords: ["aggressive", "luxury", "dark", "performance", "supercar"] },
+  { id: "bugatti", keywords: ["ultra-luxury", "exclusive", "dark", "refined", "hypercar"] },
+  { id: "bmw-m", keywords: ["performance", "dynamic", "automotive", "motorsport", "bold"] },
+  { id: "vercel", keywords: ["developer", "dark", "minimal", "modern", "deployment", "nextjs"] },
+  { id: "linear-app", keywords: ["saas", "clean", "purple", "productivity", "project"] },
+  { id: "spotify", keywords: ["entertainment", "dark", "green", "music", "audio", "podcast"] },
+  { id: "discord", keywords: ["social", "gaming", "community", "purple", "chat"] },
+  { id: "figma", keywords: ["creative", "design", "collaboration", "colorful", "tool"] },
+  { id: "playstation", keywords: ["gaming", "dark", "blue", "console", "ps5", "game"] },
+  { id: "shopify", keywords: ["e-commerce", "green", "retail", "modern", "store", "shop"] },
+  { id: "meta", keywords: ["social", "blue", "platform", "meta", "facebook"] },
+  { id: "uber", keywords: ["transport", "modern", "clean", "global", "ride", "mobility"] },
+  { id: "raycast", keywords: ["productivity", "dark", "developer", "fast", "launcher"] },
+  { id: "openai", keywords: ["ai", "minimal", "clean", "research", "gpt", "chatgpt"] },
+  { id: "notion", keywords: ["productivity", "clean", "workspace", "notes", "wiki"] },
+];
+
+function buildCapabilityRecommendations(idea: string, style: string, templateId: string): string[] {
+  const signal = `${idea} ${style}`.toLowerCase();
+  const recs: string[] = [];
+
+  if (signal.includes("game") || signal.includes("pixel") || signal.includes("sprite")) {
+    recs.push("- Capability: `agent-sprite-forge` — 2D sprite asset generation for game-style animation.");
+  }
+
+  if (signal.includes("3d") || signal.includes("three.js") || signal.includes("webgl")) {
+    recs.push("- Capability: Three.js / WebGL — 3D rendering for immersive scenes. Use `npx hyperframes add` to check catalog support.");
+  }
+
+  if (templateId === "data-shock" || signal.includes("chart") || signal.includes("graph") || signal.includes("data")) {
+    recs.push("- Capability: D3.js or Chart.js — data visualization for stats and metrics. Embed as Canvas or SVG.");
+  }
+
+  if (signal.includes("audio") || signal.includes("music") || signal.includes("beat")) {
+    recs.push("- Capability: Web Audio API — audio-reactive animation. See HyperFrames `references/audio-reactive.md` for patterns.");
+  }
+
+  return recs;
+}
+
+function matchDesignSystem(signal: string): string {
+  const lower = signal.toLowerCase();
+  let bestId = "stripe";
+  let bestScore = 0;
+
+  for (const ds of DESIGN_SYSTEM_SIGNALS) {
+    const score = ds.keywords.filter((kw) => lower.includes(kw)).length;
+    if (score > bestScore) {
+      bestScore = score;
+      bestId = ds.id;
+    }
+  }
+
+  return bestId;
+}
+
+function buildDesignFiles(idea: string, style: string): Record<string, string> {
+  const designId = matchDesignSystem(`${idea} ${style}`);
+  const designSourcePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "templates", "designs", `${designId}.md`);
+
+  if (!existsSync(designSourcePath)) {
+    return {
+      "DESIGN_TOKENS.md": [
+        "# Design Tokens",
+        "",
+        "No design system matched. Agent should establish colors and typography based on user style words.",
+        "",
+      ].join("\n"),
+    };
+  }
+
+  const designContent = readFileSync(designSourcePath, "utf8");
+
+  return {
+    "DESIGN.md": designContent,
+    "DESIGN_TOKENS.md": buildDesignTokens(designContent),
+  };
+}
+
+function buildDesignTokens(designContent: string): string {
+  const colorLines: string[] = [];
+  const fontLines: string[] = [];
+
+  for (const line of designContent.split("\n")) {
+    const hexMatch = line.match(/`#([0-9a-fA-F]{3,8})`/);
+    if (hexMatch) {
+      const label = line.replace(/[`*#\[\]]/g, "").split(":")[0].split("(")[0].trim();
+      colorLines.push(`- ${label}: #${hexMatch[1]}`);
+    }
+    if (line.match(/font-family|font.*:/i) && line.includes("px")) {
+      fontLines.push(line.trim());
+    }
+  }
+
+  return [
+    "# Design Tokens",
+    "",
+    "Extracted from the matched design system. Use these exact values in composition code.",
+    "",
+    "## Colors",
+    "",
+    colorLines.length > 0 ? colorLines.slice(0, 20).join("\n") : "- See DESIGN.md for full palette.",
+    "",
+    "## Typography",
+    "",
+    fontLines.length > 0 ? fontLines.slice(0, 10).join("\n") : "- See DESIGN.md for typography hierarchy.",
+    "",
+    "## Source",
+    "",
+    "These tokens were auto-extracted from DESIGN.md. For complete design rules, read DESIGN.md.",
+    "",
+  ].join("\n");
+}
+
 const SKELETON_SCENES: Record<string, { id: string; label: string; duration: number }[]> = {
   "saas-launch": [
     { id: "hook", label: "Hook — grab attention with the problem", duration: 4 },
@@ -875,6 +998,7 @@ function buildFiles(input: {
     tuningParameters,
   });
   const humanDigestMarkdown = formatHumanDigest(humanDigest);
+  const capabilityRecs = buildCapabilityRecommendations(input.idea, input.style, recommendation.template.id);
   const recommendedStack = [
     "- Runtime: HyperFrames first; Remotion is a good route for reusable social/template video.",
     "- Motion: GSAP timeline for HyperFrames-safe scene control.",
@@ -886,6 +1010,7 @@ function buildFiles(input: {
     `- Catalog prefabs: ${recommendation.catalogRecommendation.prefabs.map((prefab) => prefab.id).join(", ") || "inspect live Catalog before custom work"}.`,
     `- Avoid: ${recommendation.avoid.join(", ")}.`,
     "- Verification: CSS first scene visible, scene switches with tl.set(), timeline registered on window.__timelines.",
+    ...capabilityRecs,
   ].join("\n");
 
   return {
@@ -1183,6 +1308,7 @@ function buildFiles(input: {
       idea: input.idea,
       templateId: recommendation.template.id,
     }),
+    ...buildDesignFiles(input.idea, input.style),
   };
 }
 

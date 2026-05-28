@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0-alpha.11
+
+- generate DESIGN.md by matching user style to one of 22 design systems and copying the full design spec into the project (HyperFrames builder auto-discovers design.md)
+- generate DESIGN_TOKENS.md with extracted hex colors and typography from the matched design system
+- add external capability recommendations to COMPOSITION.md Recommended Stack: agent-sprite-forge for game routes, Three.js for 3D, D3/Chart.js for data, Web Audio for audio-reactive
+- 175/175 tests pass
+
+## 0.5.0-alpha.10
+
+- generate HyperFrames-passable index.html skeleton during `create` with proper data attributes, scene structure, entrance animations, and paused GSAP timeline
+- 6 template-specific scene layouts (saas-launch, game-ad, course-promo, news-explainer, founder-story, data-shock)
+- correct 1920x1080 or 1080x1920 dimensions based on format, first scene visible via CSS
+- add test validating skeleton HTML passes all HyperFrames lint requirements
+- 175/175 tests pass
+
 ## 0.5.0-alpha.9
 
 - rewrote all four skills with HOW-level detail following HyperFrames progressive disclosure pattern (SKILL.md is a concise index, details loaded on demand from references/)
