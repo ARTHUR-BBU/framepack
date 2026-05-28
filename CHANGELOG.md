@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0-alpha.12
+
+- updated GitHub README, npm README, and Chinese README to document all alpha.9-11 features
+- added Design System Matching section with 22 curated design system names
+- added External Capabilities section (agent-sprite-forge, Three.js, D3/Chart.js, Web Audio)
+- updated Workbench Arsenal section from 7 to 12 workbench files (DESIGN.md, DESIGN_TOKENS.md, ASSET_GAPS.md, index.html)
+- updated Skill Playbooks section with progressive disclosure pattern and references/ paths
+- updated HyperFrames Safety section with 7 rules and index.html skeleton note
+- updated Catalog Bridge section with Catalog Pre-Flight explanation
+- 175/175 tests pass
+
 ## 0.5.0-alpha.11
 
 - generate DESIGN.md by matching user style to one of 22 design systems and copying the full design spec into the project (HyperFrames builder auto-discovers design.md)

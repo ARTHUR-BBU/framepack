@@ -2542,14 +2542,15 @@ Framepack compiles content into executable video projects.
         "utf8",
       );
 
-      assert.match(readme, /non-expert users describe the video/);
+      assert.match(readme, /programmatic video workbench/);
+      assert.match(readme, /Programmatic Video vs Generative Video/);
       assert.match(readme, /outsider language into a professional video plan/);
       assert.match(readme, /framepack create --idea/);
       assert.match(readme, /ASSETS\.md/);
       assert.match(readme, /COMPOSITION\.md/);
       assert.match(readme, /postinstall hook/);
       assert.match(readme, /Polish Arsenal/);
-      assert.match(chineseReadme, /不懂动画技术的用户/);
+      assert.match(chineseReadme, /程式化视频/);
       assert.match(chineseReadme, /framepack create --idea/);
       assert.match(chineseReadme, /三层机制/);
       assert.match(chineseReadme, /内置模板 registry/);
@@ -2565,9 +2566,9 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.11");
+      assert.equal(packageJson.version, "0.5.0-alpha.12");
       assert.equal(packageJson.private, false);
-      assert.match(packageJson.readme, /Framepack is an agent-native/);
+      assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
       assert.match(packageJson.readme, /workbench brief/);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
@@ -2603,7 +2604,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.11");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.12");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
