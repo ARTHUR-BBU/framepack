@@ -3099,6 +3099,55 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "generate a HyperFrames-passable index.html skeleton",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-skeleton-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const exitCode = await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium product launch video",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "skeleton-test",
+            "--style",
+            "premium dynamic",
+            "--format",
+            "16:9",
+            "--duration",
+            "30",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+
+        const projectDir = join(tempRoot, "skeleton-test");
+        const html = readFileSync(join(projectDir, "index.html"), "utf8");
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.match(html, /data-composition-id/);
+        assert.match(html, /data-start="0"/);
+        assert.match(html, /data-duration="30"/);
+        assert.match(html, /data-width="1920"/);
+        assert.match(html, /data-height="1080"/);
+        assert.match(html, /window\.__timelines/);
+        assert.match(html, /gsap\.timeline\(\{ paused: true \}\)/);
+        assert.match(html, /gsap@3\.14\.2/);
+        assert.match(html, /opacity: 1/);
+        assert.match(html, /tl\.from/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "publish a real install smoke script for release candidates",
     run: () => {
       const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));

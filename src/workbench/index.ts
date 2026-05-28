@@ -704,6 +704,151 @@ export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport 
   return validateWorkbenchFiles(files);
 }
 
+const SKELETON_SCENES: Record<string, { id: string; label: string; duration: number }[]> = {
+  "saas-launch": [
+    { id: "hook", label: "Hook — grab attention with the problem", duration: 4 },
+    { id: "product", label: "Product — show the solution", duration: 6 },
+    { id: "proof", label: "Proof — social proof and results", duration: 5 },
+    { id: "cta", label: "CTA — clear call to action", duration: 3 },
+  ],
+  "news-explainer": [
+    { id: "headline", label: "Headline — the key takeaway", duration: 4 },
+    { id: "context", label: "Context — why it matters", duration: 6 },
+    { id: "implication", label: "Implication — what happens next", duration: 5 },
+  ],
+  "course-promo": [
+    { id: "promise", label: "Promise — what you'll learn", duration: 4 },
+    { id: "path", label: "Path — the journey", duration: 6 },
+    { id: "proof", label: "Proof — student results", duration: 5 },
+    { id: "cta", label: "CTA — enroll now", duration: 3 },
+  ],
+  "game-ad": [
+    { id: "action", label: "Action — explosive gameplay moment", duration: 3 },
+    { id: "progression", label: "Progression — show the journey", duration: 5 },
+    { id: "reward", label: "Reward — what you get", duration: 4 },
+  ],
+  "founder-story": [
+    { id: "tension", label: "Tension — the struggle", duration: 5 },
+    { id: "origin", label: "Origin — how it started", duration: 6 },
+    { id: "conviction", label: "Conviction — the belief", duration: 5 },
+  ],
+  "data-shock": [
+    { id: "number", label: "Number — the shocking stat", duration: 4 },
+    { id: "context", label: "Context — what it means", duration: 6 },
+    { id: "action", label: "Action — what to do", duration: 4 },
+  ],
+};
+
+function buildSkeletonHtml(input: {
+  projectName: string;
+  format: "16:9" | "9:16";
+  durationSec: number;
+  idea: string;
+  templateId: string;
+}): string {
+  const [width, height] = input.format === "9:16" ? [1080, 1920] : [1920, 1080];
+  const scenes = SKELETON_SCENES[input.templateId] ?? SKELETON_SCENES["saas-launch"];
+  const totalSceneDuration = scenes.reduce((sum, s) => sum + s.duration, 0);
+  const scaleFactor = totalSceneDuration > 0 ? input.durationSec / totalSceneDuration : 1;
+
+  let currentTime = 0;
+  const sceneDivs = scenes.map((scene) => {
+    const dur = Math.round(scene.duration * scaleFactor * 10) / 10;
+    const start = Math.round(currentTime * 10) / 10;
+    currentTime += dur;
+    return `    <div id="${scene.id}" class="scene" data-start="${start}" data-duration="${dur}">
+      <div class="scene-content">
+        <h2 class="scene-title">${scene.label}</h2>
+        <p class="scene-body">Replace with your content for: ${input.idea}</p>
+      </div>
+    </div>`;
+  });
+
+  const sceneCss = scenes.map((scene, i) => {
+    const opacity = i === 0 ? "1" : "0";
+    return `    [data-start="${scene.id === scenes[0].id ? "0" : ""}"] { opacity: ${opacity}; }`;
+  });
+
+  const entranceTweens = scenes.map((scene, i) => {
+    const startTime = i === 0 ? 0.2 : scenes.slice(0, i).reduce((sum, s) => sum + Math.round(s.duration * scaleFactor * 10) / 10, 0) + 0.3;
+    return `  tl.from("#${scene.id} .scene-content", { y: 60, opacity: 0, duration: 0.5, ease: "power3.out" }, ${Math.round(startTime * 10) / 10});`;
+  });
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${input.projectName}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a0a0a; color: #ffffff; font-family: system-ui, sans-serif; overflow: hidden; }
+
+    [data-composition-id="${input.projectName}"] {
+      position: relative;
+      width: ${width}px;
+      height: ${height}px;
+      background: #0a0a0a;
+      overflow: hidden;
+    }
+
+    .scene {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+    }
+
+    .scene:first-child { opacity: 1; }
+
+    .scene-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      width: 100%;
+      height: 100%;
+      padding: ${input.format === "9:16" ? "120px 48px" : "120px 160px"};
+      text-align: center;
+    }
+
+    .scene-title {
+      font-size: ${input.format === "9:16" ? "64px" : "96px"};
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -1px;
+    }
+
+    .scene-body {
+      font-size: ${input.format === "9:16" ? "28px" : "36px"};
+      font-weight: 400;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.7);
+      max-width: ${input.format === "9:16" ? "900px" : "1400px"};
+    }
+  </style>
+</head>
+<body>
+  <div data-composition-id="${input.projectName}" data-start="0" data-duration="${input.durationSec}" data-width="${width}" data-height="${height}">
+${sceneDivs.join("\n")}
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+
+    // Entrance animations — agent should enhance these
+${entranceTweens.join("\n")}
+
+    window.__timelines["${input.projectName}"] = tl;
+  </script>
+</body>
+</html>`;
+}
+
 function buildFiles(input: {
   projectName: string;
   idea: string;
@@ -1031,6 +1176,13 @@ function buildFiles(input: {
       null,
       2,
     ),
+    "index.html": buildSkeletonHtml({
+      projectName: input.projectName,
+      format: input.format,
+      durationSec: input.durationSec,
+      idea: input.idea,
+      templateId: recommendation.template.id,
+    }),
   };
 }
 
