@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 export type AgentTarget = "codex" | "claude-code" | "auto";
 export type AgentScope = "project";
@@ -37,19 +38,42 @@ const PROJECT_SKILLS: ProjectSkill[] = [
 
 Turn fuzzy user language into a professional video direction before implementation.
 
+## Design System Index
+
+Before deciding colors, fonts, or visual style, match user intent to a design system and **read the corresponding file** from \`references/designs/\`. Each file contains exact hex codes, typography scales, and visual rules — use them as source of truth.
+
+| User intent keywords | Load file |
+|---|---|
+| space, dark, cinematic, futuristic | [references/designs/spacex.md](references/designs/spacex.md) |
+| electric, automotive, clean, photography | [references/designs/tesla.md](references/designs/tesla.md) |
+| AI, tech, green, dark, data | [references/designs/nvidia.md](references/designs/nvidia.md) |
+| premium, elegant, minimal | [references/designs/apple.md](references/designs/apple.md) |
+| fintech, professional, purple, corporate | [references/designs/stripe.md](references/designs/stripe.md) |
+| sport, athletic, energy, bold | [references/designs/nike.md](references/designs/nike.md) |
+| luxury, automotive, red, editorial | [references/designs/ferrari.md](references/designs/ferrari.md) |
+| aggressive, luxury, dark, performance | [references/designs/lamborghini.md](references/designs/lamborghini.md) |
+| ultra-luxury, exclusive, dark | [references/designs/bugatti.md](references/designs/bugatti.md) |
+| performance, dynamic, bold | [references/designs/bmw-m.md](references/designs/bmw-m.md) |
+| developer, dark, minimal | [references/designs/vercel.md](references/designs/vercel.md) |
+| SaaS, clean, purple, productivity | [references/designs/linear-app.md](references/designs/linear-app.md) |
+| entertainment, dark, green, music | [references/designs/spotify.md](references/designs/spotify.md) |
+| social, gaming, community, purple | [references/designs/discord.md](references/designs/discord.md) |
+| creative, design, collaboration | [references/designs/figma.md](references/designs/figma.md) |
+| gaming, dark, blue, console | [references/designs/playstation.md](references/designs/playstation.md) |
+| e-commerce, green, retail | [references/designs/shopify.md](references/designs/shopify.md) |
+| social, blue, platform | [references/designs/meta.md](references/designs/meta.md) |
+| transport, modern, clean | [references/designs/uber.md](references/designs/uber.md) |
+| productivity, dark, developer | [references/designs/raycast.md](references/designs/raycast.md) |
+| AI, minimal, clean, research | [references/designs/openai.md](references/designs/openai.md) |
+| productivity, clean, workspace | [references/designs/notion.md](references/designs/notion.md) |
+
 ## Workflow
 
 1. Read \`FRAMEPACK.md\`, \`HUMAN.md\`, \`STYLE.md\`, and \`DIRECTION.md\` if they exist.
-2. Translate ordinary phrases like more business, cooler, faster, bigger text, more animated, cinematic, or like this reference into structure, visual language, motion language, risk, and acceptance criteria.
-3. Keep the user's business goal and assets as the source of truth.
-4. Write or update the plain-language explanation in \`HUMAN.md\`.
-5. Write or update the professional direction in \`DIRECTION.md\`.
-
-## Output
-
-- A clear video structure.
-- A user-readable decision point.
-- Specific visual and motion language an agent can execute.`,
+2. Match user intent to a design system above and load the corresponding file.
+3. Translate fuzzy phrases into structure, visual language, motion language, risk, and acceptance criteria using the design system's exact colors and typography.
+4. Keep the user's business goal and assets as the source of truth.
+5. Write or update \`HUMAN.md\` and \`DIRECTION.md\`.`,
   },
   {
     name: "framepack-template-fuser",
@@ -58,19 +82,18 @@ Turn fuzzy user language into a professional video direction before implementati
 
 Fuse templates with user assets and requirements. Templates are director blueprints, not finished videos.
 
+## References (loaded on demand)
+
+- **[references/catalog-usage.md](references/catalog-usage.md)** — Catalog component install, block vs component usage, and pre-flight checklist. **Always read before writing custom code.**
+
 ## Workflow
 
 1. Read \`FRAMEPACK.md\`, \`ASSETS.md\`, \`DIRECTION.md\`, \`STYLE.md\`, and \`COMPOSITION.md\`.
-2. Preserve user assets, offer, proof, audience, and CTA as the source of truth.
-3. Use the selected HyperFrames prompt template for scene rhythm, Catalog candidates, motion rules, and QA checks.
-4. Replace generic template copy with user-specific content.
-5. Write the result into \`COMPOSITION.md\` under \`Template Fusion Plan\`.
-
-## Output
-
-- A custom scene plan.
-- Catalog candidates with install commands treated as optional.
-- Acceptance criteria for the fused composition.`,
+2. Read [references/catalog-usage.md](references/catalog-usage.md) and follow the Catalog pre-flight steps.
+3. Preserve user assets, offer, proof, audience, and CTA as the source of truth.
+4. Use the selected HyperFrames prompt template for scene rhythm, Catalog candidates, motion rules, and QA checks.
+5. Replace generic template copy with user-specific content.
+6. Write the result into \`COMPOSITION.md\` under \`Template Fusion Plan\`.`,
   },
   {
     name: "framepack-hyperframes-builder",
@@ -79,20 +102,25 @@ Fuse templates with user assets and requirements. Templates are director bluepri
 
 Turn \`COMPOSITION.md\` into HyperFrames code without breaking render safety.
 
+## Quick Rules
+
+- First scene visible via CSS. Register timeline on \`window.__timelines\`. Use \`tl.set()\` for scene switches. No \`Math.random()\`, no \`repeat: -1\`, no async timeline construction.
+- **Always read the full compatibility rules before writing code.**
+
+## References (loaded on demand)
+
+- **[references/compatibility-rules.md](references/compatibility-rules.md)** — 15 mandatory HyperFrames render rules derived from real failures. **Always read before building.**
+- **[references/code-templates.md](references/code-templates.md)** — Reusable GSAP patterns: impact pop, kinetic type, hard snap, smooth dissolve, scale reveal, number counter, sweep line. Read when writing scene animations.
+
 ## Workflow
 
 1. Read \`FRAMEPACK.md\`, \`COMPOSITION.md\`, \`ASSETS.md\`, and \`ITERATIONS.md\`.
-2. Keep the first frame visible in CSS before JavaScript animation runs.
-3. Register timelines on \`window.__timelines\`.
-4. Use \`tl.set()\` for scene switches.
-5. Do not drive the same element with multiple animation engines.
-6. Run \`npx hyperframes lint\`, \`npx hyperframes inspect\`, and snapshot checks before final render when HyperFrames is available.
-7. Record render feedback and next actions in \`ITERATIONS.md\`.
-
-## Output
-
-- HyperFrames-safe composition code.
-- Verification notes tied to visible frames and readable text.`,
+2. If the project has a \`design.md\` or \`DESIGN.md\`, read it — its colors and fonts are source of truth.
+3. Read [references/compatibility-rules.md](references/compatibility-rules.md). Apply all rules when writing code.
+4. Read [references/code-templates.md](references/code-templates.md) for animation building blocks.
+5. Run \`npx hyperframes lint\` and \`npx hyperframes inspect\` before render.
+6. Run \`npx hyperframes preview\` and wait for user approval before rendering.
+7. Record render feedback and next actions in \`ITERATIONS.md\`.`,
   },
   {
     name: "framepack-reference-miner",
@@ -101,19 +129,32 @@ Turn \`COMPOSITION.md\` into HyperFrames code without breaking render safety.
 
 Extract reusable video structure from a reference or finished render.
 
+## What to Extract
+
+### Visual DNA
+- **Color palette:** Background, foreground, accent hex codes
+- **Typography:** Font families, sizes, weights, letter-spacing for each hierarchy level
+- **Visual density:** How much of the frame is filled vs empty
+
+### Motion DNA
+- **Scene rhythm:** Duration of each scene/beat (fast-fast-SLOW-fast pattern)
+- **Transition types:** Hard cuts, dissolves, wipes, reveals
+- **Animation patterns:** Scale pops, kinetic type, slide-ins, fade-ups
+- **Timing:** Stagger intervals, entrance duration, hold duration
+
+### Structural DNA
+- **Opening hook:** What happens in the first 2 seconds
+- **Narrative arc:** Problem → solution → proof → CTA (or other pattern)
+- **Proof devices:** Screenshots, testimonials, data, demo footage
+- **CTA design:** How the video ends and what action it drives
+
 ## Workflow
 
 1. Read \`FRAMEPACK.md\` and any existing \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
-2. Identify hook, scene rhythm, pacing, typography, camera motion, transitions, proof devices, CTA, and visual rules.
-3. Write the observed structure into \`VIDEO_DNA.md\`.
+2. Watch or analyze the reference and extract the DNA above.
+3. Write the observed structure into \`VIDEO_DNA.md\` with specific timestamps, hex codes, and duration values.
 4. Convert reusable production rules into \`TEMPLATE_BLUEPRINT.md\`.
-5. Update \`DIRECTION.md\` and \`COMPOSITION.md\` only after the blueprint is clear.
-
-## Output
-
-- \`VIDEO_DNA.md\` for reference analysis.
-- \`TEMPLATE_BLUEPRINT.md\` for reusable template logic.
-- A short user-facing explanation of what was borrowed and what was changed.`,
+5. Update \`DIRECTION.md\` and \`COMPOSITION.md\` only after the blueprint is clear.`,
   },
 ];
 
@@ -127,11 +168,11 @@ function packageCommand(packageSource: PackageSource): string {
   return packageSource === "github" ? "npx -y github:ARTHUR-BBU/framepack" : "npx -y framepack";
 }
 
-function writeManagedMarkdown(path: string, title: string, managedContent: string, force: boolean): void {
+function writeManagedMarkdown(path: string, _title: string, managedContent: string, force: boolean): void {
   const block = `${MANAGED_START}\n${managedContent.trim()}\n${MANAGED_END}\n`;
 
   if (!existsSync(path)) {
-    writeFileSync(path, `${title}\n\n${block}`, "utf8");
+    writeFileSync(path, `${block}`, "utf8");
     return;
   }
 
@@ -175,14 +216,59 @@ ${skill.body}
 `;
 }
 
+function copySkillReferences(skillDir: string, skillName: string, prefix: string, written: string[]): void {
+  const pkgRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+  const refsSource = join(pkgRoot, "templates", "skills", skillName, "references");
+  if (!existsSync(refsSource)) return;
+
+  const refsTarget = join(skillDir, "references");
+  copyDirRecursive(refsSource, refsTarget);
+
+  for (const file of readdirSync(refsTarget, { recursive: true })) {
+    if (typeof file === "string" && file.endsWith(".md")) {
+      written.push(join(prefix, skillName, "references", file).replace(/\\/g, "/"));
+    }
+  }
+}
+
+function copyDirRecursive(source: string, target: string): void {
+  mkdirSync(target, { recursive: true });
+  for (const entry of readdirSync(source, { withFileTypes: true })) {
+    const srcPath = join(source, entry.name);
+    const destPath = join(target, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath);
+    } else {
+      copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
 function writeProjectSkills(rootDir: string, prefix: string): string[] {
-  return PROJECT_SKILLS.map((skill) => {
-    const relativePath = join(prefix, skill.name, "SKILL.md").replace(/\\/g, "/");
+  const designSourceDir = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "templates", "designs");
+  const written: string[] = [];
+
+  for (const skill of PROJECT_SKILLS) {
     const skillDir = join(rootDir, prefix, skill.name);
     mkdirSync(skillDir, { recursive: true });
     writeFileSync(join(skillDir, "SKILL.md"), skillMarkdown(skill), "utf8");
-    return relativePath;
-  });
+    written.push(join(prefix, skill.name, "SKILL.md").replace(/\\/g, "/"));
+
+    if (skill.name === "framepack-director" && existsSync(designSourceDir)) {
+      const refsDir = join(skillDir, "references", "designs");
+      mkdirSync(refsDir, { recursive: true });
+      for (const file of readdirSync(designSourceDir)) {
+        if (file.endsWith(".md")) {
+          copyFileSync(join(designSourceDir, file), join(refsDir, file));
+          written.push(join(prefix, skill.name, "references", "designs", file).replace(/\\/g, "/"));
+        }
+      }
+    }
+
+    copySkillReferences(skillDir, skill.name, prefix, written);
+  }
+
+  return written;
 }
 
 function skillPlaybooks(): string {
@@ -324,20 +410,28 @@ export function initAgentProject(options: InitAgentOptions = {}): InitAgentResul
   mkdirSync(projectDir, { recursive: true });
 
   if (targetsFor(target).includes("codex")) {
-    const agentDir = join(projectDir, ".framepack", "agent", "codex");
-    mkdirSync(agentDir, { recursive: true });
-    writeFileSync(join(agentDir, "SKILL.md"), codexSkill(packageSource), "utf8");
-    writeFileSync(join(agentDir, "INSTALL.md"), codexInstall(packageSource), "utf8");
-    const skillFiles = writeProjectSkills(projectDir, join(".framepack", "agent", "codex", "skills"));
-    writeManagedMarkdown(join(projectDir, "AGENTS.md"), "# Project Agent Guide", codexAgentsBlock(packageSource), force);
-    writtenFiles.push("AGENTS.md", ".framepack/agent/codex/SKILL.md", ".framepack/agent/codex/INSTALL.md", ...skillFiles);
+    try {
+      const agentDir = join(projectDir, ".framepack", "agent", "codex");
+      mkdirSync(agentDir, { recursive: true });
+      writeFileSync(join(agentDir, "SKILL.md"), codexSkill(packageSource), "utf8");
+      writeFileSync(join(agentDir, "INSTALL.md"), codexInstall(packageSource), "utf8");
+      const skillFiles = writeProjectSkills(projectDir, join(".framepack", "agent", "codex", "skills"));
+      writeManagedMarkdown(join(projectDir, "AGENTS.md"), "# Project Agent Guide", codexAgentsBlock(packageSource), force);
+      writtenFiles.push("AGENTS.md", ".framepack/agent/codex/SKILL.md", ".framepack/agent/codex/INSTALL.md", ...skillFiles);
+    } catch (error) {
+      console.warn(`Framepack codex init warning: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   if (targetsFor(target).includes("claude-code")) {
-    writeManagedMarkdown(join(projectDir, "CLAUDE.md"), "# Claude Code Project Guide", claudeInstructions(packageSource), force);
-    writeMcpConfig(join(projectDir, ".mcp.json"), createMcpServerConfig(packageSource, platform));
-    const skillFiles = writeProjectSkills(projectDir, join(".claude", "skills"));
-    writtenFiles.push("CLAUDE.md", ".mcp.json", ...skillFiles);
+    try {
+      writeManagedMarkdown(join(projectDir, "CLAUDE.md"), "# Claude Code Project Guide", claudeInstructions(packageSource), force);
+      writeMcpConfig(join(projectDir, ".mcp.json"), createMcpServerConfig(packageSource, platform));
+      const skillFiles = writeProjectSkills(projectDir, join(".claude", "skills"));
+      writtenFiles.push("CLAUDE.md", ".mcp.json", ...skillFiles);
+    } catch (error) {
+      console.warn(`Framepack claude-code init warning: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   return { projectDir, target, writtenFiles };
