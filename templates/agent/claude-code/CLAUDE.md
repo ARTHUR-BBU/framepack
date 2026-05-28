@@ -2,6 +2,13 @@
 
 Use Framepack when the user asks for a polished video, HyperFrames or Remotion composition, asset-to-video planning, template selection, or vague creative improvements such as cooler, more business, more dynamic, bigger text, faster pacing, or like this reference.
 
+Project skills are installed under `.claude/skills`:
+
+- `framepack-director`
+- `framepack-template-fuser`
+- `framepack-hyperframes-builder`
+- `framepack-reference-miner`
+
 Suggested flow:
 
 1. Create a workbench with `framepack create --idea "<idea>" --assets <dir> --output-dir <dir>`.

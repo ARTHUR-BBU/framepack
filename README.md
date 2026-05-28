@@ -179,6 +179,21 @@ Included prompt templates:
 - `framepack-hyperframes-builder`: turn the composition plan into HyperFrames code with first-frame, timeline, lint, inspect, and snapshot rules.
 - `framepack-reference-miner`: turn a finished or reference video into `VIDEO_DNA.md` and `TEMPLATE_BLUEPRINT.md` so strong work can become a reusable template.
 
+For Claude Code, these are installed as project skills:
+
+```text
+.claude/skills/framepack-director/SKILL.md
+.claude/skills/framepack-template-fuser/SKILL.md
+.claude/skills/framepack-hyperframes-builder/SKILL.md
+.claude/skills/framepack-reference-miner/SKILL.md
+```
+
+For Codex-facing project workflows, matching skill files are installed under:
+
+```text
+.framepack/agent/codex/skills/
+```
+
 ## HyperFrames Catalog Bridge
 
 HyperFrames Catalog is the official prefab supply layer. Framepack treats it as a source of runtime-usable video parts, not as a replacement for the Template Market.

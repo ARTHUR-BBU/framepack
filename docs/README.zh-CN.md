@@ -6,6 +6,21 @@ Framepack 现在不是只给用户一堆命令，而是给 Codex / Claude Code �
 
 这四个 playbook 分别负责：把外行人的模糊审美愿望翻译成专业导演方案；把用户素材、模板和要求融合成 `COMPOSITION.md`；把方案交给 HyperFrames 安全实现；把参考视频沉淀成 `VIDEO_DNA.md` 和 `TEMPLATE_BLUEPRINT.md`。
 
+从 `0.5.0-alpha.8` 开始，这四个能力不只是写在说明文档里，而是会在 Claude Code 项目中安装成真实 project skills：
+
+```text
+.claude/skills/framepack-director/SKILL.md
+.claude/skills/framepack-template-fuser/SKILL.md
+.claude/skills/framepack-hyperframes-builder/SKILL.md
+.claude/skills/framepack-reference-miner/SKILL.md
+```
+
+Codex 面向项目的同名 skill 文件会写入：
+
+```text
+.framepack/agent/codex/skills/
+```
+
 Framepack 也内置了 11 个 HyperFrames prompt-template 蓝图：
 
 - `hyperframes-saas-product-promo-30s`

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-alpha.8
+
+- installed the four Framepack playbooks as real project skills for Claude Code under `.claude/skills`
+- installed matching project skills for Codex-facing workflows under `.framepack/agent/codex/skills`
+- updated agent instructions so Claude Code and Codex know the skills are registered, not just documented as prose
+- added regression coverage for `framepack-director`, `framepack-template-fuser`, `framepack-hyperframes-builder`, and `framepack-reference-miner` generated skill files
+
 ## 0.5.0-alpha.7
 
 - added 11 built-in HyperFrames prompt-template blueprints adapted from the Open Design template pattern

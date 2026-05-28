@@ -2565,7 +2565,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.7");
+      assert.equal(packageJson.version, "0.5.0-alpha.8");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /Framepack is an agent-native/);
       assert.match(packageJson.readme, /中文/);
@@ -2603,7 +2603,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.7");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.8");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -4547,6 +4547,18 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /HUMAN\.md/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /TEMPLATE_BLUEPRINT\.md/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "INSTALL.md"), "utf8"), /npx -y framepack mcp/);
+        const codexSkillRoot = join(tempRoot, ".framepack", "agent", "codex", "skills");
+        for (const skillName of [
+          "framepack-director",
+          "framepack-template-fuser",
+          "framepack-hyperframes-builder",
+          "framepack-reference-miner",
+        ]) {
+          const skill = readFileSync(join(codexSkillRoot, skillName, "SKILL.md"), "utf8");
+          assert.match(skill, new RegExp(`name: ${skillName}`));
+          assert.match(skill, /description: Use when/);
+          assert.match(skill, /FRAMEPACK\.md|COMPOSITION\.md|VIDEO_DNA\.md/);
+        }
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -4576,6 +4588,25 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /framepack-template-fuser/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /framepack-reference-miner/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /VIDEO_DNA\.md/);
+        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /\.claude\/skills/);
+        const claudeSkillRoot = join(tempRoot, ".claude", "skills");
+        const directorSkill = readFileSync(join(claudeSkillRoot, "framepack-director", "SKILL.md"), "utf8");
+        const fuserSkill = readFileSync(join(claudeSkillRoot, "framepack-template-fuser", "SKILL.md"), "utf8");
+        const builderSkill = readFileSync(join(claudeSkillRoot, "framepack-hyperframes-builder", "SKILL.md"), "utf8");
+        const minerSkill = readFileSync(join(claudeSkillRoot, "framepack-reference-miner", "SKILL.md"), "utf8");
+
+        assert.match(directorSkill, /name: framepack-director/);
+        assert.match(directorSkill, /HUMAN\.md/);
+        assert.match(directorSkill, /fuzzy user language/i);
+        assert.match(fuserSkill, /name: framepack-template-fuser/);
+        assert.match(fuserSkill, /Template Fusion Plan/);
+        assert.match(fuserSkill, /COMPOSITION\.md/);
+        assert.match(builderSkill, /name: framepack-hyperframes-builder/);
+        assert.match(builderSkill, /window\.__timelines/);
+        assert.match(builderSkill, /npx hyperframes inspect/);
+        assert.match(minerSkill, /name: framepack-reference-miner/);
+        assert.match(minerSkill, /VIDEO_DNA\.md/);
+        assert.match(minerSkill, /TEMPLATE_BLUEPRINT\.md/);
         const mcpConfig = JSON.parse(readFileSync(join(tempRoot, ".mcp.json"), "utf8"));
         assert.equal(mcpConfig.mcpServers.framepack.command, "cmd");
         assert.deepEqual(mcpConfig.mcpServers.framepack.args, ["/c", "npx", "-y", "framepack", "mcp"]);

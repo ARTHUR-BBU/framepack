@@ -23,6 +23,100 @@ export interface InitAgentResult {
 const MANAGED_START = "<!-- FRAMEPACK MANAGED BLOCK START -->";
 const MANAGED_END = "<!-- FRAMEPACK MANAGED BLOCK END -->";
 
+interface ProjectSkill {
+  name: string;
+  description: string;
+  body: string;
+}
+
+const PROJECT_SKILLS: ProjectSkill[] = [
+  {
+    name: "framepack-director",
+    description: "Use when a user gives fuzzy video taste words, rough creative intent, reference direction, or asks for a better HyperFrames or Remotion video concept.",
+    body: `# Framepack Director
+
+Turn fuzzy user language into a professional video direction before implementation.
+
+## Workflow
+
+1. Read \`FRAMEPACK.md\`, \`HUMAN.md\`, \`STYLE.md\`, and \`DIRECTION.md\` if they exist.
+2. Translate ordinary phrases like more business, cooler, faster, bigger text, more animated, cinematic, or like this reference into structure, visual language, motion language, risk, and acceptance criteria.
+3. Keep the user's business goal and assets as the source of truth.
+4. Write or update the plain-language explanation in \`HUMAN.md\`.
+5. Write or update the professional direction in \`DIRECTION.md\`.
+
+## Output
+
+- A clear video structure.
+- A user-readable decision point.
+- Specific visual and motion language an agent can execute.`,
+  },
+  {
+    name: "framepack-template-fuser",
+    description: "Use when user assets, workflow templates, HyperFrames prompt templates, Catalog candidates, or style requirements must become a custom composition plan.",
+    body: `# Framepack Template Fuser
+
+Fuse templates with user assets and requirements. Templates are director blueprints, not finished videos.
+
+## Workflow
+
+1. Read \`FRAMEPACK.md\`, \`ASSETS.md\`, \`DIRECTION.md\`, \`STYLE.md\`, and \`COMPOSITION.md\`.
+2. Preserve user assets, offer, proof, audience, and CTA as the source of truth.
+3. Use the selected HyperFrames prompt template for scene rhythm, Catalog candidates, motion rules, and QA checks.
+4. Replace generic template copy with user-specific content.
+5. Write the result into \`COMPOSITION.md\` under \`Template Fusion Plan\`.
+
+## Output
+
+- A custom scene plan.
+- Catalog candidates with install commands treated as optional.
+- Acceptance criteria for the fused composition.`,
+  },
+  {
+    name: "framepack-hyperframes-builder",
+    description: "Use when turning a Framepack composition plan into HyperFrames code, debugging HyperFrames output, or preparing lint, inspect, snapshot, and render checks.",
+    body: `# Framepack HyperFrames Builder
+
+Turn \`COMPOSITION.md\` into HyperFrames code without breaking render safety.
+
+## Workflow
+
+1. Read \`FRAMEPACK.md\`, \`COMPOSITION.md\`, \`ASSETS.md\`, and \`ITERATIONS.md\`.
+2. Keep the first frame visible in CSS before JavaScript animation runs.
+3. Register timelines on \`window.__timelines\`.
+4. Use \`tl.set()\` for scene switches.
+5. Do not drive the same element with multiple animation engines.
+6. Run \`npx hyperframes lint\`, \`npx hyperframes inspect\`, and snapshot checks before final render when HyperFrames is available.
+7. Record render feedback and next actions in \`ITERATIONS.md\`.
+
+## Output
+
+- HyperFrames-safe composition code.
+- Verification notes tied to visible frames and readable text.`,
+  },
+  {
+    name: "framepack-reference-miner",
+    description: "Use when a user provides a finished video, reference video, competitor example, or wants to turn an existing result into a reusable Framepack or HyperFrames template.",
+    body: `# Framepack Reference Miner
+
+Extract reusable video structure from a reference or finished render.
+
+## Workflow
+
+1. Read \`FRAMEPACK.md\` and any existing \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
+2. Identify hook, scene rhythm, pacing, typography, camera motion, transitions, proof devices, CTA, and visual rules.
+3. Write the observed structure into \`VIDEO_DNA.md\`.
+4. Convert reusable production rules into \`TEMPLATE_BLUEPRINT.md\`.
+5. Update \`DIRECTION.md\` and \`COMPOSITION.md\` only after the blueprint is clear.
+
+## Output
+
+- \`VIDEO_DNA.md\` for reference analysis.
+- \`TEMPLATE_BLUEPRINT.md\` for reusable template logic.
+- A short user-facing explanation of what was borrowed and what was changed.`,
+  },
+];
+
 function targetsFor(target: AgentTarget | undefined): Exclude<AgentTarget, "auto">[] {
   if (target === "codex") return ["codex"];
   if (target === "claude-code") return ["claude-code"];
@@ -69,6 +163,26 @@ function writeMcpConfig(path: string, framepackConfig: object): void {
     `${JSON.stringify({ ...current, mcpServers: { ...mcpServers, framepack: framepackConfig } }, null, 2)}\n`,
     "utf8",
   );
+}
+
+function skillMarkdown(skill: ProjectSkill): string {
+  return `---
+name: ${skill.name}
+description: ${skill.description}
+---
+
+${skill.body}
+`;
+}
+
+function writeProjectSkills(rootDir: string, prefix: string): string[] {
+  return PROJECT_SKILLS.map((skill) => {
+    const relativePath = join(prefix, skill.name, "SKILL.md").replace(/\\/g, "/");
+    const skillDir = join(rootDir, prefix, skill.name);
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(join(skillDir, "SKILL.md"), skillMarkdown(skill), "utf8");
+    return relativePath;
+  });
 }
 
 function skillPlaybooks(): string {
@@ -155,6 +269,7 @@ Framepack is installed as an agent-native video creative workbench for this proj
 - Start every Framepack project by reading \`FRAMEPACK.md\`.
 - Use \`HUMAN.md\`, \`ASSETS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
 - Recommend animation libraries, templates, game-asset tools, HyperFrames, or Remotion only when the current project needs them.
+- Project skills are installed under \`.framepack/agent/codex/skills\`; use the matching Framepack skill when the task is director work, template fusion, HyperFrames building, or reference mining.
 
 ${skillPlaybooks()}
 `;
@@ -166,6 +281,8 @@ function claudeInstructions(packageSource: PackageSource): string {
   return `# Framepack Claude Code Instructions
 
 Framepack is available through the project MCP server.
+
+Project skills are installed under \`.claude/skills\`. Use \`framepack-director\`, \`framepack-template-fuser\`, \`framepack-hyperframes-builder\`, and \`framepack-reference-miner\` when the task matches their descriptions.
 
 Use Framepack when the user asks for a polished video, HyperFrames or Remotion composition, asset-to-video planning, template selection, or vague creative improvements such as cooler, more business, more dynamic, bigger text, faster pacing, or like this reference.
 
@@ -211,14 +328,16 @@ export function initAgentProject(options: InitAgentOptions = {}): InitAgentResul
     mkdirSync(agentDir, { recursive: true });
     writeFileSync(join(agentDir, "SKILL.md"), codexSkill(packageSource), "utf8");
     writeFileSync(join(agentDir, "INSTALL.md"), codexInstall(packageSource), "utf8");
+    const skillFiles = writeProjectSkills(projectDir, join(".framepack", "agent", "codex", "skills"));
     writeManagedMarkdown(join(projectDir, "AGENTS.md"), "# Project Agent Guide", codexAgentsBlock(packageSource), force);
-    writtenFiles.push("AGENTS.md", ".framepack/agent/codex/SKILL.md", ".framepack/agent/codex/INSTALL.md");
+    writtenFiles.push("AGENTS.md", ".framepack/agent/codex/SKILL.md", ".framepack/agent/codex/INSTALL.md", ...skillFiles);
   }
 
   if (targetsFor(target).includes("claude-code")) {
     writeManagedMarkdown(join(projectDir, "CLAUDE.md"), "# Claude Code Project Guide", claudeInstructions(packageSource), force);
     writeMcpConfig(join(projectDir, ".mcp.json"), createMcpServerConfig(packageSource, platform));
-    writtenFiles.push("CLAUDE.md", ".mcp.json");
+    const skillFiles = writeProjectSkills(projectDir, join(".claude", "skills"));
+    writtenFiles.push("CLAUDE.md", ".mcp.json", ...skillFiles);
   }
 
   return { projectDir, target, writtenFiles };

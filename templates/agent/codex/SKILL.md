@@ -7,6 +7,8 @@ description: Use Framepack when a user wants a polished HyperFrames or Remotion 
 
 Use Framepack when the user asks for video creative work, asset-to-video planning, HyperFrames or Remotion composition, more polish, more motion, a business-looking video, a game-style ad, or a result inspired by a reference.
 
+Project skills are also installed under `.framepack/agent/codex/skills` for director work, template fusion, HyperFrames building, and reference mining.
+
 ## Workflow
 
 1. Inspect `framepack mcp --describe` when MCP is not connected.
