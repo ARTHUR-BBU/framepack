@@ -1,6 +1,7 @@
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { basename, dirname, extname, resolve } from "node:path";
+import { basename, dirname, extname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { initAgentProject, type AgentTarget, type PackageSource } from "../../agent/init-agent.js";
 import {
   getCapabilityAtlasNode,
@@ -161,7 +162,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.17";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.18";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -934,59 +935,85 @@ function runCatalogCommand(args: string[], io: CliIo): number {
 function runCatalogInstallCommand(args: string[], io: CliIo): number {
   const maxRetries = args.includes("--retries") ? parseInt(getRequiredArg(args, "--retries"), 10) || 3 : 3;
   const timeout = 30000;
+  const projectDir = process.cwd();
+  const componentsDir = join(projectDir, "compositions", "components");
 
-  io.stdout("Fetching catalog list from HyperFrames...");
-
-  let catalogJson: { blocks?: { id: string }[]; components?: { id: string }[] };
-  try {
-    const raw = execSync("npx hyperframes catalog --json 2>/dev/null", { encoding: "utf8", timeout: 20000 });
-    catalogJson = JSON.parse(raw);
-  } catch {
-    io.stderr("Failed to fetch catalog. Is HyperFrames installed? Run: npm install hyperframes");
-    return 1;
-  }
-
-  const items: { id: string; kind: string }[] = [
-    ...(catalogJson.blocks ?? []).map((b: { id: string }) => ({ id: b.id, kind: "block" })),
-    ...(catalogJson.components ?? []).map((c: { id: string }) => ({ id: c.id, kind: "component" })),
-  ];
-
-  if (items.length === 0) {
-    io.stdout("No catalog items found.");
-    return 0;
-  }
-
+  // Phase 1: Install bundled components (local, zero network)
+  const bundledDir = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "templates", "catalog", "components");
   const succeeded: string[] = [];
   const failed: string[] = [];
 
-  io.stdout(`Installing ${items.length} catalog items (max ${maxRetries} retries each)...\n`);
+  if (existsSync(bundledDir)) {
+    const manifests = readdirSync(bundledDir).filter(f => f.endsWith(".json"));
+    if (manifests.length > 0) {
+      io.stdout(`Installing ${manifests.length} bundled components (offline)...\n`);
+      mkdirSync(componentsDir, { recursive: true });
 
-  for (const item of items) {
-    let installed = false;
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        execSync(`npx hyperframes add ${item.id} 2>/dev/null`, { encoding: "utf8", timeout });
-        installed = true;
-        break;
-      } catch {
-        if (attempt < maxRetries) {
-          io.stdout(`  ${item.id} retry ${attempt}/${maxRetries}...`);
+      for (const mf of manifests) {
+        try {
+          const manifest = JSON.parse(readFileSync(join(bundledDir, mf), "utf8"));
+          const name = manifest.name ?? mf.replace(".json", "");
+          for (const file of manifest.files ?? []) {
+            const src = join(bundledDir, file.path);
+            const dest = join(componentsDir, basename(file.target ?? file.path));
+            if (existsSync(src)) {
+              copyFileSync(src, dest);
+            }
+          }
+          succeeded.push(name);
+          io.stdout(`  ✓ ${name} (component, bundled)`);
+        } catch {
+          const name = mf.replace(".json", "");
+          failed.push(name);
+          io.stderr(`  ✗ ${name} — bundled copy failed`);
         }
       }
     }
-    if (installed) {
-      succeeded.push(item.id);
-      io.stdout(`  ✓ ${item.id} (${item.kind})`);
-    } else {
-      failed.push(item.id);
-      io.stderr(`  ✗ ${item.id} (${item.kind}) — failed after ${maxRetries} retries`);
-    }
   }
 
+  // Phase 2: Install blocks via HyperFrames CLI (requires network)
+  io.stdout("\nFetching block catalog from HyperFrames...");
+  let blockCount = 0;
+  try {
+    const raw = execSync("npx hyperframes catalog --type block --json 2>/dev/null", { encoding: "utf8", timeout: 20000 });
+    const blocks: { name: string }[] = JSON.parse(raw);
+    if (blocks.length > 0) {
+      io.stdout(`\nInstalling ${blocks.length} blocks (network, ${maxRetries} retries each)...\n`);
+      for (const block of blocks) {
+        let installed = false;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            execSync(`npx hyperframes add ${block.name} 2>/dev/null`, { encoding: "utf8", timeout });
+            installed = true;
+            break;
+          } catch {
+            if (attempt < maxRetries) io.stdout(`  ${block.name} retry ${attempt}/${maxRetries}...`);
+          }
+        }
+        if (installed) {
+          succeeded.push(block.name);
+          blockCount++;
+          io.stdout(`  ✓ ${block.name} (block)`);
+        } else {
+          failed.push(block.name);
+          io.stderr(`  ✗ ${block.name} (block) — failed after ${maxRetries} retries`);
+        }
+      }
+    } else {
+      io.stdout("No blocks in catalog.");
+    }
+  } catch {
+    io.stdout("HyperFrames CLI not available — skipping blocks. Components still installed.");
+  }
+
+  const componentCount = succeeded.filter(id => !failed.includes(id)).length;
+  const total = succeeded.length + failed.length;
   io.stdout([
     "",
-    `Installed: ${succeeded.length}/${items.length}`,
-    ...(failed.length > 0 ? [`Failed: ${failed.join(", ")}`, "", "Retry failed items manually: npx hyperframes add <id>"] : []),
+    `Components (bundled): ${componentCount} installed`,
+    `Blocks (network): ${blockCount} installed`,
+    `Total: ${succeeded.length}/${total} installed`,
+    ...(failed.length > 0 ? [``, `Failed: ${failed.join(", ")}`, "Retry blocks: npx hyperframes add <name>"] : []),
   ].join("\n"));
 
   return failed.length > 0 ? 1 : 0;

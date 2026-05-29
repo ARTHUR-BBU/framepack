@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0-alpha.18
+
+- fix P0: bundle all 23 HyperFrames Catalog Components in npm package — zero network, zero timeout
+- `framepack catalog install` installs components locally first, then tries blocks via HyperFrames CLI
+- Apache 2.0 attribution for bundled HyperFrames components
+- 177/177 tests pass
+
 ## 0.5.0-alpha.17
 
 - fix P0: DESIGN_TOKENS brand color extraction — require 2+ keyword matches, no false positives

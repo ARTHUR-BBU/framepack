@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -2566,7 +2566,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.17");
+      assert.equal(packageJson.version, "0.5.0-alpha.18");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2604,7 +2604,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.17");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.18");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -7096,6 +7096,57 @@ Framepack compiles content into executable video projects.
           /data-palette="default"/,
         );
       } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "bundled catalog components include all 23 HyperFrames components",
+    async run() {
+      const catalogDir = resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../templates/catalog/components",
+      );
+      assert.ok(existsSync(catalogDir), "templates/catalog/components/ should exist");
+
+      const files = readdirSync(catalogDir).filter(f => f.endsWith(".json"));
+      assert.ok(files.length >= 23, `Expected 23+ component manifests, got ${files.length}`);
+
+      const htmlFiles = readdirSync(catalogDir).filter(f => f.endsWith(".html"));
+      assert.ok(htmlFiles.length >= 23, `Expected 23+ component HTML files, got ${htmlFiles.length}`);
+
+      const notice = readFileSync(join(catalogDir, "NOTICE"), "utf8");
+      assert.match(notice, /Apache License/);
+      assert.match(notice, /HeyGen/);
+
+      for (const mf of files) {
+        const manifest = JSON.parse(readFileSync(join(catalogDir, mf), "utf8"));
+        assert.ok(manifest.name, `${mf} should have a name`);
+        assert.ok(Array.isArray(manifest.files), `${mf} should have files array`);
+      }
+    },
+  },
+  {
+    name: "catalog install uses bundled components without network",
+    async run() {
+      const tempRoot = mkdtempSync(join(tmpdir(), "fp-catalog-"));
+      const origCwd = process.cwd();
+      try {
+        mkdirSync(join(tempRoot, "compositions"), { recursive: true });
+        process.chdir(tempRoot);
+
+        const logs = [];
+        const io = { stdout: (m) => logs.push(m), stderr: (m) => logs.push(m) };
+        await runCli(["catalog", "install"], io);
+
+        const outDir = join(tempRoot, "compositions", "components");
+        assert.ok(existsSync(outDir), "compositions/components/ should be created");
+
+        const installed = readdirSync(outDir).filter(f => f.endsWith(".html"));
+        assert.ok(installed.length >= 23, `Expected 23+ installed components, got ${installed.length}`);
+        assert.ok(logs.some(l => l.includes("bundled")), 'Should mention "bundled" in output');
+      } finally {
+        process.chdir(origCwd);
         rmSync(tempRoot, { recursive: true, force: true });
       }
     },

@@ -1,0 +1,11 @@
+HyperFrames Catalog Components
+Copyright 2024-2026 HeyGen, Inc.
+
+Licensed under the Apache License, Version 2.0.
+Source: https://github.com/heygen-com/hyperframes/tree/main/registry/components
+
+These component files are redistributed from the HyperFrames open-source registry
+under the terms of the Apache License 2.0. See LICENSE file for details.
+
+Components are CSS/GSAP code snippets for HyperFrames compositions.
+Use: paste into your composition HTML or install via `framepack catalog install`.
