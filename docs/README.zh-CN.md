@@ -80,6 +80,16 @@ npx framepack create \
   --style "高级 SaaS 发布会风格，带程序化界面动效"
 ```
 
+或者从参考视频的 DNA 创建项目：
+
+```bash
+npx framepack create \
+  --dna ./VIDEO_DNA.md \
+  --assets ./assets \
+  --output-dir ./out \
+  --project-name mo1-intro
+```
+
 它会生成完整的 agent-ready 工作台：
 
 ```text
@@ -157,6 +167,24 @@ Skill 遵循渐进式披露模式——`SKILL.md` 是简洁索引，详细参考
 .claude/skills/framepack-reference-miner/SKILL.md
 ```
 
+## VIDEO_DNA：从参考视频到 Composition
+
+当用户说"我要像这个视频一样的"，`framepack-reference-miner` skill 会提取一个 `VIDEO_DNA.md`——逐秒技术蓝图，包含：
+
+- 每秒的 GSAP/CSS HOW-TO 代码（不是模糊描述）
+- 从视频像素中提取的设计令牌（hex 色值、字号）
+- 复杂段落的 ASCII 布局图
+- 三级素材清单（BLOCKING / RECOMMENDED / OPTIONAL）
+- 每段的 HyperFrames 可行性评估
+
+然后从 DNA 创建项目：
+
+```bash
+framepack create --dna ./VIDEO_DNA.md --assets ./assets --output-dir ./out --project-name my-video
+```
+
+自动提取时长、格式、色值，并将 DNA 拷贝到项目中。
+
 ## 设计系统匹配
 
 Framepack 会根据用户的风格关键词，自动匹配 22 个精选设计系统中的一个，并将完整 spec 拷贝到项目中作为 `DESIGN.md`。这样 agent 就有了精确的颜色、字体、间距和动效规则，不再需要猜测。
@@ -225,12 +253,18 @@ framepack templates prompt recommend --idea "A TikTok founder video with karaoke
 
 ## HyperFrames Catalog Bridge
 
-HyperFrames Catalog 是官方视频预制件仓库。Framepack 把它当成"可被 runtime 使用的视频零部件来源"，而不是拿它替代 Template Market。
+HyperFrames Catalog 提供两种预制件：
 
-- HyperFrames Catalog 贡献 `block` 和 `component`。
-- Framepack Template Market 贡献导演工作流、创意工程模板和 agent review 系统。
+- **Component** — CSS/GSAP 代码片段，用于字幕动画、特效和转场。这是 composition 编写的核心弹药。23+ 个组件：`caption-kinetic-slam`、`vignette`、`shimmer-sweep`、`parallax-zoom` 等。
+- **Block** — 完整的 4-15 秒小视频，自带品牌风格。适合作为参考或风格完全匹配时使用。
 
-可以通过 CLI 使用：
+一键安装所有 Catalog 组件：
+
+```bash
+framepack catalog install
+```
+
+也可以浏览和单独安装：
 
 ```bash
 framepack catalog
@@ -238,7 +272,7 @@ framepack catalog --json
 framepack catalog recommend --template course-promo --idea "A premium course promo for founders" --style "business dynamic" --format 9:16 --json
 ```
 
-`COMPOSITION.md` 现在包含 Catalog Pre-Flight 部分，列出强制的"安装-然后-编码"步骤。agent 必须完成这些步骤后才能写场景代码。Framepack 只做推荐，不自动安装 Catalog 组件。
+`COMPOSITION.md` 包含 Catalog Pre-Flight 部分，列出强制的"安装-然后-编码"步骤。
 
 Polish Arsenal 推荐器会根据 idea、style、format、duration 输出：
 
@@ -297,12 +331,15 @@ Framepack 工作台会提醒 agent 避免常见渲染坑：
 framepack --version
 framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
+framepack create --dna <VIDEO_DNA.md> --assets <dir> --output-dir <dir>
 framepack init-agent --target auto --scope project
 framepack workbench check --project-dir <dir>
 framepack workbench brief --project-dir <dir>
-framepack templates
-framepack templates recommend --idea <idea> --style <style> --format <format> --json
-framepack templates prompt --json
+framepack lint                              # 运行 HyperFrames lint
+framepack preview                           # 打开 Studio 预览
+framepack render                            # 渲染为 MP4
+framepack catalog                           # 列出 Catalog 组件
+framepack catalog install                   # 批量安装所有组件
 framepack mcp --describe
 ```
 

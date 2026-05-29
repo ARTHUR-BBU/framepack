@@ -94,6 +94,16 @@ npx framepack create \
   --style "premium SaaS launch with kinetic interface motion"
 ```
 
+Or create from a reference video's DNA:
+
+```bash
+npx framepack create \
+  --dna ./VIDEO_DNA.md \
+  --assets ./assets \
+  --output-dir ./out \
+  --project-name mo1-intro
+```
+
 This creates a complete agent-ready workbench:
 
 ```text
@@ -226,6 +236,24 @@ For Codex-facing project workflows, matching skill files are installed under:
 .framepack/agent/codex/skills/
 ```
 
+## VIDEO_DNA: Reference Video to Composition
+
+When the user says "make it look like this video", the `framepack-reference-miner` skill extracts a `VIDEO_DNA.md` — a second-by-second technical blueprint with:
+
+- Per-second GSAP/CSS HOW-TO code (not vague descriptions)
+- Extracted design tokens (hex colors, font sizes from the video pixels)
+- ASCII layout diagrams for complex segments
+- Asset checklist with BLOCKING / RECOMMENDED / OPTIONAL priorities
+- HyperFrames feasibility assessment per segment
+
+Then create a project from the DNA:
+
+```bash
+framepack create --dna ./VIDEO_DNA.md --assets ./assets --output-dir ./out --project-name my-video
+```
+
+This auto-extracts duration, format, and colors from the DNA file and copies it into the project.
+
 ## Design System Matching
 
 Framepack auto-matches user style keywords to one of 22 curated design systems and copies the full spec into the project as `DESIGN.md`. This gives the agent exact colors, typography, spacing, and motion rules instead of guessing.
@@ -247,12 +275,18 @@ These are recommendations only. Framepack does not auto-install external tools.
 
 ## HyperFrames Catalog Bridge
 
-HyperFrames Catalog is the official prefab supply layer. Framepack treats it as a source of runtime-usable video parts, not as a replacement for the Template Market.
+HyperFrames Catalog provides two types of prefabs:
 
-- HyperFrames Catalog contributes `block` and `component` prefabs.
-- Framepack Template Market contributes director workflows, creative engineering templates, and review systems for agents.
+- **Components** — CSS/GSAP code snippets for captions, effects, and transitions. These are the core building blocks for composition coding. 23+ components available: `caption-kinetic-slam`, `vignette`, `shimmer-sweep`, `parallax-zoom`, etc.
+- **Blocks** — Complete 4-15 second mini-videos with their own branding. Useful as reference or when the style matches your project exactly.
 
-Use the bridge from the CLI:
+Install all catalog components in one step:
+
+```bash
+framepack catalog install
+```
+
+Or browse and install individually:
 
 ```bash
 framepack catalog
@@ -260,7 +294,7 @@ framepack catalog --json
 framepack catalog recommend --template course-promo --idea "A premium course promo for founders" --style "business dynamic" --format 9:16 --json
 ```
 
-Workbench `COMPOSITION.md` includes a Catalog Pre-Flight section that lists mandatory install-before-code steps. The agent must complete these steps before writing any scene code. Framepack recommends Catalog items; it does not auto-install them.
+Workbench `COMPOSITION.md` includes a Catalog Pre-Flight section that lists mandatory install-before-code steps.
 
 The Polish Arsenal recommender reads the idea, style, format, and duration, then recommends:
 
@@ -319,9 +353,15 @@ The generated `index.html` skeleton already follows all these rules with proper 
 framepack --version
 framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
+framepack create --dna <VIDEO_DNA.md> --assets <dir> --output-dir <dir>
 framepack init-agent --target auto --scope project
 framepack workbench check --project-dir <dir>
 framepack workbench brief --project-dir <dir>
+framepack lint                                    # run HyperFrames lint
+framepack preview                                 # open Studio preview
+framepack render                                  # render to MP4
+framepack catalog                                 # list Catalog items
+framepack catalog install                         # batch-install all components
 framepack mcp --describe
 ```
 

@@ -1,6 +1,6 @@
 {
   "name": "framepack",
-  "version": "0.5.0-alpha.15",
+  "version": "0.5.0-alpha.16",
   "private": false,
   "type": "module",
   "main": "./dist/cli.js",
@@ -8,7 +8,7 @@
     "framepack": "dist/cli.js"
   },
   "description": "A lightweight HyperFrames creative workbench for assets, prompts, composition, and iteration.",
-  "readme": "# Framepack\n\nFramepack is a programmatic video workbench for coding agents (Codex, Claude Code) and the HyperFrames render runtime. It turns rough user ideas, assets, references, and fuzzy taste words into a professional video plan.\n\nProgrammatic video (Framepack) vs Generative video (Runway/Sora): Framepack orchestrates existing assets with HTML/CSS/GSAP animations — no pixels are generated, only composed. Generative AI creates new imagery from text prompts.\n\n中文: Framepack 是程式化视频工作台。它把模糊的用户需求翻译成设计系统、视觉令牌、HTML 骨架、素材说明、composition 方案和迭代记忆。不生成画面，只编排画面。\n\nQuick start:\n\n```bash\nnpm install framepack\nnpx framepack create --idea \"A premium launch video\" --assets ./assets --output-dir ./out --project-name launch-video\nnpx framepack workbench brief --project-dir ./out/launch-video\nnpx framepack templates prompt --json\n```\n\nGenerated workbench includes: FRAMEPACK.md, ASSETS.md, HUMAN.md, STYLE.md, DIRECTION.md, COMPOSITION.md, ITERATIONS.md, DESIGN.md (auto-matched from 22 design systems), DESIGN_TOKENS.md (extracted colors and typography), ASSET_GAPS.md (blocking/optional gap analysis), index.html (HyperFrames-passable HTML skeleton).\n\nRead `FRAMEPACK.md` and `HUMAN.md` first. `COMPOSITION.md` includes Template Fusion Plan, Catalog Pre-Flight, code templates, and HyperFrames safety rules. Coding agent skills with progressive disclosure installed under `.claude/skills`.\n\nFull docs: https://github.com/ARTHUR-BBU/framepack\n",
+  "readme": "# Framepack\n\nFramepack is a programmatic video workbench for coding agents (Codex, Claude Code) and the HyperFrames render runtime. It turns rough user ideas, assets, references, and fuzzy taste words into a professional video plan.\n\nProgrammatic video (Framepack) vs Generative video (Runway/Sora): Framepack orchestrates existing assets with HTML/CSS/GSAP animations — no pixels are generated, only composed. Generative AI creates new imagery from text prompts.\n\n中文: Framepack 是程式化视频工作台。它把模糊的用户需求翻译成设计系统、视觉令牌、HTML 骨架、素材说明、composition 方案和迭代记忆。不生成画面，只编排画面。\n\nQuick start:\n\n```bash\nnpm install framepack\nnpx framepack create --idea \"A premium launch video\" --assets ./assets --output-dir ./out --project-name launch-video\nnpx framepack workbench brief --project-dir ./out/launch-video\nnpx framepack catalog install   # batch-install Catalog components\n```\n\nCreate from a reference video's DNA:\n\n```bash\nnpx framepack create --dna ./VIDEO_DNA.md --assets ./assets --output-dir ./out --project-name my-video\n```\n\nCommands: create, lint, preview, render, catalog install, workbench brief, templates prompt.\n\nFull docs: https://github.com/ARTHUR-BBU/framepack\n",
   "files": [
     "dist",
     "examples",

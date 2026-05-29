@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0-alpha.16
+
+- update all three READMEs (GitHub, npm, Chinese) with alpha.13-15 features
+- add VIDEO_DNA section explaining reference video → DNA → create workflow
+- add Component vs Block distinction to Catalog Bridge section
+- add `framepack catalog install` to README quick start
+- add `framepack lint / preview / render` to Commands section
+- add `framepack create --dna` to Commands section
+- 175/175 tests pass
+
 ## 0.5.0-alpha.15
 
 - add `framepack catalog install` — batch-install all Catalog components with retry logic
