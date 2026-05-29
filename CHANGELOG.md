@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0-alpha.13
+
+- fix postinstall version string hardcoded at alpha.9 — now reads from package.json dynamically
+- fix CLAUDE.md and AGENTS.md content duplication — playbooks only in SKILL.md files, agent files reference skills
+- fix reference-miner skill missing references — added video-dna-template.md with extraction guide and TEMPLATE_BLUEPRINT conversion table
+- add ASSET_GAPS.md to FRAMEPACK.md agent workflow reading list and all agent instruction files
+- add preview step to FRAMEPACK.md agent workflow (npx hyperframes preview → user confirms → npx hyperframes render)
+- remove Remotion parallel mentions from agent workflow files, keep HyperFrames as primary runtime
+- bold Framepack version in postinstall output for better visibility
+
 ## 0.5.0-alpha.12
 
 - updated GitHub README, npm README, and Chinese README to document all alpha.9-11 features

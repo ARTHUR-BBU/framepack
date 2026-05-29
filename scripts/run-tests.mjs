@@ -2566,7 +2566,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.12");
+      assert.equal(packageJson.version, "0.5.0-alpha.13");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2604,7 +2604,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.12");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.13");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -4586,8 +4586,8 @@ Framepack compiles content into executable video projects.
         assert.equal(exitCode, 0, stderr.join("\n"));
         assert.match(stdout.join("\n"), /Initialized Framepack agent workflow/);
         assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /FRAMEPACK MANAGED BLOCK/);
-        assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /framepack-director/);
-        assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /VIDEO_DNA\.md/);
+        assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /\.framepack\/agent\/codex\/skills/);
+        assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /ASSET_GAPS\.md/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack create/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /FRAMEPACK\.md/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack-director/);
@@ -4637,7 +4637,7 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /FRAMEPACK\.md/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /framepack-template-fuser/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /framepack-reference-miner/);
-        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /VIDEO_DNA\.md/);
+        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /ASSET_GAPS\.md/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /\.claude\/skills/);
         const claudeSkillRoot = join(tempRoot, ".claude", "skills");
         const directorSkill = readFileSync(join(claudeSkillRoot, "framepack-director", "SKILL.md"), "utf8");

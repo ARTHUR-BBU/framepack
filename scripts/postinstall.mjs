@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
@@ -14,8 +14,12 @@ async function main() {
   }
   if (!projectDir || projectDir.includes("node_modules")) return;
 
-  const distPath = resolve(dirname(fileURLToPath(import.meta.url)), "..", "dist", "agent", "init-agent.js");
+  const scriptDir = dirname(fileURLToPath(import.meta.url));
+  const distPath = resolve(scriptDir, "..", "dist", "agent", "init-agent.js");
   if (!existsSync(distPath)) return;
+
+  const pkgPath = resolve(scriptDir, "..", "package.json");
+  const version = JSON.parse(readFileSync(pkgPath, "utf8")).version ?? "unknown";
 
   const { initAgentProject } = await import(pathToFileURL(distPath).href);
   const result = initAgentProject({
@@ -25,8 +29,6 @@ async function main() {
     force: true,
     platform: process.platform,
   });
-
-  const version = result.writtenFiles.length > 0 ? "0.5.0-alpha.9" : "unknown";
   const skills = result.writtenFiles.filter((f) => f.includes("SKILL.md")).map((f) => f.split("/").slice(-2)[0]);
   const hasMcp = result.writtenFiles.some((f) => f.includes(".mcp.json"));
   const hasClaude = result.writtenFiles.some((f) => f.includes("CLAUDE.md"));
@@ -34,7 +36,7 @@ async function main() {
 
   console.log([
     "",
-    `Framepack ${version} installed!`,
+    `\x1b[1mFramepack ${version}\x1b[0m installed!`,
     "",
     `  Skills: ${skills.join(", ") || "none"}`,
     hasMcp ? "  MCP: .mcp.json" : null,

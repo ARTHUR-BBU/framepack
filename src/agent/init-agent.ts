@@ -311,7 +311,7 @@ If the user says things like cool, premium, business, dynamic, polished, bigger 
 
 1. Prefer the MCP server. If unavailable, inspect \`${command} mcp --describe\`.
 2. Create the workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
-3. Read \`FRAMEPACK.md\` first, then \`ASSETS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
+3. Read \`FRAMEPACK.md\` first, then \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
 4. Translate fuzzy user taste into concrete visual language, motion language, template route, and HyperFrames/Remotion implementation choices.
 5. Keep project state in the workbench files; do not rely on model memory.
 6. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
@@ -349,15 +349,13 @@ function codexAgentsBlock(packageSource: PackageSource): string {
 
 Framepack is installed as an agent-native video creative workbench for this project.
 
-- Trigger Framepack for vague video requests, asset-to-video work, HyperFrames/Remotion composition, template selection, or polish direction.
+- Trigger Framepack for vague video requests, asset-to-video work, HyperFrames composition, template selection, or polish direction.
 - Prefer MCP tools over memorized shell commands; check \`${command} mcp --describe\` if MCP is not connected.
 - Create workbenches with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
 - Start every Framepack project by reading \`FRAMEPACK.md\`.
-- Use \`HUMAN.md\`, \`ASSETS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
+- Use \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
 - Recommend animation libraries, templates, game-asset tools, HyperFrames, or Remotion only when the current project needs them.
-- Project skills are installed under \`.framepack/agent/codex/skills\`; use the matching Framepack skill when the task is director work, template fusion, HyperFrames building, or reference mining.
-
-${skillPlaybooks()}
+- Project skills are installed under \`.framepack/agent/codex/skills\` — each skill contains detailed references. Use the matching Framepack skill for: director work, template fusion, HyperFrames building, or reference mining.
 `;
 }
 
@@ -368,20 +366,19 @@ function claudeInstructions(packageSource: PackageSource): string {
 
 Framepack is available through the project MCP server.
 
-Project skills are installed under \`.claude/skills\`. Use \`framepack-director\`, \`framepack-template-fuser\`, \`framepack-hyperframes-builder\`, and \`framepack-reference-miner\` when the task matches their descriptions.
+Project skills are installed under \`.claude/skills\`. Use \`framepack-director\`, \`framepack-template-fuser\`, \`framepack-hyperframes-builder\`, and \`framepack-reference-miner\` when the task matches their descriptions. Each skill has a \`SKILL.md\` index and \`references/\` with detailed rules, templates, and code patterns — load on demand, do not read all at once.
 
-Use Framepack when the user asks for a polished video, HyperFrames or Remotion composition, asset-to-video planning, template selection, or vague creative improvements such as cooler, more business, more dynamic, bigger text, faster pacing, or like this reference.
+Use Framepack when the user asks for a polished video, HyperFrames composition, asset-to-video planning, template selection, or vague creative improvements such as cooler, more business, more dynamic, bigger text, faster pacing, or like this reference.
 
 Suggested flow:
 
 1. Create a workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
-2. Read \`FRAMEPACK.md\`, then \`HUMAN.md\`, \`ASSETS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
-3. Translate fuzzy user intent into concrete visual language, motion language, template route, and implementation plan.
-4. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
-5. Record render feedback and next actions in \`ITERATIONS.md\`.
-6. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
-
-${skillPlaybooks()}
+2. Read \`FRAMEPACK.md\`, then \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
+3. Check \`ASSET_GAPS.md\` for blocking gaps before writing code. If blocking gaps exist, tell the user what assets are needed.
+4. Translate fuzzy user intent into concrete visual language, motion language, template route, and implementation plan.
+5. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
+6. Record render feedback and next actions in \`ITERATIONS.md\`.
+7. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
 
 Fallback command surface: \`${command} mcp --describe\`.
 `;
