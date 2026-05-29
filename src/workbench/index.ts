@@ -909,8 +909,9 @@ function parseDesignTokens(tokenMd: string): DesignTokensResolved {
     if (!hexMatch) continue;
     const label = hexMatch[2].trim().toLowerCase();
     const hex = hexMatch[3];
-    if (label.includes("primary") || label.includes("accent")) result.colors.accentPrimary = hex;
-    else if (label.includes("secondary")) result.colors.accentSecondary = hex;
+    if (label.includes("primary")) result.colors.accentPrimary = hex;
+    else if (label.includes("accent")) result.colors.accentSecondary = hex;
+    else if (label.includes("secondary")) result.colors.bgSecondary = hex;
     else if (label.includes("background") || label.includes("bg")) result.colors.bgPrimary = hex;
     else if (label.includes("surface") || label.includes("card")) result.colors.bgSecondary = hex;
     else if (label.includes("text") && label.includes("secondary")) result.colors.textSecondary = hex;
@@ -1037,20 +1038,14 @@ function buildSkeletonHtml(input: {
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up", html: "generic" };
     const content = buildSceneContent(scene.id, role.html, shortIdea);
 
-    // Add video background for scenes 1+ if video assets exist
-    const videoIdx = idx < videoAssets.length ? idx : -1;
-    const videoEl = videoIdx >= 0
-      ? `\n      <video data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[videoIdx].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0.15;"></video>`
-      : "";
-
     // Add image for product/action scenes
     const imgIdx = role.html === "product" && idx < imageAssets.length ? idx : -1;
     const imgEl = imgIdx >= 0
       ? `\n      <img src="assets/${imageAssets[imgIdx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
       : "";
 
-    return `    <div id="${scene.id}" class="scene" data-start="${scene.start}" data-duration="${scene.dur}">
-      <div class="scene-content">${videoEl}${imgEl}
+    return `    <div id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">
+      <div class="scene-content">${imgEl}
 ${content}
       </div>
     </div>`;
@@ -1064,8 +1059,14 @@ ${content}
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up" as AnimationTemplate };
     const enterTime = i === 0 ? 0.2 : scene.start + 0.3;
 
-    // Entrance animation
-    tweens.push(buildEntranceTween(scene.id, role.animation, enterTime));
+    // First scene entrance (no prior transition handles it)
+    if (i === 0) {
+      tweens.push(buildEntranceTween(scene.id, role.animation, enterTime));
+    } else {
+      // Non-first scenes: entrance animation targets inner elements, not scene-content
+      // (transition already handles scene-content opacity)
+      tweens.push(buildInnerEntranceTween(scene.id, role.animation, enterTime));
+    }
 
     // Transition to next scene (except last)
     if (i < timed.length - 1) {
@@ -1211,6 +1212,10 @@ ${content}
 </head>
 <body>
   <div data-composition-id="${input.projectName}" data-start="0" data-duration="${input.durationSec}" data-width="${width}" data-height="${height}">
+${videoAssets.map((v, i) => {
+  const t = timed[i] ?? timed[0];
+  return `  <video id="bg-video-${i}" data-start="${t.start}" data-duration="${t.dur}" data-media-start="0" muted playsinline class="clip" src="assets/${v.name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0.15;"></video>`;
+}).join("\n")}
 ${sceneDivs.join("\n")}
   </div>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
@@ -1287,6 +1292,22 @@ function buildEntranceTween(sceneId: string, animation: AnimationTemplate, enter
       return `  tl.from("#${sceneId} .scene-title", { y: 80, opacity: 0, duration: 0.4, ease: "power3.out" }, ${t});`;
     default:
       return `  tl.from("#${sceneId} .scene-content", { y: 60, opacity: 0, duration: 0.5, ease: "power3.out" }, ${t});`;
+  }
+}
+
+function buildInnerEntranceTween(sceneId: string, animation: AnimationTemplate, enterTime: number): string {
+  const t = Math.round(enterTime * 10) / 10;
+  switch (animation) {
+    case "impact-pop":
+      return `  tl.from("#${sceneId} .scene-title", { scale: 5, ease: "back.out(1.7)", duration: 0.3 }, ${t});`;
+    case "scale-reveal":
+      return `  tl.from("#${sceneId} .scene-content > *", { scale: 0, ease: "back.out(1.4)", duration: 0.5, stagger: 0.1 }, ${t});`;
+    case "number-counter":
+      return `  tl.from("#${sceneId} .stat-value", { scale: 0.5, duration: 0.6, ease: "power3.out" }, ${t});`;
+    case "kinetic-type":
+      return `  tl.from("#${sceneId} .scene-title", { y: 80, duration: 0.4, ease: "power3.out" }, ${t});`;
+    default:
+      return `  tl.from("#${sceneId} .scene-content > *", { y: 30, duration: 0.5, ease: "power3.out", stagger: 0.08 }, ${t});`;
   }
 }
 

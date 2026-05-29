@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0-alpha.20
+
+- fix P0: HyperFrames lint compliance — video at composition root, scene clip class, no animation overlap
+- fix P1: brand color mapping — Primary (#DA291C) no longer overwritten by Accent (#FFE500)
+- <video> moved to composition root level (fixes video_nested_in_timed_element error)
+- all scene divs get class="clip" (fixes timed_element_missing_clip_class warning)
+- <video> gets id="bg-video-N" (fixes media_missing_id error)
+- separate entrance tweens for first vs subsequent scenes (fixes overlapping_gsap_tweens)
+- 179/179 tests pass
+
 ## 0.5.0-alpha.19
 
 - fix P0: enhanced HTML skeleton with design tokens, scene transitions, role-specific content, and media placeholders
