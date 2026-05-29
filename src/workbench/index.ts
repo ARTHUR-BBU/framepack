@@ -864,6 +864,89 @@ function buildDesignTokens(designContent: string): string {
   ].join("\n");
 }
 
+// --- Design token parsing for skeleton HTML ---
+
+interface DesignTokensResolved {
+  colors: {
+    bgPrimary: string;
+    bgSecondary: string;
+    accentPrimary: string;
+    accentSecondary: string;
+    textPrimary: string;
+    textSecondary: string;
+  };
+  typography: {
+    headingFont: string;
+    bodyFont: string;
+    headingWeight: string;
+    bodyWeight: string;
+  };
+}
+
+const DEFAULT_TOKENS: DesignTokensResolved = {
+  colors: {
+    bgPrimary: "#0a0a0a",
+    bgSecondary: "#111111",
+    accentPrimary: "#ffffff",
+    accentSecondary: "#888888",
+    textPrimary: "#ffffff",
+    textSecondary: "rgba(255,255,255,0.7)",
+  },
+  typography: {
+    headingFont: "system-ui, sans-serif",
+    bodyFont: "system-ui, sans-serif",
+    headingWeight: "700",
+    bodyWeight: "400",
+  },
+};
+
+function parseDesignTokens(tokenMd: string): DesignTokensResolved {
+  if (!tokenMd) return DEFAULT_TOKENS;
+  const result = { ...DEFAULT_TOKENS, colors: { ...DEFAULT_TOKENS.colors }, typography: { ...DEFAULT_TOKENS.typography } };
+
+  for (const line of tokenMd.split("\n")) {
+    const hexMatch = line.match(/(-+\s+)?(\w[\w\s]*?):\s*(#[0-9a-fA-F]{3,8})/);
+    if (!hexMatch) continue;
+    const label = hexMatch[2].trim().toLowerCase();
+    const hex = hexMatch[3];
+    if (label.includes("primary") || label.includes("accent")) result.colors.accentPrimary = hex;
+    else if (label.includes("secondary")) result.colors.accentSecondary = hex;
+    else if (label.includes("background") || label.includes("bg")) result.colors.bgPrimary = hex;
+    else if (label.includes("surface") || label.includes("card")) result.colors.bgSecondary = hex;
+    else if (label.includes("text") && label.includes("secondary")) result.colors.textSecondary = hex;
+    else if (label.includes("text") || label.includes("foreground")) result.colors.textPrimary = hex;
+  }
+
+  return result;
+}
+
+// --- Scene role → animation + content mapping ---
+
+type AnimationTemplate = "impact-pop" | "scale-reveal" | "number-counter" | "slide-up" | "kinetic-type";
+type HtmlTemplate = "headline" | "product" | "stats" | "proof" | "cta" | "generic";
+
+const SCENE_ROLE_CONFIG: Record<string, { animation: AnimationTemplate; html: HtmlTemplate }> = {
+  hook: { animation: "impact-pop", html: "headline" },
+  headline: { animation: "impact-pop", html: "headline" },
+  promise: { animation: "impact-pop", html: "headline" },
+  number: { animation: "number-counter", html: "stats" },
+  reward: { animation: "impact-pop", html: "headline" },
+  product: { animation: "scale-reveal", html: "product" },
+  action: { animation: "impact-pop", html: "product" },
+  path: { animation: "scale-reveal", html: "product" },
+  progression: { animation: "scale-reveal", html: "product" },
+  stats: { animation: "number-counter", html: "stats" },
+  proof: { animation: "number-counter", html: "proof" },
+  context: { animation: "slide-up", html: "generic" },
+  origin: { animation: "slide-up", html: "generic" },
+  implication: { animation: "slide-up", html: "generic" },
+  tension: { animation: "kinetic-type", html: "headline" },
+  cta: { animation: "slide-up", html: "cta" },
+  conviction: { animation: "slide-up", html: "cta" },
+};
+
+const FAST_TEMPLATES = new Set(["game-ad", "data-shock"]);
+
 const SKELETON_SCENES: Record<string, { id: string; label: string; duration: number }[]> = {
   "saas-launch": [
     { id: "hook", label: "Hook — grab attention with the problem", duration: 4 },
@@ -908,49 +991,112 @@ function buildSkeletonHtml(input: {
   durationSec: number;
   idea: string;
   templateId: string;
+  designTokens?: DesignTokensResolved | null;
+  assets?: WorkbenchAsset[];
+  pacing?: "slow" | "medium" | "fast";
 }): string {
+  const tokens = input.designTokens ?? DEFAULT_TOKENS;
   const [width, height] = input.format === "9:16" ? [1080, 1920] : [1920, 1080];
   const scenes = SKELETON_SCENES[input.templateId] ?? SKELETON_SCENES["saas-launch"];
   const totalSceneDuration = scenes.reduce((sum, s) => sum + s.duration, 0);
   const scaleFactor = totalSceneDuration > 0 ? input.durationSec / totalSceneDuration : 1;
+  const isFastPaced = FAST_TEMPLATES.has(input.templateId) || input.pacing === "fast";
 
+  const shortIdea = input.idea.length > 60 ? input.idea.slice(0, 57) + "..." : input.idea;
+
+  // Calculate scene timing
   let currentTime = 0;
-  const sceneDivs = scenes.map((scene) => {
+  const timed = scenes.map((scene) => {
     const dur = Math.round(scene.duration * scaleFactor * 10) / 10;
     const start = Math.round(currentTime * 10) / 10;
     currentTime += dur;
-    return `    <div id="${scene.id}" class="scene" data-start="${start}" data-duration="${dur}">
-      <div class="scene-content">
-        <h2 class="scene-title">${scene.label}</h2>
-        <p class="scene-body">Replace with your content for: ${input.idea}</p>
+    return { ...scene, dur, start };
+  });
+
+  // Build scene HTML with role-specific content
+  const videoAssets = (input.assets ?? []).filter(a => a.kind === "video");
+  const imageAssets = (input.assets ?? []).filter(a => a.kind === "image");
+
+  const sceneDivs = timed.map((scene, idx) => {
+    const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up", html: "generic" };
+    const content = buildSceneContent(scene.id, role.html, shortIdea, tokens);
+
+    // Add video background for scenes 1+ if video assets exist
+    const videoIdx = idx < videoAssets.length ? idx : -1;
+    const videoEl = videoIdx >= 0
+      ? `\n      <video data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[videoIdx].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0.15;"></video>`
+      : "";
+
+    // Add image for product/action scenes
+    const imgIdx = role.html === "product" && idx < imageAssets.length ? idx : -1;
+    const imgEl = imgIdx >= 0
+      ? `\n      <img src="assets/${imageAssets[imgIdx].name}" style="max-width:${input.format === "9:16" ? "280" : "400"}px;max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
+      : "";
+
+    return `    <div id="${scene.id}" class="scene" data-start="${scene.start}" data-duration="${scene.dur}">
+      <div class="scene-content">${videoEl}${imgEl}
+${content}
       </div>
     </div>`;
   });
 
-  const sceneCss = scenes.map((scene, i) => {
-    const opacity = i === 0 ? "1" : "0";
-    return `    [data-start="${scene.id === scenes[0].id ? "0" : ""}"] { opacity: ${opacity}; }`;
-  });
+  // Build entrance + transition tweens
+  const tweens: string[] = [];
 
-  const entranceTweens = scenes.map((scene, i) => {
-    const startTime = i === 0 ? 0.2 : scenes.slice(0, i).reduce((sum, s) => sum + Math.round(s.duration * scaleFactor * 10) / 10, 0) + 0.3;
-    return `  tl.from("#${scene.id} .scene-content", { y: 60, opacity: 0, duration: 0.5, ease: "power3.out" }, ${Math.round(startTime * 10) / 10});`;
-  });
+  for (let i = 0; i < timed.length; i++) {
+    const scene = timed[i];
+    const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up" as AnimationTemplate };
+    const enterTime = i === 0 ? 0.2 : scene.start + 0.3;
+
+    // Entrance animation
+    tweens.push(buildEntranceTween(scene.id, role.animation, enterTime));
+
+    // Transition to next scene (except last)
+    if (i < timed.length - 1) {
+      const next = timed[i + 1];
+      if (isFastPaced) {
+        tweens.push(`  tl.set("#${scene.id} .scene-content", { opacity: 0 }, ${next.start});`);
+        tweens.push(`  tl.from("#${next.id} .scene-content", { opacity: 0, duration: 0.15 }, ${next.start});`);
+      } else {
+        tweens.push(`  tl.to("#${scene.id} .scene-content", { opacity: 0, duration: 0.5, overwrite: "auto" }, ${next.start - 0.5});`);
+        tweens.push(`  tl.from("#${next.id} .scene-content", { opacity: 0, duration: 0.5 }, ${next.start});`);
+      }
+    }
+  }
+
+  // Final scene fade out
+  const lastScene = timed[timed.length - 1];
+  const fadeOutTime = Math.round((input.durationSec - 0.8) * 10) / 10;
+  if (lastScene) {
+    tweens.push(`  tl.to("#${lastScene.id} .scene-content", { opacity: 0, duration: 0.8, overwrite: "auto" }, ${fadeOutTime});`);
+  }
 
   return `<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <title>${input.projectName}</title>
   <style>
+    :root {
+      --bg-primary: ${tokens.colors.bgPrimary};
+      --bg-secondary: ${tokens.colors.bgSecondary};
+      --accent-primary: ${tokens.colors.accentPrimary};
+      --accent-secondary: ${tokens.colors.accentSecondary};
+      --text-primary: ${tokens.colors.textPrimary};
+      --text-secondary: ${tokens.colors.textSecondary};
+      --heading-font: ${tokens.typography.headingFont};
+      --body-font: ${tokens.typography.bodyFont};
+      --heading-weight: ${tokens.typography.headingWeight};
+      --body-weight: ${tokens.typography.bodyWeight};
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0a0a0a; color: #ffffff; font-family: system-ui, sans-serif; overflow: hidden; }
+    body { background: var(--bg-primary); color: var(--text-primary); font-family: var(--body-font); overflow: hidden; }
 
     [data-composition-id="${input.projectName}"] {
       position: relative;
       width: ${width}px;
       height: ${height}px;
-      background: #0a0a0a;
+      background: var(--bg-primary);
       overflow: hidden;
     }
 
@@ -967,30 +1113,83 @@ function buildSkeletonHtml(input: {
     .scene:first-child { opacity: 1; }
 
     .scene-content {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 24px;
+      gap: ${input.format === "9:16" ? "20px" : "28px"};
       width: 100%;
       height: 100%;
-      padding: ${input.format === "9:16" ? "120px 48px" : "120px 160px"};
+      padding: ${input.format === "9:16" ? "100px 40px" : "100px 140px"};
       text-align: center;
     }
 
     .scene-title {
-      font-size: ${input.format === "9:16" ? "64px" : "96px"};
-      font-weight: 700;
+      font-family: var(--heading-font);
+      font-weight: var(--heading-weight);
+      font-size: ${input.format === "9:16" ? "56px" : "88px"};
       line-height: 1.1;
       letter-spacing: -1px;
+      color: var(--text-primary);
     }
 
     .scene-body {
-      font-size: ${input.format === "9:16" ? "28px" : "36px"};
-      font-weight: 400;
+      font-family: var(--body-font);
+      font-weight: var(--body-weight);
+      font-size: ${input.format === "9:16" ? "26px" : "34px"};
       line-height: 1.5;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-secondary);
       max-width: ${input.format === "9:16" ? "900px" : "1400px"};
+    }
+
+    .stat-value {
+      font-family: var(--heading-font);
+      font-weight: var(--heading-weight);
+      font-size: ${input.format === "9:16" ? "80px" : "120px"};
+      color: var(--accent-primary);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: ${input.format === "9:16" ? "24px" : "32px"};
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: ${input.format === "9:16" ? "20px 48px" : "24px 64px"};
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      font-family: var(--heading-font);
+      font-weight: var(--heading-weight);
+      font-size: ${input.format === "9:16" ? "28px" : "36px"};
+      border-radius: 8px;
+    }
+
+    .proof-quote {
+      font-family: var(--heading-font);
+      font-size: ${input.format === "9:16" ? "36px" : "52px"};
+      font-style: italic;
+      color: var(--text-primary);
+      max-width: ${input.format === "9:16" ? "850px" : "1200px"};
+      line-height: 1.3;
+    }
+
+    .proof-attr {
+      font-size: ${input.format === "9:16" ? "22px" : "28px"};
+      color: var(--accent-secondary);
+    }
+
+    .sweep-line {
+      width: 120px;
+      height: 4px;
+      background: var(--accent-primary);
+      transform: scaleX(0);
+      transform-origin: left center;
     }
   </style>
 </head>
@@ -1003,13 +1202,76 @@ ${sceneDivs.join("\n")}
     window.__timelines = window.__timelines || {};
     const tl = gsap.timeline({ paused: true });
 
-    // Entrance animations — agent should enhance these
-${entranceTweens.join("\n")}
+${tweens.join("\n")}
 
     window.__timelines["${input.projectName}"] = tl;
   </script>
 </body>
 </html>`;
+}
+
+function buildSceneContent(sceneId: string, htmlTemplate: HtmlTemplate, idea: string, _tokens: DesignTokensResolved): string {
+  switch (htmlTemplate) {
+    case "headline":
+      return [
+        `        <h1 class="scene-title">${sceneLabel(sceneId)}</h1>`,
+        `        <div class="sweep-line"></div>`,
+        `        <p class="scene-body">${idea}</p>`,
+      ].join("\n");
+    case "product":
+      return [
+        `        <h2 class="scene-title">${sceneLabel(sceneId)}</h2>`,
+        `        <p class="scene-body">Showcase the key feature or moment</p>`,
+      ].join("\n");
+    case "stats":
+      return [
+        `        <div class="stat-value" id="stat-${sceneId}">0</div>`,
+        `        <p class="stat-label">${sceneLabel(sceneId)}</p>`,
+      ].join("\n");
+    case "proof":
+      return [
+        `        <p class="proof-quote">"Real results speak louder than promises"</p>`,
+        `        <p class="proof-attr">— Source</p>`,
+      ].join("\n");
+    case "cta":
+      return [
+        `        <h2 class="scene-title">${sceneLabel(sceneId)}</h2>`,
+        `        <div class="cta-button">Take Action</div>`,
+      ].join("\n");
+    default:
+      return [
+        `        <h2 class="scene-title">${sceneLabel(sceneId)}</h2>`,
+        `        <p class="scene-body">${idea}</p>`,
+      ].join("\n");
+  }
+}
+
+function sceneLabel(sceneId: string): string {
+  const labels: Record<string, string> = {
+    hook: "The Moment", headline: "Breaking", promise: "What You Will Learn",
+    number: "The Number", tension: "The Challenge", product: "The Solution",
+    action: "In Action", path: "The Journey", origin: "Where It Began",
+    context: "The Big Picture", implication: "What It Means", stats: "By The Numbers",
+    proof: "Real Results", progression: "The Climb", reward: "The Prize",
+    cta: "Your Move", conviction: "The Mission",
+  };
+  return labels[sceneId] ?? sceneId;
+}
+
+function buildEntranceTween(sceneId: string, animation: AnimationTemplate, enterTime: number): string {
+  const t = Math.round(enterTime * 10) / 10;
+  switch (animation) {
+    case "impact-pop":
+      return `  tl.from("#${sceneId} .scene-title", { scale: 5, ease: "back.out(1.7)", duration: 0.3 }, ${t});`;
+    case "scale-reveal":
+      return `  tl.from("#${sceneId} .scene-content > *", { scale: 0, ease: "back.out(1.4)", duration: 0.5, stagger: 0.1, overwrite: "auto" }, ${t});`;
+    case "number-counter":
+      return `  tl.from("#${sceneId} .stat-value", { scale: 0.5, opacity: 0, duration: 0.6, ease: "power3.out" }, ${t});`;
+    case "kinetic-type":
+      return `  tl.from("#${sceneId} .scene-title", { y: 80, opacity: 0, duration: 0.4, ease: "power3.out" }, ${t});`;
+    default:
+      return `  tl.from("#${sceneId} .scene-content", { y: 60, opacity: 0, duration: 0.5, ease: "power3.out" }, ${t});`;
+  }
 }
 
 function buildFiles(input: {
@@ -1343,15 +1605,77 @@ function buildFiles(input: {
       null,
       2,
     ),
-    "index.html": buildSkeletonHtml({
-      projectName: input.projectName,
-      format: input.format,
-      durationSec: input.durationSec,
-      idea: input.idea,
-      templateId: recommendation.template.id,
-    }),
-    ...buildDesignFiles(input.idea, input.style, input.brandColors),
+    ...(() => {
+      const df = buildDesignFiles(input.idea, input.style, input.brandColors);
+      return {
+        "index.html": buildSkeletonHtml({
+          projectName: input.projectName,
+          format: input.format,
+          durationSec: input.durationSec,
+          idea: input.idea,
+          templateId: recommendation.template.id,
+          designTokens: parseDesignTokens(df["DESIGN_TOKENS.md"] ?? ""),
+          assets: input.assets,
+          pacing: input.style.toLowerCase().includes("fast") ? "fast" : undefined,
+        }),
+        ...df,
+      };
+    })(),
   };
+}
+
+export function scaffoldWorkbenchProject(projectDir: string): { projectDir: string; htmlPath: string; sceneCount: number; tokensApplied: boolean; assetsReferenced: number } {
+  const dir = resolve(projectDir);
+
+  const statePath = join(dir, ".framepack", "state.json");
+  if (!existsSync(statePath)) throw new Error("Not a Framepack project: missing .framepack/state.json");
+  const state = JSON.parse(readFileSync(statePath, "utf8"));
+  const meta = state.projectMetadata ?? state;
+  const projectName = meta.projectName ?? basename(dir);
+  const format: "16:9" | "9:16" = meta.format ?? "16:9";
+  const durationSec = meta.durationSec ?? 30;
+  const templateId = meta.directorTranslation?.narrativePattern
+    ?? recommendTemplateRoute({ idea: "", style: "", format, durationSec }).template.id;
+
+  const tokensPath = join(dir, "DESIGN_TOKENS.md");
+  const tokenMd = existsSync(tokensPath) ? readFileSync(tokensPath, "utf8") : "";
+  const tokens = parseDesignTokens(tokenMd);
+
+  const assetsPath = join(dir, "ASSETS.md");
+  const assetMd = existsSync(assetsPath) ? readFileSync(assetsPath, "utf8") : "";
+  const assets = parseAssetsFromMd(assetMd);
+
+  const scenes = SKELETON_SCENES[templateId] ?? SKELETON_SCENES["saas-launch"];
+  const html = buildSkeletonHtml({
+    projectName,
+    format,
+    durationSec,
+    idea: meta.idea ?? basename(dir),
+    templateId,
+    designTokens: tokens,
+    assets,
+  });
+
+  const htmlPath = join(dir, "index.html");
+  writeFileSync(htmlPath, html, "utf8");
+
+  return {
+    projectDir: dir,
+    htmlPath,
+    sceneCount: scenes.length,
+    tokensApplied: tokenMd.length > 0,
+    assetsReferenced: assets.length,
+  };
+}
+
+function parseAssetsFromMd(md: string): WorkbenchAsset[] {
+  const assets: WorkbenchAsset[] = [];
+  const validKinds = new Set(["image", "video", "audio", "text", "other"]);
+  for (const line of md.split("\n")) {
+    const m = line.match(/[-*]\s+`?([^`*\s]+\.\w+)`?\s*\((\w+)\)/);
+    if (m) assets.push({ name: m[1], kind: (validKinds.has(m[2]) ? m[2] : "other") as WorkbenchAssetKind, path: "" });
+  }
+  return assets;
 }
 
 export function formatWorkbenchHumanBrief(projectDir: string): string {

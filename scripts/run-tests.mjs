@@ -2566,7 +2566,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.18");
+      assert.equal(packageJson.version, "0.5.0-alpha.19");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2604,7 +2604,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.18");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.19");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -3143,6 +3143,82 @@ Framepack compiles content into executable video projects.
         assert.match(html, /gsap@3\.14\.2/);
         assert.match(html, /opacity: 1/);
         assert.match(html, /tl\.from/);
+
+        // Enhanced skeleton: transitions between scenes
+        assert.match(html, /tl\.set\(.*opacity.*\)|tl\.to\(.*opacity.*0.*\)/, "Should have scene transitions");
+
+        // Enhanced skeleton: CSS custom properties from design tokens
+        assert.match(html, /--bg-primary/);
+        assert.match(html, /--text-primary/);
+        assert.match(html, /--accent-primary/);
+
+        // HyperFrames safety: no Math.random(), no <br>, no video.play()
+        assert.equal(html.includes("Math.random()"), false, "No Math.random()");
+        assert.equal(html.includes("<br>"), false, "No <br> tags");
+        assert.equal(html.includes("video.play()"), false, "No video.play()");
+
+        // Enhanced skeleton: role-specific content elements
+        assert.match(html, /scene-title/, "Should have scene titles");
+        assert.match(html, /scene-body|stat-value|cta-button|proof-quote/, "Should have role-specific content");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "scaffold command regenerates index.html from existing project",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-scaffold-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        // Create a project first
+        await runCli(
+          ["create", "--idea", "A test video", "--output-dir", tempRoot, "--project-name", "scaffold-test", "--format", "9:16", "--duration", "15"],
+          { stdout: (m) => stdout.push(m), stderr: (m) => stderr.push(m) },
+        );
+
+        const projectDir = join(tempRoot, "scaffold-test");
+        const originalHtml = readFileSync(join(projectDir, "index.html"), "utf8");
+
+        // Run scaffold
+        const scaffoldLogs = [];
+        const scaffoldExit = await runCli(
+          ["scaffold", "--project-dir", projectDir],
+          { stdout: (m) => scaffoldLogs.push(m), stderr: (m) => scaffoldLogs.push(m) },
+        );
+
+        assert.equal(scaffoldExit, 0, scaffoldLogs.join("\n"));
+        assert.match(scaffoldLogs.join("\n"), /Scaffolded/);
+
+        const newHtml = readFileSync(join(projectDir, "index.html"), "utf8");
+        assert.match(newHtml, /data-composition-id/);
+        assert.match(newHtml, /data-width="1080"/);
+        assert.match(newHtml, /data-height="1920"/);
+        assert.match(newHtml, /window\.__timelines/);
+
+        // New HTML should be different from original (regenerated)
+        assert.notEqual(newHtml.length, 0);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "skeleton applies brand colors to CSS variables",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-brands-"));
+      try {
+        await runCli(
+          ["create", "--idea", "A brand test", "--output-dir", tempRoot, "--project-name", "brand-test", "--brand-colors", "#DA291C,#000000"],
+          { stdout: () => {}, stderr: () => {} },
+        );
+
+        const html = readFileSync(join(tempRoot, "brand-test", "index.html"), "utf8");
+        assert.match(html, /#DA291C/, "Brand primary color should appear in HTML");
+        assert.match(html, /#000000/, "Brand secondary color should appear in HTML");
+        assert.match(html, /--accent-primary/, "Should have CSS custom properties");
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

@@ -55,6 +55,7 @@ import {
   recommendHyperframesCatalogPrefabs,
   recommendHyperframesPromptTemplate,
   recommendTemplateRoute,
+  scaffoldWorkbenchProject,
   validateWorkbenchProject,
 } from "../../workbench/index.js";
 
@@ -119,7 +120,8 @@ type CliCommandName =
   | "runtime-snapshot"
   | "runtime-upgrade-check"
   | "sync-captures"
-  | "sync-assets";
+  | "sync-assets"
+  | "scaffold";
 
 interface CliDependencies {
   captureProject?: typeof materializeProjectAssets;
@@ -162,7 +164,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.18";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.19";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -179,6 +181,7 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack templates recommend --idea <idea> --style <style>",
   "  framepack workbench check --project-dir <dir>",
   "  framepack workbench brief --project-dir <dir>",
+  "  framepack scaffold --project-dir <dir>",
   "  framepack packs",
   "  framepack atlas --json",
   "  framepack generate --input <file> --output-dir <dir> --goal <goal> --audience <audience>",
@@ -312,12 +315,13 @@ function getCommandName(args: string[]): CliCommandName {
     command === "preview" ||
     command === "render" ||
     command === "sync-captures" ||
-    command === "sync-assets"
+    command === "sync-assets" ||
+    command === "scaffold"
   ) {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, lint, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, lint, preview, render, scaffold, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -1019,6 +1023,24 @@ function runCatalogInstallCommand(args: string[], io: CliIo): number {
   return failed.length > 0 ? 1 : 0;
 }
 
+function runScaffoldCommand(args: string[], io: CliIo): number {
+  const projectDir = getRequiredArg(args, "--project-dir") ?? ".";
+  try {
+    const result = scaffoldWorkbenchProject(projectDir);
+    io.stdout([
+      `Scaffolded ${result.sceneCount} scenes to ${result.htmlPath}`,
+      `Design tokens applied: ${result.tokensApplied ? "yes" : "default"}`,
+      `Assets referenced: ${result.assetsReferenced}`,
+      "",
+      "Next: npx hyperframes preview --port 3002",
+    ].join("\n"));
+    return 0;
+  } catch (error) {
+    io.stderr(error instanceof Error ? error.message : String(error));
+    return 1;
+  }
+}
+
 function runWorkbenchCommand(args: string[], io: CliIo): number {
   if (args[0] !== "check" && args[0] !== "brief") {
     throw new Error("Invalid workbench command. Use: framepack workbench check --project-dir <dir> or framepack workbench brief --project-dir <dir>");
@@ -1514,6 +1536,10 @@ export async function runCli(
 
     if (command === "preview" || command === "render") {
       return runRuntimeActionCommand(command, args.slice(1), io, dependencies);
+    }
+
+    if (command === "scaffold") {
+      return runScaffoldCommand(args.slice(1), io);
     }
 
     return await runGenerateCommand(args, io);

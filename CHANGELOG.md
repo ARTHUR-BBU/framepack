@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0-alpha.19
+
+- fix P0: enhanced HTML skeleton with design tokens, scene transitions, role-specific content, and media placeholders
+- add `framepack scaffold --project-dir <dir>` command to regenerate index.html from existing workbench
+- scene transitions: hard snap for fast templates (game-ad, data-shock), dissolve for others
+- role-specific content: headline (impact pop), stats (number counter), product (scale reveal), cta (button), proof (quote)
+- design tokens applied to CSS custom properties (--bg-primary, --accent-primary, --text-primary, etc.)
+- video/image asset placeholders embedded when assets are provided
+- HyperFrames safety: no Math.random(), no <br>, no video.play(), proper tl.set transitions
+- 179/179 tests pass
+
 ## 0.5.0-alpha.18
 
 - fix P0: bundle all 23 HyperFrames Catalog Components in npm package — zero network, zero timeout
