@@ -1024,7 +1024,7 @@ function runCatalogInstallCommand(args: string[], io: CliIo): number {
 }
 
 function runScaffoldCommand(args: string[], io: CliIo): number {
-  const projectDir = getRequiredArg(args, "--project-dir") ?? ".";
+  const projectDir = getRequiredArg(args, "--project-dir");
   try {
     const result = scaffoldWorkbenchProject(projectDir);
     io.stdout([

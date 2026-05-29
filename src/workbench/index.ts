@@ -1001,8 +1001,24 @@ function buildSkeletonHtml(input: {
   const totalSceneDuration = scenes.reduce((sum, s) => sum + s.duration, 0);
   const scaleFactor = totalSceneDuration > 0 ? input.durationSec / totalSceneDuration : 1;
   const isFastPaced = FAST_TEMPLATES.has(input.templateId) || input.pacing === "fast";
-
+  const isPortrait = input.format === "9:16";
   const shortIdea = input.idea.length > 60 ? input.idea.slice(0, 57) + "..." : input.idea;
+
+  const f = {
+    gap: isPortrait ? "20px" : "28px",
+    pad: isPortrait ? "100px 40px" : "100px 140px",
+    title: isPortrait ? "56px" : "88px",
+    body: isPortrait ? "26px" : "34px",
+    bodyMax: isPortrait ? "900px" : "1400px",
+    stat: isPortrait ? "80px" : "120px",
+    statLabel: isPortrait ? "24px" : "32px",
+    ctaPad: isPortrait ? "20px 48px" : "24px 64px",
+    ctaFont: isPortrait ? "28px" : "36px",
+    quoteFont: isPortrait ? "36px" : "52px",
+    quoteMax: isPortrait ? "850px" : "1200px",
+    attrFont: isPortrait ? "22px" : "28px",
+    imgMax: isPortrait ? "280px" : "400px",
+  };
 
   // Calculate scene timing
   let currentTime = 0;
@@ -1019,7 +1035,7 @@ function buildSkeletonHtml(input: {
 
   const sceneDivs = timed.map((scene, idx) => {
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up", html: "generic" };
-    const content = buildSceneContent(scene.id, role.html, shortIdea, tokens);
+    const content = buildSceneContent(scene.id, role.html, shortIdea);
 
     // Add video background for scenes 1+ if video assets exist
     const videoIdx = idx < videoAssets.length ? idx : -1;
@@ -1030,7 +1046,7 @@ function buildSkeletonHtml(input: {
     // Add image for product/action scenes
     const imgIdx = role.html === "product" && idx < imageAssets.length ? idx : -1;
     const imgEl = imgIdx >= 0
-      ? `\n      <img src="assets/${imageAssets[imgIdx].name}" style="max-width:${input.format === "9:16" ? "280" : "400"}px;max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
+      ? `\n      <img src="assets/${imageAssets[imgIdx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
       : "";
 
     return `    <div id="${scene.id}" class="scene" data-start="${scene.start}" data-duration="${scene.dur}">
@@ -1119,17 +1135,17 @@ ${content}
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: ${input.format === "9:16" ? "20px" : "28px"};
+      gap: ${f.gap};
       width: 100%;
       height: 100%;
-      padding: ${input.format === "9:16" ? "100px 40px" : "100px 140px"};
+      padding: ${f.pad};
       text-align: center;
     }
 
     .scene-title {
       font-family: var(--heading-font);
       font-weight: var(--heading-weight);
-      font-size: ${input.format === "9:16" ? "56px" : "88px"};
+      font-size: ${f.title};
       line-height: 1.1;
       letter-spacing: -1px;
       color: var(--text-primary);
@@ -1138,22 +1154,22 @@ ${content}
     .scene-body {
       font-family: var(--body-font);
       font-weight: var(--body-weight);
-      font-size: ${input.format === "9:16" ? "26px" : "34px"};
+      font-size: ${f.body};
       line-height: 1.5;
       color: var(--text-secondary);
-      max-width: ${input.format === "9:16" ? "900px" : "1400px"};
+      max-width: ${f.bodyMax};
     }
 
     .stat-value {
       font-family: var(--heading-font);
       font-weight: var(--heading-weight);
-      font-size: ${input.format === "9:16" ? "80px" : "120px"};
+      font-size: ${f.stat};
       color: var(--accent-primary);
       line-height: 1;
     }
 
     .stat-label {
-      font-size: ${input.format === "9:16" ? "24px" : "32px"};
+      font-size: ${f.statLabel};
       color: var(--text-secondary);
       text-transform: uppercase;
       letter-spacing: 2px;
@@ -1161,26 +1177,26 @@ ${content}
 
     .cta-button {
       display: inline-block;
-      padding: ${input.format === "9:16" ? "20px 48px" : "24px 64px"};
+      padding: ${f.ctaPad};
       background: var(--accent-primary);
       color: var(--bg-primary);
       font-family: var(--heading-font);
       font-weight: var(--heading-weight);
-      font-size: ${input.format === "9:16" ? "28px" : "36px"};
+      font-size: ${f.ctaFont};
       border-radius: 8px;
     }
 
     .proof-quote {
       font-family: var(--heading-font);
-      font-size: ${input.format === "9:16" ? "36px" : "52px"};
+      font-size: ${f.quoteFont};
       font-style: italic;
       color: var(--text-primary);
-      max-width: ${input.format === "9:16" ? "850px" : "1200px"};
+      max-width: ${f.quoteMax};
       line-height: 1.3;
     }
 
     .proof-attr {
-      font-size: ${input.format === "9:16" ? "22px" : "28px"};
+      font-size: ${f.attrFont};
       color: var(--accent-secondary);
     }
 
@@ -1210,7 +1226,7 @@ ${tweens.join("\n")}
 </html>`;
 }
 
-function buildSceneContent(sceneId: string, htmlTemplate: HtmlTemplate, idea: string, _tokens: DesignTokensResolved): string {
+function buildSceneContent(sceneId: string, htmlTemplate: HtmlTemplate, idea: string): string {
   switch (htmlTemplate) {
     case "headline":
       return [
@@ -1605,36 +1621,43 @@ function buildFiles(input: {
       null,
       2,
     ),
-    ...(() => {
-      const df = buildDesignFiles(input.idea, input.style, input.brandColors);
-      return {
-        "index.html": buildSkeletonHtml({
-          projectName: input.projectName,
-          format: input.format,
-          durationSec: input.durationSec,
-          idea: input.idea,
-          templateId: recommendation.template.id,
-          designTokens: parseDesignTokens(df["DESIGN_TOKENS.md"] ?? ""),
-          assets: input.assets,
-          pacing: input.style.toLowerCase().includes("fast") ? "fast" : undefined,
-        }),
-        ...df,
-      };
-    })(),
+    ...buildHtmlWithDesign(input, recommendation),
+  };
+}
+
+function buildHtmlWithDesign(input: { projectName: string; idea: string; style: string; format: "16:9" | "9:16"; durationSec: number; assets: WorkbenchAsset[]; brandColors?: string }, recommendation: PolishArsenalRecommendation): Record<string, string> {
+  const designFiles = buildDesignFiles(input.idea, input.style, input.brandColors);
+  return {
+    "index.html": buildSkeletonHtml({
+      projectName: input.projectName,
+      format: input.format,
+      durationSec: input.durationSec,
+      idea: input.idea,
+      templateId: recommendation.template.id,
+      designTokens: parseDesignTokens(designFiles["DESIGN_TOKENS.md"] ?? ""),
+      assets: input.assets,
+      pacing: input.style.toLowerCase().includes("fast") ? "fast" : undefined,
+    }),
+    ...designFiles,
   };
 }
 
 export function scaffoldWorkbenchProject(projectDir: string): { projectDir: string; htmlPath: string; sceneCount: number; tokensApplied: boolean; assetsReferenced: number } {
   const dir = resolve(projectDir);
 
-  const statePath = join(dir, ".framepack", "state.json");
-  if (!existsSync(statePath)) throw new Error("Not a Framepack project: missing .framepack/state.json");
-  const state = JSON.parse(readFileSync(statePath, "utf8"));
-  const meta = state.projectMetadata ?? state;
-  const projectName = meta.projectName ?? basename(dir);
-  const format: "16:9" | "9:16" = meta.format ?? "16:9";
-  const durationSec = meta.durationSec ?? 30;
-  const templateId = meta.directorTranslation?.narrativePattern
+  let state: Record<string, unknown>;
+  try {
+    state = JSON.parse(readFileSync(join(dir, ".framepack", "state.json"), "utf8"));
+  } catch {
+    throw new Error("Not a Framepack project: missing .framepack/state.json");
+  }
+  const meta = (state.projectMetadata ?? state) as Record<string, unknown>;
+  const projectName = (meta.projectName as string) ?? basename(dir);
+  const format: "16:9" | "9:16" = (meta.format as "16:9" | "9:16") ?? "16:9";
+  const durationSec = (meta.durationSec as number) ?? 30;
+  const idea = (meta.idea as string) ?? basename(dir);
+  const director = meta.directorTranslation as Record<string, unknown> | undefined;
+  const templateId = (director?.narrativePattern as string)
     ?? recommendTemplateRoute({ idea: "", style: "", format, durationSec }).template.id;
 
   const tokensPath = join(dir, "DESIGN_TOKENS.md");
@@ -1650,7 +1673,7 @@ export function scaffoldWorkbenchProject(projectDir: string): { projectDir: stri
     projectName,
     format,
     durationSec,
-    idea: meta.idea ?? basename(dir),
+    idea,
     templateId,
     designTokens: tokens,
     assets,
