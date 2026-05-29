@@ -1,4 +1,5 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { basename, dirname, extname, resolve } from "node:path";
 import { initAgentProject, type AgentTarget, type PackageSource } from "../../agent/init-agent.js";
 import {
@@ -108,6 +109,7 @@ type CliCommandName =
   | "validate"
   | "repair"
   | "capture"
+  | "lint"
   | "preview"
   | "render"
   | "runtime-doctor"
@@ -159,7 +161,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.14";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.15";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -305,6 +307,7 @@ function getCommandName(args: string[]): CliCommandName {
     command === "validate" ||
     command === "repair" ||
     command === "capture" ||
+    command === "lint" ||
     command === "preview" ||
     command === "render" ||
     command === "sync-captures" ||
@@ -313,7 +316,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, preview, render, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, lint, preview, render, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -608,15 +611,39 @@ function runInitCommand(args: string[], io: CliIo): number {
 }
 
 function runCreateCommand(args: string[], io: CliIo): number {
-  const idea = getRequiredArg(args, "--idea");
-  const outputDir = getRequiredArg(args, "--output-dir");
-  const format = (getOptionalArg(args, "--format") ?? "16:9") as "16:9" | "9:16";
-  const durationSec = Number(getOptionalArg(args, "--duration") ?? "45");
+  const dnaPath = getOptionalArg(args, "--dna");
+  let idea = getOptionalArg(args, "--idea") ?? "";
+  let style = getOptionalArg(args, "--style");
+  let durationSec = Number(getOptionalArg(args, "--duration") ?? "0");
+  let format = (getOptionalArg(args, "--format") ?? "16:9") as "16:9" | "9:16";
+
+  // Load VIDEO_DNA metadata when provided.
+  if (dnaPath) {
+    const dnaContent = readFileSync(resolve(dnaPath), "utf8");
+    const durationMatch = dnaContent.match(/\*\*时长\*\*:\s*(\d+)s|\*\*Duration\*\*:\s*\[?(\d+)/);
+    if (durationMatch) durationSec = durationSec || parseInt(durationMatch[1] ?? durationMatch[2], 10);
+    const resMatch = dnaContent.match(/(\d+)×(\d+)/);
+    if (resMatch && !args.includes("--format")) {
+      const w = parseInt(resMatch[1], 10);
+      const h = parseInt(resMatch[2], 10);
+      if (h > w) format = "9:16";
+    }
+    const typeMatch = dnaContent.match(/\*\*类型\*\*:\s*(.+)|\*\*Type\*\*:\s*\[?(.+?)[\]\n]/);
+    if (typeMatch && !idea) idea = `Video based on reference DNA: ${(typeMatch[1] ?? typeMatch[2]).trim()}`;
+    if (!idea) idea = `Video based on reference DNA from ${dnaPath}`;
+    if (!style) {
+      const colorMatches = [...dnaContent.matchAll(/#[0-9a-fA-F]{6}/g)].map((m) => m[0]);
+      if (colorMatches.length > 0) style = `DNA-driven with ${colorMatches.slice(0, 3).join(", ")}`;
+    }
+  }
+
+  if (!idea) throw new Error("Missing --idea or --dna argument. Provide a creative idea or a VIDEO_DNA.md file path.");
 
   if (format !== "16:9" && format !== "9:16") {
     throw new Error("Invalid --format value. Use 16:9 or 9:16.");
   }
 
+  if (!durationSec || durationSec < 5) durationSec = 45;
   if (!Number.isFinite(durationSec) || durationSec < 5) {
     throw new Error("Invalid --duration value. Use a number of at least 5 seconds.");
   }
@@ -624,19 +651,29 @@ function runCreateCommand(args: string[], io: CliIo): number {
   const project = createWorkbenchProject({
     projectName: getOptionalArg(args, "--project-name") ?? defaultWorkbenchProjectName(idea),
     idea,
-    outputDir,
+    outputDir: getRequiredArg(args, "--output-dir"),
     assetDir: getOptionalArg(args, "--assets"),
-    style: getOptionalArg(args, "--style"),
+    style,
     format,
     durationSec,
   });
 
+  // Copy VIDEO_DNA.md into the project if provided.
+  if (dnaPath) {
+    const targetDir = resolve(getRequiredArg(args, "--output-dir"), getOptionalArg(args, "--project-name") ?? defaultWorkbenchProjectName(idea));
+    const dnaTarget = resolve(targetDir, "VIDEO_DNA.md");
+    try {
+      copyFileSync(resolve(dnaPath), dnaTarget);
+    } catch { /* best effort */ }
+  }
+
   io.stdout(
     [
       `Created Framepack workbench at ${project.projectDir}`,
+      dnaPath ? "VIDEO_DNA.md copied into project." : null,
       `assets: ${project.assets.length}`,
-      "next: open FRAMEPACK.md with your agent, then refine COMPOSITION.md and build the HyperFrames or Remotion composition.",
-    ].join("\n"),
+      "next: open FRAMEPACK.md with your agent, then refine COMPOSITION.md and build the HyperFrames composition.",
+    ].filter(Boolean).join("\n"),
   );
   return 0;
 }
@@ -833,6 +870,10 @@ function runTemplatesCommand(args: string[], io: CliIo): number {
 }
 
 function runCatalogCommand(args: string[], io: CliIo): number {
+  if (args[0] === "install") {
+    return runCatalogInstallCommand(args.slice(1), io);
+  }
+
   if (args[0] === "recommend") {
     const recommendation = recommendHyperframesCatalogPrefabs({
       templateId: getRequiredArg(args, "--template") as Parameters<typeof recommendHyperframesCatalogPrefabs>[0]["templateId"],
@@ -875,10 +916,72 @@ function runCatalogCommand(args: string[], io: CliIo): number {
       "",
       ...payload.prefabs.map((prefab) => `- ${prefab.id}: ${prefab.label} (${prefab.kind})`),
       "",
-      "Inspect the live official Catalog before installing: npx hyperframes catalog --json",
+      "Install all catalog components: npx framepack catalog install",
+      "Inspect the live official Catalog: npx hyperframes catalog --json",
     ].join("\n"),
   );
   return 0;
+}
+
+function runCatalogInstallCommand(args: string[], io: CliIo): number {
+  const maxRetries = args.includes("--retries") ? parseInt(getRequiredArg(args, "--retries"), 10) || 3 : 3;
+  const timeout = 30000;
+
+  io.stdout("Fetching catalog list from HyperFrames...");
+
+  let catalogJson: { blocks?: { id: string }[]; components?: { id: string }[] };
+  try {
+    const raw = execSync("npx hyperframes catalog --json 2>/dev/null", { encoding: "utf8", timeout: 20000 });
+    catalogJson = JSON.parse(raw);
+  } catch {
+    io.stderr("Failed to fetch catalog. Is HyperFrames installed? Run: npm install hyperframes");
+    return 1;
+  }
+
+  const items: { id: string; kind: string }[] = [
+    ...(catalogJson.blocks ?? []).map((b: { id: string }) => ({ id: b.id, kind: "block" })),
+    ...(catalogJson.components ?? []).map((c: { id: string }) => ({ id: c.id, kind: "component" })),
+  ];
+
+  if (items.length === 0) {
+    io.stdout("No catalog items found.");
+    return 0;
+  }
+
+  const succeeded: string[] = [];
+  const failed: string[] = [];
+
+  io.stdout(`Installing ${items.length} catalog items (max ${maxRetries} retries each)...\n`);
+
+  for (const item of items) {
+    let installed = false;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        execSync(`npx hyperframes add ${item.id} 2>/dev/null`, { encoding: "utf8", timeout });
+        installed = true;
+        break;
+      } catch {
+        if (attempt < maxRetries) {
+          io.stdout(`  ${item.id} retry ${attempt}/${maxRetries}...`);
+        }
+      }
+    }
+    if (installed) {
+      succeeded.push(item.id);
+      io.stdout(`  ✓ ${item.id} (${item.kind})`);
+    } else {
+      failed.push(item.id);
+      io.stderr(`  ✗ ${item.id} (${item.kind}) — failed after ${maxRetries} retries`);
+    }
+  }
+
+  io.stdout([
+    "",
+    `Installed: ${succeeded.length}/${items.length}`,
+    ...(failed.length > 0 ? [`Failed: ${failed.join(", ")}`, "", "Retry failed items manually: npx hyperframes add <id>"] : []),
+  ].join("\n"));
+
+  return failed.length > 0 ? 1 : 0;
 }
 
 function runWorkbenchCommand(args: string[], io: CliIo): number {
@@ -1344,6 +1447,10 @@ export async function runCli(
 
     if (command === "runtime-doctor") {
       return runRuntimeDoctorCommand(args.slice(2), io);
+    }
+
+    if (command === "lint") {
+      return runRuntimeActionCommand("lint", args.slice(1), io, dependencies);
     }
 
     if (command === "runtime-lint") {

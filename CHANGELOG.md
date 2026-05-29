@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0-alpha.15
+
+- add `framepack catalog install` — batch-install all Catalog components with retry logic
+- add `framepack lint` as top-level command (alias for `framepack runtime lint`)
+- add `--dna <path>` flag to `framepack create` — create workbench from VIDEO_DNA.md
+- update catalog-usage.md with Block vs Component distinction and usage patterns
+- postinstall checks HyperFrames availability and reports version or install hint
+- postinstall mentions `framepack catalog install` in quick start
+- 175/175 tests pass
+
 ## 0.5.0-alpha.14
 
 - add VIDEO_DNA reference example (365 lines, 8 segments, per-second GSAP HOW-TO code) as reference-miner skill reference

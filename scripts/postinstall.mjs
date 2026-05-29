@@ -1,22 +1,31 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { execSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 async function main() {
-  if (process.env.FRAMEPACK_SKIP_AGENT_INSTALL === "1") return;
-
   const scriptDir = dirname(fileURLToPath(import.meta.url));
   const pkgPath = resolve(scriptDir, "..", "package.json");
   const version = JSON.parse(readFileSync(pkgPath, "utf8")).version ?? "unknown";
+
+  // Check HyperFrames availability.
+  let hfStatus = "\x1b[33mnot found\x1b[0m — install with: \x1b[1mnpm install hyperframes\x1b[0m";
+  try {
+    const hfOut = execSync("npx hyperframes --version 2>/dev/null", { encoding: "utf8", timeout: 15000 }).trim();
+    if (hfOut) hfStatus = `\x1b[32m${hfOut}\x1b[0m`;
+  } catch {}
 
   // Always print a welcome message so the user knows Framepack was installed.
   console.log([
     "",
     `\x1b[1m\x1b[36mFramepack ${version}\x1b[0m installed!`,
     "",
+    "  HyperFrames: " + hfStatus,
+    "",
     "  Quick start:",
     '    npx framepack create --idea "your video idea" --assets ./assets --output-dir ./out',
     "    npx framepack workbench brief --project-dir ./out/<project-name>",
+    "    npx framepack catalog install   # batch-install Catalog components",
     "",
     "  Docs: https://github.com/ARTHUR-BBU/framepack",
     "",
