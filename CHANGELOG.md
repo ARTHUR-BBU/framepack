@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-alpha.14
+
+- add VIDEO_DNA reference example (365 lines, 8 segments, per-second GSAP HOW-TO code) as reference-miner skill reference
+- rewrite VIDEO_DNA extraction template with standardized format: segments, per-second code, design tokens, 3-tier asset lists, feasibility assessment
+- update reference-miner SKILL.md with complete VIDEO_DNA extraction workflow and reference links
+- fix postinstall message not showing — always print welcome message first, then try agent install
+- add cyan ANSI color to postinstall version output for visibility
+
 ## 0.5.0-alpha.13
 
 - fix postinstall version string hardcoded at alpha.9 — now reads from package.json dynamically

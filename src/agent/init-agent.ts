@@ -127,34 +127,42 @@ Turn \`COMPOSITION.md\` into HyperFrames code without breaking render safety.
     description: "Use when a user provides a finished video, reference video, competitor example, or wants to turn an existing result into a reusable Framepack or HyperFrames template.",
     body: `# Framepack Reference Miner
 
-Extract reusable video structure from a reference or finished render.
+Extract a **VIDEO_DNA.md** technical blueprint from a reference video for HyperFrames reproduction.
 
-## What to Extract
+## When to Use
 
-### Visual DNA
-- **Color palette:** Background, foreground, accent hex codes
-- **Typography:** Font families, sizes, weights, letter-spacing for each hierarchy level
-- **Visual density:** How much of the frame is filled vs empty
+- User says "like this reference video" or "make it look like this"
+- User provides a competitor video to study
+- User wants to turn a finished render into a reusable template
 
-### Motion DNA
-- **Scene rhythm:** Duration of each scene/beat (fast-fast-SLOW-fast pattern)
-- **Transition types:** Hard cuts, dissolves, wipes, reveals
-- **Animation patterns:** Scale pops, kinetic type, slide-ins, fade-ups
-- **Timing:** Stagger intervals, entrance duration, hold duration
+## Output
 
-### Structural DNA
-- **Opening hook:** What happens in the first 2 seconds
-- **Narrative arc:** Problem → solution → proof → CTA (or other pattern)
-- **Proof devices:** Screenshots, testimonials, data, demo footage
-- **CTA design:** How the video ends and what action it drives
+\`VIDEO_DNA.md\` — a segment-by-second technical blueprint with:
+- Per-second GSAP/CSS HOW-TO code (not vague descriptions)
+- Design tokens extracted from the video (hex colors, font sizes)
+- ASCII layout diagrams for complex segments
+- Asset checklist with BLOCKING / RECOMMENDED / OPTIONAL priorities
+- HyperFrames feasibility assessment per segment
+
+After DNA extraction, also produce \`TEMPLATE_BLUEPRINT.md\` with abstracted slots.
+
+## References
+
+- [video-dna-template.md](references/video-dna-template.md) — required output format and extraction workflow
+- [video-dna-example.md](references/video-dna-example.md) — complete worked example (8 segments, 63s video)
 
 ## Workflow
 
-1. Read \`FRAMEPACK.md\` and any existing \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
-2. Watch or analyze the reference and extract the DNA above.
-3. Write the observed structure into \`VIDEO_DNA.md\` with specific timestamps, hex codes, and duration values.
-4. Convert reusable production rules into \`TEMPLATE_BLUEPRINT.md\`.
-5. Update \`DIRECTION.md\` and \`COMPOSITION.md\` only after the blueprint is clear.`,
+1. Read \`FRAMEPACK.md\` and any existing \`DIRECTION.md\`, \`COMPOSITION.md\`, \`ITERATIONS.md\`, and \`ASSETS.md\`.
+2. Watch the reference video **twice**: first pass for rhythm, second pass for per-second detail.
+3. Read the template, then extract DNA following the required format.
+4. Study the example if you need to calibrate extraction granularity.
+5. Write \`VIDEO_DNA.md\` — every second must have specific GSAP code, not descriptions.
+6. Extract design tokens (hex colors, font sizes) into the DNA's Design Tokens section.
+7. Build the asset checklist and compare against user's \`ASSETS.md\`.
+8. Update \`ASSET_GAPS.md\` with DNA-derived blocking gaps.
+9. Convert reusable rules into \`TEMPLATE_BLUEPRINT.md\`.
+10. Update \`DIRECTION.md\` and \`COMPOSITION.md\` only after the DNA and blueprint are clear.`,
   },
 ];
 

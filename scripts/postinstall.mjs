@@ -5,6 +5,26 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 async function main() {
   if (process.env.FRAMEPACK_SKIP_AGENT_INSTALL === "1") return;
 
+  const scriptDir = dirname(fileURLToPath(import.meta.url));
+  const pkgPath = resolve(scriptDir, "..", "package.json");
+  const version = JSON.parse(readFileSync(pkgPath, "utf8")).version ?? "unknown";
+
+  // Always print a welcome message so the user knows Framepack was installed.
+  console.log([
+    "",
+    `\x1b[1m\x1b[36mFramepack ${version}\x1b[0m installed!`,
+    "",
+    "  Quick start:",
+    '    npx framepack create --idea "your video idea" --assets ./assets --output-dir ./out',
+    "    npx framepack workbench brief --project-dir ./out/<project-name>",
+    "",
+    "  Docs: https://github.com/ARTHUR-BBU/framepack",
+    "",
+  ].join("\n"));
+
+  if (process.env.FRAMEPACK_SKIP_AGENT_INSTALL === "1") return;
+
+  // Try to install agent workflow files in the project directory.
   let projectDir = process.env.INIT_CWD;
   if (!projectDir) {
     const cwd = process.cwd();
@@ -14,12 +34,8 @@ async function main() {
   }
   if (!projectDir || projectDir.includes("node_modules")) return;
 
-  const scriptDir = dirname(fileURLToPath(import.meta.url));
   const distPath = resolve(scriptDir, "..", "dist", "agent", "init-agent.js");
   if (!existsSync(distPath)) return;
-
-  const pkgPath = resolve(scriptDir, "..", "package.json");
-  const version = JSON.parse(readFileSync(pkgPath, "utf8")).version ?? "unknown";
 
   const { initAgentProject } = await import(pathToFileURL(distPath).href);
   const result = initAgentProject({
@@ -31,22 +47,16 @@ async function main() {
   });
   const skills = result.writtenFiles.filter((f) => f.includes("SKILL.md")).map((f) => f.split("/").slice(-2)[0]);
   const hasMcp = result.writtenFiles.some((f) => f.includes(".mcp.json"));
-  const hasClaude = result.writtenFiles.some((f) => f.includes("CLAUDE.md"));
-  const hasAgents = result.writtenFiles.some((f) => f.includes("AGENTS.md"));
 
-  console.log([
-    "",
-    `\x1b[1mFramepack ${version}\x1b[0m installed!`,
-    "",
-    `  Skills: ${skills.join(", ") || "none"}`,
-    hasMcp ? "  MCP: .mcp.json" : null,
-    hasClaude ? "  Agent guide: CLAUDE.md" : null,
-    hasAgents ? "  Agent guide: AGENTS.md" : null,
-    "",
-    "  Next: restart Claude Code to activate skills.",
-    '  Quick start: npx framepack create --idea "your video idea" --assets ./assets --output-dir ./out',
-    "",
-  ].filter(Boolean).join("\n"));
+  if (skills.length > 0 || hasMcp) {
+    console.log([
+      `  Agent files: ${result.writtenFiles.length} written`,
+      `  Skills: ${skills.join(", ")}`,
+      hasMcp ? "  MCP: .mcp.json" : null,
+      "  Restart your coding agent to activate skills.",
+      "",
+    ].filter(Boolean).join("\n"));
+  }
 }
 
 main().catch((error) => {
