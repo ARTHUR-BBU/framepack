@@ -711,7 +711,7 @@ const DESIGN_SYSTEM_SIGNALS: { id: string; keywords: string[] }[] = [
   { id: "nvidia", keywords: ["ai", "gpu", "green", "dark", "data", "computing", "chip"] },
   { id: "apple", keywords: ["premium", "elegant", "minimal", "apple", "refined", "polished", "ios"] },
   { id: "stripe", keywords: ["fintech", "professional", "purple", "corporate", "payment", "finance"] },
-  { id: "nike", keywords: ["sport", "athletic", "energy", "bold", "monochrome", "fitness", "running"] },
+  { id: "nike", keywords: ["sport", "athletic", "energy", "bold", "monochrome", "fitness", "running", "football", "soccer", "basketball", "jersey", "team", "stadium", "transfer"] },
   { id: "ferrari", keywords: ["luxury", "automotive", "red", "cinematic", "editorial", "racing", "italian"] },
   { id: "lamborghini", keywords: ["aggressive", "luxury", "dark", "performance", "supercar"] },
   { id: "bugatti", keywords: ["ultra-luxury", "exclusive", "dark", "refined", "hypercar"] },
@@ -753,9 +753,9 @@ function buildCapabilityRecommendations(idea: string, style: string, templateId:
   return recs;
 }
 
-function matchDesignSystem(signal: string): string {
+function matchDesignSystem(signal: string): string | null {
   const lower = signal.toLowerCase();
-  let bestId = "stripe";
+  let bestId: string | null = null;
   let bestScore = 0;
 
   for (const ds of DESIGN_SYSTEM_SIGNALS) {
@@ -766,11 +766,48 @@ function matchDesignSystem(signal: string): string {
     }
   }
 
-  return bestId;
+  // Require at least 2 keyword matches to avoid false positives.
+  return bestScore >= 2 ? bestId : null;
 }
 
-function buildDesignFiles(idea: string, style: string): Record<string, string> {
+function buildDesignFiles(idea: string, style: string, brandColors?: string): Record<string, string> {
+  // When user provides explicit brand colors, skip design system matching.
+  if (brandColors) {
+    const colors = brandColors.split(",").map((c) => c.trim()).filter(Boolean);
+    return {
+      "DESIGN_TOKENS.md": [
+        "# Design Tokens",
+        "",
+        "User-specified brand colors. Use these exact values in composition code.",
+        "",
+        "## Colors",
+        "",
+        ...colors.map((c, i) => `- ${i === 0 ? "Primary" : i === 1 ? "Secondary" : i === 2 ? "Accent" : `Color ${i + 1}`}: ${c}`),
+        "",
+        "## Typography",
+        "",
+        "- Select typography that matches the brand's industry and tone.",
+        "",
+      ].join("\n"),
+    };
+  }
+
   const designId = matchDesignSystem(`${idea} ${style}`);
+
+  // No match found — let the agent decide colors.
+  if (!designId) {
+    return {
+      "DESIGN_TOKENS.md": [
+        "# Design Tokens",
+        "",
+        "No design system matched. Agent should establish colors and typography based on user style words.",
+        "",
+        "Use `--brand-colors \"#RRGGBB,#RRGGBB,...\"` to specify exact brand colors.",
+        "",
+      ].join("\n"),
+    };
+  }
+
   const designSourcePath = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "templates", "designs", `${designId}.md`);
 
   if (!existsSync(designSourcePath)) {
@@ -846,9 +883,12 @@ const SKELETON_SCENES: Record<string, { id: string; label: string; duration: num
     { id: "cta", label: "CTA — enroll now", duration: 3 },
   ],
   "game-ad": [
-    { id: "action", label: "Action — explosive gameplay moment", duration: 3 },
-    { id: "progression", label: "Progression — show the journey", duration: 5 },
-    { id: "reward", label: "Reward — what you get", duration: 4 },
+    { id: "hook", label: "Hook — explosive opening moment", duration: 3 },
+    { id: "action", label: "Action — show the highlight", duration: 5 },
+    { id: "stats", label: "Stats — numbers and metrics", duration: 4 },
+    { id: "progression", label: "Progression — the journey", duration: 5 },
+    { id: "reward", label: "Reward — the payoff", duration: 4 },
+    { id: "cta", label: "CTA — what to do next", duration: 3 },
   ],
   "founder-story": [
     { id: "tension", label: "Tension — the struggle", duration: 5 },
@@ -979,6 +1019,7 @@ function buildFiles(input: {
   format: "16:9" | "9:16";
   durationSec: number;
   assets: WorkbenchAsset[];
+  brandColors?: string;
 }) {
   const assetList = formatAssets(input.assets);
   const recommendation = recommendPolishArsenal(input);
@@ -1309,7 +1350,7 @@ function buildFiles(input: {
       idea: input.idea,
       templateId: recommendation.template.id,
     }),
-    ...buildDesignFiles(input.idea, input.style),
+    ...buildDesignFiles(input.idea, input.style, input.brandColors),
   };
 }
 
@@ -1353,6 +1394,7 @@ export function createWorkbenchProject(input: {
   style?: string;
   format?: "16:9" | "9:16";
   durationSec?: number;
+  brandColors?: string;
 }): WorkbenchProject {
   const projectDir = resolve(input.outputDir, input.projectName);
   const assets = scanAssets(input.assetDir);
@@ -1363,6 +1405,7 @@ export function createWorkbenchProject(input: {
     format: input.format ?? "16:9",
     durationSec: input.durationSec ?? 45,
     assets,
+    brandColors: input.brandColors,
   });
 
   for (const [filePath, content] of Object.entries(files)) {

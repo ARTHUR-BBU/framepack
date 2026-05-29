@@ -161,7 +161,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.16";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.17";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -616,6 +616,7 @@ function runCreateCommand(args: string[], io: CliIo): number {
   let style = getOptionalArg(args, "--style");
   let durationSec = Number(getOptionalArg(args, "--duration") ?? "0");
   let format = (getOptionalArg(args, "--format") ?? "16:9") as "16:9" | "9:16";
+  const brandColors = getOptionalArg(args, "--brand-colors");
 
   // Load VIDEO_DNA metadata when provided.
   if (dnaPath) {
@@ -639,6 +640,12 @@ function runCreateCommand(args: string[], io: CliIo): number {
 
   if (!idea) throw new Error("Missing --idea or --dna argument. Provide a creative idea or a VIDEO_DNA.md file path.");
 
+  // Extract duration from idea text when not explicitly set.
+  if (!durationSec || durationSec < 5) {
+    const durMatch = idea.match(/(\d+)\s*(?:秒|second|sec|s\b)/i);
+    if (durMatch) durationSec = parseInt(durMatch[1], 10);
+  }
+
   if (format !== "16:9" && format !== "9:16") {
     throw new Error("Invalid --format value. Use 16:9 or 9:16.");
   }
@@ -656,6 +663,7 @@ function runCreateCommand(args: string[], io: CliIo): number {
     style,
     format,
     durationSec,
+    brandColors,
   });
 
   // Copy VIDEO_DNA.md into the project if provided.

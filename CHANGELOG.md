@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0-alpha.17
+
+- fix P0: DESIGN_TOKENS brand color extraction — require 2+ keyword matches, no false positives
+- fix P0: add `--brand-colors "#hex,#hex,..."` parameter to create command for explicit brand colors
+- fix P0: extract duration from idea text ("30秒", "30 seconds", "30s") when --duration not specified
+- improve game-ad HTML skeleton from 3 to 6 scenes (hook, action, stats, progression, reward, cta)
+- 175/175 tests pass
+
 ## 0.5.0-alpha.16
 
 - update all three READMEs (GitHub, npm, Chinese) with alpha.13-15 features
