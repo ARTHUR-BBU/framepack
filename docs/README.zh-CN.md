@@ -332,15 +332,109 @@ framepack --version
 framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
 framepack create --dna <VIDEO_DNA.md> --assets <dir> --output-dir <dir>
+framepack build --project-dir <dir>                # 从规划文件编译生成 HTML
+framepack preview --project-dir <dir> --open       # 预览 + 自动打开浏览器
+framepack render --project-dir <dir> --audio <mp3> # 渲染 MP4 + 合并音频
+framepack template save --name <n> --category <c>  # 保存 agent 模板
+framepack scene-templates list                     # 列出所有场景模板
+framepack scene-templates recommend --category <c> # 推荐模板
+framepack scene-templates stats                    # 模板统计
 framepack init-agent --target auto --scope project
 framepack workbench check --project-dir <dir>
 framepack workbench brief --project-dir <dir>
 framepack lint                              # 运行 HyperFrames lint
-framepack preview                           # 打开 Studio 预览
-framepack render                            # 渲染为 MP4
 framepack catalog                           # 列出 Catalog 组件
 framepack catalog install                   # 批量安装所有组件
 framepack mcp --describe
 ```
 
 旧的 `generate`、`validate`、`status` 和 runtime 命令在过渡期可能保留，但 0.5 的公开主线是 workbench。
+
+## 场景模板
+
+Framepack 内置 20 个场景模板，覆盖 6 大类别。每个模板是一个独立的 HTML/CSS/GSAP 积木块，agent 可以选择、填充实体数据、组装成完整视频。
+
+| 类别 | 模板 | 用途 |
+|------|------|------|
+| **opening** | dark-build, impact-slam, reveal-from-black, kinetic-burst | 视频开场、抓注意力 |
+| **name-reveal** | fly-through, slam-down, split-reveal, typewriter | 名字/标题揭露、公告 |
+| **stats** | counter-cards, progress-bars, radial-chart | 数据、指标、社会认证 |
+| **footage** | fullscreen-labels, split-screen, picture-in-picture | 视频素材 + 覆盖层 |
+| **cta** | bold-text, button-pulse, countdown | 行动号召 |
+| **transition** | hard-cut, dissolve, white-flash | 场景转场 |
+
+模板使用 CSS 变量（`var(--accent-primary)`）引用品牌色，包含 GSAP 动画注释。Agent 也可以创造并保存自定义模板：
+
+```bash
+framepack template save --name "my-opening" --category "opening" --tags "dark,dramatic" --project-dir ./out/my-video
+```
+
+保存的模板会被自动索引，匹配引擎会使用它们。
+
+## 实体提取
+
+`framepack create` 和 `framepack build` 会从用户的 idea 文字中提取实体：
+
+- **人名/品牌名**：专有名词、品牌名、转会模式（"Ederson → Manchester United"）
+- **数字**：带单位（"£50m"、"100 saves"、"30秒"）
+- **动作**：transfer、launch、reveal、announcement 等
+- **风格关键词**：premium、energetic、dramatic、cinematic 等
+- **时长**：从文本模式提取（"30 seconds"、"30秒"、"30-second"）
+
+提取的实体自动填充模板占位符：`{{entityName}}`、`{{statValue}}`、`{{ctaHeadline}}` 等。
+
+## Build 命令
+
+`framepack build` 从规划文件编译生成可预览的 HTML composition：
+
+```bash
+npx framepack build --project-dir ./out/ederson-v3
+```
+
+它会读取：
+- `COMPOSITION.md` — 场景方案、代码模板、创意方向
+- `DESIGN_TOKENS.md` — 品牌色和字体
+- `ASSETS.md` — 素材列表和类型
+- `.framepack/state.json` — 项目元数据
+
+然后生成 `index.html`，包含：
+- 按场景角色匹配的模板（opening → dark-build、stats → counter-cards 等）
+- 从用户 idea 提取实体并填充的内容
+- 完整 GSAP 时间线（真实时间点 + 转场）
+- 视频/图片素材自动嵌入场景
+
+## 完整工作流
+
+```bash
+# Step 1: 规划 — 生成 12 个工作台文件 + 初始骨架
+npx framepack create --idea "Ederson → 曼联转会宣传片 30秒" \
+  --brand-colors "#DA291C,#000000,#FFE500" --assets ./assets \
+  --output-dir ./out --project-name ederson-v3 --format 9:16
+
+# Step 2: 编译 — 规划文件 → 增强 HTML
+npx framepack build --project-dir ./out/ederson-v3
+
+# Step 3: 预览 — 自动打开浏览器
+npx framepack preview --project-dir ./out/ederson-v3 --open
+
+# Step 4: 渲染 — 视频 + 音频合并
+npx framepack render --project-dir ./out/ederson-v3 --audio bgm.mp3
+```
+
+## MCP 知识接口
+
+Framepack MCP 是**知识查询接口**，不是命令镜像。三个工具让 agent 随时问"这个效果怎么做？"：
+
+| 工具 | 查询 | 返回 |
+|------|------|------|
+| `querySceneTemplate` | `{ purpose: "name-reveal", format: "9:16" }` | 匹配的模板代码 + 使用说明 |
+| `recommendAnimation` | `{ element: "stat-number", style: "impact" }` | GSAP 代码片段 |
+| `getComponentCode` | `{ componentId: "caption-kinetic-slam" }` | 组件 CSS + JS |
+
+三个知识资源提供最佳实践：
+
+| 资源 | 内容 |
+|------|------|
+| `framepack://knowledge/video-design` | HeyGen/Synthesia 模式、3 秒钩子法则、文字大小层级 |
+| `framepack://knowledge/hyperframes-rules` | 15 条 HyperFrames 兼容规则 |
+| `framepack://templates/scene-templates` | 完整模板索引 + 统计 |

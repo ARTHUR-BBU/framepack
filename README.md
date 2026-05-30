@@ -333,6 +333,95 @@ Framepack targets HyperFrames as its primary render runtime. It does not ask use
 - GSAP for HyperFrames-safe timeline motion.
 - Anime.js, SVG, Canvas, PixiJS, and asset-forge tools when they fit the creative goal.
 
+## Scene Templates
+
+Framepack ships 20 built-in scene templates across 6 categories. Each template is a self-contained HTML/CSS/GSAP building block that agents can select, fill with entity data, and compose into complete videos.
+
+| Category | Templates | Use for |
+|----------|-----------|---------|
+| **opening** | dark-build, impact-slam, reveal-from-black, kinetic-burst | Video hooks, attention grabs |
+| **name-reveal** | fly-through, slam-down, split-reveal, typewriter | Name/title reveals, announcements |
+| **stats** | counter-cards, progress-bars, radial-chart | Data, metrics, social proof |
+| **footage** | fullscreen-labels, split-screen, picture-in-picture | Video footage with overlays |
+| **cta** | bold-text, button-pulse, countdown | Calls to action |
+| **transition** | hard-cut, dissolve, white-flash | Scene-to-scene transitions |
+
+Templates use CSS variables (`var(--accent-primary)`) for brand colors and include GSAP animation comments. Agents can also create and save custom templates:
+
+```bash
+framepack template save --name "my-opening" --category "opening" --tags "dark,dramatic" --project-dir ./out/my-video
+```
+
+Saved templates are auto-indexed and returned by the matching engine.
+
+## Entity Extraction
+
+`framepack create` and `framepack build` extract entities from the user's idea text:
+
+- **Names**: proper nouns, brand names, transfer patterns ("Ederson → Manchester United")
+- **Numbers**: with units ("£50m", "100 saves", "30秒")
+- **Actions**: transfer, launch, reveal, announcement, etc.
+- **Style keywords**: premium, energetic, dramatic, cinematic, etc.
+- **Duration**: from text patterns ("30 seconds", "30秒", "30-second")
+
+Extracted entities fill template placeholders automatically: `{{entityName}}`, `{{statValue}}`, `{{ctaHeadline}}`, etc.
+
+## Build Command
+
+The `framepack build` command compiles planning files into a previewable HTML composition:
+
+```bash
+npx framepack build --project-dir ./out/ederson-v3
+```
+
+It reads:
+- `COMPOSITION.md` — scene shape, code templates, creative direction
+- `DESIGN_TOKENS.md` — brand colors and typography
+- `ASSETS.md` — asset list and types
+- `.framepack/state.json` — project metadata
+
+Then generates an `index.html` with:
+- Scene templates matched per role (opening → dark-build, stats → counter-cards, etc.)
+- Entity-filled content from the user's idea
+- Complete GSAP timeline with real timing and transitions
+- Video/image assets embedded in scenes
+
+## Full Workflow
+
+```bash
+# Step 1: Plan — generates 12 workbench files + initial skeleton
+npx framepack create --idea "Ederson → Manchester United transfer promo 30s" \
+  --brand-colors "#DA291C,#000000,#FFE500" --assets ./assets \
+  --output-dir ./out --project-name ederson-v3 --format 9:16
+
+# Step 2: Compile — planning files → enhanced HTML
+npx framepack build --project-dir ./out/ederson-v3
+
+# Step 3: Preview — auto-opens browser
+npx framepack preview --project-dir ./out/ederson-v3 --open
+
+# Step 4: Render — video + audio merge
+npx framepack render --project-dir ./out/ederson-v3 --audio bgm.mp3
+```
+
+## MCP Knowledge Interface
+
+Framepack MCP is a **knowledge query interface**, not a command mirror. Three tools let agents ask "how do I make this effect?":
+
+| Tool | Query | Returns |
+|------|-------|---------|
+| `querySceneTemplate` | `{ purpose: "name-reveal", format: "9:16" }` | Matching template code + usage |
+| `recommendAnimation` | `{ element: "stat-number", style: "impact" }` | GSAP code snippet |
+| `getComponentCode` | `{ componentId: "caption-kinetic-slam" }` | Component CSS + JS |
+
+Three knowledge resources provide best practices:
+
+| Resource | Content |
+|----------|---------|
+| `framepack://knowledge/video-design` | HeyGen/Synthesia patterns, 3-second hook rule, typography scale |
+| `framepack://knowledge/hyperframes-rules` | 15 HyperFrames compatibility rules |
+| `framepack://templates/scene-templates` | Complete template index with stats |
+
 ## HyperFrames Safety
 
 Framepack workbenches remind agents to avoid common render traps:
@@ -354,12 +443,17 @@ framepack --version
 framepack --help
 framepack create --idea <idea> --assets <dir> --output-dir <dir>
 framepack create --dna <VIDEO_DNA.md> --assets <dir> --output-dir <dir>
+framepack build --project-dir <dir>                # compile planning files → HTML
+framepack preview --project-dir <dir> --open       # preview + auto-open browser
+framepack render --project-dir <dir> --audio <mp3> # render to MP4 + merge audio
+framepack template save --name <n> --category <c>  # save agent template
+framepack scene-templates list                     # list all scene templates
+framepack scene-templates recommend --category <c> # recommend templates
+framepack scene-templates stats                    # template statistics
 framepack init-agent --target auto --scope project
 framepack workbench check --project-dir <dir>
 framepack workbench brief --project-dir <dir>
 framepack lint                                    # run HyperFrames lint
-framepack preview                                 # open Studio preview
-framepack render                                  # render to MP4
 framepack catalog                                 # list Catalog items
 framepack catalog install                         # batch-install all components
 framepack mcp --describe

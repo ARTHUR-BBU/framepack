@@ -8,6 +8,42 @@ Framepack is the harness and compiler layer in a mixed workflow: asset library +
 
 In the Agent Harness model, Codex or Claude Code is the general-purpose brain, Framepack is the video-production nervous system, and HyperFrames is the rendering body.
 
+## Quick Workflow (0.5+)
+
+```bash
+# Step 1: Plan
+npx framepack create --idea "Ederson → MUFC transfer promo 30s" \
+  --brand-colors "#DA291C,#000000,#FFE500" --assets ./assets \
+  --output-dir ./out --project-name ederson-v3 --format 9:16
+
+# Step 2: Compile
+npx framepack build --project-dir ./out/ederson-v3
+
+# Step 3: Preview
+npx framepack preview --project-dir ./out/ederson-v3 --open
+
+# Step 4: Render
+npx framepack render --project-dir ./out/ederson-v3 --audio bgm.mp3
+```
+
+## Scene Templates
+
+20 built-in templates across 6 categories (opening, name-reveal, stats, footage, cta, transition). Each is a self-contained HTML/CSS/GSAP building block. The matching engine selects the best template per scene role.
+
+Agents can create and persist custom templates:
+
+```bash
+npx framepack template save --name "my-opening" --category "opening" --tags "dark,dramatic"
+```
+
+## MCP Knowledge Tools
+
+Three tools for querying Framepack knowledge at coding time:
+
+- `querySceneTemplate` — find scene template code by purpose/category
+- `recommendAnimation` — get GSAP animation code for elements
+- `getComponentCode` — read bundled component HTML from Catalog
+
 ## Mental Model
 
 - Framepack prepares the project package.
@@ -44,6 +80,12 @@ npx -y -p framepack@beta framepack --version
 npx -y -p framepack@beta framepack --help
 npm exec --yes --package=framepack@beta -- framepack mcp --describe
 npx framepack mcp --describe
+npx framepack build --project-dir ./out/ederson-v3
+npx framepack preview --project-dir ./out/ederson-v3 --open
+npx framepack render --project-dir ./out/ederson-v3 --audio bgm.mp3
+npx framepack template save --name "my-opening" --category "opening" --tags "dark,dramatic"
+npx framepack scene-templates list
+npx framepack scene-templates recommend --category "name-reveal"
 npx framepack atlas --json
 npx framepack atlas get library.animejs --json
 npx framepack atlas recommend --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade --output-type game-ad --format 9:16 --json
