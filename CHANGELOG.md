@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.6.0-alpha.1
+
+- add external template registry support
+  - `framepack scene-templates registries` — list available registries (HyperFrames blocks, GSAP community, Remotion community)
+  - `framepack scene-templates search --registry <id>` — search external templates
+  - `framepack scene-templates install --id <template-id> --registry <id>` — download and install external template
+  - `fetchRegistryIndex()` — fetch with 1-hour local cache, offline fallback
+  - `installExternalTemplate()` — download HTML and save as local template
+- `listRegistries()` — list default template registries
+- 200/198 tests pass (2 new: registry listing, registries CLI)
+
 ## 0.5.0-beta.1
 
 Beta milestone — all P0+P1 issues from alpha.20 test report resolved.

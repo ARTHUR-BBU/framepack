@@ -98,6 +98,7 @@ import {
   loadAllTemplates,
   matchSceneTemplates,
   getTemplateStats,
+  listRegistries,
 } from "../dist/workbench/scene-templates.js";
 
 const fixturePath = resolve(
@@ -2573,7 +2574,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-beta.1");
+      assert.equal(packageJson.version, "0.6.0-alpha.1");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2611,7 +2612,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-beta.1");
+      assert.equal(versionStdout.join("\n").trim(), "0.6.0-alpha.1");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -7718,6 +7719,40 @@ Framepack compiles content into executable video projects.
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
+    },
+  },
+
+  // --- 0.6.0-alpha.1: external template registries ---
+
+  {
+    name: "listRegistries returns default registries",
+    run() {
+      const registries = listRegistries();
+      assert.ok(registries.length >= 3, "Should have at least 3 registries");
+      const ids = registries.map(r => r.id);
+      assert.ok(ids.includes("hyperframes-blocks"), "Should include hyperframes-blocks");
+      assert.ok(ids.includes("gsap-community"), "Should include gsap-community");
+      assert.ok(ids.includes("remotion-community"), "Should include remotion-community");
+
+      for (const r of registries) {
+        assert.ok(r.id, "Registry should have id");
+        assert.ok(r.name, "Registry should have name");
+        assert.ok(r.baseUrl, "Registry should have baseUrl");
+        assert.ok(r.format, "Registry should have format");
+      }
+    },
+  },
+
+  {
+    name: "scene-templates registries CLI lists registries",
+    run() {
+      const stdout = execSync(
+        `node dist/cli.js scene-templates registries`,
+        { cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."), encoding: "utf-8" },
+      );
+      assert.match(stdout, /hyperframes-blocks/);
+      assert.match(stdout, /gsap-community/);
+      assert.match(stdout, /remotion-community/);
     },
   },
 ];

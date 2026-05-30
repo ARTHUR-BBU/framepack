@@ -324,6 +324,150 @@ export function listRegistries(): TemplateRegistryEntry[] {
   return DEFAULT_REGISTRIES;
 }
 
+/**
+ * Fetch and cache external template index from a registry.
+ * Returns cached data when offline.
+ */
+export async function fetchRegistryIndex(registryId: string): Promise<ExternalTemplateEntry[]> {
+  const registry = DEFAULT_REGISTRIES.find(r => r.id === registryId);
+  if (!registry) throw new Error(`Unknown registry: ${registryId}`);
+
+  const cacheDir = getRegistryCacheDir(registryId);
+  const cacheFile = join(cacheDir, "index.json");
+
+  // Return cache if fresh (< 1 hour)
+  if (existsSync(cacheFile)) {
+    const stat = await import("node:fs").then(fs => fs.statSync(cacheFile));
+    const ageMs = Date.now() - stat.mtimeMs;
+    if (ageMs < 3600000) {
+      try {
+        return JSON.parse(readFileSync(cacheFile, "utf-8"));
+      } catch { /* cache corrupt */ }
+    }
+  }
+
+  // Fetch from registry
+  try {
+    const entries = await fetchFromRegistry(registry);
+
+    // Cache the result
+    mkdirSync(cacheDir, { recursive: true });
+    writeFileSync(cacheFile, JSON.stringify(entries, null, 2));
+
+    return entries;
+  } catch (err) {
+    // Return stale cache on network error
+    if (existsSync(cacheFile)) {
+      try { return JSON.parse(readFileSync(cacheFile, "utf-8")); } catch { /* ignore */ }
+    }
+    throw new Error(`Failed to fetch registry '${registryId}': ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+export interface ExternalTemplateEntry {
+  id: string;
+  name: string;
+  category: SceneTemplateCategory;
+  tags: string[];
+  url: string;
+  format: string;
+  minDuration: number;
+  maxDuration: number;
+}
+
+/**
+ * Download and install an external template as a local cached template.
+ */
+export async function installExternalTemplate(
+  entry: ExternalTemplateEntry,
+  projectDir?: string,
+): Promise<string> {
+  try {
+    const response = await fetch(entry.url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const html = await response.text();
+
+    const template: Omit<SceneTemplate, "source"> = {
+      id: `ext-${entry.id}`,
+      category: entry.category,
+      tags: [...entry.tags, "external", entry.id],
+      format: "any",
+      html,
+      requiredTokens: [],
+      minDuration: entry.minDuration,
+      maxDuration: entry.maxDuration,
+    };
+
+    const path = saveAgentTemplate(template as SceneTemplate, projectDir);
+    _builtinCache = null;
+    return path;
+  } catch (err) {
+    throw new Error(`Failed to install template '${entry.id}': ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+async function fetchFromRegistry(registry: TemplateRegistryEntry): Promise<ExternalTemplateEntry[]> {
+  const entries: ExternalTemplateEntry[] = [];
+
+  if (registry.id === "hyperframes-blocks") {
+    // Fetch block list from HyperFrames GitHub registry
+    const indexUrl = `${registry.baseUrl}/index.json`;
+    const response = await fetch(indexUrl);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const index = await response.json() as Record<string, unknown[]>;
+
+    const blocks = Array.isArray(index) ? index : (index.blocks ?? []);
+    for (const block of blocks) {
+      const b = block as Record<string, unknown>;
+      const blockId = String(b.id ?? b.name ?? "unknown");
+      const categories = BLOCK_SCENE_MAP[blockId] ?? ["footage"];
+      entries.push({
+        id: blockId,
+        name: String(b.title ?? b.name ?? blockId),
+        category: categories[0],
+        tags: ["block", blockId, ...(Array.isArray(b.tags) ? b.tags as string[] : [])],
+        url: `${registry.baseUrl}/${blockId}/${blockId}.html`,
+        format: "hyperframes-html",
+        minDuration: Number(b.minDuration ?? 3),
+        maxDuration: Number(b.maxDuration ?? 20),
+      });
+    }
+  }
+
+  // GSAP and Remotion registries — search via GitHub API
+  if (registry.id === "gsap-community" || registry.id === "remotion-community") {
+    const topic = registry.id === "gsap-community" ? "gsap-animation" : "programmatic-video";
+    const apiUrl = `https://api.github.com/search/repositories?q=topic:${topic}&sort=stars&per_page=10`;
+
+    const response = await fetch(apiUrl, {
+      headers: { "Accept": "application/vnd.github.v3+json" },
+    });
+    if (!response.ok) throw new Error(`GitHub API HTTP ${response.status}`);
+    const data = await response.json() as { items: Array<Record<string, unknown>> };
+
+    for (const repo of (data.items ?? []).slice(0, 10)) {
+      const repoName = String(repo.full_name ?? repo.name ?? "unknown");
+      entries.push({
+        id: repoName.replace("/", "-"),
+        name: String(repo.description ?? repoName).slice(0, 100),
+        category: "opening",
+        tags: [topic, "community", ...(String(repo.description ?? "").toLowerCase().match(/\b\w{4,}\b/g) ?? [])].slice(0, 8),
+        url: String(repo.html_url ?? `https://github.com/${repoName}`),
+        format: registry.format,
+        minDuration: 2,
+        maxDuration: 30,
+      });
+    }
+  }
+
+  return entries;
+}
+
+function getRegistryCacheDir(registryId: string): string {
+  const home = process.env.USERPROFILE || process.env.HOME || "";
+  return join(home, ".framepack", "cache", "registries", registryId);
+}
+
 // ── Template Statistics ───────────────────────────────
 
 export interface TemplateStats {

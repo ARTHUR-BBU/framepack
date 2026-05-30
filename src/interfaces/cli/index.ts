@@ -64,8 +64,12 @@ import {
   matchSceneTemplates,
   getTemplateStats,
   saveAgentTemplate,
+  fetchRegistryIndex,
+  installExternalTemplate,
+  listRegistries,
   type SceneTemplateQuery,
   type SceneTemplateCategory,
+  type ExternalTemplateEntry,
 } from "../../workbench/scene-templates.js";
 
 export interface CliIo {
@@ -176,7 +180,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-beta.1";
+const FRAMEPACK_CLI_VERSION = "0.6.0-alpha.1";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -1138,7 +1142,93 @@ function runSceneTemplatesCommand(args: string[], io: CliIo): number {
     return 0;
   }
 
-  throw new Error("Invalid scene-templates subcommand. Use: list, recommend, stats");
+  throw new Error("Invalid scene-templates subcommand. Use: list, recommend, stats, search, registries, install");
+}
+
+async function runSceneTemplatesAsync(args: string[], io: CliIo): Promise<number> {
+  const subcommand = args[0];
+
+  if (subcommand === "registries") {
+    const registries = listRegistries();
+    io.stdout([
+      "Template Registries:",
+      "",
+      ...registries.map(r => [
+        `  ${r.id} (${r.name})`,
+        `    Format: ${r.format}`,
+        `    URL: ${r.baseUrl}`,
+      ].join("\n")),
+    ].join("\n"));
+    return 0;
+  }
+
+  if (subcommand === "search") {
+    const registryId = getOptionalArg(args, "--registry") ?? "hyperframes-blocks";
+    const category = getOptionalArg(args, "--category");
+
+    io.stdout(`Searching registry: ${registryId}...`);
+    try {
+      const entries = await fetchRegistryIndex(registryId);
+      const filtered = category
+        ? entries.filter(e => e.category === category)
+        : entries;
+
+      if (filtered.length === 0) {
+        io.stdout("No external templates found.");
+        return 0;
+      }
+
+      io.stdout([
+        "",
+        `Found ${filtered.length} templates in ${registryId}:`,
+        "",
+        ...filtered.map((e, i) => [
+          `${i + 1}. ${e.name} (${e.id})`,
+          `   Category: ${e.category} | Tags: ${e.tags.join(", ")}`,
+          `   Duration: ${e.minDuration}-${e.maxDuration}s`,
+          `   URL: ${e.url}`,
+        ].join("\n")),
+      ].join("\n"));
+    } catch (err) {
+      io.stderr(`Search failed: ${err instanceof Error ? err.message : String(err)}`);
+      return 1;
+    }
+    return 0;
+  }
+
+  if (subcommand === "install") {
+    const entryId = getRequiredArg(args, "--id");
+    const registryId = getOptionalArg(args, "--registry") ?? "hyperframes-blocks";
+    const projectDir = getOptionalArg(args, "--project-dir");
+
+    io.stdout(`Installing template '${entryId}' from ${registryId}...`);
+    try {
+      const entries = await fetchRegistryIndex(registryId);
+      const entry = entries.find(e => e.id === entryId);
+      if (!entry) {
+        io.stderr(`Template '${entryId}' not found in registry '${registryId}'.`);
+        io.stderr(`Available: ${entries.map(e => e.id).join(", ")}`);
+        return 1;
+      }
+
+      const path = await installExternalTemplate(entry, projectDir);
+      io.stdout([
+        `Installed: ${entry.id}`,
+        `  Category: ${entry.category}`,
+        `  Tags: ${entry.tags.join(", ")}`,
+        `  Path: ${path}`,
+        "",
+        "Template is now available in scene-templates list.",
+      ].join("\n"));
+    } catch (err) {
+      io.stderr(`Install failed: ${err instanceof Error ? err.message : String(err)}`);
+      return 1;
+    }
+    return 0;
+  }
+
+  io.stderr("Unknown async subcommand. Use: registries, search, install");
+  return 1;
 }
 
 function runTemplateCommand(args: string[], io: CliIo): number {
@@ -1820,7 +1910,12 @@ export async function runCli(
     }
 
     if (command === "scene-templates") {
-      return runSceneTemplatesCommand(args.slice(1), io);
+      const stArgs = args.slice(1);
+      const asyncSubs = new Set(["search", "registries", "install"]);
+      if (asyncSubs.has(stArgs[0])) {
+        return await runSceneTemplatesAsync(stArgs, io);
+      }
+      return runSceneTemplatesCommand(stArgs, io);
     }
 
     if (command === "template") {
