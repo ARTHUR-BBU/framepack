@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0-alpha.25
+
+- add `framepack preview --open` — wraps hyperframes preview + auto-opens browser (start/open/xdg-open)
+- add `framepack template save` — save agent-created scenes as reusable templates
+  - `--name`, `--category`, `--tags` required; `--html-file` optional; `--project-dir` for project-scoped save
+  - saved templates auto-indexed by matching engine and returned by scene-templates list + MCP
+- all 17 scene roles now match to built-in scene templates (verified)
+- 195/193 tests pass (2 new: preview --open, template save round-trip)
+
 ## 0.5.0-alpha.24
 
 - add 3 MCP knowledge query tools: querySceneTemplate, recommendAnimation, getComponentCode

@@ -62,7 +62,9 @@ import {
   loadAllTemplates,
   matchSceneTemplates,
   getTemplateStats,
+  saveAgentTemplate,
   type SceneTemplateQuery,
+  type SceneTemplateCategory,
 } from "../../workbench/scene-templates.js";
 
 export interface CliIo {
@@ -128,7 +130,8 @@ type CliCommandName =
   | "sync-captures"
   | "sync-assets"
   | "scaffold"
-  | "scene-templates";
+  | "scene-templates"
+  | "template";
 
 interface CliDependencies {
   captureProject?: typeof materializeProjectAssets;
@@ -171,7 +174,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.24";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.25";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -198,6 +201,7 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack validate --project-dir <package>",
   "  framepack scene-templates list [--category <cat>] [--format <16:9|9:16>]",
   "  framepack scene-templates recommend --category <cat> --tags <tags>",
+  "  framepack template save --name <id> --category <cat> [--tags <tags>]",
   "  framepack runtime doctor --project-dir <package>",
   "",
   "Agent-first install check:",
@@ -326,7 +330,8 @@ function getCommandName(args: string[]): CliCommandName {
     command === "sync-captures" ||
     command === "sync-assets" ||
     command === "scaffold" ||
-    command === "scene-templates"
+    command === "scene-templates" ||
+    command === "template"
   ) {
     return command;
   }
@@ -368,7 +373,8 @@ function getCommandArgs(args: string[]): string[] {
     first === "render" ||
     first === "sync-captures" ||
     first === "sync-assets" ||
-    first === "scene-templates"
+    first === "scene-templates" ||
+    first === "template"
   ) {
     return args.slice(1);
   }
@@ -1111,6 +1117,73 @@ function runSceneTemplatesCommand(args: string[], io: CliIo): number {
   throw new Error("Invalid scene-templates subcommand. Use: list, recommend, stats");
 }
 
+function runTemplateCommand(args: string[], io: CliIo): number {
+  const subcommand = args[0];
+
+  if (subcommand === "save") {
+    const name = getRequiredArg(args, "--name");
+    const category = getRequiredArg(args, "--category") as SceneTemplateCategory;
+    const tagsStr = getOptionalArg(args, "--tags");
+    const projectDir = getOptionalArg(args, "--project-dir");
+
+    const validCategories = new Set(["opening", "name-reveal", "stats", "footage", "cta", "transition", "overlay"]);
+    if (!validCategories.has(category)) {
+      throw new Error(`Invalid --category '${category}'. Use: ${[...validCategories].join(", ")}`);
+    }
+
+    // Read HTML from stdin or a file
+    const htmlFile = getOptionalArg(args, "--html-file");
+    let html: string;
+    if (htmlFile) {
+      try {
+        html = readFileSync(resolve(htmlFile), "utf-8");
+      } catch (err) {
+        throw new Error(`Cannot read --html-file '${htmlFile}': ${err instanceof Error ? err.message : String(err)}`);
+      }
+    } else {
+      // Generate a basic template from the name and category
+      html = [
+        `<!-- Agent-created template: ${name} -->`,
+        `<div class="scene clip" data-start="{{sceneStart}}" data-duration="{{sceneDuration}}" style="background:var(--bg-primary);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">`,
+        `  <div class="scene-content">`,
+        `    <h2 class="scene-title" style="font-size:clamp(48px,10vw,140px);font-weight:900;color:var(--text-primary);">{{entityName}}</h2>`,
+        `  </div>`,
+        `</div>`,
+      ].join("\n");
+    }
+
+    const tags = tagsStr ? tagsStr.split(",").map(t => t.trim()) : [];
+
+    const savedPath = saveAgentTemplate(
+      {
+        id: name,
+        category,
+        tags,
+        format: "any",
+        html,
+        requiredTokens: ["--bg-primary", "--text-primary"],
+        minDuration: 2,
+        maxDuration: 15,
+      },
+      projectDir,
+    );
+
+    io.stdout([
+      `Template saved: ${name}`,
+      `  Category: ${category}`,
+      `  Tags: ${tags.join(", ") || "(none)"}`,
+      `  Path: ${savedPath}`,
+      "",
+      "This template is now available to the matching engine and will be",
+      "returned by `framepack scene-templates list` and MCP querySceneTemplate.",
+    ].join("\n"));
+
+    return 0;
+  }
+
+  throw new Error("Invalid template subcommand. Use: save");
+}
+
 function runWorkbenchCommand(args: string[], io: CliIo): number {
   if (args[0] !== "check" && args[0] !== "brief") {
     throw new Error("Invalid workbench command. Use: framepack workbench check --project-dir <dir> or framepack workbench brief --project-dir <dir>");
@@ -1515,6 +1588,36 @@ function runRenderCommand(
   }
 }
 
+function runPreviewCommand(
+  args: string[],
+  io: CliIo,
+  dependencies: CliDependencies = {},
+): number {
+  const shouldOpen = args.includes("--open") || args.includes("-o");
+  const port = getOptionalArg(args, "--port") ?? "3002";
+
+  // Run hyperframes preview
+  const exitCode = runRuntimeActionCommand("preview", args, io, dependencies);
+
+  if (exitCode !== 0) return exitCode;
+
+  // Auto-open browser if requested
+  if (shouldOpen) {
+    const url = `http://localhost:${port}`;
+    io.stdout(`Opening preview: ${url}`);
+    const openCmd = process.platform === "win32" ? "start"
+      : process.platform === "darwin" ? "open"
+      : "xdg-open";
+    try {
+      execSync(`${openCmd} "${url}"`, { stdio: "pipe" });
+    } catch {
+      io.stdout(`Could not auto-open browser. Open manually: ${url}`);
+    }
+  }
+
+  return 0;
+}
+
 function runSyncAssetsCommand(args: string[], io: CliIo): number {
   const projectDir = getRequiredProjectDir(args);
   const result = syncAssetExecutionProject({
@@ -1681,7 +1784,7 @@ export async function runCli(
     }
 
     if (command === "preview") {
-      return runRuntimeActionCommand("preview", args.slice(1), io, dependencies);
+      return runPreviewCommand(args.slice(1), io, dependencies);
     }
 
     if (command === "render") {
@@ -1694,6 +1797,10 @@ export async function runCli(
 
     if (command === "scene-templates") {
       return runSceneTemplatesCommand(args.slice(1), io);
+    }
+
+    if (command === "template") {
+      return runTemplateCommand(args.slice(1), io);
     }
 
     return await runGenerateCommand(args, io);

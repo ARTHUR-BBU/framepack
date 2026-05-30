@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -2572,7 +2573,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.24");
+      assert.equal(packageJson.version, "0.5.0-alpha.25");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2610,7 +2611,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.24");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.25");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -7552,6 +7553,56 @@ Framepack compiles content into executable video projects.
       assert.match(output, /video-design/);
       assert.match(output, /hyperframes-rules/);
       assert.match(output, /scene-templates/);
+    },
+  },
+
+  {
+    name: "preview command accepts --open flag",
+    run: async () => {
+      const logs = [];
+      try {
+        await runCli(
+          ["preview", "--project-dir", "/nonexistent", "--open"],
+          { stdout: (m) => logs.push(m), stderr: (m) => logs.push(m) },
+        );
+      } catch {
+        // Expected to fail — no HyperFrames
+      }
+      const output = logs.join(" ");
+      const hasNoCommandError = !output.includes("Missing or invalid command");
+      assert.ok(hasNoCommandError, "Should route to preview, not throw invalid command");
+    },
+  },
+
+  {
+    name: "template save creates a reusable template file",
+    run() {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-tmpl-save-"));
+      const projectDir = join(tempRoot, "project");
+      mkdirSync(projectDir, { recursive: true });
+      try {
+        // Run template save via CLI — execSync throws on non-zero exit
+        const stdout = execSync(
+          `node dist/cli.js template save --name "test-opening" --category "opening" --tags "test,dramatic" --project-dir "${projectDir}"`,
+          { cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."), encoding: "utf-8" },
+        );
+        assert.match(stdout, /Template saved/);
+
+        // Check the template was saved
+        const savedPath = join(projectDir, ".framepack", "templates", "opening", "test-opening.json");
+        assert.ok(existsSync(savedPath), `Template should be saved at ${savedPath}`);
+        const meta = JSON.parse(readFileSync(savedPath, "utf-8"));
+        assert.equal(meta.id, "test-opening");
+        assert.equal(meta.category, "opening");
+        assert.ok(meta.tags.includes("test"));
+        assert.ok(meta.tags.includes("dramatic"));
+
+        // Check HTML was saved too
+        const htmlPath = join(projectDir, ".framepack", "templates", "opening", "test-opening.html");
+        assert.ok(existsSync(htmlPath), "HTML file should be saved");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
     },
   },
 ];
