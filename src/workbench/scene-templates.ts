@@ -447,11 +447,12 @@ async function fetchFromRegistry(registry: TemplateRegistryEntry): Promise<Exter
 
     for (const repo of (data.items ?? []).slice(0, 10)) {
       const repoName = String(repo.full_name ?? repo.name ?? "unknown");
+      const description = String(repo.description ?? "");
       entries.push({
         id: repoName.replace("/", "-"),
-        name: String(repo.description ?? repoName).slice(0, 100),
-        category: "opening",
-        tags: [topic, "community", ...(String(repo.description ?? "").toLowerCase().match(/\b\w{4,}\b/g) ?? [])].slice(0, 8),
+        name: String(description || repoName).slice(0, 100),
+        category: inferExternalTemplateCategory(`${repoName} ${description}`),
+        tags: [topic, "community", ...(description.toLowerCase().match(/\b\w{4,}\b/g) ?? [])].slice(0, 8),
         url: String(repo.html_url ?? `https://github.com/${repoName}`),
         format: registry.format,
         minDuration: 2,
@@ -461,6 +462,19 @@ async function fetchFromRegistry(registry: TemplateRegistryEntry): Promise<Exter
   }
 
   return entries;
+}
+
+function inferExternalTemplateCategory(text: string): SceneTemplateCategory {
+  const value = text.toLowerCase();
+  const checks: Array<[SceneTemplateCategory, RegExp]> = [
+    ["stats", /\b(chart|charts|graph|graphs|data|dashboard|analytics|metric|metrics|counter|countup|number|numbers|bar|race|visualization)\b/],
+    ["cta", /\b(cta|call.?to.?action|button|subscribe|signup|sign.?up|checkout|pricing|landing|conversion)\b/],
+    ["transition", /\b(transition|wipe|fade|morph|dissolve|cut|flash|glitch)\b/],
+    ["name-reveal", /\b(logo|title|typography|typewriter|text|headline|brand|reveal|intro)\b/],
+    ["footage", /\b(video|footage|showcase|screen|screens|phone|app|product|demo|player|media|mockup)\b/],
+  ];
+
+  return checks.find(([, pattern]) => pattern.test(value))?.[0] ?? "opening";
 }
 
 function getRegistryCacheDir(registryId: string): string {

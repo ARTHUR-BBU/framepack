@@ -180,7 +180,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.6.0-alpha.1";
+const FRAMEPACK_CLI_VERSION = "0.6.0-alpha.2";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -198,6 +198,9 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack workbench check --project-dir <dir>",
   "  framepack workbench brief --project-dir <dir>",
   "  framepack scaffold --project-dir <dir>",
+  "  framepack build --project-dir <dir>",
+  "  framepack preview --project-dir <dir> [--open]",
+  "  framepack render --project-dir <dir> [--audio <file>]",
   "  framepack packs",
   "  framepack atlas --json",
   "  framepack generate --input <file> --output-dir <dir> --goal <goal> --audience <audience>",
@@ -207,6 +210,10 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack validate --project-dir <package>",
   "  framepack scene-templates list [--category <cat>] [--format <16:9|9:16>]",
   "  framepack scene-templates recommend --category <cat> --tags <tags>",
+  "  framepack scene-templates stats",
+  "  framepack scene-templates registries",
+  "  framepack scene-templates search [--registry <id>] [--category <cat>]",
+  "  framepack scene-templates install --id <template-id> [--registry <id>] [--project-dir <dir>]",
   "  framepack template save --name <id> --category <cat> [--tags <tags>]",
   "  framepack runtime doctor --project-dir <package>",
   "",

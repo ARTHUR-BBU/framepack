@@ -99,6 +99,7 @@ import {
   matchSceneTemplates,
   getTemplateStats,
   listRegistries,
+  fetchRegistryIndex,
 } from "../dist/workbench/scene-templates.js";
 
 const fixturePath = resolve(
@@ -2574,7 +2575,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.6.0-alpha.1");
+      assert.equal(packageJson.version, "0.6.0-alpha.2");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2612,11 +2613,18 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.6.0-alpha.1");
+      assert.equal(versionStdout.join("\n").trim(), "0.6.0-alpha.2");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
       assert.match(helpStdout.join("\n"), /framepack create --idea <idea> --assets <dir> --output-dir <dir>/);
+      assert.match(helpStdout.join("\n"), /framepack build --project-dir <dir>/);
+      assert.match(helpStdout.join("\n"), /framepack preview --project-dir <dir>/);
+      assert.match(helpStdout.join("\n"), /framepack render --project-dir <dir>/);
+      assert.match(helpStdout.join("\n"), /framepack scene-templates search/);
+      assert.match(helpStdout.join("\n"), /framepack scene-templates registries/);
+      assert.match(helpStdout.join("\n"), /framepack scene-templates stats/);
+      assert.match(helpStdout.join("\n"), /framepack scene-templates install --id <template-id>/);
       assert.match(helpStdout.join("\n"), /npx -y -p framepack@alpha framepack --version/);
       assert.match(helpStdout.join("\n"), /npx -y -p framepack@alpha framepack --help/);
       assert.match(helpStdout.join("\n"), /npm exec --yes --package=framepack@alpha -- framepack mcp --describe/);
@@ -2668,9 +2676,19 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["HUMAN.md"], /Recommended HyperFrames prompt template/);
         assert.match(project.files["ITERATIONS.md"], /Initial creative package/);
         assert.match(project.files["ITERATIONS.md"], /Human Review Notes/);
+        assert.match(project.files["meta.json"], /"rootEntry": "index.html"/);
+        assert.match(project.files["meta.json"], /"runtime": "hyperframes"/);
         assert.match(project.files[".framepack/state.json"], /"mode": "hyperframes-creative-workbench"/);
         assert.match(project.files[".framepack/state.json"], /"promptTemplateRecommendation"/);
         assert.match(project.files[".framepack/state.json"], /"humanDigest"/);
+        assert.equal(existsSync(join(project.projectDir, "meta.json")), true);
+        const createdHtml = readFileSync(join(project.projectDir, "index.html"), "utf8");
+        assert.match(createdHtml, /data-start="0" data-duration="45" data-width="1920" data-height="1080"/);
+        assert.equal(
+          /<div[^>]+data-scene-id="[^"]+"[^>]+data-start="[^"]+"[^>]*>[\s\S]*?<video[^>]+data-start="/.test(createdHtml),
+          false,
+          "Created timed videos must not be nested inside timed scene elements",
+        );
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -7666,9 +7684,27 @@ Framepack compiles content into executable video projects.
         const html = readFileSync(result.htmlPath, "utf-8");
         assert.ok(html.includes("data-composition-id"), "Should have composition ID");
         assert.ok(html.includes("data-scene-id"), "Should have scene IDs");
+        assert.match(html, /data-start="0" data-duration="18" data-width="1920" data-height="1080"/);
+        assert.equal(
+          html.includes("data-composition-src=\"compositions/blocks/"),
+          false,
+          "Build output should not reference missing block HTML files",
+        );
+        assert.equal(
+          /<div[^>]+data-scene-id="[^"]+"[^>]+data-start="[^"]+"[^>]*>[\s\S]*?<video[^>]+data-start="/.test(html),
+          false,
+          "Timed videos must not be nested inside timed scene elements",
+        );
         assert.ok(html.includes("FF6600"), "Should use design token colors");
         assert.ok(html.includes("gsap.timeline"), "Should have GSAP timeline");
         assert.ok(html.includes("__timelines"), "Should register timeline");
+
+        const runtimeMeta = JSON.parse(readFileSync(join(tempRoot, "meta.json"), "utf8"));
+        assert.equal(runtimeMeta.rootEntry, "index.html");
+        assert.equal(runtimeMeta.runtime, "hyperframes");
+        assert.equal(runtimeMeta.width, 1920);
+        assert.equal(runtimeMeta.height, 1080);
+        assert.equal(runtimeMeta.duration, 18);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -7739,6 +7775,49 @@ Framepack compiles content into executable video projects.
         assert.ok(r.name, "Registry should have name");
         assert.ok(r.baseUrl, "Registry should have baseUrl");
         assert.ok(r.format, "Registry should have format");
+      }
+    },
+  },
+  {
+    name: "external community registries infer useful scene categories",
+    run: async () => {
+      const oldFetch = globalThis.fetch;
+      const oldUserProfile = process.env.USERPROFILE;
+      const oldHome = process.env.HOME;
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-registry-categories-"));
+
+      try {
+        process.env.USERPROFILE = tempRoot;
+        process.env.HOME = tempRoot;
+        globalThis.fetch = async () => new Response(JSON.stringify({
+          items: [
+            {
+              full_name: "demo/chart-race",
+              description: "Animated data chart and analytics dashboard for product metrics.",
+              html_url: "https://example.test/chart-race",
+            },
+            {
+              full_name: "demo/checkout-cta",
+              description: "Landing page CTA button and conversion animation.",
+              html_url: "https://example.test/checkout-cta",
+            },
+            {
+              full_name: "demo/logo-reveal",
+              description: "Cinematic logo typography reveal intro.",
+              html_url: "https://example.test/logo-reveal",
+            },
+          ],
+        }), { status: 200 });
+
+        const entries = await fetchRegistryIndex("gsap-community");
+        assert.equal(entries.find((entry) => entry.id === "demo-chart-race")?.category, "stats");
+        assert.equal(entries.find((entry) => entry.id === "demo-checkout-cta")?.category, "cta");
+        assert.equal(entries.find((entry) => entry.id === "demo-logo-reveal")?.category, "name-reveal");
+      } finally {
+        globalThis.fetch = oldFetch;
+        process.env.USERPROFILE = oldUserProfile;
+        process.env.HOME = oldHome;
+        rmSync(tempRoot, { recursive: true, force: true });
       }
     },
   },

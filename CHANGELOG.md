@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.0-alpha.2
+
+- restore the `create -> build -> preview/render` runtime contract after the 0.6.0-alpha.1 regression
+  - `create` and `build` now produce `meta.json` for HyperFrames runtime commands
+  - `build` preserves `data-start`, `data-width`, and `data-height` on the composition root
+  - `build` no longer emits missing `compositions/blocks/*.html` references when block templates are not installed
+  - timed `<video>` elements are kept out of timed scene containers to avoid frozen renders
+- update CLI help to list `build`, `preview`, `render`, and the full `scene-templates` surface
+- infer useful categories for GSAP/Remotion community registry results instead of falling everything back to `opening`
+- add regression coverage for the runtime contract, block-reference safety, video nesting, CLI help, and external registry categorization
+- 201/201 tests pass
+
 ## 0.6.0-alpha.1
 
 - add external template registry support

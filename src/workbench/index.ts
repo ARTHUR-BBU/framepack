@@ -1024,6 +1024,15 @@ const SCENE_ROLE_CONFIG: Record<string, { animation: AnimationTemplate; html: Ht
 
 const FAST_TEMPLATES = new Set(["game-ad", "data-shock"]);
 
+function isSafeInlineSceneTemplate(template: SceneTemplate | null | undefined): template is SceneTemplate {
+  return Boolean(
+    template &&
+    template.source !== "block" &&
+    template.html.length > 100 &&
+    !/<video\b[\s\S]*\bdata-start=/.test(template.html),
+  );
+}
+
 const SKELETON_SCENES: Record<string, { id: string; label: string; duration: number }[]> = {
   "saas-launch": [
     { id: "hook", label: "Hook — grab attention with the problem", duration: 4 },
@@ -1119,16 +1128,20 @@ function buildSkeletonHtml(input: {
   const videoAssets = (input.assets ?? []).filter(a => a.kind === "video");
   const imageAssets = (input.assets ?? []).filter(a => a.kind === "image");
 
+  // Collect video elements separately — they must be direct children of composition root
+  const rootVideos: string[] = [];
+
   const sceneDivs = timed.map((scene, idx) => {
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up", html: "generic" };
 
     // Try to find a matching scene template
     const template = findTemplateForSceneRole(scene.id, input.format, scene.dur);
+    const usableTemplate = isSafeInlineSceneTemplate(template) ? template : null;
     let content: string;
 
-    if (template && template.html.length > 100) {
+    if (usableTemplate) {
       // Use scene template — fill in entity placeholders
-      content = template.html
+      content = usableTemplate.html
         .replace(/\{\{entityName\}\}/g, entityName)
         .replace(/\{\{entityTagline\}\}/g, entityTagline)
         .replace(/\{\{entitySubtitle\}\}/g, entitySubtitle)
@@ -1169,34 +1182,32 @@ function buildSkeletonHtml(input: {
       content = buildSceneContent(scene.id, role.html, input.idea, entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel);
     }
 
-    // Add video for footage scenes (when not using template that already has video)
+    // Collect video elements for composition root (not inside scene div)
     const needsVideo = (role.html === "product" || scene.id === "action" || scene.id === "hook") && idx < videoAssets.length;
     const hasVideoInContent = content.includes("<video");
-    const videoEl = needsVideo && !hasVideoInContent
-      ? `\n      <video id="bg-video-${idx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[idx].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;"></video>`
-      : "";
+    if (needsVideo && !hasVideoInContent) {
+      rootVideos.push(`  <video id="bg-video-${idx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[idx].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;"></video>`);
+    }
 
     // Add image for product scenes (when not using template)
-    const imgIdx = role.html === "product" && idx < imageAssets.length && !template ? idx : -1;
+    const imgIdx = role.html === "product" && idx < imageAssets.length && !usableTemplate ? idx : -1;
     const imgEl = imgIdx >= 0
       ? `\n      <img src="assets/${imageAssets[idx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
       : "";
 
     // If template already has a scene wrapper div, extract inner content
     // (templates are full scene HTML; we wrap them in our standard structure)
-    if (template && template.html.length > 100 && content.includes("class=\"scene clip\"")) {
+    if (usableTemplate && content.includes("class=\"scene clip\"")) {
       // Extract content between scene wrapper tags — strip the outer div
       const innerMatch = content.match(/class="scene clip"[^>]*>([\s\S]*)<\/div>\s*$/);
       const innerContent = innerMatch ? innerMatch[1].trim() : content;
 
       return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">
-      ${videoEl}
 ${innerContent}
     </div>`;
     }
 
     return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">
-      ${videoEl}
       <div class="scene-content">${imgEl}
 ${content}
       </div>
@@ -1374,6 +1385,7 @@ ${content}
 </head>
 <body>
   <div data-composition-id="${input.projectName}" data-start="0" data-duration="${input.durationSec}" data-width="${width}" data-height="${height}">
+${rootVideos.join("\n")}
 ${sceneDivs.join("\n")}
   </div>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
@@ -1810,6 +1822,12 @@ function buildFiles(input: {
       null,
       2,
     ),
+    "meta.json": JSON.stringify({
+      rootEntry: "index.html",
+      compositionDirectory: ".",
+      assetDirectory: "assets",
+      runtime: "hyperframes",
+    }, null, 2),
     ...buildHtmlWithDesign(input, recommendation),
   };
 }
@@ -2027,12 +2045,25 @@ export function buildWorkbenchProject(projectDir: string): {
   const htmlPath = join(dir, "index.html");
   writeFileSync(htmlPath, html, "utf8");
 
-  // Collect which templates were used
+  // Ensure meta.json exists (needed by preview/render)
+  const metaPath = join(dir, "meta.json");
+  if (!existsSync(metaPath)) {
+    const [w, h] = format === "9:16" ? [1080, 1920] : [1920, 1080];
+    writeFileSync(metaPath, JSON.stringify({
+      rootEntry: "index.html",
+      compositionDirectory: ".",
+      assetDirectory: "assets",
+      runtime: "hyperframes",
+      width: w,
+      height: h,
+      duration: durationSec,
+    }, null, 2));
+  }
   const templatesUsed: string[] = [];
   const entities = extractIdeaEntities(idea);
   for (const scene of scenes) {
     const tpl = findTemplateForSceneRole(scene.id, format, scene.duration);
-    if (tpl && tpl.html.length > 100) templatesUsed.push(tpl.id);
+    if (isSafeInlineSceneTemplate(tpl)) templatesUsed.push(tpl.id);
   }
 
   return {
@@ -2174,13 +2205,18 @@ function buildEnhancedHtml(input: {
   // Extract GSAP code templates from COMPOSITION.md
   const codeTemplates = extractCodeTemplates(input.compositionMd);
 
+  // Collect video elements separately — they must be direct children of composition root
+  const enhancedRootVideos: string[] = [];
+
   const sceneDivs = timed.map((scene, idx) => {
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up" as AnimationTemplate, html: "generic" as HtmlTemplate };
     const template = findTemplateForSceneRole(scene.id, input.format, scene.dur);
+    // Skip block templates — they only work when blocks are actually installed
+    const usableTemplate = isSafeInlineSceneTemplate(template) ? template : null;
 
     let content: string;
-    if (template && template.html.length > 100) {
-      content = fillTemplatePlaceholders(template.html, {
+    if (usableTemplate) {
+      content = fillTemplatePlaceholders(usableTemplate.html, {
         entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel,
         sceneIndex: idx, sceneStart: scene.start, sceneDuration: scene.dur,
         videoSrc: videoAssets.length > 0 ? `assets/${videoAssets[idx % videoAssets.length].name}` : "",
@@ -2196,30 +2232,28 @@ function buildEnhancedHtml(input: {
     const desc = input.sceneDescriptions.get(scene.id);
     const guidanceComment = desc ? `\n        <!-- Scene guidance: ${desc.label} -->` : "";
 
-    // Add video element for footage scenes
+    // Collect video elements for composition root (not inside scene div)
     const needsVideo = (role.html === "product" || scene.id === "action" || scene.id === "hook") && idx < videoAssets.length;
     const hasVideoInContent = content.includes("<video");
-    const videoEl = needsVideo && !hasVideoInContent
-      ? `\n      <video id="bg-video-${idx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[idx % videoAssets.length].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"></video>`
-      : "";
+    if (needsVideo && !hasVideoInContent) {
+      enhancedRootVideos.push(`  <video id="bg-video-${idx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[idx % videoAssets.length].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;"></video>`);
+    }
 
     // Add image for product scenes
-    const imgIdx = role.html === "product" && idx < imageAssets.length && !template ? idx : -1;
+    const imgIdx = role.html === "product" && idx < imageAssets.length && !usableTemplate ? idx : -1;
     const imgEl = imgIdx >= 0
       ? `\n      <img src="assets/${imageAssets[idx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
       : "";
 
-    if (template && template.html.length > 100 && content.includes('class="scene clip"')) {
+    if (usableTemplate && content.includes('class="scene clip"')) {
       const innerMatch = content.match(/class="scene clip"[^>]*>([\s\S]*)<\/div>\s*$/);
       const innerContent = innerMatch ? innerMatch[1].trim() : content;
       return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">${guidanceComment}
-      ${videoEl}
 ${innerContent}
     </div>`;
     }
 
     return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">${guidanceComment}
-      ${videoEl}
       <div class="scene-content">${imgEl}
 ${content}
       </div>
@@ -2412,7 +2446,8 @@ ${content}
   </style>
 </head>
 <body>
-  <div data-composition-id="${input.projectName}" data-duration="${input.durationSec}">
+  <div data-composition-id="${input.projectName}" data-start="0" data-duration="${input.durationSec}" data-width="${width}" data-height="${height}">
+${enhancedRootVideos.join("\n")}
 ${sceneDivs.join("\n")}
   </div>
 
