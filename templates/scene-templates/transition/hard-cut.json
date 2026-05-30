@@ -1,0 +1,9 @@
+{
+  "id": "hard-cut",
+  "category": "transition",
+  "tags": ["cut", "snap", "instant", "fast", "hard"],
+  "format": "any",
+  "requiredTokens": [],
+  "minDuration": 0,
+  "maxDuration": 1
+}

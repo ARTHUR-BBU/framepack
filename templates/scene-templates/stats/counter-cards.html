@@ -1,0 +1,34 @@
+<!--
+  Counter Cards — 数字卡片
+  Uses: number counter animation with scale reveal
+  Vars: {{statValue}}, {{statLabel}}, {{statPrefix}}, {{statSuffix}}, {{sceneStart}}, {{sceneDuration}}
+  Tokens: --bg-primary, --accent-primary, --text-primary
+-->
+<div id="scene-{{sceneIndex}}" class="scene clip" data-start="{{sceneStart}}" data-duration="{{sceneDuration}}" style="background:var(--bg-primary);display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;overflow:hidden;">
+
+  <!-- Stat value -->
+  <div class="stat-row" style="display:flex;align-items:baseline;justify-content:center;z-index:2;">
+    <span class="stat-prefix" style="font-size:clamp(32px,5vw,72px);font-weight:700;color:var(--accent-primary);">{{statPrefix}}</span>
+    <span class="stat-value" style="font-size:clamp(72px,16vw,240px);font-weight:900;color:var(--text-primary);line-height:1;">{{statValue}}</span>
+    <span class="stat-suffix" style="font-size:clamp(32px,5vw,72px);font-weight:700;color:var(--accent-primary);">{{statSuffix}}</span>
+  </div>
+
+  <!-- Label -->
+  <p class="stat-label" style="font-size:clamp(16px,2.5vw,32px);color:var(--text-primary);opacity:0.7;text-transform:uppercase;letter-spacing:clamp(2px,0.4vw,8px);z-index:2;margin-top:clamp(4px,1vw,16px);">{{statLabel}}</p>
+
+  <!-- Accent underline -->
+  <div class="stat-line" style="width:clamp(80px,12vw,200px);height:3px;background:var(--accent-primary);z-index:2;margin-top:clamp(6px,1.2vw,20px);"></div>
+</div>
+
+<!--
+  GSAP Timeline:
+  // Number counter: animate a proxy { val: 0 } to target
+  var proxy = { val: 0 };
+  tl.to(proxy, { val: {{statValue}}, duration: 1.5, ease: "power2.out", onUpdate: function() {
+    document.querySelector("#scene-{{sceneIndex}} .stat-value").textContent = Math.round(proxy.val).toLocaleString();
+  }}, {{sceneStart}} + 0.5)
+  tl.from("#scene-{{sceneIndex}} .stat-prefix", { opacity: 0, x: -20, duration: 0.3 }, {{sceneStart}} + 0.3)
+  tl.from("#scene-{{sceneIndex}} .stat-suffix", { opacity: 0, x: 20, duration: 0.3 }, {{sceneStart}} + 0.3)
+  tl.from("#scene-{{sceneIndex}} .stat-label", { y: 20, opacity: 0, duration: 0.4, ease: "power3.out" }, {{sceneStart}} + 1.2)
+  tl.from("#scene-{{sceneIndex}} .stat-line", { scaleX: 0, duration: 0.3, ease: "power2.out" }, {{sceneStart}} + 1.5)
+-->

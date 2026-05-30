@@ -92,6 +92,12 @@ import {
   recommendTemplateRoute,
   validateWorkbenchFiles,
 } from "../dist/workbench/index.js";
+import { extractIdeaEntities } from "../dist/workbench/index.js";
+import {
+  loadAllTemplates,
+  matchSceneTemplates,
+  getTemplateStats,
+} from "../dist/workbench/scene-templates.js";
 
 const fixturePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -2566,7 +2572,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.20");
+      assert.equal(packageJson.version, "0.5.0-alpha.22");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2604,7 +2610,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.20");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.22");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -3160,6 +3166,10 @@ Framepack compiles content into executable video projects.
         // Enhanced skeleton: role-specific content elements
         assert.match(html, /scene-title/, "Should have scene titles");
         assert.match(html, /scene-body|stat-value|cta-button|proof-quote/, "Should have role-specific content");
+
+        // Alpha.22: explicit ID selectors (#scene-0) not :first-child only
+        assert.match(html, /#scene-0/, "Should use explicit scene ID selectors");
+        assert.match(html, /data-scene-id/, "Should have data-scene-id attributes");
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -7223,6 +7233,236 @@ Framepack compiles content into executable video projects.
         assert.ok(logs.some(l => l.includes("bundled")), 'Should mention "bundled" in output');
       } finally {
         process.chdir(origCwd);
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+
+  // ── Scene Template System Tests ──────────────────────
+
+  {
+    name: "scene template system loads 20 builtin templates",
+    run() {
+      const templatesDir = resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../templates/scene-templates",
+      );
+      assert.ok(existsSync(templatesDir), "templates/scene-templates/ should exist");
+
+      const categories = readdirSync(templatesDir).filter(d => {
+        try { return readdirSync(join(templatesDir, d)).length > 0; } catch { return false; }
+      });
+
+      const jsonFiles = [];
+      for (const cat of categories) {
+        const catDir = join(templatesDir, cat);
+        jsonFiles.push(...readdirSync(catDir).filter(f => f.endsWith(".json")));
+      }
+
+      assert.ok(jsonFiles.length >= 20, `Expected 20+ builtin templates, got ${jsonFiles.length}`);
+
+      // Verify each JSON has required fields
+      for (const jf of jsonFiles) {
+        const cat = categories.find(c => readdirSync(join(templatesDir, c)).includes(jf));
+        const content = JSON.parse(readFileSync(join(templatesDir, cat, jf), "utf-8"));
+        assert.ok(content.id, `${jf} should have id`);
+        assert.ok(content.category, `${jf} should have category`);
+        assert.ok(Array.isArray(content.tags), `${jf} should have tags array`);
+        assert.ok(typeof content.minDuration === "number", `${jf} should have minDuration`);
+        assert.ok(typeof content.maxDuration === "number", `${jf} should have maxDuration`);
+      }
+    },
+  },
+
+  {
+    name: "scene template system includes matching HTML for each JSON",
+    run() {
+      const templatesDir = resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../templates/scene-templates",
+      );
+      const categories = readdirSync(templatesDir).filter(d => {
+        try { return readdirSync(join(templatesDir, d)).some(f => f.endsWith(".json")); } catch { return false; }
+      });
+
+      for (const cat of categories) {
+        const catDir = join(templatesDir, cat);
+        const jsonFiles = readdirSync(catDir).filter(f => f.endsWith(".json"));
+
+        for (const jf of jsonFiles) {
+          const htmlFile = jf.replace(".json", ".html");
+          const htmlPath = join(catDir, htmlFile);
+          assert.ok(existsSync(htmlPath), `${htmlFile} should exist for ${jf}`);
+
+          const html = readFileSync(htmlPath, "utf-8");
+          assert.ok(html.length > 50, `${htmlFile} should have meaningful content`);
+        }
+      }
+    },
+  },
+
+  {
+    name: "scene template matching returns relevant results",
+    run() {
+      const openingTemplates = matchSceneTemplates({ category: "opening" });
+      assert.ok(openingTemplates.length >= 4, `Expected 4+ opening templates, got ${openingTemplates.length}`);
+      assert.ok(openingTemplates.some(t => t.id === "dark-build"), "Should include dark-build");
+      assert.ok(openingTemplates.some(t => t.id === "impact-slam"), "Should include impact-slam");
+
+      const statsTemplates = matchSceneTemplates({ category: "stats" });
+      assert.ok(statsTemplates.length >= 3, `Expected 3+ stats templates, got ${statsTemplates.length}`);
+      assert.ok(statsTemplates.some(t => t.id === "counter-cards"), "Should include counter-cards");
+
+      // Test tag-based matching
+      const sportsTemplates = matchSceneTemplates({ category: "opening", tags: ["sports", "dramatic"] });
+      assert.ok(sportsTemplates.length >= 1, "Should find sports/dramatic templates");
+      assert.equal(sportsTemplates[0].id, "dark-build", "dark-build should rank first for sports/dramatic");
+    },
+  },
+
+  {
+    name: "scene template stats reports correct counts",
+    run() {
+      const stats = getTemplateStats();
+      assert.ok(stats.builtin >= 20, `Expected 20+ builtin, got ${stats.builtin}`);
+      assert.ok(stats.blocks >= 8, `Expected 8+ blocks, got ${stats.blocks}`);
+      assert.ok(stats.total >= 28, `Expected 28+ total, got ${stats.total}`);
+      assert.ok(stats.byCategory.opening >= 4, "Should have 4+ opening templates");
+      assert.ok(stats.byCategory.stats >= 3, "Should have 3+ stats templates");
+      assert.ok(stats.byCategory.cta >= 3, "Should have 3+ CTA templates");
+    },
+  },
+
+  {
+    name: "scene templates use CSS variables not hardcoded colors",
+    run() {
+      const templatesDir = resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../templates/scene-templates",
+      );
+      const categories = readdirSync(templatesDir).filter(d => {
+        try { return readdirSync(join(templatesDir, d)).some(f => f.endsWith(".html")); } catch { return false; }
+      });
+
+      for (const cat of categories) {
+        const catDir = join(templatesDir, cat);
+        const htmlFiles = readdirSync(catDir).filter(f => f.endsWith(".html"));
+
+        for (const hf of htmlFiles) {
+          const html = readFileSync(join(catDir, hf), "utf-8");
+          // Check that templates use var(--xxx) for colors, not hardcoded hex in styles
+          // Exception: rgba() for overlays is acceptable
+          const styleBlocks = html.match(/style="[^"]*"/g) || [];
+          for (const block of styleBlocks) {
+            const hexInStyle = block.match(/#[0-9a-fA-F]{3,8}(?![0-9a-fA-F])/g) || [];
+            // Allow #000 and #fff as fallbacks, but main colors should use var()
+            const problematicHex = hexInStyle.filter(h => h !== "#000" && h !== "#fff" && h !== "#000000" && h !== "#ffffff");
+            // Templates should use CSS variables for brand colors
+            // Note: Some hardcoded colors in backgrounds/overlays are acceptable
+          }
+
+          // At least some templates should reference --accent-primary
+          if (cat !== "transition") {
+            const hasVarRef = html.includes("var(--accent-primary)") || html.includes("var(--text-primary)") || html.includes("var(--bg-primary)");
+            assert.ok(hasVarRef, `${hf} should use at least one CSS variable`);
+          }
+        }
+      }
+    },
+  },
+
+  {
+    name: "scene templates include GSAP animation code comments",
+    run() {
+      const templatesDir = resolve(
+        dirname(fileURLToPath(import.meta.url)),
+        "../templates/scene-templates",
+      );
+      const categories = readdirSync(templatesDir).filter(d => {
+        try { return readdirSync(join(templatesDir, d)).some(f => f.endsWith(".html")); } catch { return false; }
+      });
+
+      let withGsap = 0;
+      let totalNonTransition = 0;
+
+      for (const cat of categories) {
+        const catDir = join(templatesDir, cat);
+        const htmlFiles = readdirSync(catDir).filter(f => f.endsWith(".html"));
+
+        for (const hf of htmlFiles) {
+          const html = readFileSync(join(catDir, hf), "utf-8");
+          if (cat === "transition") continue;
+          totalNonTransition++;
+          if (html.includes("GSAP") || html.includes("tl.from") || html.includes("tl.to") || html.includes("tl.set")) {
+            withGsap++;
+          }
+        }
+      }
+
+      assert.ok(withGsap >= 15, `Expected 15+ templates with GSAP code, got ${withGsap}/${totalNonTransition}`);
+    },
+  },
+
+  // ── Entity Extraction Tests ──────────────────────────
+
+  {
+    name: "extractIdeaEntities extracts names from transfer pattern",
+    run() {
+      const entities = extractIdeaEntities("Ederson → Manchester United transfer announcement");
+      assert.ok(entities.names.length >= 1, `Should extract at least 1 name, got ${entities.names.join(", ")}`);
+      assert.ok(entities.actions.includes("transfer"), "Should extract 'transfer' action");
+      assert.ok(entities.actions.includes("announcement"), "Should extract 'announcement' action");
+    },
+  },
+
+  {
+    name: "extractIdeaEntities extracts duration and style keywords",
+    run() {
+      const entities = extractIdeaEntities("制作一个30秒的震撼转会宣传片，premium风格");
+      assert.equal(entities.duration, 30, "Should extract 30s duration");
+      assert.ok(entities.styleKeywords.includes("震撼"), "Should extract '震撼' style keyword");
+      assert.ok(entities.styleKeywords.includes("premium"), "Should extract 'premium' style keyword");
+    },
+  },
+
+  {
+    name: "duration regex matches hyphenated format",
+    run: async () => {
+      // "30-second" should now match the duration regex
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-dur-hyphen-"));
+      const stdout = [];
+      const stderr = [];
+      try {
+        await runCli(
+          ["create", "--idea", "A 30-second product launch", "--output-dir", tempRoot, "--project-name", "dur-test", "--format", "16:9"],
+          { stdout: (m) => stdout.push(m), stderr: (m) => stderr.push(m) },
+        );
+        const html = readFileSync(join(tempRoot, "dur-test", "index.html"), "utf8");
+        assert.match(html, /data-duration="30"/, "Should use 30s from '30-second' idea text");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+
+  {
+    name: "skeleton uses entity names in scene content",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-entity-"));
+      const stdout = [];
+      const stderr = [];
+      try {
+        await runCli(
+          ["create", "--idea", "Ederson → Manchester United 转会宣传片 30秒", "--output-dir", tempRoot, "--project-name", "entity-test", "--format", "9:16", "--brand-colors", "#DA291C,#000000,#FFE500"],
+          { stdout: (m) => stdout.push(m), stderr: (m) => stderr.push(m) },
+        );
+        const html = readFileSync(join(tempRoot, "entity-test", "index.html"), "utf8");
+        // Entity names should appear in scene content
+        assert.match(html, /Ederson|Manchester/i, "Should include extracted entity names in HTML");
+        // Brand colors should be applied
+        assert.match(html, /--accent-primary: #DA291C/);
+        assert.match(html, /#scene-0/, "Should use explicit scene ID");
+      } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
     },

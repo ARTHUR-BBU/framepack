@@ -1,0 +1,32 @@
+<!--
+  Split Screen — 分屏对比展示
+  Uses: 50/50 layout with clipPath animation for reveal
+  Vars: {{leftTitle}}, {{leftSubtext}}, {{rightTitle}}, {{rightSubtext}}, {{sceneStart}}, {{sceneDuration}}
+  Tokens: --bg-primary, --accent-primary, --text-primary
+-->
+<div id="scene-{{sceneIndex}}" class="scene clip" data-start="{{sceneStart}}" data-duration="{{sceneDuration}}" style="background:var(--bg-primary);display:flex;position:relative;overflow:hidden;">
+
+  <!-- Left panel -->
+  <div class="split-left" style="width:50%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;background:var(--accent-primary);z-index:1;">
+    <h2 class="left-title" style="font-size:clamp(24px,4vw,56px);font-weight:900;color:#000;text-align:center;z-index:2;">{{leftTitle}}</h2>
+    <p class="left-subtext" style="font-size:clamp(12px,1.8vw,24px);color:rgba(0,0,0,0.7);text-align:center;z-index:2;margin-top:clamp(4px,0.8vw,12px);">{{leftSubtext}}</p>
+  </div>
+
+  <!-- Right panel -->
+  <div class="split-right" style="width:50%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;background:var(--bg-primary);z-index:1;">
+    <h2 class="right-title" style="font-size:clamp(24px,4vw,56px);font-weight:900;color:var(--text-primary);text-align:center;z-index:2;">{{rightTitle}}</h2>
+    <p class="right-subtext" style="font-size:clamp(12px,1.8vw,24px);color:var(--text-primary);opacity:0.7;text-align:center;z-index:2;margin-top:clamp(4px,0.8vw,12px);">{{rightSubtext}}</p>
+  </div>
+
+  <!-- Center divider -->
+  <div class="split-divider" style="position:absolute;top:0;left:50%;width:2px;height:100%;background:var(--accent-primary);z-index:3;transform:translateX(-50%);"></div>
+</div>
+
+<!--
+  GSAP Timeline:
+  tl.from("#scene-{{sceneIndex}} .split-left", { xPercent: -100, duration: 0.6, ease: "power3.out" }, {{sceneStart}} + 0.2)
+  tl.from("#scene-{{sceneIndex}} .split-right", { xPercent: 100, duration: 0.6, ease: "power3.out" }, {{sceneStart}} + 0.2)
+  tl.from("#scene-{{sceneIndex}} .left-title", { y: 30, opacity: 0, duration: 0.4, ease: "power3.out" }, {{sceneStart}} + 0.7)
+  tl.from("#scene-{{sceneIndex}} .right-title", { y: 30, opacity: 0, duration: 0.4, ease: "power3.out" }, {{sceneStart}} + 0.8)
+  tl.from("#scene-{{sceneIndex}} .split-divider", { scaleY: 0, duration: 0.3, ease: "power2.out" }, {{sceneStart}} + 0.5)
+-->

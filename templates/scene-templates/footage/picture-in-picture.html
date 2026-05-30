@@ -1,0 +1,26 @@
+<!--
+  Picture in Picture — 画中画效果
+  Uses: small overlay window on top of main content
+  Vars: {{mainTitle}}, {{mainSubtext}}, {{pipLabel}}, {{sceneStart}}, {{sceneDuration}}
+  Tokens: --bg-primary, --accent-primary, --text-primary
+-->
+<div id="scene-{{sceneIndex}}" class="scene clip" data-start="{{sceneStart}}" data-duration="{{sceneDuration}}" style="background:var(--bg-primary);display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;overflow:hidden;">
+
+  <!-- Main content area -->
+  <div class="main-content" style="text-align:center;z-index:1;">
+    <h2 class="main-title" style="font-size:clamp(32px,6vw,80px);font-weight:900;color:var(--text-primary);line-height:1;">{{mainTitle}}</h2>
+    <p class="main-subtext" style="font-size:clamp(14px,2vw,28px);color:var(--text-primary);opacity:0.6;margin-top:clamp(4px,1vw,16px);">{{mainSubtext}}</p>
+  </div>
+
+  <!-- PiP window (positioned bottom-right) -->
+  <div class="pip-window" style="position:absolute;bottom:8%;right:8%;width:clamp(100px,18vw,280px);aspect-ratio:16/9;background:var(--accent-primary);border-radius:8px;z-index:2;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.2);">
+    <span class="pip-label" style="font-size:clamp(10px,1.2vw,16px);font-weight:700;color:#000;text-transform:uppercase;">{{pipLabel}}</span>
+  </div>
+</div>
+
+<!--
+  GSAP Timeline:
+  tl.from("#scene-{{sceneIndex}} .main-title", { y: 40, opacity: 0, duration: 0.5, ease: "power3.out" }, {{sceneStart}} + 0.3)
+  tl.from("#scene-{{sceneIndex}} .main-subtext", { y: 20, opacity: 0, duration: 0.4, ease: "power3.out" }, {{sceneStart}} + 0.6)
+  tl.from("#scene-{{sceneIndex}} .pip-window", { scale: 0, opacity: 0, duration: 0.4, ease: "back.out(1.7)" }, {{sceneStart}} + 0.8)
+-->

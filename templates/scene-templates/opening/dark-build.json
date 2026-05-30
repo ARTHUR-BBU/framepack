@@ -1,0 +1,9 @@
+{
+  "id": "dark-build",
+  "category": "opening",
+  "tags": ["dramatic", "dark", "sports", "impact", "energy", "intense"],
+  "format": "any",
+  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
+  "minDuration": 3,
+  "maxDuration": 8
+}

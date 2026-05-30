@@ -1,0 +1,27 @@
+<!--
+  Button Pulse CTA — 按钮脉冲行动号召
+  Uses: scale pulse loop on a button element
+  Vars: {{ctaHeadline}}, {{ctaButtonText}}, {{sceneStart}}, {{sceneDuration}}
+  Tokens: --bg-primary, --accent-primary, --text-primary
+-->
+<div id="scene-{{sceneIndex}}" class="scene clip" data-start="{{sceneStart}}" data-duration="{{sceneDuration}}" style="background:var(--bg-primary);display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;overflow:hidden;">
+
+  <!-- Headline -->
+  <h2 class="cta-headline" style="font-size:clamp(28px,5vw,72px);font-weight:800;color:var(--text-primary);z-index:2;text-align:center;margin-bottom:clamp(12px,2.5vw,40px);">{{ctaHeadline}}</h2>
+
+  <!-- CTA Button -->
+  <div class="cta-button" style="padding:clamp(12px,2vw,24px) clamp(24px,4vw,60px);background:var(--accent-primary);border-radius:clamp(4px,0.6vw,8px);z-index:2;cursor:default;">
+    <span class="button-text" style="font-size:clamp(16px,2.5vw,32px);font-weight:800;color:#000;text-transform:uppercase;letter-spacing:clamp(1px,0.3vw,4px);">{{ctaButtonText}}</span>
+  </div>
+
+  <!-- Pulse ring behind button -->
+  <div class="pulse-ring" style="position:absolute;padding:clamp(12px,2vw,24px) clamp(24px,4vw,60px);border:2px solid var(--accent-primary);border-radius:clamp(4px,0.6vw,8px);z-index:1;opacity:0;"></div>
+</div>
+
+<!--
+  GSAP Timeline:
+  tl.from("#scene-{{sceneIndex}} .cta-headline", { y: 40, opacity: 0, duration: 0.5, ease: "power3.out" }, {{sceneStart}} + 0.3)
+  tl.from("#scene-{{sceneIndex}} .cta-button", { scale: 0, duration: 0.5, ease: "back.out(1.7)" }, {{sceneStart}} + 0.7)
+  tl.to("#scene-{{sceneIndex}} .pulse-ring", { scale: 1.5, opacity: 0.4, duration: 0.8, ease: "power1.out", repeat: 2 }, {{sceneStart}} + 1.2)
+  tl.to("#scene-{{sceneIndex}} .pulse-ring", { opacity: 0, duration: 0.4 }, {{sceneStart}} + 3.2)
+-->

@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.5.0-alpha.22
+
+- add `extractIdeaEntities()` — extracts names, numbers, actions, and style keywords from user idea text
+- upgrade `buildSkeletonHtml` to use entity extraction for scene content filling (names, numbers, actions appear in HTML)
+- upgrade scene IDs from `hook`/`product` to `scene-0`/`scene-1` with `data-scene-id` attribute for explicit selectors
+- fix video integration: video now inside scene div (not composition root) with GSAP opacity control
+- fix opacity control: add `#scene-0 { opacity: 1 }` explicit selector (no longer depends on `:first-child`)
+- fix duration regex: `30-second` and `30sec` now correctly matched
+- scene content uses extracted entities (entity name in headlines, stats numbers, proof quotes)
+- 189/189 tests pass (10 new: entity extraction, duration regex, entity content, scene ID selectors)
+
+## 0.5.0-alpha.21
+
+- add scene template system: `src/workbench/scene-templates.ts` with load, match, save, and stats functions
+- add 20 built-in scene templates across 6 categories (opening, name-reveal, stats, footage, cta, transition)
+- add 8 HyperFrames Block templates mapped to scene roles
+- add `framepack scene-templates list` command to list all available templates
+- add `framepack scene-templates recommend` command for template matching by category/tags
+- add `framepack scene-templates stats` command for template ecosystem statistics
+- add external template registry interface with 3 default registries (HyperFrames blocks, GSAP, Remotion)
+- add `saveAgentTemplate()` for agents to create and persist custom templates
+- add `findTemplateForSceneRole()` for automatic scene role → template matching
+- templates use CSS variables (`var(--accent-primary)`) for brand colors, not hardcoded hex
+- 185/185 tests pass (6 new scene template tests)
+
 ## 0.5.0-alpha.20
 
 - fix P0: HyperFrames lint compliance — video at composition root, scene clip class, no animation overlap

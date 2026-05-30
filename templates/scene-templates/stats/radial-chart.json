@@ -1,0 +1,9 @@
+{
+  "id": "radial-chart",
+  "category": "stats",
+  "tags": ["chart", "radial", "ring", "data", "visualization"],
+  "format": "any",
+  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
+  "minDuration": 3,
+  "maxDuration": 8
+}

@@ -1,0 +1,9 @@
+{
+  "id": "split-reveal",
+  "category": "name-reveal",
+  "tags": ["split", "cinematic", "reveal", "movie", "title"],
+  "format": "any",
+  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
+  "minDuration": 3,
+  "maxDuration": 7
+}

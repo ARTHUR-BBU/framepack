@@ -1,0 +1,9 @@
+{
+  "id": "reveal-from-black",
+  "category": "opening",
+  "tags": ["elegant", "reveal", "fade", "premium", "apple", "minimal"],
+  "format": "any",
+  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
+  "minDuration": 3,
+  "maxDuration": 8
+}

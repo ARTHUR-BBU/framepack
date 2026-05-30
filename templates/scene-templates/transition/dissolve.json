@@ -1,0 +1,9 @@
+{
+  "id": "dissolve",
+  "category": "transition",
+  "tags": ["dissolve", "fade", "smooth", "soft", "cross-fade"],
+  "format": "any",
+  "requiredTokens": [],
+  "minDuration": 0,
+  "maxDuration": 2
+}

@@ -900,6 +900,78 @@ const DEFAULT_TOKENS: DesignTokensResolved = {
   },
 };
 
+// --- Idea entity extraction ---
+
+export interface IdeaEntities {
+  names: string[];
+  numbers: string[];
+  actions: string[];
+  styleKeywords: string[];
+  duration: number | null;
+}
+
+export function extractIdeaEntities(idea: string): IdeaEntities {
+  const names: string[] = [];
+  const numbers: string[] = [];
+  const actions: string[] = [];
+  const styleKeywords: string[] = [];
+
+  // Extract quoted names/brands
+  const quoted = idea.match(/["""]([^""]+)["""]|«([^»]+)»/g);
+  if (quoted) {
+    for (const q of quoted) {
+      const inner = q.replace(/^["""]|["""]$|^«|»$/g, "").trim();
+      if (inner) names.push(inner);
+    }
+  }
+
+  // Extract proper nouns (capitalized words not at sentence start)
+  const properNouns = idea.match(/(?<=[a-zà-ÿ\s,.\-→>]\s)[A-Z][a-zA-Z]{2,}|[A-Z]{2,}/g);
+  if (properNouns) {
+    const stopWords = new Set(["The", "This", "That", "And", "But", "For", "With", "Make", "Create", "Build", "Using", "About", "From", "Into", "With"]);
+    for (const pn of properNouns) {
+      if (!stopWords.has(pn) && !names.includes(pn)) names.push(pn);
+    }
+  }
+
+  // Extract "X → Y" or "X to Y" transfer patterns
+  const transferMatch = idea.match(/([A-Z][a-zA-Z\s]{1,30})\s*(?:→|->|to)\s*([A-Z][a-zA-Z\s]{1,30})/);
+  if (transferMatch) {
+    const from = transferMatch[1].trim();
+    const to = transferMatch[2].trim();
+    if (from && !names.includes(from)) names.push(from);
+    if (to && !names.includes(to)) names.push(to);
+    actions.push("transfer");
+  }
+
+  // Extract numbers with units
+  const numMatches = idea.matchAll(/(£|€|\$|¥)?(\d+(?:\.\d+)?)(%|\s*million|\s*billion|\s*k|\s* saves|\s* goals|\s* caps)?/gi);
+  for (const m of numMatches) {
+    const full = m[0].trim();
+    if (full.length > 0 && !numbers.includes(full)) numbers.push(full);
+  }
+
+  // Extract action keywords
+  const actionWords = ["transfer", "announcement", "launch", "reveal", "release", "debut", "arrival", "signing", "promo", "trailer", "teaser", "commercial", "ad"];
+  const lowerIdea = idea.toLowerCase();
+  for (const aw of actionWords) {
+    if (lowerIdea.includes(aw)) actions.push(aw);
+  }
+
+  // Extract style keywords
+  const styleWords = ["震撼", "premium", "energetic", "dramatic", "elegant", "minimal", "bold", "intense", "cinematic", "dark", "bright", "retro", "modern", "impactful", "sleek", "explosive"];
+  for (const sw of styleWords) {
+    if (lowerIdea.includes(sw.toLowerCase())) styleKeywords.push(sw);
+  }
+
+  // Extract duration
+  let duration: number | null = null;
+  const durMatch = idea.match(/(\d+)\s*[-]?\s*(?:秒|seconds?|sec|s\b)/i);
+  if (durMatch) duration = parseInt(durMatch[1], 10);
+
+  return { names, numbers, actions, styleKeywords, duration };
+}
+
 function parseDesignTokens(tokenMd: string): DesignTokensResolved {
   if (!tokenMd) return DEFAULT_TOKENS;
   const result = { ...DEFAULT_TOKENS, colors: { ...DEFAULT_TOKENS.colors }, typography: { ...DEFAULT_TOKENS.typography } };
@@ -1021,6 +1093,15 @@ function buildSkeletonHtml(input: {
     imgMax: isPortrait ? "280px" : "400px",
   };
 
+  // Extract entities from idea for template filling
+  const entities = extractIdeaEntities(input.idea);
+  const entityName = entities.names[0] || "Your Brand";
+  const entityTagline = entities.names.length > 1 ? entities.names[1] : entities.actions[0] || "Coming Soon";
+  const entitySubtitle = entities.actions[0] || entities.styleKeywords[0] || "";
+  const statValue = entities.numbers[0]?.replace(/[£€$¥]/, "") || "100";
+  const statPrefix = entities.numbers[0]?.match(/[£€$¥]/)?.[0] || "";
+  const statLabel = entities.numbers[0] || "Key Metric";
+
   // Calculate scene timing
   let currentTime = 0;
   const timed = scenes.map((scene) => {
@@ -1036,7 +1117,13 @@ function buildSkeletonHtml(input: {
 
   const sceneDivs = timed.map((scene, idx) => {
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up", html: "generic" };
-    const content = buildSceneContent(scene.id, role.html, shortIdea);
+    const content = buildSceneContent(scene.id, role.html, input.idea, entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel);
+
+    // Add video for footage scenes
+    const videoIdx = (role.html === "product" || scene.id === "action" || scene.id === "hook") && idx < videoAssets.length ? idx : -1;
+    const videoEl = videoIdx >= 0
+      ? `\n      <video id="bg-video-${videoIdx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[videoIdx].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;"></video>`
+      : "";
 
     // Add image for product/action scenes
     const imgIdx = role.html === "product" && idx < imageAssets.length ? idx : -1;
@@ -1044,7 +1131,8 @@ function buildSkeletonHtml(input: {
       ? `\n      <img src="assets/${imageAssets[imgIdx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
       : "";
 
-    return `    <div id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">
+    return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">
+      ${videoEl}
       <div class="scene-content">${imgEl}
 ${content}
       </div>
@@ -1056,36 +1144,45 @@ ${content}
 
   for (let i = 0; i < timed.length; i++) {
     const scene = timed[i];
+    const sceneEl = `scene-${i}`;
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up" as AnimationTemplate };
     const enterTime = i === 0 ? 0.2 : scene.start + 0.3;
 
     // First scene entrance (no prior transition handles it)
     if (i === 0) {
-      tweens.push(buildEntranceTween(scene.id, role.animation, enterTime));
+      tweens.push(buildEntranceTween(sceneEl, role.animation, enterTime));
     } else {
-      // Non-first scenes: entrance animation targets inner elements, not scene-content
-      // (transition already handles scene-content opacity)
-      tweens.push(buildInnerEntranceTween(scene.id, role.animation, enterTime));
+      tweens.push(buildInnerEntranceTween(sceneEl, role.animation, enterTime));
+    }
+
+    // Video opacity control
+    if (videoAssets.length > 0) {
+      const vIdx = (role.html === "product" || scene.id === "action" || scene.id === "hook") && i < videoAssets.length ? i : -1;
+      if (vIdx >= 0) {
+        tweens.push(`  gsap.set("#bg-video-${vIdx}", { opacity: 0 });`);
+        tweens.push(`  tl.to("#bg-video-${vIdx}", { opacity: 0.3, duration: 0.5 }, ${scene.start + 0.2});`);
+      }
     }
 
     // Transition to next scene (except last)
     if (i < timed.length - 1) {
       const next = timed[i + 1];
+      const nextEl = `scene-${i + 1}`;
       if (isFastPaced) {
-        tweens.push(`  tl.set("#${scene.id} .scene-content", { opacity: 0 }, ${next.start});`);
-        tweens.push(`  tl.from("#${next.id} .scene-content", { opacity: 0, duration: 0.15 }, ${next.start});`);
+        tweens.push(`  tl.set("#${sceneEl} .scene-content", { opacity: 0 }, ${next.start});`);
+        tweens.push(`  tl.from("#${nextEl} .scene-content", { opacity: 0, duration: 0.15 }, ${next.start});`);
       } else {
-        tweens.push(`  tl.to("#${scene.id} .scene-content", { opacity: 0, duration: 0.5, overwrite: "auto" }, ${next.start - 0.5});`);
-        tweens.push(`  tl.from("#${next.id} .scene-content", { opacity: 0, duration: 0.5 }, ${next.start});`);
+        tweens.push(`  tl.to("#${sceneEl} .scene-content", { opacity: 0, duration: 0.5, overwrite: "auto" }, ${next.start - 0.5});`);
+        tweens.push(`  tl.from("#${nextEl} .scene-content", { opacity: 0, duration: 0.5 }, ${next.start});`);
       }
     }
   }
 
   // Final scene fade out
-  const lastScene = timed[timed.length - 1];
+  const lastIdx = timed.length - 1;
   const fadeOutTime = Math.round((input.durationSec - 0.8) * 10) / 10;
-  if (lastScene) {
-    tweens.push(`  tl.to("#${lastScene.id} .scene-content", { opacity: 0, duration: 0.8, overwrite: "auto" }, ${fadeOutTime});`);
+  if (lastIdx >= 0) {
+    tweens.push(`  tl.to("#scene-${lastIdx} .scene-content", { opacity: 0, duration: 0.8, overwrite: "auto" }, ${fadeOutTime});`);
   }
 
   return `<!DOCTYPE html>
@@ -1128,6 +1225,7 @@ ${content}
     }
 
     .scene:first-child { opacity: 1; }
+    #scene-0 { opacity: 1; }
 
     .scene-content {
       position: relative;
@@ -1212,10 +1310,6 @@ ${content}
 </head>
 <body>
   <div data-composition-id="${input.projectName}" data-start="0" data-duration="${input.durationSec}" data-width="${width}" data-height="${height}">
-${videoAssets.map((v, i) => {
-  const t = timed[i] ?? timed[0];
-  return `  <video id="bg-video-${i}" data-start="${t.start}" data-duration="${t.dur}" data-media-start="0" muted playsinline class="clip" src="assets/${v.name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0.15;"></video>`;
-}).join("\n")}
 ${sceneDivs.join("\n")}
   </div>
   <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
@@ -1231,38 +1325,48 @@ ${tweens.join("\n")}
 </html>`;
 }
 
-function buildSceneContent(sceneId: string, htmlTemplate: HtmlTemplate, idea: string): string {
+function buildSceneContent(
+  sceneId: string,
+  htmlTemplate: HtmlTemplate,
+  idea: string,
+  name: string,
+  tagline: string,
+  subtitle: string,
+  statVal: string,
+  statPre: string,
+  statLbl: string,
+): string {
   switch (htmlTemplate) {
     case "headline":
       return [
-        `        <h1 class="scene-title">${sceneLabel(sceneId)}</h1>`,
+        `        <h1 class="scene-title">${name}</h1>`,
         `        <div class="sweep-line"></div>`,
-        `        <p class="scene-body">${idea}</p>`,
+        `        <p class="scene-body">${tagline || idea}</p>`,
       ].join("\n");
     case "product":
       return [
-        `        <h2 class="scene-title">${sceneLabel(sceneId)}</h2>`,
-        `        <p class="scene-body">Showcase the key feature or moment</p>`,
+        `        <h2 class="scene-title">${name}</h2>`,
+        `        <p class="scene-body">${subtitle || "Showcase the key feature or moment"}</p>`,
       ].join("\n");
     case "stats":
       return [
-        `        <div class="stat-value" id="stat-${sceneId}">0</div>`,
-        `        <p class="stat-label">${sceneLabel(sceneId)}</p>`,
+        `        <div class="stat-value" id="stat-${sceneId}">${statPre}0</div>`,
+        `        <p class="stat-label">${statLbl || sceneLabel(sceneId)}</p>`,
       ].join("\n");
     case "proof":
       return [
-        `        <p class="proof-quote">"Real results speak louder than promises"</p>`,
-        `        <p class="proof-attr">— Source</p>`,
+        `        <p class="proof-quote">"${subtitle || "Real results speak louder than promises"}"</p>`,
+        `        <p class="proof-attr">— ${name}</p>`,
       ].join("\n");
     case "cta":
       return [
-        `        <h2 class="scene-title">${sceneLabel(sceneId)}</h2>`,
-        `        <div class="cta-button">Take Action</div>`,
+        `        <h2 class="scene-title">${tagline || sceneLabel(sceneId)}</h2>`,
+        `        <div class="cta-button">${name}</div>`,
       ].join("\n");
     default:
       return [
-        `        <h2 class="scene-title">${sceneLabel(sceneId)}</h2>`,
-        `        <p class="scene-body">${idea}</p>`,
+        `        <h2 class="scene-title">${name || sceneLabel(sceneId)}</h2>`,
+        `        <p class="scene-body">${subtitle || idea}</p>`,
       ].join("\n");
   }
 }

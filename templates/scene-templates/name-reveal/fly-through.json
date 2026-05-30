@@ -1,0 +1,9 @@
+{
+  "id": "fly-through",
+  "category": "name-reveal",
+  "tags": ["dramatic", "fly", "zoom", "perspective", "sports", "transfer"],
+  "format": "any",
+  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
+  "minDuration": 3,
+  "maxDuration": 7
+}

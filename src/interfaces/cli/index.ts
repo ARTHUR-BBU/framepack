@@ -58,6 +58,12 @@ import {
   scaffoldWorkbenchProject,
   validateWorkbenchProject,
 } from "../../workbench/index.js";
+import {
+  loadAllTemplates,
+  matchSceneTemplates,
+  getTemplateStats,
+  type SceneTemplateQuery,
+} from "../../workbench/scene-templates.js";
 
 export interface CliIo {
   stdout: (message: string) => void;
@@ -121,7 +127,8 @@ type CliCommandName =
   | "runtime-upgrade-check"
   | "sync-captures"
   | "sync-assets"
-  | "scaffold";
+  | "scaffold"
+  | "scene-templates";
 
 interface CliDependencies {
   captureProject?: typeof materializeProjectAssets;
@@ -164,7 +171,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.20";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.22";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -189,6 +196,8 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack generate --game-ad-description <text> --output-dir <dir> --goal <goal> --audience <audience> --format 9:16 --auto-pack",
   "  framepack status --project-dir <package>",
   "  framepack validate --project-dir <package>",
+  "  framepack scene-templates list [--category <cat>] [--format <16:9|9:16>]",
+  "  framepack scene-templates recommend --category <cat> --tags <tags>",
   "  framepack runtime doctor --project-dir <package>",
   "",
   "Agent-first install check:",
@@ -316,12 +325,13 @@ function getCommandName(args: string[]): CliCommandName {
     command === "render" ||
     command === "sync-captures" ||
     command === "sync-assets" ||
-    command === "scaffold"
+    command === "scaffold" ||
+    command === "scene-templates"
   ) {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, lint, preview, render, scaffold, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, lint, preview, render, scaffold, scene-templates, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -357,7 +367,8 @@ function getCommandArgs(args: string[]): string[] {
     first === "preview" ||
     first === "render" ||
     first === "sync-captures" ||
-    first === "sync-assets"
+    first === "sync-assets" ||
+    first === "scene-templates"
   ) {
     return args.slice(1);
   }
@@ -647,7 +658,7 @@ function runCreateCommand(args: string[], io: CliIo): number {
 
   // Extract duration from idea text when not explicitly set.
   if (!durationSec || durationSec < 5) {
-    const durMatch = idea.match(/(\d+)\s*(?:秒|second|sec|s\b)/i);
+    const durMatch = idea.match(/(\d+)\s*[-]?\s*(?:秒|seconds?|sec|s\b)/i);
     if (durMatch) durationSec = parseInt(durMatch[1], 10);
   }
 
@@ -1039,6 +1050,65 @@ function runScaffoldCommand(args: string[], io: CliIo): number {
     io.stderr(error instanceof Error ? error.message : String(error));
     return 1;
   }
+}
+
+function runSceneTemplatesCommand(args: string[], io: CliIo): number {
+  const subcommand = args[0];
+
+  if (subcommand === "list" || !subcommand) {
+    const category = getOptionalArg(args, "--category");
+    const format = getOptionalArg(args, "--format");
+    const query: SceneTemplateQuery = {};
+    if (category) query.category = category as SceneTemplateQuery["category"];
+    if (format) query.format = format;
+
+    const templates = query.category || query.format
+      ? matchSceneTemplates(query)
+      : loadAllTemplates();
+
+    const stats = getTemplateStats();
+
+    io.stdout([
+      `Scene Templates (${stats.total}: ${stats.builtin} builtin, ${stats.blocks} blocks, ${stats.agentCreated} agent)`,
+      "",
+      "By category:",
+      ...Object.entries(stats.byCategory).map(([cat, count]) => `  ${cat}: ${count}`),
+      "",
+      ...templates.map(t => `  [${t.source}] ${t.id} (${t.category}, ${t.minDuration}-${t.maxDuration}s, ${t.format})`),
+    ].join("\n"));
+    return 0;
+  }
+
+  if (subcommand === "recommend") {
+    const category = getOptionalArg(args, "--category");
+    const tags = getOptionalArg(args, "--tags");
+    const format = getOptionalArg(args, "--format");
+    const query: SceneTemplateQuery = {};
+    if (category) query.category = category as SceneTemplateQuery["category"];
+    if (tags) query.tags = tags.split(",");
+    if (format) query.format = format;
+
+    const results = matchSceneTemplates(query);
+    io.stdout([
+      `Recommended templates for: ${category || "any"}${tags ? ` [${tags}]` : ""}`,
+      "",
+      ...results.slice(0, 5).map((t, i) => [
+        `${i + 1}. ${t.id} (${t.category}, ${t.source})`,
+        `   Tags: ${t.tags.join(", ")}`,
+        `   Duration: ${t.minDuration}-${t.maxDuration}s | Format: ${t.format}`,
+        `   Required tokens: ${t.requiredTokens.join(", ") || "none"}`,
+      ].join("\n")),
+    ].join("\n"));
+    return 0;
+  }
+
+  if (subcommand === "stats") {
+    const stats = getTemplateStats();
+    io.stdout(JSON.stringify(stats, null, 2));
+    return 0;
+  }
+
+  throw new Error("Invalid scene-templates subcommand. Use: list, recommend, stats");
 }
 
 function runWorkbenchCommand(args: string[], io: CliIo): number {
@@ -1540,6 +1610,10 @@ export async function runCli(
 
     if (command === "scaffold") {
       return runScaffoldCommand(args.slice(1), io);
+    }
+
+    if (command === "scene-templates") {
+      return runSceneTemplatesCommand(args.slice(1), io);
     }
 
     return await runGenerateCommand(args, io);

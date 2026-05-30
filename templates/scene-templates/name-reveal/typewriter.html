@@ -1,0 +1,26 @@
+<!--
+  Typewriter Name Reveal — 逐字打出
+  Uses: stagger per character for typing effect
+  Vars: {{entityName}}, {{entitySubtitle}}, {{sceneStart}}, {{sceneDuration}}
+  Tokens: --bg-primary, --accent-primary, --text-primary
+-->
+<div id="scene-{{sceneIndex}}" class="scene clip" data-start="{{sceneStart}}" data-duration="{{sceneDuration}}" style="background:var(--bg-primary);display:flex;align-items:center;justify-content:center;flex-direction:column;position:relative;overflow:hidden;">
+
+  <!-- Cursor line -->
+  <div class="cursor-line" style="position:absolute;width:3px;height:clamp(60px,10vw,120px);background:var(--accent-primary);z-index:2;"></div>
+
+  <!-- Name (chars will be wrapped in spans by agent) -->
+  <h1 class="scene-title" style="font-size:clamp(48px,10vw,140px);font-weight:800;color:var(--text-primary);letter-spacing:0.02em;z-index:2;text-align:center;">{{entityName}}</h1>
+
+  <!-- Subtitle -->
+  <p class="scene-subtitle" style="font-size:clamp(16px,2.5vw,32px);color:var(--accent-primary);font-weight:500;opacity:0.8;z-index:2;margin-top:clamp(6px,1.5vw,24px);text-align:center;">{{entitySubtitle}}</p>
+</div>
+
+<!--
+  GSAP Timeline:
+  // Agent should wrap each character in <span class="char">X</span> inside .scene-title
+  tl.from("#scene-{{sceneIndex}} .scene-title .char", { opacity: 0, y: 10, stagger: 0.05, duration: 0.1, ease: "power1.out" }, {{sceneStart}} + 0.3)
+  tl.from("#scene-{{sceneIndex}} .cursor-line", { scaleY: 0, duration: 0.3, ease: "power2.out" }, {{sceneStart}} + 0.2)
+  tl.to("#scene-{{sceneIndex}} .cursor-line", { opacity: 0, duration: 0.2 }, {{sceneStart}} + 1.5)
+  tl.from("#scene-{{sceneIndex}} .scene-subtitle", { opacity: 0, duration: 0.5 }, {{sceneStart}} + 1.6)
+-->

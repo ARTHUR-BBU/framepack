@@ -1,0 +1,11 @@
+<!--
+  Dissolve Transition — 溶解过渡
+  Uses: tl.to for smooth opacity cross-fade
+  This is NOT a scene element but a transition code pattern.
+  Vars: {{prevSceneId}}, {{nextSceneId}}, {{cutTime}}, {{dissolveDuration}}
+-->
+<!--
+  GSAP Transition Code (add between scenes in timeline):
+  tl.to("#{{prevSceneId}} .scene-content", { opacity: 0, duration: {{dissolveDuration}}, ease: "power1.inOut" }, {{cutTime}} - {{dissolveDuration}})
+  tl.from("#{{nextSceneId}} .scene-content", { opacity: 0, duration: {{dissolveDuration}}, ease: "power1.inOut" }, {{cutTime}})
+-->
