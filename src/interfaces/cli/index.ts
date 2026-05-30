@@ -171,7 +171,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.23";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.24";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",

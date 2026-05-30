@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.0-alpha.24
+
+- add 3 MCP knowledge query tools: querySceneTemplate, recommendAnimation, getComponentCode
+- add MCP knowledge resources: video-design-best-practices, hyperframes-rules, scene-templates-index
+- querySceneTemplate: query templates by purpose/category/tags, returns HTML/CSS/GSAP code
+- recommendAnimation: recommend GSAP code for element+style combos (stat-number/headline/button/etc)
+- getComponentCode: return complete code for any of 23 bundled Catalog Components
+- knowledge base includes: HeyGen patterns (700+ templates), Synthesia practices, universal video design principles, agent template creation guide, HyperFrames 15 compatibility rules
+- MCP repositioned from "command mirror" to "knowledge query interface"
+- 193/191 tests pass (2 new: MCP tool registration, knowledge resources)
+
 ## 0.5.0-alpha.23
 
 - add `framepack render --with-audio <file>` — wraps hyperframes render + ffmpeg audio merge

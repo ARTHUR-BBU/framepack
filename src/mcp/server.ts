@@ -377,6 +377,241 @@ export function createFramepackMcpServer(): McpServer {
     async (input) => textJson(await runFramepackReleaseSmoke({ outputDir: input.outputDir })),
   );
 
+  // ── Knowledge Query Tools (alpha.24) ──────────────
+
+  server.registerTool(
+    "querySceneTemplate",
+    {
+      description: "Query scene templates by purpose/category. Returns matching HTML/CSS/GSAP code snippets that an agent can paste directly into a composition. This is a knowledge query, not a command executor.",
+      inputSchema: {
+        purpose: z.string().describe("Scene purpose: opening, name-reveal, stats, footage, cta, transition, overlay"),
+        format: z.enum(["16:9", "9:16", "any"]).optional().describe("Target format"),
+        tags: z.string().optional().describe("Comma-separated style tags: dramatic, sports, bold, minimal..."),
+        duration: z.number().optional().describe("Scene duration in seconds"),
+      },
+    },
+    async (input) => {
+      const { matchSceneTemplates } = await import("../workbench/scene-templates.js");
+      const results = matchSceneTemplates({
+        category: input.purpose as "opening",
+        format: input.format,
+        tags: input.tags ? input.tags.split(",") : undefined,
+        duration: input.duration,
+      }).slice(0, 5);
+
+      return textJson({
+        query: input,
+        count: results.length,
+        templates: results.map(t => ({
+          id: t.id,
+          category: t.category,
+          tags: t.tags,
+          source: t.source,
+          duration: `${t.minDuration}-${t.maxDuration}s`,
+          requiredTokens: t.requiredTokens,
+          code: t.html,
+        })),
+      });
+    },
+  );
+
+  server.registerTool(
+    "recommendAnimation",
+    {
+      description: "Recommend GSAP animation code for a specific element and style. Returns complete GSAP timeline snippets an agent can use directly.",
+      inputSchema: {
+        element: z.string().describe("What to animate: stat-number, headline, title, button, image, scene-content, sweep-line"),
+        style: z.enum(["impact", "elegant", "energetic", "subtle", "dramatic"]).optional().describe("Animation mood"),
+      },
+    },
+    async (input) => {
+      const animations: Record<string, Record<string, string>> = {
+        "stat-number": {
+          impact: "var proxy = { val: 0 };\ntl.to(proxy, { val: TARGET, duration: 1.5, ease: \"power2.out\", onUpdate: function() {\n  document.querySelector(\"SELECTOR\").textContent = Math.round(proxy.val).toLocaleString();\n}}, TIME)",
+          elegant: "tl.from(\"SELECTOR\", { opacity: 0, y: 20, duration: 0.8, ease: \"power2.out\" }, TIME)",
+          energetic: "tl.from(\"SELECTOR\", { scale: 0, duration: 0.5, ease: \"back.out(1.7)\" }, TIME)\n  .to(\"SELECTOR\", { scale: 1.05, duration: 0.15, yoyo: true, repeat: 1 }, TIME + 0.5)",
+        },
+        headline: {
+          impact: "tl.from(\"SELECTOR\", { scale: 5, opacity: 0, duration: 0.5, ease: \"back.out(1.7)\" }, TIME)",
+          elegant: "tl.from(\"SELECTOR\", { opacity: 0, y: 20, duration: 1, ease: \"power2.out\" }, TIME)",
+          dramatic: "tl.from(\"SELECTOR\", { scale: 8, opacity: 0, filter: \"blur(30px)\", duration: 0.7, ease: \"expo.out\" }, TIME)",
+          energetic: "tl.from(\"SELECTOR\", { scale: 3, opacity: 0, filter: \"blur(20px)\", duration: 0.5, ease: \"expo.out\" }, TIME)",
+        },
+        title: {
+          impact: "tl.from(\"SELECTOR\", { y: \"-120%\", duration: 0.6, ease: \"bounce.out\" }, TIME)",
+          elegant: "tl.from(\"SELECTOR\", { opacity: 0, y: 15, duration: 0.8, ease: \"power2.out\" }, TIME)",
+          subtle: "tl.from(\"SELECTOR\", { opacity: 0, duration: 0.6 }, TIME)",
+        },
+        button: {
+          impact: "tl.from(\"SELECTOR\", { scale: 0, duration: 0.5, ease: \"back.out(1.7)\" }, TIME)\n  .to(\"SELECTOR\", { scale: 1.1, duration: 0.8, ease: \"power1.out\", repeat: 2 }, TIME + 1)",
+          elegant: "tl.from(\"SELECTOR\", { opacity: 0, y: 20, duration: 0.4, ease: \"power3.out\" }, TIME)",
+          energetic: "tl.from(\"SELECTOR\", { scale: 0, rotation: -10, duration: 0.4, ease: \"back.out(1.7)\" }, TIME)",
+        },
+        "scene-content": {
+          subtle: "tl.from(\"SELECTOR\", { opacity: 0, y: 60, duration: 0.5, ease: \"power3.out\" }, TIME)",
+          dramatic: "tl.from(\"SELECTOR > *\", { scale: 0, ease: \"back.out(1.4)\", duration: 0.5, stagger: 0.1, overwrite: \"auto\" }, TIME)",
+        },
+        "sweep-line": {
+          impact: "tl.from(\"SELECTOR\", { scaleX: 0, duration: 0.4, ease: \"power2.out\" }, TIME)",
+          elegant: "tl.from(\"SELECTOR\", { scaleX: 0, duration: 0.6, ease: \"power2.inOut\" }, TIME)",
+        },
+        image: {
+          impact: "tl.from(\"SELECTOR\", { scale: 0, opacity: 0, duration: 0.5, ease: \"back.out(1.4)\" }, TIME)",
+          elegant: "tl.from(\"SELECTOR\", { opacity: 0, scale: 1.1, duration: 0.8, ease: \"power2.out\" }, TIME)",
+          dramatic: "tl.from(\"SELECTOR\", { scale: 2, opacity: 0, filter: \"blur(20px)\", duration: 0.6, ease: \"expo.out\" }, TIME)",
+        },
+      };
+
+      const el = input.element;
+      const style = input.style || "impact";
+      const elAnims = animations[el];
+      const code = elAnims?.[style] || elAnims?.impact || "// No matching animation found";
+
+      return textJson({
+        element: el,
+        style: style,
+        code: code,
+        placeholders: { SELECTOR: "CSS selector for the element", TARGET: "target number value", TIME: "start time in seconds" },
+        tips: [
+          "Replace SELECTOR with your element's CSS selector (e.g., '#scene-0 .stat-value')",
+          "Replace TIME with the scene start time in seconds",
+          "Use gsap.set() for initial state, tl.from()/tl.to() for animations",
+          "Always add overwrite: 'auto' when multiple tweens affect the same property",
+        ],
+      });
+    },
+  );
+
+  server.registerTool(
+    "getComponentCode",
+    {
+      description: "Get the CSS+JS code for a HyperFrames Catalog Component. Returns the component's complete code that an agent can paste into a composition.",
+      inputSchema: {
+        componentId: z.string().describe("Component ID, e.g. caption-kinetic-slam, vignette, shimmer-sweep, grain-overlay"),
+      },
+    },
+    async (input) => {
+      const { resolve } = await import("node:path");
+      const { readFileSync, existsSync } = await import("node:fs");
+      const { fileURLToPath } = await import("node:url");
+
+      const candidates = [
+        resolve(new URL(".", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1"), "..", "..", "templates", "catalog", "components"),
+        resolve(new URL(".", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1"), "..", "..", "..", "templates", "catalog", "components"),
+      ];
+
+      for (const dir of candidates) {
+        const htmlPath = resolve(dir, `${input.componentId}.html`);
+        const jsonPath = resolve(dir, `${input.componentId}.json`);
+        if (existsSync(htmlPath)) {
+          const html = readFileSync(htmlPath, "utf-8");
+          const meta = existsSync(jsonPath) ? JSON.parse(readFileSync(jsonPath, "utf-8")) : {};
+          return textJson({
+            componentId: input.componentId,
+            name: meta.name || input.componentId,
+            tags: meta.tags || [],
+            integrationMode: "copy-snippet",
+            code: html,
+            usage: "Copy the CSS into <style> and the JS into your GSAP timeline. Adjust selectors to match your scene structure.",
+          });
+        }
+      }
+
+      return textJson({ error: `Component '${input.componentId}' not found. Use framepack scene-templates list to see available templates and components.` });
+    },
+  );
+
+  // ── Knowledge Base Resources (alpha.24) ────────────
+
+  server.registerResource(
+    "video-design-best-practices",
+    "framepack://knowledge/video-design",
+    { title: "Video design best practices from industry (HeyGen, Synthesia, universal principles)" },
+    (uri) => ({
+      contents: [{
+        uri: uri.href,
+        text: [
+          "# Video Design Best Practices",
+          "",
+          "## Universal Principles",
+          "- 3-second hook rule: first 3 seconds must grab attention",
+          "- Brand color consistency: max 2 primary colors + 1 accent",
+          "- Typography hierarchy (1080p): title ≥ 72px, subtitle 36-48px, body 24-30px",
+          "- Scene duration: 3-8 seconds ideal; >10s needs internal rhythm changes",
+          "- Transition rhythm matches content: hard cut for data, dissolve for emotion",
+          "- Text on video: always add dark/light overlay for readability",
+          "",
+          "## HeyGen Patterns (700+ templates)",
+          "- Marketing templates: hook → benefit → proof → CTA",
+          "- Social Media: word-synced captions, dynamic zoom, 4 visual hooks",
+          "- Announcement: dark build opening → name reveal → details → countdown CTA",
+          "- Training: chapter markers, progress bars, pause points",
+          "- 12 social-optimized templates: 4 visual hooks, 8 caption styles",
+          "",
+          "## Synthesia Patterns (230+ avatars)",
+          "- L&D best: chapter-based, SCORM export, brand kit integration",
+          "- Avatar naturalism: consistent gaze, gesture timing, voice sync",
+          "- Corporate: brand colors in every scene, logo watermark, professional pacing",
+          "",
+          "## Agent Template Creation Guide",
+          "1. Design with CSS variables (var(--accent-primary)) not hardcoded colors",
+          "2. Add data-start/data-duration attributes to all timed elements",
+          "3. Register GSAP timeline: window.__timelines['id'] = tl",
+          "4. Follow HyperFrames 15 rules (see framepack://knowledge/hyperframes-rules)",
+          "5. Validate: npx hyperframes lint your-template.html",
+          "6. Save: npx framepack template save --name 'my-template' --category 'opening'",
+        ].join("\n"),
+      }],
+    }),
+  );
+
+  server.registerResource(
+    "hyperframes-rules",
+    "framepack://knowledge/hyperframes-rules",
+    { title: "HyperFrames 15 compatibility rules for video compositions" },
+    (uri) => ({
+      contents: [{
+        uri: uri.href,
+        text: [
+          "# HyperFrames Compatibility Rules",
+          "",
+          "1. <video> needs data-start AND data-media-start",
+          "2. No Math.random() — use seeded PRNG (mulberry32)",
+          "3. No repeat: -1 — calculate finite repeats",
+          "4. GSAP loaded synchronously from CDN",
+          "5. Scene switches use tl.set(), not tl.to()",
+          "6. First scene visible via CSS before JavaScript",
+          "7. Multiple tweens on same property need overwrite: 'auto'",
+          "8. Timeline registration: window.__timelines['id'] = tl",
+          "9. Root element: data-composition-id, data-start, data-duration, data-width, data-height",
+          "10. No async timeline construction",
+          "11. Every multi-scene composition needs transitions",
+          "12. No exit animations except on final scene",
+          "13. All timed elements need class='clip'",
+          "14. No <br> tags — use CSS for line breaks",
+          "15. No video.play() — HyperFrames controls playback",
+        ].join("\n"),
+      }],
+    }),
+  );
+
+  server.registerResource(
+    "scene-templates-index",
+    "framepack://templates/scene-templates",
+    { title: "Complete index of available scene templates (builtin + blocks)" },
+    async (uri) => {
+      const { getTemplateStats, loadAllTemplates } = await import("../workbench/scene-templates.js");
+      const stats = getTemplateStats();
+      const templates = loadAllTemplates().map(t => ({
+        id: t.id, category: t.category, tags: t.tags, source: t.source,
+        duration: `${t.minDuration}-${t.maxDuration}s`, format: t.format,
+      }));
+      return {
+        contents: [{ uri: uri.href, text: JSON.stringify({ stats, templates }, null, 2) }],
+      };
+    },
+  );
+
   server.registerResource(
     "workflow-packs",
     "framepack://packs/workflows",

@@ -24,6 +24,9 @@ export const FRAMEPACK_MCP_TOOLS = [
   "getCreativeDirectionPack",
   "recommendPacks",
   "releaseSmoke",
+  "querySceneTemplate",
+  "recommendAnimation",
+  "getComponentCode",
 ] as const;
 
 export const FRAMEPACK_MCP_RESOURCES = [
@@ -36,6 +39,9 @@ export const FRAMEPACK_MCP_RESOURCES = [
   "framepack://project/{projectName}/capability-graph",
   "framepack://project/{projectName}/forge-tasks",
   "framepack://project/{projectName}/status",
+  "framepack://knowledge/video-design",
+  "framepack://knowledge/hyperframes-rules",
+  "framepack://templates/scene-templates",
 ] as const;
 
 export const FRAMEPACK_MCP_PROMPTS = [

@@ -2572,7 +2572,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.23");
+      assert.equal(packageJson.version, "0.5.0-alpha.24");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2610,7 +2610,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.23");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.24");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -5072,6 +5072,13 @@ Framepack compiles content into executable video projects.
       assert.match(output, /framepack:\/\/packs\/workflows/);
       assert.match(output, /framepack:\/\/packs\/creative-directions/);
       assert.match(output, /framepack:\/\/capabilities\/atlas/);
+      // Alpha.24: knowledge query tools
+      assert.match(output, /querySceneTemplate/);
+      assert.match(output, /recommendAnimation/);
+      assert.match(output, /getComponentCode/);
+      assert.match(output, /framepack:\/\/knowledge\/video-design/);
+      assert.match(output, /framepack:\/\/knowledge\/hyperframes-rules/);
+      assert.match(output, /framepack:\/\/templates\/scene-templates/);
     },
   },
   {
@@ -7515,6 +7522,36 @@ Framepack compiles content into executable video projects.
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
+    },
+  },
+
+  // ── MCP Knowledge Query Tests (alpha.24) ───────────
+
+  {
+    name: "MCP querySceneTemplate tool returns templates",
+    run: async () => {
+      const { createFramepackMcpServer } = await import("../dist/mcp/server.js");
+      const server = createFramepackMcpServer();
+      // Verify the server has the tool registered via mcp --describe
+      const stdout = [];
+      await runCli(["mcp", "--describe"], { stdout: (m) => stdout.push(m), stderr: () => {} });
+      const output = stdout.join("\n");
+      assert.match(output, /querySceneTemplate/);
+      assert.match(output, /recommendAnimation/);
+      assert.match(output, /getComponentCode/);
+    },
+  },
+
+  {
+    name: "MCP knowledge resources include best practices",
+    run: async () => {
+      const stdout = [];
+      await runCli(["mcp", "--describe"], { stdout: (m) => stdout.push(m), stderr: () => {} });
+      const output = stdout.join("\n");
+      // Verify knowledge resources
+      assert.match(output, /video-design/);
+      assert.match(output, /hyperframes-rules/);
+      assert.match(output, /scene-templates/);
     },
   },
 ];
