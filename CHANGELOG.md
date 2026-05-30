@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.5.0-beta.1
+
+Beta milestone — all P0+P1 issues from alpha.20 test report resolved.
+
+### P0 Issues (all cleared)
+- overlay z-index blocking scene content → fixed
+- `:first-child` / `:first-of-type` not matching scenes → explicit `#scene-0 { opacity: 1 }` ID selector
+- All scenes initial opacity:0 with no recovery → explicit ID-based CSS + GSAP
+
+### P1 Issues (all resolved)
+- video as composition root child causing black frame → video inside scene div + GSAP opacity control
+- Asset files not auto-copied → `createWorkbenchProject` copies assets to project dir
+- HyperFrames render --audio not working → `framepack render --with-audio` wraps hyperframes + ffmpeg
+
+### New since alpha.20
+- 20 built-in scene templates (6 categories: opening/name-reveal/stats/footage/cta/transition)
+- Entity extraction from idea text (names, numbers, actions, style, duration)
+- Scene template matching in skeleton + build
+- `framepack build` one-click compilation from planning files to HTML
+- `framepack preview --open` auto-opens browser
+- `framepack render --with-audio` ffmpeg audio merge
+- `framepack template save` agent template persistence
+- 3 MCP knowledge query tools (querySceneTemplate, recommendAnimation, getComponentCode)
+- MCP knowledge resources (video design best practices, HyperFrames rules, scene template index)
+- External template registry interface
+- 198 tests passing
+
+## 0.5.0-alpha.26
+
+- add `framepack build` command — one-click compilation from planning files to previewable HTML
+  - reads COMPOSITION.md + DESIGN_TOKENS.md + ASSETS.md + .framepack/state.json
+  - parses Scene Shape descriptions for richer scene context
+  - extracts Code Templates from COMPOSITION.md for enhanced GSAP transitions
+  - matches scene templates per role with entity filling
+  - generates complete index.html with GSAP timeline
+- `buildWorkbenchProject()` core function in workbench module
+- 198/195 tests pass (3 new: build generates HTML, build fails without state, build CLI flag)
+
 ## 0.5.0-alpha.25
 
 - add `framepack preview --open` — wraps hyperframes preview + auto-opens browser (start/open/xdg-open)
