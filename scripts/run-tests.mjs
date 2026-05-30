@@ -93,7 +93,7 @@ import {
   recommendTemplateRoute,
   validateWorkbenchFiles,
 } from "../dist/workbench/index.js";
-import { extractIdeaEntities } from "../dist/workbench/index.js";
+import { buildWorkbenchProject, extractIdeaEntities } from "../dist/workbench/index.js";
 import {
   loadAllTemplates,
   matchSceneTemplates,
@@ -2573,7 +2573,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.25");
+      assert.equal(packageJson.version, "0.5.0-alpha.26");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2611,7 +2611,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.25");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.26");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -7600,6 +7600,121 @@ Framepack compiles content into executable video projects.
         // Check HTML was saved too
         const htmlPath = join(projectDir, ".framepack", "templates", "opening", "test-opening.html");
         assert.ok(existsSync(htmlPath), "HTML file should be saved");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+
+  // --- alpha.26: framepack build ---
+
+  {
+    name: "build command reads project state and generates HTML",
+    run() {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-build-"));
+      try {
+        // Create a minimal project structure
+        mkdirSync(join(tempRoot, ".framepack"), { recursive: true });
+        const projectName = "build-test";
+
+        // Write state.json
+        writeFileSync(join(tempRoot, ".framepack", "state.json"), JSON.stringify({
+          version: "framepack.workbench.v1",
+          projectName,
+          format: "16:9",
+          durationSec: 18,
+          directorTranslation: { narrativePattern: "saas-launch" },
+        }));
+
+        // Write DESIGN_TOKENS.md
+        writeFileSync(join(tempRoot, "DESIGN_TOKENS.md"), [
+          "# Design Tokens",
+          "- Accent primary: #FF6600",
+          "- Background: #111111",
+        ].join("\n"));
+
+        // Write ASSETS.md
+        writeFileSync(join(tempRoot, "ASSETS.md"), [
+          "# Assets",
+          "- `hero.mp4` (video)",
+          "- `logo.png` (image)",
+        ].join("\n"));
+
+        // Write COMPOSITION.md
+        writeFileSync(join(tempRoot, "COMPOSITION.md"), [
+          "# Composition Plan",
+          "",
+          "## Scene Shape",
+          "1. Open with a strong visual promise.",
+          "2. Build tension around the user's problem.",
+          "3. End with a clear payoff or next action.",
+          "",
+          "## Code Templates",
+          "Impact Pop (text shock): `tl.from(\".headline\", { scale: 5, ease: \"back.out(1.7)\", duration: 0.3 }, sceneStart + 0.2)`",
+          "Hard Scene Snap: `tl.set(\"#prev .content\", { opacity: 0 }, cutTime); tl.from(\"#next .content\", { opacity: 0, duration: 0.15 }, cutTime)`",
+        ].join("\n"));
+
+        const result = buildWorkbenchProject(tempRoot);
+
+        assert.equal(result.projectDir, tempRoot);
+        assert.ok(result.sceneCount > 0, "Should have scenes");
+        assert.equal(result.tokensApplied, true, "Tokens should be applied");
+        assert.equal(result.assetsReferenced, 2, "Should reference 2 assets");
+
+        // Check HTML was generated
+        const html = readFileSync(result.htmlPath, "utf-8");
+        assert.ok(html.includes("data-composition-id"), "Should have composition ID");
+        assert.ok(html.includes("data-scene-id"), "Should have scene IDs");
+        assert.ok(html.includes("FF6600"), "Should use design token colors");
+        assert.ok(html.includes("gsap.timeline"), "Should have GSAP timeline");
+        assert.ok(html.includes("__timelines"), "Should register timeline");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+
+  {
+    name: "build command fails without state.json",
+    run() {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-build-nostate-"));
+      try {
+        let threw = false;
+        try {
+          buildWorkbenchProject(tempRoot);
+        } catch (e) {
+          threw = true;
+          assert.ok(e instanceof Error);
+          assert.match(e.message, /Not a Framepack project/);
+        }
+        assert.ok(threw, "Should throw when state.json is missing");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+
+  {
+    name: "build CLI accepts --project-dir flag",
+    run() {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-build-cli-"));
+      try {
+        // Create a minimal project
+        mkdirSync(join(tempRoot, ".framepack"), { recursive: true });
+        writeFileSync(join(tempRoot, ".framepack", "state.json"), JSON.stringify({
+          version: "framepack.workbench.v1",
+          projectName: "cli-build-test",
+          format: "9:16",
+          durationSec: 15,
+          directorTranslation: { narrativePattern: "saas-launch" },
+        }));
+
+        const stdout = execSync(
+          `node dist/cli.js build --project-dir "${tempRoot}"`,
+          { cwd: resolve(dirname(fileURLToPath(import.meta.url)), ".."), encoding: "utf-8" },
+        );
+        assert.match(stdout, /Built \d+ scenes/);
+        assert.match(stdout, /Scene templates used/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

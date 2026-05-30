@@ -1968,6 +1968,553 @@ export function createWorkbenchProject(input: {
   return { projectDir, assets, files };
 }
 
+export function buildWorkbenchProject(projectDir: string): {
+  projectDir: string;
+  htmlPath: string;
+  sceneCount: number;
+  tokensApplied: boolean;
+  assetsReferenced: number;
+  templatesUsed: string[];
+} {
+  const dir = resolve(projectDir);
+
+  // Read project state
+  let state: Record<string, unknown>;
+  try {
+    state = JSON.parse(readFileSync(join(dir, ".framepack", "state.json"), "utf8"));
+  } catch {
+    throw new Error("Not a Framepack project: missing .framepack/state.json. Run `framepack create` first.");
+  }
+  const meta = (state.projectMetadata ?? state) as Record<string, unknown>;
+  const projectName = (meta.projectName as string) ?? basename(dir);
+  const format: "16:9" | "9:16" = (meta.format as "16:9" | "9:16") ?? "16:9";
+  const durationSec = (meta.durationSec as number) ?? 30;
+  const idea = readIfExists(join(dir, "FRAMEPACK.md"))?.split("\n").find(l => l.startsWith("Idea:"))?.replace("Idea:", "").trim()
+    ?? (meta.idea as string) ?? basename(dir);
+  const director = meta.directorTranslation as Record<string, unknown> | undefined;
+  const templateId = (director?.narrativePattern as string)
+    ?? recommendTemplateRoute({ idea: "", style: "", format, durationSec }).template.id;
+
+  // Read design tokens
+  const tokenMd = readIfExists(join(dir, "DESIGN_TOKENS.md")) ?? "";
+  const tokens = parseDesignTokens(tokenMd);
+
+  // Read assets
+  const assetMd = readIfExists(join(dir, "ASSETS.md")) ?? "";
+  const assets = parseAssetsFromMd(assetMd);
+
+  // Read COMPOSITION.md for richer scene context
+  const compositionMd = readIfExists(join(dir, "COMPOSITION.md")) ?? "";
+  const sceneDescriptions = parseSceneDescriptions(compositionMd);
+
+  // Get scenes from template
+  const scenes = SKELETON_SCENES[templateId] ?? SKELETON_SCENES["saas-launch"];
+
+  // Build enhanced HTML
+  const html = buildEnhancedHtml({
+    projectName,
+    format,
+    durationSec,
+    idea,
+    templateId,
+    designTokens: tokens,
+    assets,
+    scenes,
+    sceneDescriptions,
+    compositionMd,
+  });
+
+  const htmlPath = join(dir, "index.html");
+  writeFileSync(htmlPath, html, "utf8");
+
+  // Collect which templates were used
+  const templatesUsed: string[] = [];
+  const entities = extractIdeaEntities(idea);
+  for (const scene of scenes) {
+    const tpl = findTemplateForSceneRole(scene.id, format, scene.duration);
+    if (tpl && tpl.html.length > 100) templatesUsed.push(tpl.id);
+  }
+
+  return {
+    projectDir: dir,
+    htmlPath,
+    sceneCount: scenes.length,
+    tokensApplied: tokenMd.length > 0,
+    assetsReferenced: assets.length,
+    templatesUsed,
+  };
+}
+
+function readIfExists(path: string): string | undefined {
+  try {
+    return readFileSync(path, "utf8");
+  } catch {
+    return undefined;
+  }
+}
+
+interface SceneDescription {
+  role: string;
+  label: string;
+  guidance: string;
+}
+
+function parseSceneDescriptions(compositionMd: string): Map<string, SceneDescription> {
+  const descriptions = new Map<string, SceneDescription>();
+  const lines = compositionMd.split("\n");
+
+  let inSceneShape = false;
+  let currentScene: SceneDescription | null = null;
+
+  for (const line of lines) {
+    if (line.includes("## Scene Shape")) {
+      inSceneShape = true;
+      continue;
+    }
+    if (inSceneShape && line.startsWith("## ")) {
+      inSceneShape = false;
+      continue;
+    }
+    if (!inSceneShape) continue;
+
+    // Match numbered scene entries like "1. Open with a strong visual promise."
+    const numberedMatch = line.match(/^\d+\.\s+(.+)/);
+    if (numberedMatch) {
+      if (currentScene) {
+        descriptions.set(currentScene.role, currentScene);
+      }
+      currentScene = {
+        role: "",
+        label: numberedMatch[1].trim(),
+        guidance: numberedMatch[1].trim(),
+      };
+      // Guess the role from the label
+      const lower = numberedMatch[1].toLowerCase();
+      if (lower.includes("open") || lower.includes("hook") || lower.includes("strong")) {
+        currentScene.role = "hook";
+      } else if (lower.includes("product") || lower.includes("solution") || lower.includes("show")) {
+        currentScene.role = "product";
+      } else if (lower.includes("proof") || lower.includes("social") || lower.includes("result")) {
+        currentScene.role = "proof";
+      } else if (lower.includes("cta") || lower.includes("call") || lower.includes("action") || lower.includes("next")) {
+        currentScene.role = "cta";
+      } else if (lower.includes("stat") || lower.includes("number") || lower.includes("metric")) {
+        currentScene.role = "stats";
+      } else if (lower.includes("tension") || lower.includes("struggle")) {
+        currentScene.role = "tension";
+      } else if (lower.includes("build") || lower.includes("problem")) {
+        currentScene.role = "context";
+      } else if (lower.includes("end") || lower.includes("payoff") || lower.includes("reward")) {
+        currentScene.role = "reward";
+      }
+      continue;
+    }
+  }
+  if (currentScene) descriptions.set(currentScene.role, currentScene);
+
+  return descriptions;
+}
+
+function buildEnhancedHtml(input: {
+  projectName: string;
+  format: "16:9" | "9:16";
+  durationSec: number;
+  idea: string;
+  templateId: string;
+  designTokens?: DesignTokensResolved | null;
+  assets?: WorkbenchAsset[];
+  scenes: { id: string; label: string; duration: number }[];
+  sceneDescriptions: Map<string, SceneDescription>;
+  compositionMd: string;
+}): string {
+  const tokens = input.designTokens ?? DEFAULT_TOKENS;
+  const [width, height] = input.format === "9:16" ? [1080, 1920] : [1920, 1080];
+  const scenes = input.scenes;
+  const totalSceneDuration = scenes.reduce((sum, s) => sum + s.duration, 0);
+  const scaleFactor = totalSceneDuration > 0 ? input.durationSec / totalSceneDuration : 1;
+  const isFastPaced = FAST_TEMPLATES.has(input.templateId) || input.compositionMd.toLowerCase().includes("fast");
+  const isPortrait = input.format === "9:16";
+  const shortIdea = input.idea.length > 60 ? input.idea.slice(0, 57) + "..." : input.idea;
+
+  const f = {
+    gap: isPortrait ? "20px" : "28px",
+    pad: isPortrait ? "100px 40px" : "100px 140px",
+    title: isPortrait ? "56px" : "88px",
+    body: isPortrait ? "26px" : "34px",
+    bodyMax: isPortrait ? "900px" : "1400px",
+    stat: isPortrait ? "80px" : "120px",
+    statLabel: isPortrait ? "24px" : "32px",
+    ctaPad: isPortrait ? "20px 48px" : "24px 64px",
+    ctaFont: isPortrait ? "28px" : "36px",
+    quoteFont: isPortrait ? "36px" : "52px",
+    quoteMax: isPortrait ? "850px" : "1200px",
+    attrFont: isPortrait ? "22px" : "28px",
+    imgMax: isPortrait ? "280px" : "400px",
+  };
+
+  const entities = extractIdeaEntities(input.idea);
+  const entityName = entities.names[0] || "Your Brand";
+  const entityTagline = entities.names.length > 1 ? entities.names[1] : entities.actions[0] || "Coming Soon";
+  const entitySubtitle = entities.actions[0] || entities.styleKeywords[0] || "";
+  const statValue = entities.numbers[0]?.replace(/[£€$¥]/, "") || "100";
+  const statPrefix = entities.numbers[0]?.match(/[£€$¥]/)?.[0] || "";
+  const statLabel = entities.numbers[0] || "Key Metric";
+
+  let currentTime = 0;
+  const timed = scenes.map((scene) => {
+    const dur = Math.round(scene.duration * scaleFactor * 10) / 10;
+    const start = Math.round(currentTime * 10) / 10;
+    currentTime += dur;
+    return { ...scene, dur, start };
+  });
+
+  const videoAssets = (input.assets ?? []).filter(a => a.kind === "video");
+  const imageAssets = (input.assets ?? []).filter(a => a.kind === "image");
+
+  // Extract GSAP code templates from COMPOSITION.md
+  const codeTemplates = extractCodeTemplates(input.compositionMd);
+
+  const sceneDivs = timed.map((scene, idx) => {
+    const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up" as AnimationTemplate, html: "generic" as HtmlTemplate };
+    const template = findTemplateForSceneRole(scene.id, input.format, scene.dur);
+
+    let content: string;
+    if (template && template.html.length > 100) {
+      content = fillTemplatePlaceholders(template.html, {
+        entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel,
+        sceneIndex: idx, sceneStart: scene.start, sceneDuration: scene.dur,
+        videoSrc: videoAssets.length > 0 ? `assets/${videoAssets[idx % videoAssets.length].name}` : "",
+        prevSceneId: `scene-${Math.max(0, idx - 1)}`,
+        nextSceneId: `scene-${idx}`,
+      });
+      content = content.replace(/<!--[\s\S]*?-->/g, "").trim();
+    } else {
+      content = buildSceneContent(scene.id, role.html, input.idea, entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel);
+    }
+
+    // Scene description guidance as HTML comment (for agent reference)
+    const desc = input.sceneDescriptions.get(scene.id);
+    const guidanceComment = desc ? `\n        <!-- Scene guidance: ${desc.label} -->` : "";
+
+    // Add video element for footage scenes
+    const needsVideo = (role.html === "product" || scene.id === "action" || scene.id === "hook") && idx < videoAssets.length;
+    const hasVideoInContent = content.includes("<video");
+    const videoEl = needsVideo && !hasVideoInContent
+      ? `\n      <video id="bg-video-${idx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[idx % videoAssets.length].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;"></video>`
+      : "";
+
+    // Add image for product scenes
+    const imgIdx = role.html === "product" && idx < imageAssets.length && !template ? idx : -1;
+    const imgEl = imgIdx >= 0
+      ? `\n      <img src="assets/${imageAssets[idx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
+      : "";
+
+    if (template && template.html.length > 100 && content.includes('class="scene clip"')) {
+      const innerMatch = content.match(/class="scene clip"[^>]*>([\s\S]*)<\/div>\s*$/);
+      const innerContent = innerMatch ? innerMatch[1].trim() : content;
+      return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">${guidanceComment}
+      ${videoEl}
+${innerContent}
+    </div>`;
+    }
+
+    return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">${guidanceComment}
+      ${videoEl}
+      <div class="scene-content">${imgEl}
+${content}
+      </div>
+    </div>`;
+  });
+
+  // Build enhanced GSAP timeline
+  const tweens: string[] = [];
+
+  for (let i = 0; i < timed.length; i++) {
+    const scene = timed[i];
+    const sceneEl = `scene-${i}`;
+    const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up" as AnimationTemplate };
+    const enterTime = i === 0 ? 0.2 : scene.start + 0.3;
+
+    if (i === 0) {
+      tweens.push(buildEntranceTween(sceneEl, role.animation, enterTime));
+    } else {
+      tweens.push(buildInnerEntranceTween(sceneEl, role.animation, enterTime));
+    }
+
+    // Video opacity control
+    if (videoAssets.length > 0) {
+      const vIdx = (role.html === "product" || scene.id === "action" || scene.id === "hook") && i < videoAssets.length ? i : -1;
+      if (vIdx >= 0) {
+        tweens.push(`  gsap.set("#bg-video-${vIdx}", { opacity: 0 });`);
+        tweens.push(`  tl.to("#bg-video-${vIdx}", { opacity: 0.3, duration: 0.5 }, ${scene.start + 0.2});`);
+      }
+    }
+
+    // Transition to next scene
+    if (i < timed.length - 1) {
+      const next = timed[i + 1];
+      const nextEl = `scene-${i + 1}`;
+
+      // Use code templates from COMPOSITION.md when available
+      const transitionTemplate = findBestTransition(codeTemplates, scene.id);
+      if (transitionTemplate) {
+        const tweenCode = transitionTemplate
+          .replace(/sceneStart/g, String(scene.start))
+          .replace(/cutTime/g, String(next.start))
+          .replace(/#prev/g, `#${sceneEl}`)
+          .replace(/#next/g, `#${nextEl}`)
+          .replace(/\.headline/g, `#${sceneEl} .scene-title`)
+          .replace(/\.word/g, `#${sceneEl} .scene-word`);
+        tweens.push(`  // ${scene.id} → ${timed[i + 1].id} transition`);
+        tweens.push(`  ${tweenCode}`);
+      } else if (isFastPaced) {
+        tweens.push(`  tl.set("#${sceneEl} .scene-content", { opacity: 0 }, ${next.start});`);
+        tweens.push(`  tl.from("#${nextEl} .scene-content", { opacity: 0, duration: 0.15 }, ${next.start});`);
+      } else {
+        tweens.push(`  tl.to("#${sceneEl} .scene-content", { opacity: 0, duration: 0.5, overwrite: "auto" }, ${next.start - 0.5});`);
+        tweens.push(`  tl.from("#${nextEl} .scene-content", { opacity: 0, duration: 0.5 }, ${next.start});`);
+      }
+    }
+  }
+
+  // Final fade out
+  const lastIdx = timed.length - 1;
+  const fadeOutTime = Math.round((input.durationSec - 0.8) * 10) / 10;
+  if (lastIdx >= 0) {
+    tweens.push(`  tl.to("#scene-${lastIdx} .scene-content", { opacity: 0, duration: 0.8, overwrite: "auto" }, ${fadeOutTime});`);
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>${input.projectName}</title>
+  <style>
+    :root {
+      --bg-primary: ${tokens.colors.bgPrimary};
+      --bg-secondary: ${tokens.colors.bgSecondary};
+      --accent-primary: ${tokens.colors.accentPrimary};
+      --accent-secondary: ${tokens.colors.accentSecondary};
+      --text-primary: ${tokens.colors.textPrimary};
+      --text-secondary: ${tokens.colors.textSecondary};
+      --heading-font: ${tokens.typography.headingFont};
+      --body-font: ${tokens.typography.bodyFont};
+      --heading-weight: ${tokens.typography.headingWeight};
+      --body-weight: ${tokens.typography.bodyWeight};
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg-primary); color: var(--text-primary); font-family: var(--body-font); overflow: hidden; }
+
+    [data-composition-id="${input.projectName}"] {
+      position: relative;
+      width: ${width}px;
+      height: ${height}px;
+      background: var(--bg-primary);
+      overflow: hidden;
+    }
+
+    .scene {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+    }
+
+    #scene-0 { opacity: 1; }
+
+    .scene-content {
+      padding: ${f.pad};
+      max-width: ${width}px;
+      text-align: center;
+      width: 100%;
+    }
+
+    .scene-title {
+      font-size: ${f.title};
+      font-weight: var(--heading-weight);
+      color: var(--text-primary);
+      font-family: var(--heading-font);
+      line-height: 1.1;
+      margin-bottom: ${f.gap};
+    }
+
+    .scene-subtitle {
+      font-size: ${f.body};
+      font-weight: var(--body-weight);
+      color: var(--text-secondary);
+      font-family: var(--body-font);
+      max-width: ${f.bodyMax};
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: ${f.gap};
+      max-width: ${f.bodyMax};
+      margin: 0 auto;
+    }
+
+    .stat-card {
+      text-align: center;
+      padding: 32px 20px;
+      border-radius: 16px;
+      background: var(--bg-secondary);
+    }
+
+    .stat-number {
+      font-size: ${f.stat};
+      font-weight: 900;
+      color: var(--accent-primary);
+      font-family: var(--heading-font);
+    }
+
+    .stat-label {
+      font-size: ${f.statLabel};
+      color: var(--text-secondary);
+      margin-top: 8px;
+    }
+
+    .cta-button {
+      display: inline-block;
+      padding: ${f.ctaPad};
+      background: var(--accent-primary);
+      color: var(--bg-primary);
+      font-size: ${f.ctaFont};
+      font-weight: 700;
+      border-radius: 12px;
+      text-decoration: none;
+      margin-top: ${f.gap};
+    }
+
+    .quote-block {
+      max-width: ${f.quoteMax};
+      margin: 0 auto;
+    }
+
+    .quote-text {
+      font-size: ${f.quoteFont};
+      font-weight: 700;
+      font-style: italic;
+      color: var(--text-primary);
+      line-height: 1.3;
+    }
+
+    .quote-attr {
+      font-size: ${f.attrFont};
+      color: var(--text-secondary);
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div data-composition-id="${input.projectName}" data-duration="${input.durationSec}">
+${sceneDivs.join("\n")}
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+${tweens.join("\n")}
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines["${input.projectName}"] = tl;
+    tl.play();
+  </script>
+</body>
+</html>`;
+}
+
+function fillTemplatePlaceholders(html: string, vars: {
+  entityName: string;
+  entityTagline: string;
+  entitySubtitle: string;
+  statValue: string;
+  statPrefix: string;
+  statLabel: string;
+  sceneIndex: number;
+  sceneStart: number;
+  sceneDuration: number;
+  videoSrc: string;
+  prevSceneId: string;
+  nextSceneId: string;
+}): string {
+  return html
+    .replace(/\{\{entityName\}\}/g, vars.entityName)
+    .replace(/\{\{entityTagline\}\}/g, vars.entityTagline)
+    .replace(/\{\{entitySubtitle\}\}/g, vars.entitySubtitle)
+    .replace(/\{\{sceneIndex\}\}/g, String(vars.sceneIndex))
+    .replace(/\{\{sceneStart\}\}/g, String(vars.sceneStart))
+    .replace(/\{\{sceneDuration\}\}/g, String(vars.sceneDuration))
+    .replace(/\{\{statValue\}\}/g, vars.statValue)
+    .replace(/\{\{statPrefix\}\}/g, vars.statPrefix)
+    .replace(/\{\{statSuffix\}\}/g, "")
+    .replace(/\{\{statLabel\}\}/g, vars.statLabel)
+    .replace(/\{\{videoSrc\}\}/g, vars.videoSrc)
+    .replace(/\{\{labelText\}\}/g, vars.entityName)
+    .replace(/\{\{subLabelText\}\}/g, vars.entityTagline)
+    .replace(/\{\{ctaHeadline\}\}/g, vars.entityTagline)
+    .replace(/\{\{ctaSubtext\}\}/g, vars.entitySubtitle || vars.entityName)
+    .replace(/\{\{ctaButtonText\}\}/g, vars.entityName)
+    .replace(/\{\{countdownFrom\}\}/g, "5")
+    .replace(/\{\{mainTitle\}\}/g, vars.entityName)
+    .replace(/\{\{mainSubtext\}\}/g, vars.entityTagline)
+    .replace(/\{\{pipLabel\}\}/g, vars.entitySubtitle || "LIVE")
+    .replace(/\{\{bar1Label\}\}/g, "Speed").replace(/\{\{bar1Value\}\}/g, "85%")
+    .replace(/\{\{bar2Label\}\}/g, "Power").replace(/\{\{bar2Value\}\}/g, "70%")
+    .replace(/\{\{bar3Label\}\}/g, "Impact").replace(/\{\{bar3Value\}\}/g, "92%")
+    .replace(/\{\{leftTitle\}\}/g, vars.entityName).replace(/\{\{leftSubtext\}\}/g, vars.entityTagline)
+    .replace(/\{\{rightTitle\}\}/g, vars.entityTagline).replace(/\{\{rightSubtext\}\}/g, vars.entitySubtitle)
+    .replace(/\{\{chartValue\}\}/g, vars.statValue).replace(/\{\{chartLabel\}\}/g, vars.statLabel)
+    .replace(/\{\{chartSubtext\}\}/g, vars.entityTagline)
+    .replace(/\{\{cutTime\}\}/g, String(vars.sceneStart))
+    .replace(/\{\{dissolveDuration\}\}/g, "0.5")
+    .replace(/\{\{flashTime\}\}/g, String(vars.sceneStart))
+    .replace(/\{\{prevSceneId\}\}/g, vars.prevSceneId)
+    .replace(/\{\{nextSceneId\}\}/g, vars.nextSceneId);
+}
+
+interface CodeTemplate {
+  name: string;
+  pattern: string;
+  code: string;
+}
+
+function extractCodeTemplates(compositionMd: string): CodeTemplate[] {
+  const templates: CodeTemplate[] = [];
+  const inCodeTemplates = compositionMd.includes("## Code Templates");
+  if (!inCodeTemplates) return templates;
+
+  const section = compositionMd.split("## Code Templates")[1]?.split("##")[0] ?? "";
+  const lines = section.split("\n");
+  let current: CodeTemplate | null = null;
+
+  for (const line of lines) {
+    const namedMatch = line.match(/^([A-Z][^(]+)\s*\(([^)]+)\):\s*`(.+)`/);
+    if (namedMatch) {
+      if (current) templates.push(current);
+      current = { name: namedMatch[1].trim(), pattern: namedMatch[2].trim(), code: namedMatch[3] };
+    }
+  }
+  if (current) templates.push(current);
+  return templates;
+}
+
+function findBestTransition(templates: CodeTemplate[], sceneId: string): string | null {
+  for (const t of templates) {
+    const lower = t.name.toLowerCase() + " " + t.pattern.toLowerCase();
+    if (lower.includes("hard") && (sceneId === "action" || sceneId === "hook")) return t.code;
+    if (lower.includes("dissolve") && (sceneId === "context" || sceneId === "origin")) return t.code;
+    if (lower.includes("snap") && sceneId !== "cta") return t.code;
+  }
+  return null;
+}
+
 export function defaultWorkbenchProjectName(idea: string) {
   return (
     basename(idea)

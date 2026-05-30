@@ -47,6 +47,7 @@ import {
 } from "../../workflow-packs/registry.js";
 import {
   createWorkbenchProject,
+  buildWorkbenchProject,
   defaultWorkbenchProjectName,
   formatWorkbenchHumanBrief,
   listHyperframesCatalogPrefabs,
@@ -131,7 +132,8 @@ type CliCommandName =
   | "sync-assets"
   | "scaffold"
   | "scene-templates"
-  | "template";
+  | "template"
+  | "build";
 
 interface CliDependencies {
   captureProject?: typeof materializeProjectAssets;
@@ -174,7 +176,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.25";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.26";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -331,7 +333,8 @@ function getCommandName(args: string[]): CliCommandName {
     command === "sync-assets" ||
     command === "scaffold" ||
     command === "scene-templates" ||
-    command === "template"
+    command === "template" ||
+    command === "build"
   ) {
     return command;
   }
@@ -1050,6 +1053,27 @@ function runScaffoldCommand(args: string[], io: CliIo): number {
       `Assets referenced: ${result.assetsReferenced}`,
       "",
       "Next: npx hyperframes preview --port 3002",
+    ].join("\n"));
+    return 0;
+  } catch (error) {
+    io.stderr(error instanceof Error ? error.message : String(error));
+    return 1;
+  }
+}
+
+function runBuildCommand(args: string[], io: CliIo): number {
+  const projectDir = getRequiredArg(args, "--project-dir");
+  try {
+    const result = buildWorkbenchProject(projectDir);
+    io.stdout([
+      `Built ${result.sceneCount} scenes to ${result.htmlPath}`,
+      `Design tokens applied: ${result.tokensApplied ? "yes" : "default"}`,
+      `Assets referenced: ${result.assetsReferenced}`,
+      result.templatesUsed.length > 0
+        ? `Scene templates used: ${result.templatesUsed.join(", ")}`
+        : "Scene templates: none matched (using built-in content)",
+      "",
+      "Next: npx framepack preview --project-dir . --open",
     ].join("\n"));
     return 0;
   } catch (error) {
@@ -1801,6 +1825,10 @@ export async function runCli(
 
     if (command === "template") {
       return runTemplateCommand(args.slice(1), io);
+    }
+
+    if (command === "build") {
+      return runBuildCommand(args.slice(1), io);
     }
 
     return await runGenerateCommand(args, io);
