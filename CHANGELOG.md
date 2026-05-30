@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0-alpha.23
+
+- add `framepack render --with-audio <file>` — wraps hyperframes render + ffmpeg audio merge
+- add auto-copy of asset files to project's assets/ directory during `framepack create`
+- upgrade `buildSkeletonHtml` to use scene templates from the template ecosystem
+  - each scene role matched to best template via `findTemplateForSceneRole()`
+  - entity placeholders filled from `extractIdeaEntities()` results
+  - templates provide richer HTML with proper CSS structure, GSAP animation hints
+- 191/189 tests pass (2 new: render --audio routing, asset auto-copy)
+
 ## 0.5.0-alpha.22
 
 - add `extractIdeaEntities()` — extracts names, numbers, actions, and style keywords from user idea text

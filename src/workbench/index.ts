@@ -17,6 +17,10 @@ import {
   recommendHyperframesPromptTemplate,
   type HyperframesPromptTemplateRecommendation,
 } from "./hyperframes-prompt-templates.js";
+import {
+  findTemplateForSceneRole,
+  type SceneTemplate,
+} from "./scene-templates.js";
 
 export type WorkbenchAssetKind = "image" | "video" | "audio" | "text" | "other";
 
@@ -1117,19 +1121,79 @@ function buildSkeletonHtml(input: {
 
   const sceneDivs = timed.map((scene, idx) => {
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up", html: "generic" };
-    const content = buildSceneContent(scene.id, role.html, input.idea, entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel);
 
-    // Add video for footage scenes
-    const videoIdx = (role.html === "product" || scene.id === "action" || scene.id === "hook") && idx < videoAssets.length ? idx : -1;
-    const videoEl = videoIdx >= 0
-      ? `\n      <video id="bg-video-${videoIdx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[videoIdx].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;"></video>`
+    // Try to find a matching scene template
+    const template = findTemplateForSceneRole(scene.id, input.format, scene.dur);
+    let content: string;
+
+    if (template && template.html.length > 100) {
+      // Use scene template — fill in entity placeholders
+      content = template.html
+        .replace(/\{\{entityName\}\}/g, entityName)
+        .replace(/\{\{entityTagline\}\}/g, entityTagline)
+        .replace(/\{\{entitySubtitle\}\}/g, entitySubtitle)
+        .replace(/\{\{sceneIndex\}\}/g, String(idx))
+        .replace(/\{\{sceneStart\}\}/g, String(scene.start))
+        .replace(/\{\{sceneDuration\}\}/g, String(scene.dur))
+        .replace(/\{\{statValue\}\}/g, statValue)
+        .replace(/\{\{statPrefix\}\}/g, statPrefix)
+        .replace(/\{\{statSuffix\}\}/g, "")
+        .replace(/\{\{statLabel\}\}/g, statLabel)
+        .replace(/\{\{videoSrc\}\}/g, videoAssets.length > 0 ? `assets/${videoAssets[0].name}` : "")
+        .replace(/\{\{labelText\}\}/g, entityName)
+        .replace(/\{\{subLabelText\}\}/g, entityTagline)
+        .replace(/\{\{ctaHeadline\}\}/g, entityTagline)
+        .replace(/\{\{ctaSubtext\}\}/g, entitySubtitle || entityName)
+        .replace(/\{\{ctaButtonText\}\}/g, entityName)
+        .replace(/\{\{countdownFrom\}\}/g, "5")
+        .replace(/\{\{mainTitle\}\}/g, entityName)
+        .replace(/\{\{mainSubtext\}\}/g, entityTagline)
+        .replace(/\{\{pipLabel\}\}/g, entitySubtitle || "LIVE")
+        .replace(/\{\{bar1Label\}\}/g, "Speed").replace(/\{\{bar1Value\}\}/g, "85%")
+        .replace(/\{\{bar2Label\}\}/g, "Power").replace(/\{\{bar2Value\}\}/g, "70%")
+        .replace(/\{\{bar3Label\}\}/g, "Impact").replace(/\{\{bar3Value\}\}/g, "92%")
+        .replace(/\{\{leftTitle\}\}/g, entityName).replace(/\{\{leftSubtext\}\}/g, entityTagline)
+        .replace(/\{\{rightTitle\}\}/g, entityTagline).replace(/\{\{rightSubtext\}\}/g, entitySubtitle)
+        .replace(/\{\{chartValue\}\}/g, statValue).replace(/\{\{chartLabel\}\}/g, statLabel)
+        .replace(/\{\{chartSubtext\}\}/g, entityTagline)
+        .replace(/\{\{cutTime\}\}/g, String(scene.start))
+        .replace(/\{\{dissolveDuration\}\}/g, "0.5")
+        .replace(/\{\{flashTime\}\}/g, String(scene.start))
+        .replace(/\{\{prevSceneId\}\}/g, `scene-${Math.max(0, idx - 1)}`)
+        .replace(/\{\{nextSceneId\}\}/g, `scene-${idx}`);
+
+      // Strip comment blocks for cleaner output
+      content = content.replace(/<!--[\s\S]*?-->/g, "").trim();
+    } else {
+      // Fallback to hardcoded content
+      content = buildSceneContent(scene.id, role.html, input.idea, entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel);
+    }
+
+    // Add video for footage scenes (when not using template that already has video)
+    const needsVideo = (role.html === "product" || scene.id === "action" || scene.id === "hook") && idx < videoAssets.length;
+    const hasVideoInContent = content.includes("<video");
+    const videoEl = needsVideo && !hasVideoInContent
+      ? `\n      <video id="bg-video-${idx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[idx].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;"></video>`
       : "";
 
-    // Add image for product/action scenes
-    const imgIdx = role.html === "product" && idx < imageAssets.length ? idx : -1;
+    // Add image for product scenes (when not using template)
+    const imgIdx = role.html === "product" && idx < imageAssets.length && !template ? idx : -1;
     const imgEl = imgIdx >= 0
-      ? `\n      <img src="assets/${imageAssets[imgIdx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
+      ? `\n      <img src="assets/${imageAssets[idx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
       : "";
+
+    // If template already has a scene wrapper div, extract inner content
+    // (templates are full scene HTML; we wrap them in our standard structure)
+    if (template && template.html.length > 100 && content.includes("class=\"scene clip\"")) {
+      // Extract content between scene wrapper tags — strip the outer div
+      const innerMatch = content.match(/class="scene clip"[^>]*>([\s\S]*)<\/div>\s*$/);
+      const innerContent = innerMatch ? innerMatch[1].trim() : content;
+
+      return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">
+      ${videoEl}
+${innerContent}
+    </div>`;
+    }
 
     return `    <div id="scene-${idx}" data-scene-id="${scene.id}" class="scene clip" data-start="${scene.start}" data-duration="${scene.dur}">
       ${videoEl}
@@ -1883,6 +1947,22 @@ export function createWorkbenchProject(input: {
   for (const [filePath, content] of Object.entries(files)) {
     mkdirSync(dirname(join(projectDir, filePath)), { recursive: true });
     writeFileSync(join(projectDir, filePath), content, "utf8");
+  }
+
+  // Auto-copy asset files to project's assets/ directory
+  if (input.assetDir) {
+    const sourceDir = resolve(input.assetDir);
+    const targetDir = join(projectDir, "assets");
+    if (existsSync(sourceDir) && sourceDir !== targetDir) {
+      mkdirSync(targetDir, { recursive: true });
+      for (const asset of assets) {
+        const src = join(sourceDir, asset.name);
+        const dst = join(targetDir, asset.name);
+        if (existsSync(src) && !existsSync(dst)) {
+          try { copyFileSync(src, dst); } catch { /* skip unreadable files */ }
+        }
+      }
+    }
   }
 
   return { projectDir, assets, files };

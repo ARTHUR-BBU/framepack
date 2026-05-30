@@ -171,7 +171,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.22";
+const FRAMEPACK_CLI_VERSION = "0.5.0-alpha.23";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -1439,6 +1439,82 @@ function runRuntimeActionCommand(
   return 0;
 }
 
+function runRenderCommand(
+  args: string[],
+  io: CliIo,
+  dependencies: CliDependencies = {},
+): number {
+  const audioFile = getOptionalArg(args, "--audio") ?? getOptionalArg(args, "--with-audio");
+  const projectDir = getRequiredProjectDir(args);
+
+  // Step 1: Run hyperframes render
+  const renderExit = runRuntimeActionCommand("render", args, io, dependencies);
+  if (renderExit !== 0) return renderExit;
+
+  // Step 2: If no audio requested, we're done
+  if (!audioFile) return 0;
+
+  // Step 3: Find the rendered video
+  const rendersDir = join(projectDir, "renders");
+  if (!existsSync(rendersDir)) {
+    io.stderr("No renders/ directory found. Run render without --audio first to check output.");
+    return 1;
+  }
+
+  const renderedFiles = readdirSync(rendersDir)
+    .filter(f => f.endsWith(".mp4"))
+    .sort()
+    .reverse();
+
+  if (renderedFiles.length === 0) {
+    io.stderr("No .mp4 files found in renders/. Run render first.");
+    return 1;
+  }
+
+  const videoFile = join(rendersDir, renderedFiles[0]);
+  const audioPath = resolve(audioFile);
+
+  if (!existsSync(audioPath)) {
+    io.stderr(`Audio file not found: ${audioPath}`);
+    return 1;
+  }
+
+  // Step 4: Check ffmpeg availability
+  try {
+    execSync("ffmpeg -version", { stdio: "pipe" });
+  } catch {
+    io.stderr([
+      "ffmpeg is required for audio merge. Install it first:",
+      "  Windows: winget install ffmpeg",
+      "  macOS:   brew install ffmpeg",
+      "  Linux:   sudo apt install ffmpeg",
+      "",
+      "Then re-run: npx framepack render --project-dir . --audio bgm.mp3",
+    ].join("\n"));
+    return 1;
+  }
+
+  // Step 5: Merge audio with ffmpeg
+  const outputFile = videoFile.replace(".mp4", "-with-audio.mp4");
+  io.stdout(`Merging audio: ${audioFile} → ${basename(outputFile)}`);
+
+  try {
+    execSync(
+      `ffmpeg -y -i "${videoFile}" -i "${audioPath}" -c:v copy -c:a aac -b:a 192k -shortest "${outputFile}"`,
+      { stdio: "pipe" },
+    );
+    io.stdout([
+      `Audio merged successfully: ${outputFile}`,
+      `Video: ${basename(videoFile)}`,
+      `Audio: ${basename(audioPath)}`,
+    ].join("\n"));
+    return 0;
+  } catch (err) {
+    io.stderr(`ffmpeg merge failed: ${err instanceof Error ? err.message : String(err)}`);
+    return 1;
+  }
+}
+
 function runSyncAssetsCommand(args: string[], io: CliIo): number {
   const projectDir = getRequiredProjectDir(args);
   const result = syncAssetExecutionProject({
@@ -1604,8 +1680,12 @@ export async function runCli(
       return runSyncAssetsCommand(args.slice(1), io);
     }
 
-    if (command === "preview" || command === "render") {
-      return runRuntimeActionCommand(command, args.slice(1), io, dependencies);
+    if (command === "preview") {
+      return runRuntimeActionCommand("preview", args.slice(1), io, dependencies);
+    }
+
+    if (command === "render") {
+      return runRenderCommand(args.slice(1), io, dependencies);
     }
 
     if (command === "scaffold") {

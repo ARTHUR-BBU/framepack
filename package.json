@@ -1,6 +1,6 @@
 {
   "name": "framepack",
-  "version": "0.5.0-alpha.22",
+  "version": "0.5.0-alpha.23",
   "private": false,
   "type": "module",
   "main": "./dist/cli.js",

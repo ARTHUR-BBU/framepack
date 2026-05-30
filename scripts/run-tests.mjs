@@ -2572,7 +2572,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.5.0-alpha.22");
+      assert.equal(packageJson.version, "0.5.0-alpha.23");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /中文/);
@@ -2610,7 +2610,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.22");
+      assert.equal(versionStdout.join("\n").trim(), "0.5.0-alpha.23");
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -7462,6 +7462,56 @@ Framepack compiles content into executable video projects.
         // Brand colors should be applied
         assert.match(html, /--accent-primary: #DA291C/);
         assert.match(html, /#scene-0/, "Should use explicit scene ID");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+
+  {
+    name: "render command accepts --audio flag",
+    run: async () => {
+      // Test that render --audio routes correctly (should fail gracefully, not crash)
+      const logs = [];
+      try {
+        await runCli(
+          ["render", "--project-dir", "/nonexistent", "--audio", "bgm.mp3"],
+          { stdout: (m) => logs.push(m), stderr: (m) => logs.push(m) },
+        );
+      } catch {
+        // Expected to fail — the point is it doesn't throw "invalid command"
+      }
+      // Should reach render (HyperFrames error) or audio file check, not "invalid command"
+      const output = logs.join(" ");
+      const hasNoCommandError = !output.includes("Missing or invalid command");
+      assert.ok(hasNoCommandError, `Should route to render, not throw invalid command: ${output.slice(0, 100)}`);
+    },
+  },
+
+  {
+    name: "createWorkbenchProject auto-copies assets to project dir",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-copy-"));
+      const assetDir = join(tempRoot, "source-assets");
+      const outputDir = join(tempRoot, "output");
+      mkdirSync(assetDir, { recursive: true });
+      mkdirSync(outputDir, { recursive: true });
+
+      // Create dummy asset files
+      writeFileSync(join(assetDir, "test-image.jpg"), "fake-jpg");
+      writeFileSync(join(assetDir, "test-video.mp4"), "fake-mp4");
+
+      try {
+        await runCli(
+          ["create", "--idea", "Asset copy test", "--assets", assetDir, "--output-dir", outputDir, "--project-name", "copy-test", "--format", "16:9"],
+          { stdout: () => {}, stderr: () => {} },
+        );
+
+        // Check that assets were copied to project dir
+        const projectAssetsDir = join(outputDir, "copy-test", "assets");
+        assert.ok(existsSync(projectAssetsDir), "assets/ directory should exist in project");
+        assert.ok(existsSync(join(projectAssetsDir, "test-image.jpg")), "test-image.jpg should be copied");
+        assert.ok(existsSync(join(projectAssetsDir, "test-video.mp4")), "test-video.mp4 should be copied");
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
