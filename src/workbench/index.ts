@@ -101,6 +101,20 @@ export interface WorkbenchQaReport {
   findings: string[];
 }
 
+export interface WorkbenchAuditCheck extends WorkbenchQaCheck {
+  priority: "P0" | "P1" | "P2";
+  correction: string;
+}
+
+export interface WorkbenchAuditReport {
+  version: "framepack.workbench-audit.v1";
+  status: "passed" | "failed";
+  checks: WorkbenchAuditCheck[];
+  priorityBlockers: WorkbenchAuditCheck[];
+  findings: string[];
+  corrections: string[];
+}
+
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mov", ".webm", ".mkv"]);
 const AUDIO_EXTENSIONS = new Set([".mp3", ".wav", ".m4a", ".aac", ".ogg"]);
@@ -684,6 +698,14 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
       summary: "COMPOSITION.md includes a HyperFrames Prompt Template plan.",
       finding: "COMPOSITION.md is missing a HyperFrames Prompt Template plan.",
     }),
+    validateContains({
+      files,
+      file: "DESIGN_TOKENS.md",
+      pattern: /Design Tokens/,
+      id: "design-tokens",
+      summary: "DESIGN_TOKENS.md exists as the stable visual token source.",
+      finding: "DESIGN_TOKENS.md is missing.",
+    }),
   ];
   const findings = checks
     .filter((check) => check.status === "failed")
@@ -699,7 +721,7 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
 
 export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport {
   const files = Object.fromEntries(
-    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"]
+    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", "DESIGN.md", "DESIGN_TOKENS.md", ".framepack/state.json"]
       .map((filePath) => [
         filePath,
         existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
@@ -707,6 +729,116 @@ export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport 
   );
 
   return validateWorkbenchFiles(files);
+}
+
+function auditContains(input: {
+  files: Record<string, string>;
+  file: string;
+  pattern: RegExp;
+  id: string;
+  priority: WorkbenchAuditCheck["priority"];
+  summary: string;
+  finding: string;
+  correction: string;
+}): WorkbenchAuditCheck {
+  const content = input.files[input.file] ?? "";
+  const passed = input.pattern.test(content);
+  return {
+    id: input.id,
+    priority: input.priority,
+    status: passed ? "passed" : "failed",
+    summary: passed ? input.summary : input.finding,
+    correction: input.correction,
+  };
+}
+
+export function auditWorkbenchFiles(files: Record<string, string>): WorkbenchAuditReport {
+  const checks: WorkbenchAuditCheck[] = [
+    auditContains({
+      files,
+      file: "DESIGN_TOKENS.md",
+      pattern: /Design Tokens[\s\S]*(Colors|Palette|#(?:[0-9a-fA-F]{6}))/,
+      id: "design-token-contract",
+      priority: "P0",
+      summary: "DESIGN_TOKENS.md provides executable visual tokens.",
+      finding: "DESIGN_TOKENS.md is missing executable colors or token guidance.",
+      correction: "Regenerate or repair DESIGN.md and DESIGN_TOKENS.md before writing or rebuilding composition code.",
+    }),
+    auditContains({
+      files,
+      file: "ASSET_GAPS.md",
+      pattern: /Gaps found|No critical gaps detected|Blocking \(must resolve before composition\)|Optional \(can proceed without\)/,
+      id: "asset-gap-intelligence",
+      priority: "P1",
+      summary: "ASSET_GAPS.md explains blocking or optional asset needs.",
+      finding: "ASSET_GAPS.md does not expose actionable asset gap status.",
+      correction: "Re-run Framepack create or update ASSET_GAPS.md with blocking, optional, recommendation, and next-step sections.",
+    }),
+    auditContains({
+      files,
+      file: "FRAMEPACK.md",
+      pattern: /Skill\/instructions|Project skills|Trigger Framepack|agentic loop/i,
+      id: "skill-install-surface",
+      priority: "P1",
+      summary: "FRAMEPACK.md exposes when agents must trigger Framepack skills or instructions.",
+      finding: "FRAMEPACK.md does not expose a clear skill/instruction trigger surface.",
+      correction: "Run framepack init-agent for the project and keep FRAMEPACK.md trigger rules visible to Codex or Claude Code.",
+    }),
+    auditContains({
+      files,
+      file: "ITERATIONS.md",
+      pattern: /HITL Loop[\s\S]*(Decision Log|Feedback Prompts|Next action)/,
+      id: "harness-compliance-audit",
+      priority: "P0",
+      summary: "ITERATIONS.md records the HITL loop needed to supervise and correct agent work.",
+      finding: "ITERATIONS.md does not record the HITL loop and correction checkpoints.",
+      correction: "Restore the HITL loop, decision log, feedback prompts, and review notes before asking testers to continue.",
+    }),
+    auditContains({
+      files,
+      file: "COMPOSITION.md",
+      pattern: /Catalog Pre-Flight[\s\S]*(npx hyperframes add|Recommended prefabs|Fallback)/,
+      id: "technology-install-plan",
+      priority: "P1",
+      summary: "COMPOSITION.md contains a concrete technology or Catalog install plan.",
+      finding: "COMPOSITION.md does not contain an actionable technology/Catalog install plan.",
+      correction: "Add install commands, fallback strategy, and user-confirmation notes for recommended technologies.",
+    }),
+    auditContains({
+      files,
+      file: "HUMAN.md",
+      pattern: /Current Summary[\s\S]*(Next user decision|What I need from you)/,
+      id: "plain-language-disclosure",
+      priority: "P1",
+      summary: "HUMAN.md gives the user a plain-language summary and decision point.",
+      finding: "HUMAN.md does not disclose progress and next decisions in plain language.",
+      correction: "Update HUMAN.md before continuing so the user understands the plan and can redirect it.",
+    }),
+  ];
+  const priorityBlockers = checks.filter(
+    (check) => check.status === "failed" && (check.priority === "P0" || check.priority === "P1"),
+  );
+
+  return {
+    version: "framepack.workbench-audit.v1",
+    status: priorityBlockers.length === 0 ? "passed" : "failed",
+    checks,
+    priorityBlockers,
+    findings: checks.filter((check) => check.status === "failed").map((check) => check.summary),
+    corrections: priorityBlockers.map((check) => check.correction),
+  };
+}
+
+export function auditWorkbenchProject(projectDir: string): WorkbenchAuditReport {
+  const files = Object.fromEntries(
+    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", "DESIGN.md", "DESIGN_TOKENS.md", ".framepack/state.json"]
+      .map((filePath) => [
+        filePath,
+        existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
+      ]),
+  );
+
+  return auditWorkbenchFiles(files);
 }
 
 const DESIGN_SYSTEM_SIGNALS: { id: string; keywords: string[] }[] = [
@@ -779,6 +911,20 @@ function buildDesignFiles(idea: string, style: string, brandColors?: string): Re
   if (brandColors) {
     const colors = brandColors.split(",").map((c) => c.trim()).filter(Boolean);
     return {
+      "DESIGN.md": [
+        "# Design System",
+        "",
+        "User-specified brand colors are the source of truth for this project.",
+        "",
+        "## Palette",
+        "",
+        ...colors.map((color, index) => `- Color ${index + 1}: ${color}`),
+        "",
+        "## Rule",
+        "",
+        "Use these colors exactly unless the user changes the brand direction.",
+        "",
+      ].join("\n"),
       "DESIGN_TOKENS.md": [
         "# Design Tokens",
         "",
@@ -801,12 +947,54 @@ function buildDesignFiles(idea: string, style: string, brandColors?: string): Re
   // No match found — let the agent decide colors.
   if (!designId) {
     return {
+      "DESIGN.md": [
+        "# Design System",
+        "",
+        "No named design system matched with enough confidence. Use this neutral production fallback until the user or agent selects a stronger reference.",
+        "",
+        "## Palette",
+        "",
+        "- Background primary: #050505",
+        "- Background secondary: #151515",
+        "- Accent primary: #ffffff",
+        "- Accent secondary: #8a8f98",
+        "- Text primary: #ffffff",
+        "- Text secondary: #b8bcc5",
+        "",
+        "## Typography",
+        "",
+        "- Heading font: Inter, Arial, sans-serif",
+        "- Body font: Inter, Arial, sans-serif",
+        "- Heading weight: 800",
+        "- Body weight: 500",
+        "",
+        "## Rule",
+        "",
+        "This fallback is deliberately restrained. Replace it with a named design system when the user gives a clear reference or brand direction.",
+        "",
+      ].join("\n"),
       "DESIGN_TOKENS.md": [
         "# Design Tokens",
         "",
-        "No design system matched. Agent should establish colors and typography based on user style words.",
+        "No design system matched. These executable fallback tokens keep the project buildable and auditable until a stronger design reference is selected.",
         "",
-        "Use `--brand-colors \"#RRGGBB,#RRGGBB,...\"` to specify exact brand colors.",
+        "## Colors",
+        "",
+        "- Background primary: #050505",
+        "- Background secondary: #151515",
+        "- Accent primary: #ffffff",
+        "- Accent secondary: #8a8f98",
+        "- Text primary: #ffffff",
+        "- Text secondary: #b8bcc5",
+        "",
+        "## Typography",
+        "",
+        "- Heading font: Inter, Arial, sans-serif",
+        "- Body font: Inter, Arial, sans-serif",
+        "- Heading weight: 800",
+        "- Body weight: 500",
+        "",
+        "Use `--brand-colors \"#RRGGBB,#RRGGBB,...\"` or a clear reference style to specify exact brand colors.",
         "",
       ].join("\n"),
     };
@@ -816,10 +1004,32 @@ function buildDesignFiles(idea: string, style: string, brandColors?: string): Re
 
   if (!existsSync(designSourcePath)) {
     return {
+      "DESIGN.md": [
+        "# Design System",
+        "",
+        `Matched design system '${designId}', but the source file was not bundled. Use the fallback production tokens below.`,
+        "",
+      ].join("\n"),
       "DESIGN_TOKENS.md": [
         "# Design Tokens",
         "",
-        "No design system matched. Agent should establish colors and typography based on user style words.",
+        "Matched design system source was missing. These fallback tokens keep the project buildable and auditable.",
+        "",
+        "## Colors",
+        "",
+        "- Background primary: #050505",
+        "- Background secondary: #151515",
+        "- Accent primary: #ffffff",
+        "- Accent secondary: #8a8f98",
+        "- Text primary: #ffffff",
+        "- Text secondary: #b8bcc5",
+        "",
+        "## Typography",
+        "",
+        "- Heading font: Inter, Arial, sans-serif",
+        "- Body font: Inter, Arial, sans-serif",
+        "- Heading weight: 800",
+        "- Body weight: 500",
         "",
       ].join("\n"),
     };
@@ -1549,7 +1759,7 @@ function buildFiles(input: {
       "",
       "## Agent Workflow",
       "",
-      "1. Read `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `STYLE.md`, `DIRECTION.md`, and `COMPOSITION.md` before writing code.",
+      "1. Read `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `DESIGN.md`, `DESIGN_TOKENS.md`, `STYLE.md`, `DIRECTION.md`, and `COMPOSITION.md` before writing code.",
       "2. Discuss unclear creative choices with the user in natural language.",
       "3. Use Framepack recommendations as a production brief, not as rigid rails.",
       "4. Build or refine the HyperFrames composition.",
@@ -1566,6 +1776,7 @@ function buildFiles(input: {
       "## Three Layers",
       "",
       "- Skill/instructions: trigger Framepack for vague video, asset, prompt, template, or composition work.",
+      "- Project skills: run `framepack init-agent --target auto --scope project` in the consumer project so Codex and Claude Code can load the Framepack director, template fuser, HyperFrames builder, and reference miner instructions.",
       "- MCP/CLI: call Framepack tools when files need to be created or refreshed.",
       "- Workbench files: keep the state in markdown so agents can resume without relying on model memory.",
       "",
@@ -1807,6 +2018,8 @@ function buildFiles(input: {
           human: "HUMAN.md",
           assets: "ASSETS.md",
           assetGaps: "ASSET_GAPS.md",
+          design: "DESIGN.md",
+          designTokens: "DESIGN_TOKENS.md",
           style: "STYLE.md",
           direction: "DIRECTION.md",
           composition: "COMPOSITION.md",

@@ -91,6 +91,7 @@ import {
   recommendHyperframesCatalogPrefabs,
   recommendHyperframesPromptTemplate,
   recommendTemplateRoute,
+  auditWorkbenchProject,
   validateWorkbenchFiles,
 } from "../dist/workbench/index.js";
 import { buildWorkbenchProject, extractIdeaEntities } from "../dist/workbench/index.js";
@@ -3335,6 +3336,10 @@ Framepack compiles content into executable video projects.
       assert.match(script, /composition-build-contract/);
       assert.match(script, /hyperframes-lint/);
       assert.match(script, /plain-language-review/);
+      assert.match(script, /design-token-contract/);
+      assert.match(script, /asset-gap-intelligence/);
+      assert.match(script, /skill-install-surface/);
+      assert.match(script, /harness-compliance-audit/);
       assert.match(script, /lintWarnings/);
       assert.match(script, /sandbox-report\.json/);
       assert.match(script, /SANDBOX_REPORT\.md/);
@@ -3364,6 +3369,10 @@ Framepack compiles content into executable video projects.
       assert.equal(report.maxScore, 100);
       assert.ok(report.coreCapabilities.some((check) => check.id === "mcp-callability"));
       assert.ok(report.coreCapabilities.some((check) => check.id === "workbench-mainline"));
+      assert.ok(report.coreCapabilities.some((check) => check.id === "design-token-contract"));
+      assert.ok(report.coreCapabilities.some((check) => check.id === "asset-gap-intelligence"));
+      assert.ok(report.coreCapabilities.some((check) => check.id === "skill-install-surface"));
+      assert.ok(report.coreCapabilities.some((check) => check.id === "harness-compliance-audit"));
       assert.ok(report.coreCapabilities.some((check) => check.id === "hyperframes-lint"));
       assert.equal(existsSync(join(outputDir, "sandbox-report.json")), true);
       assert.equal(existsSync(join(outputDir, "SANDBOX_REPORT.md")), true);
@@ -4864,6 +4873,89 @@ Framepack compiles content into executable video projects.
         assert.equal(checkExitCode, 0, stderr.join("\n"));
         assert.equal(payload.report.status, "passed");
         assert.ok(payload.report.checks.some((check) => check.id === "hitl-loop"));
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "audit a workbench package for harness compliance",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-workbench-audit-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const createExitCode = await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium Apple-like SaaS launch video for founders with product proof and a strong CTA.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "audited-workbench",
+            "--style",
+            "premium minimal polished business",
+            "--duration",
+            "30",
+            "--format",
+            "9:16",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const projectDir = join(tempRoot, "audited-workbench");
+        const report = auditWorkbenchProject(projectDir);
+        const auditExitCode = await runCli(
+          ["workbench", "audit", "--project-dir", projectDir, "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const payload = JSON.parse(stdout.join("\n"));
+
+        assert.equal(createExitCode, 0, stderr.join("\n"));
+        assert.equal(auditExitCode, 0, stderr.join("\n"));
+        assert.equal(report.status, "passed");
+        assert.equal(payload.report.status, "passed");
+        assert.equal(existsSync(join(projectDir, "DESIGN.md")), true);
+        assert.equal(existsSync(join(projectDir, "DESIGN_TOKENS.md")), true);
+        assert.ok(payload.report.checks.some((check) => check.id === "design-token-contract"));
+        assert.ok(payload.report.checks.some((check) => check.id === "asset-gap-intelligence"));
+        assert.ok(payload.report.checks.some((check) => check.id === "skill-install-surface"));
+        assert.ok(payload.report.checks.some((check) => check.id === "harness-compliance-audit"));
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "audit reports harness drift when critical workbench files are skipped",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-workbench-audit-drift-"));
+
+      try {
+        mkdirSync(join(tempRoot, ".framepack"), { recursive: true });
+        writeFileSync(join(tempRoot, "FRAMEPACK.md"), "# Framepack Workbench\n", "utf8");
+        writeFileSync(join(tempRoot, "HUMAN.md"), "# Human Brief\n\n## Current Summary\n\nDraft.\n", "utf8");
+        writeFileSync(join(tempRoot, "ASSETS.md"), "# Assets\n\n- logo.png (image)\n", "utf8");
+        writeFileSync(join(tempRoot, "ASSET_GAPS.md"), "# Asset Gap Analysis\n\nNo critical gaps detected.\n", "utf8");
+        writeFileSync(join(tempRoot, "STYLE.md"), "# Style Direction\n\n## Brand Direction\n\nDraft.\n", "utf8");
+        writeFileSync(join(tempRoot, "DIRECTION.md"), "# Creative Direction\n\n## Director Translation\n\nDraft.\n", "utf8");
+        writeFileSync(join(tempRoot, "COMPOSITION.md"), "# Composition Plan\n\n## Catalog Pre-Flight\n\nDraft.\n", "utf8");
+        writeFileSync(join(tempRoot, "ITERATIONS.md"), "# Iterations\n\n## HITL Loop\n\nDraft.\n", "utf8");
+        writeFileSync(join(tempRoot, ".framepack", "state.json"), JSON.stringify({ version: "framepack.workbench.v1" }, null, 2), "utf8");
+
+        const report = auditWorkbenchProject(tempRoot);
+
+        assert.equal(report.status, "failed");
+        assert.ok(report.priorityBlockers.some((check) => check.id === "design-token-contract"));
+        assert.ok(report.priorityBlockers.some((check) => check.id === "skill-install-surface"));
+        assert.ok(report.corrections.some((item) => /DESIGN/.test(item)));
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

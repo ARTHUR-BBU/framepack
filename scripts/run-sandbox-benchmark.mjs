@@ -228,12 +228,16 @@ async function main() {
   const projectDir = join(projectsDir, "sandbox-launch");
   const workbenchBrief = runNodeCli(["workbench", "brief", "--project-dir", projectDir]);
   const workbenchCheck = runNodeCli(["workbench", "check", "--project-dir", projectDir, "--json"]);
+  const workbenchAudit = parseJson(runNodeCli(["workbench", "audit", "--project-dir", projectDir, "--json"]));
   runNodeCli(["build", "--project-dir", projectDir]);
 
   const indexHtml = readProjectFile(projectDir, "index.html");
   const compositionMd = readProjectFile(projectDir, "COMPOSITION.md");
   const directionMd = readProjectFile(projectDir, "DIRECTION.md");
   const humanMd = readProjectFile(projectDir, "HUMAN.md");
+  const assetGapsMd = readProjectFile(projectDir, "ASSET_GAPS.md");
+  const designTokensMd = readProjectFile(projectDir, "DESIGN_TOKENS.md");
+  const iterationsMd = readProjectFile(projectDir, "ITERATIONS.md");
   const state = parseJson(readProjectFile(projectDir, ".framepack/state.json"));
   const meta = parseJson(readProjectFile(projectDir, "meta.json"));
 
@@ -253,7 +257,7 @@ async function main() {
     scoreCheck({
       id: "install-cli-surface",
       label: "CLI version/help expose the public workbench path.",
-      weight: 10,
+      weight: 6,
       passed: version.length > 0 && assertContains(help, /create/) && assertContains(help, /build/) && assertContains(help, /preview/) && assertContains(help, /mcp --describe/),
       evidence: [`version ${version}`, "help has create/build/preview/mcp"],
       priority: "P1",
@@ -261,7 +265,7 @@ async function main() {
     scoreCheck({
       id: "mcp-callability",
       label: "MCP tools are not only described; selected tools are callable through the SDK.",
-      weight: 15,
+      weight: 12,
       passed: mcp.toolNames.includes("recommendPacks") && mcp.calls.every((call) => call.ok),
       evidence: [`tools ${mcp.toolNames.length}`, `called ${mcp.calls.map((call) => call.name).join(", ")}`],
       priority: "P0",
@@ -269,23 +273,55 @@ async function main() {
     scoreCheck({
       id: "workbench-mainline",
       label: "The mainline create workflow writes agent-readable workbench files.",
-      weight: 15,
-      passed: ["FRAMEPACK.md", "HUMAN.md", "ASSETS.md", "ASSET_GAPS.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"].every((file) => existsSync(join(projectDir, file))),
+      weight: 10,
+      passed: ["FRAMEPACK.md", "HUMAN.md", "ASSETS.md", "ASSET_GAPS.md", "DESIGN_TOKENS.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", ".framepack/state.json"].every((file) => existsSync(join(projectDir, file))),
       evidence: ["core markdown files exist", `workbench check ${parseJson(workbenchCheck).report.status}`],
       priority: "P0",
     }),
     scoreCheck({
       id: "plain-language-review",
       label: "The workbench exposes a human-readable current summary.",
-      weight: 10,
+      weight: 6,
       passed: /Current Summary/.test(humanMd) && /Framepack human brief/.test(workbenchBrief),
       evidence: ["HUMAN.md has Current Summary", "workbench brief returns a readable summary"],
       priority: "P1",
     }),
     scoreCheck({
+      id: "design-token-contract",
+      label: "DESIGN.md/DESIGN_TOKENS.md give agents an executable visual source of truth.",
+      weight: 10,
+      passed: existsSync(join(projectDir, "DESIGN.md")) && /Design Tokens/.test(designTokensMd) && /#[0-9a-fA-F]{6}|Colors|Palette/.test(designTokensMd) && /--accent-primary/.test(indexHtml),
+      evidence: ["DESIGN.md present", "DESIGN_TOKENS.md has usable visual tokens", "HTML consumes CSS design variables"],
+      priority: "P0",
+    }),
+    scoreCheck({
+      id: "asset-gap-intelligence",
+      label: "ASSET_GAPS.md exposes blocking and optional material gaps before composition work.",
+      weight: 8,
+      passed: /Gaps found|No critical gaps detected/.test(assetGapsMd) && /Blocking|Optional|Next Step|Catalog/.test(assetGapsMd),
+      evidence: ["ASSET_GAPS.md has gap status", "asset recommendations are actionable"],
+      priority: "P1",
+    }),
+    scoreCheck({
+      id: "skill-install-surface",
+      label: "The package tells agents how Framepack skills and instructions must be installed or triggered.",
+      weight: 8,
+      passed: /framepack init-agent/.test(readProjectFile(projectDir, "FRAMEPACK.md")) && /Project skills|Skill\/instructions/.test(readProjectFile(projectDir, "FRAMEPACK.md")),
+      evidence: ["FRAMEPACK.md includes init-agent instruction", "skill trigger surface is visible"],
+      priority: "P1",
+    }),
+    scoreCheck({
+      id: "harness-compliance-audit",
+      label: "Framepack can audit and correct workflow drift instead of trusting model memory.",
+      weight: 10,
+      passed: workbenchAudit.report.status === "passed" && /HITL Loop/.test(iterationsMd) && Array.isArray(workbenchAudit.report.priorityBlockers),
+      evidence: [`workbench audit ${workbenchAudit.report.status}`, "HITL loop present", "priority blockers are machine-readable"],
+      priority: "P0",
+    }),
+    scoreCheck({
       id: "template-arsenal",
       label: "Built-in scene templates and route recommendations are available.",
-      weight: 15,
+      weight: 8,
       passed: templateStats.builtin >= 20 && templateStats.blocks >= 8 && /HyperFrames Prompt Template/.test(compositionMd),
       evidence: [`builtin ${templateStats.builtin ?? 0}`, `blocks ${templateStats.blocks ?? 0}`, "COMPOSITION.md has prompt-template plan"],
       priority: "P1",
@@ -293,7 +329,7 @@ async function main() {
     scoreCheck({
       id: "catalog-bridge",
       label: "Official Catalog candidates are exposed and written into the production plan.",
-      weight: 10,
+      weight: 6,
       passed: Array.isArray(catalog.prefabs) && catalog.prefabs.length >= 8 && catalogRecommendation.recommendation?.prefabs?.length > 0 && /Catalog Pre-Flight/.test(compositionMd),
       evidence: [`catalog prefabs ${catalog.prefabs?.length ?? 0}`, `recommended ${catalogRecommendation.recommendation?.prefabs?.length ?? 0}`, "COMPOSITION.md has Catalog Pre-Flight"],
       priority: "P1",
@@ -301,7 +337,7 @@ async function main() {
     scoreCheck({
       id: "composition-build-contract",
       label: "Build emits a HyperFrames-safe HTML skeleton and runtime metadata.",
-      weight: 15,
+      weight: 10,
       passed: /data-composition-id/.test(indexHtml) && /data-start="0"/.test(indexHtml) && /data-width="1080"/.test(indexHtml) && /data-height="1920"/.test(indexHtml) && /window\.__timelines/.test(indexHtml) && meta.rootEntry === "index.html" && !/<section[\s\S]*?<video/.test(indexHtml),
       evidence: ["root data attrs present", "timeline registered", "video elements stay outside timed scenes", `rootEntry ${meta.rootEntry}`],
       priority: "P0",
@@ -309,7 +345,7 @@ async function main() {
     scoreCheck({
       id: "hyperframes-lint",
       label: "Generated composition passes HyperFrames lint.",
-      weight: 10,
+      weight: 6,
       passed: lintOk,
       evidence: [lintOk ? "lint has 0 errors" : "lint failed"],
       warnings: [...lintWarnings, ...(lintWarning ? [lintWarning] : [])],
@@ -344,6 +380,8 @@ async function main() {
       mcpCalls: mcp.calls,
       templateStats,
       catalogPrefabs: catalog.prefabs?.length ?? 0,
+      workbenchAuditStatus: workbenchAudit.report.status,
+      workbenchAuditBlockers: workbenchAudit.report.priorityBlockers,
       stateKeys: Object.keys(state),
       lintOutput,
       lintWarnings,

@@ -50,6 +50,7 @@ import {
   buildWorkbenchProject,
   defaultWorkbenchProjectName,
   formatWorkbenchHumanBrief,
+  auditWorkbenchProject,
   listHyperframesCatalogPrefabs,
   listHyperframesPromptTemplates,
   listTemplateMarket,
@@ -196,6 +197,7 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack templates prompt",
   "  framepack templates recommend --idea <idea> --style <style>",
   "  framepack workbench check --project-dir <dir>",
+  "  framepack workbench audit --project-dir <dir>",
   "  framepack workbench brief --project-dir <dir>",
   "  framepack scaffold --project-dir <dir>",
   "  framepack build --project-dir <dir>",
@@ -1306,8 +1308,8 @@ function runTemplateCommand(args: string[], io: CliIo): number {
 }
 
 function runWorkbenchCommand(args: string[], io: CliIo): number {
-  if (args[0] !== "check" && args[0] !== "brief") {
-    throw new Error("Invalid workbench command. Use: framepack workbench check --project-dir <dir> or framepack workbench brief --project-dir <dir>");
+  if (args[0] !== "check" && args[0] !== "audit" && args[0] !== "brief") {
+    throw new Error("Invalid workbench command. Use: framepack workbench check --project-dir <dir>, framepack workbench audit --project-dir <dir>, or framepack workbench brief --project-dir <dir>");
   }
 
   if (args[0] === "brief") {
@@ -1316,6 +1318,29 @@ function runWorkbenchCommand(args: string[], io: CliIo): number {
   }
 
   const projectDir = resolve(getRequiredArg(args, "--project-dir"));
+
+  if (args[0] === "audit") {
+    const report = auditWorkbenchProject(projectDir);
+
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify({ projectDir, report }, null, 2));
+    } else {
+      io.stdout(
+        [
+          `Framepack workbench audit: ${report.status}`,
+          `projectDir: ${projectDir}`,
+          "",
+          ...report.checks.map((check) => `- ${check.status}: ${check.priority} ${check.id} - ${check.summary}`),
+          "",
+          "Corrections:",
+          ...(report.corrections.length > 0 ? report.corrections.map((item) => `- ${item}`) : ["- No correction required."]),
+        ].join("\n"),
+      );
+    }
+
+    return report.status === "passed" ? 0 : 1;
+  }
+
   const report = validateWorkbenchProject(projectDir);
 
   if (args.includes("--json")) {
