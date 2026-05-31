@@ -2587,6 +2587,7 @@ Framepack compiles content into executable video projects.
       assert.ok(packageJson.files.includes("AGENTS.md"));
       assert.ok(packageJson.files.includes("docs/rebirth"));
       assert.ok(packageJson.files.includes("scripts/postinstall.mjs"));
+      assert.ok(packageJson.files.includes("scripts/run-sandbox-benchmark.mjs"));
       assert.equal(packageJson.files.includes("docs/architecture"), false);
       assert.equal(packageJson.files.includes("docs/agent-platform"), false);
       assert.equal(packageJson.scripts.postinstall, "node scripts/postinstall.mjs");
@@ -3315,6 +3316,58 @@ Framepack compiles content into executable video projects.
       assert.match(scenarioReport, /four practical user routes/);
       assert.match(scenarioReport, /npm run release:scenarios/);
       assert.match(scenarioReport, /v0\.4\.0-alpha\.1/);
+    },
+  },
+  {
+    name: "publish a product-grade sandbox benchmark for internal scoring",
+    run: () => {
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+      const scriptPath = resolve(dirname(packageJsonPath), "scripts", "run-sandbox-benchmark.mjs");
+      const script = readFileSync(scriptPath, "utf8");
+
+      assert.equal(packageJson.scripts["sandbox:benchmark"], "npm run build && node scripts/run-sandbox-benchmark.mjs");
+      assert.match(script, /Framepack Sandbox Benchmark/);
+      assert.match(script, /coreCapabilities/);
+      assert.match(script, /mcp-callability/);
+      assert.match(script, /workbench-mainline/);
+      assert.match(script, /template-arsenal/);
+      assert.match(script, /catalog-bridge/);
+      assert.match(script, /composition-build-contract/);
+      assert.match(script, /hyperframes-lint/);
+      assert.match(script, /plain-language-review/);
+      assert.match(script, /lintWarnings/);
+      assert.match(script, /sandbox-report\.json/);
+      assert.match(script, /SANDBOX_REPORT\.md/);
+      assert.match(script, /Xiaobai Summary/);
+      assert.match(script, /BENCHMARK_MAX_SCORE = 100/);
+      assert.match(script, /priorityBlockers/);
+      assert.match(script, /timeout:/);
+      assert.match(script, /--clean/);
+      assert.match(script, /Client/);
+      assert.match(script, /StdioClientTransport/);
+      assert.match(script, /callTool/);
+      assert.match(script, /--json/);
+    },
+  },
+  {
+    name: "run the sandbox benchmark and verify its report contract",
+    run: () => {
+      const outputDir = mkdtempSync(resolve(dirname(packageJsonPath), "out", "sandbox-benchmark", "test-contract-"));
+      const stdout = execSync(
+        `node scripts/run-sandbox-benchmark.mjs --output-dir "${outputDir}" --clean --json`,
+        { cwd: resolve(dirname(packageJsonPath)), encoding: "utf8", timeout: 120000 },
+      );
+      const jsonStart = stdout.indexOf("{");
+      const report = JSON.parse(stdout.slice(jsonStart));
+
+      assert.equal(report.title, "Framepack Sandbox Benchmark");
+      assert.equal(report.maxScore, 100);
+      assert.ok(report.coreCapabilities.some((check) => check.id === "mcp-callability"));
+      assert.ok(report.coreCapabilities.some((check) => check.id === "workbench-mainline"));
+      assert.ok(report.coreCapabilities.some((check) => check.id === "hyperframes-lint"));
+      assert.equal(existsSync(join(outputDir, "sandbox-report.json")), true);
+      assert.equal(existsSync(join(outputDir, "SANDBOX_REPORT.md")), true);
+      assert.match(readFileSync(join(outputDir, "SANDBOX_REPORT.md"), "utf8"), /Xiaobai Summary/);
     },
   },
   {
