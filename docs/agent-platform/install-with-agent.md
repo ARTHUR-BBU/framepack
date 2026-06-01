@@ -1,52 +1,62 @@
 # Install Framepack With An Agent
 
-Framepack is designed to be installed by a coding agent.
+Framepack is designed to be installed and operated by a coding agent.
 
-Recommended prompt:
+## Recommended Prompt
 
 ```text
-Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project. Configure its MCP server, initialize the agent workflow, verify version/help/MCP, then generate and validate a small Framepack video package.
+Read https://github.com/ARTHUR-BBU/framepack and install Framepack into this project. Configure the agent workflow and MCP if available. Verify the install, create a small workbench from my idea and assets, explain it in plain language, run the audit gates, then build and preview.
 ```
 
-The agent should:
+## What The Agent Should Do
 
-1. Install Framepack from npm.
-2. Verify the published beta with `npx -y -p framepack@beta framepack --version`.
-3. Inspect the first-run guide with `npx -y -p framepack@beta framepack --help`.
-4. Verify the MCP surface with `npm exec --yes --package=framepack@beta -- framepack mcp --describe`.
-5. Run `framepack init-agent --target codex --scope project`.
-6. Inspect `framepack packs recommend --json` or the MCP `recommendPacks` tool.
-7. Generate a small package.
-8. Run status and validation.
-9. Report `readiness`, `nextActionItems`, and any missing assets or runtime gaps.
+1. Run `npm install framepack`.
+2. Verify with `npx framepack --version`.
+3. Inspect help with `npx framepack --help`.
+4. Inspect MCP with `npx framepack mcp --describe`.
+5. Confirm `AGENTS.md`, `CLAUDE.md`, `.mcp.json`, and project skills were created.
+6. Create a workbench with `npx framepack create`.
+7. Run `npx framepack workbench brief`.
+8. Run phase audits: `preflight`, `design`, `composition`, `preview`, and `render`.
+9. Build with `npx framepack build`.
+10. Preview with `npx framepack preview --open`.
+11. Render only after P0/P1 blockers are clear.
 
-For release-candidate or installer verification, the agent can run `framepack release-smoke --output-dir out/release-smoke --json` or MCP `releaseSmoke`. This performs the same flow as a structured smoke harness: agent workflow files, MCP surface, Arsenal Exposure, pack recommendation, auto-pack generation, capability/runtime artifacts, package status, and package validation.
+## What Gets Installed
 
-## What The Agent Is Installing
+Framepack is not only a CLI. It installs or exposes:
 
-Framepack is not only a CLI. The install should make the agent able to use:
+- project agent instructions
+- Claude Code skills
+- Codex project skills
+- `.mcp.json` for MCP-aware tools
+- workbench commands for create, brief, audit, build, preview, render
+- template, Catalog, and animation recommendation surfaces
 
-- MCP tools for generation, status, validation, asset work, and runtime checks
-- project resources such as manifest, handoff, asset execution plan, forge tasks, and status
-- workflow prompts for common video tasks
-- workflow packs and creative direction packs for route and taste selection
-- Codex skill instructions or Claude Code preview instructions
+## Expected User Experience
 
-The intended user experience is natural language first. The user describes the video job; the agent chooses the Framepack workflow, generates a package, checks readiness, follows `nextActionItems`, and reports what remains.
+The user should be able to speak naturally:
 
-For broad requests, the agent can pass `--auto-pack` or MCP `autoRecommendPacks: true` during generation. When the agent chooses a workflow and creative direction explicitly, CLI uses `--workflow-pack` and `--creative-direction-pack`; MCP uses `workflowPackId` and `creativeDirectionPackId`.
+```text
+Make this product video more premium, dynamic, business-like, with bigger focal text and stronger motion.
+```
 
-## Creative And Template Direction
+The agent should translate that into:
 
-Agents should treat design and motion quality as part of the workflow, not as an afterthought.
+- `HUMAN.md` for plain-language progress
+- `DIRECTION.md` for professional creative direction
+- `DESIGN.md` and `DESIGN_TOKENS.md` for visual execution
+- `ASSET_GAPS.md` for missing assets
+- `COMPOSITION.md` for HyperFrames planning
+- `ITERATIONS.md` for feedback and changes
 
-When a task needs creative output, the agent should identify:
+## Release Or Installer Verification
 
-- the intended video type
-- the audience and tone
-- the visual style
-- the animation rhythm
-- the best available template or workflow pack
-- any missing assets or forge tasks
+For repository development, run:
 
-If no template exists, the agent should preserve clear creative notes in the package handoff so a human, designer, or future template pack can improve the result.
+```bash
+npm run sandbox:benchmark
+npm run release:gate
+```
+
+`sandbox:benchmark` is the preferred product-level rehearsal because it exercises the current workbench path and the audit gates.

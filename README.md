@@ -1,462 +1,224 @@
 # Framepack
 
-Framepack is a **programmatic video workbench** for coding agents (Codex, Claude Code) and the HyperFrames render runtime.
+Framepack is a **programmatic video workbench** for coding agents such as Codex and Claude Code, built for the HyperFrames render runtime.
 
-It translates fuzzy taste words, user assets, references, and rough ideas into executable creative direction: design system, visual tokens, HTML skeleton, template route, motion language, animation techniques, composition plan, polish rules, and iteration memory.
+It turns rough ideas, user assets, references, and fuzzy taste words into a professional video workbench: design direction, visual tokens, asset gaps, HyperFrames composition guidance, reusable templates, build output, audit gates, and iteration memory.
 
 Chinese README: [docs/README.zh-CN.md](https://github.com/ARTHUR-BBU/framepack/blob/framepack-agent-platform/docs/README.zh-CN.md).
 
-## 中文快速说明
+## Plain Explanation
 
-Framepack 是一个**程式化视频创意工作台**，面向 coding agent（Codex、Claude Code）和 HyperFrames 渲染引擎。你可以用普通话描述想要的视频，比如”更商务一点””节奏更快””字大一点””动画多一点””像这个参考视频”。Framepack 会把这些模糊表达翻译成设计系统、视觉令牌、HTML 骨架、素材说明、用户摘要、风格方向、视频结构、模板路线、动效语言、composition 方案和迭代记录。
+Most users do not know which animation library, template, visual style, or HyperFrames rule they need. They say things like "make it more premium", "faster", "more business", "bigger text", "more motion", or "like this reference video".
 
-最短用法：
+Framepack translates that language into a workbench that an agent can execute. It does not generate pixels. It organizes assets, recommends templates and animation routes, writes production guidance, builds HyperFrames-safe HTML, and forces quality checks before preview and render.
 
-```bash
-npm install framepack
-npx framepack create --idea “一个高级、动感、商务感强的产品发布视频” --assets ./assets --output-dir ./out --project-name launch-video
-npx framepack workbench brief --project-dir ./out/launch-video
-```
-
-生成后先读 `FRAMEPACK.md` 和 `HUMAN.md`。`HUMAN.md` 是给人看的小白摘要，说明当前进度、视频结构、下一步要用户决定什么，以及技术选择是什么意思。
+In short: Framepack turns outsider language into a professional video plan.
 
 ## Programmatic Video vs Generative Video
 
-There are two fundamentally different approaches to making video with AI:
+**Generative video** tools create new imagery from a prompt.
 
-**Generative video** (Runway, Sora, Kling, Project Luxo): AI “paints” pixels from noise. You write a text prompt, the model generates entirely new frames — characters, scenes, motion, everything. No assets, no HTML, no code orchestration. Prompt in, video out.
+**Programmatic video** with Framepack + HyperFrames composes existing assets, text, clips, UI captures, SVG, HTML, CSS, and GSAP timelines into a controllable rendered video.
 
-**Programmatic video** (Framepack + HyperFrames): code orchestrates existing assets (images, text, video clips, icons) with wrapped animations (transitions, subtitle effects, motion graphics) and renders to MP4. No pixels are generated — only composed.
+| Area | Generative video | Framepack + HyperFrames |
+| --- | --- | --- |
+| Input | Prompt | Assets + intent + references |
+| Output | New frames | Composed video project |
+| Control | Broad style control | Element, timing, layout, and copy control |
+| Best for | Open-ended visual generation | Brand videos, explainers, product promos, data motion, template-led content |
+| Framepack role | Not the generator | Workbench, harness, template router, audit layer |
 
-| | Generative (Runway) | Programmatic (Framepack) |
-|---|---|---|
-| Input | Text prompt | Asset files + creative intent |
-| Output | New imagery | Asset composition + packaging |
-| Control | Coarse (overall style) | Pixel-perfect (every element, every frame) |
-| Best for | Storytelling, creative ads | Brand videos, data visualization, template content |
-| Imagery source | AI-generated | User-provided |
-| Core tech | Diffusion model | GSAP + CSS animation engine |
+## Install
 
-Framepack sits firmly on the programmatic side. It does not generate imagery. It gives coding agents the creative context, design systems, code templates, and safety rules needed to orchestrate user assets into professional HyperFrames compositions.
+```bash
+npm install framepack
+```
 
-## The Problem
-
-Most users do not know which animation library, template, motion grammar, or render runtime they need. They say things like:
-
-- make it cooler
-- more business
-- bigger text
-- faster pacing
-- more animation
-- like this reference video
-
-Framepack turns that outsider language into a professional video plan a coding agent can execute through HyperFrames.
-
-## Three Layers
-
-Framepack works through three layers:
-
-1. **Agent instructions / skills** trigger Framepack inside coding agents like Codex and Claude Code.
-2. **MCP / CLI** creates workbenches and exposes tool surfaces.
-3. **Workbench files** persist context so agents can resume without relying on model memory.
-
-When installed from npm, Framepack runs a small postinstall hook that creates project agent instructions:
+The npm postinstall hook installs project-facing agent guidance unless disabled:
 
 ```text
 AGENTS.md
 CLAUDE.md
 .mcp.json
 .framepack/agent/codex/SKILL.md
+.framepack/agent/codex/skills/
+.claude/skills/
 ```
 
-Set `FRAMEPACK_SKIP_AGENT_INSTALL=1` to skip that automatic project setup.
-
-## Start
+Disable the automatic project setup when needed:
 
 ```bash
-npm install framepack
+FRAMEPACK_SKIP_AGENT_INSTALL=1 npm install framepack
 ```
 
-Then ask your coding agent:
+## Recommended Agent Prompt
+
+Ask Codex or Claude Code:
 
 ```text
-Use Framepack to turn my assets folder into a polished HyperFrames video workbench. Make it premium, dynamic, business-ready, with strong motion and clear focal text.
+Use Framepack to turn this idea and assets folder into a polished HyperFrames video workbench. Keep the structure clear, make the style premium and dynamic, explain the plan in plain language, run the Framepack audit gates, then build and preview.
 ```
 
-Or call it directly:
+## Quick Workflow
+
+Minimal direct command:
 
 ```bash
+npx framepack create --idea "A premium launch video" --assets ./assets --output-dir ./out --project-name launch-video
+```
+
+```bash
+# Step 1: Create the workbench
 npx framepack create \
-  --idea "A 45 second founder-facing launch video for an agent-native workflow" \
+  --idea "A premium 30 second launch video for an agent-native workflow" \
   --assets ./assets \
   --output-dir ./out \
   --project-name launch-video \
-  --style "premium SaaS launch with kinetic interface motion"
+  --format 9:16 \
+  --style "premium SaaS, strong motion, large focal text"
+
+# Step 2: Explain it to the user
+npx framepack workbench brief --project-dir ./out/launch-video
+
+# Step 3: Audit before implementation
+npx framepack workbench audit --phase preflight --project-dir ./out/launch-video
+npx framepack workbench audit --phase design --project-dir ./out/launch-video
+npx framepack workbench audit --phase composition --project-dir ./out/launch-video
+
+# Step 4: Build HyperFrames HTML
+npx framepack build --project-dir ./out/launch-video
+
+# Step 5: Preview and render
+npx framepack preview --project-dir ./out/launch-video --open
+npx framepack workbench audit --phase preview --project-dir ./out/launch-video
+npx framepack render --project-dir ./out/launch-video --audio bgm.mp3
+npx framepack workbench audit --phase render --project-dir ./out/launch-video
 ```
 
-Or create from a reference video's DNA:
+## Workbench Files
 
-```bash
-npx framepack create \
-  --dna ./VIDEO_DNA.md \
-  --assets ./assets \
-  --output-dir ./out \
-  --project-name mo1-intro
-```
-
-This creates a complete agent-ready workbench:
+`framepack create` writes a compact workbench, not the old heavy package tree:
 
 ```text
 launch-video/
-  FRAMEPACK.md          agent workflow and mental model
-  ASSETS.md             user-provided assets and their role
-  HUMAN.md              plain-language status for the user
-  STYLE.md              brand direction, visual tokens, motion tokens
-  DIRECTION.md          fuzzy user language → professional creative direction
-  COMPOSITION.md        production route, scene plan, code templates, safety rules
-  ITERATIONS.md         render feedback and next changes
-  DESIGN.md             matched design system spec (22 curated systems)
-  DESIGN_TOKENS.md      extracted colors and typography from the design system
-  ASSET_GAPS.md         blocking and optional asset gap analysis
-  index.html            HyperFrames-passable HTML skeleton with scene structure
-  .framepack/
-    state.json          machine-readable project state
+  FRAMEPACK.md          agent workflow and required reading order
+  HUMAN.md              plain-language summary for non-technical users
+  ASSETS.md             user assets and expected roles
+  ASSET_GAPS.md         blocking and optional asset gaps
+  STYLE.md              brand direction and tuning parameters
+  DESIGN.md             matched design-system reference
+  DESIGN_TOKENS.md      executable colors and typography
+  DIRECTION.md          professional creative direction
+  COMPOSITION.md        HyperFrames production plan and template route
+  ITERATIONS.md         feedback and decision history
+  index.html            initial HyperFrames-safe composition skeleton
+  meta.json             runtime metadata for preview/render
+  .framepack/state.json machine-readable workbench state
 ```
 
-Start with `FRAMEPACK.md`.
+The human-facing file is `HUMAN.md`. The agent-facing starting point is `FRAMEPACK.md`.
 
-Check the generated workbench before building the first composition:
+## Audit Gates
+
+Framepack now treats quality control as part of the product, not a final afterthought.
 
 ```bash
-framepack workbench check --project-dir ./out/launch-video
-framepack workbench check --project-dir ./out/launch-video --json
-framepack workbench brief --project-dir ./out/launch-video
+npx framepack workbench audit --phase preflight --project-dir ./out/launch-video
+npx framepack workbench audit --phase design --project-dir ./out/launch-video
+npx framepack workbench audit --phase composition --project-dir ./out/launch-video
+npx framepack workbench audit --phase preview --project-dir ./out/launch-video
+npx framepack workbench audit --phase render --project-dir ./out/launch-video
+npx framepack workbench audit --phase all --project-dir ./out/launch-video --json
 ```
 
-## Workbench Arsenal
+Agents should stop on P0/P1 audit blockers before moving to build, preview, or render. The audit checks include user-readable summary, design tokens, asset gaps, HITL checkpoints, technology plan, skill exposure, HyperFrames runtime files, and preview/render readiness.
 
-`framepack create` writes twelve workbench files, not a heavy legacy package tree:
+## Built-In Arsenal
 
-- `FRAMEPACK.md`: agent workflow and three-layer mental model.
-- `ASSETS.md`: user-provided assets and their role.
-- `HUMAN.md`: plain-language status, structure, next decision, and technology explanation for the user.
-- `STYLE.md`: brand direction, visual tokens, motion tokens, and tuning parameters.
-- `DIRECTION.md`: fuzzy user language translated into professional creative direction.
-- `COMPOSITION.md`: HyperFrames production route, scene plan, code templates, Catalog Pre-Flight, and safety rules.
-- `ITERATIONS.md`: render feedback and next changes.
-- `DESIGN.md`: auto-matched design system spec from 22 curated systems (Apple, Stripe, Nike, SpaceX, Tesla, etc.).
-- `DESIGN_TOKENS.md`: extracted hex colors and typography from the matched design system.
-- `ASSET_GAPS.md`: blocking and optional asset gap analysis with tool recommendations.
-- `index.html`: HyperFrames-passable HTML skeleton with proper data attributes, scene structure, GSAP timeline, and CSS first-scene visibility.
-- `.framepack/state.json`: machine-readable project state.
+Framepack includes a local arsenal that helps agents choose a strong route without guessing:
 
-The built-in template registry includes:
+- 6 workflow templates: `saas-launch`, `news-explainer`, `course-promo`, `game-ad`, `founder-story`, `data-shock`
+- 11 HyperFrames prompt-template blueprints adapted from the Open Design template pattern
+- 20 scene templates across opening, name-reveal, stats, footage, CTA, and transition categories
+- 22 curated design-system references such as Apple, Stripe, SpaceX, Tesla, Nike, Nvidia, Linear, OpenAI, and Notion
+- HyperFrames Catalog bridge for components and blocks
+- Polish Arsenal recommendations for style, motion language, template route, avoid list, and acceptance criteria
 
-- `saas-launch`
-- `news-explainer`
-- `course-promo`
-- `game-ad`
-- `founder-story`
-- `data-shock`
-
-## Template Market
-
-Framepack now includes the first local Template Market index. It is intentionally small and agent-readable: no remote download, no payment system, no account layer yet.
-
-Each template carries the fields needed for a future ecosystem:
-
-- market item kind, starting with `workflow-template`
-- GitHub PR reviewed contribution model
-- access and license
-- price metadata
-- tags and fuzzy-match words
-- HyperFrames implementation routes
-- asset needs
-- visual language
-- motion language
-- acceptance criteria
-
-Use it from the CLI:
+Useful commands:
 
 ```bash
-framepack templates
-framepack templates --json
-framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
-framepack templates prompt --json
-framepack templates prompt recommend --idea "A TikTok founder video with karaoke captions" --style "big text fast social" --format 9:16 --json
+npx framepack templates
+npx framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
+npx framepack templates prompt
+npx framepack templates prompt recommend --idea "A TikTok founder video with karaoke captions" --style "big text fast social" --format 9:16 --json
+npx framepack scene-templates list
+npx framepack scene-templates recommend --category name-reveal
+npx framepack catalog recommend --template course-promo --idea "premium founder course promo" --style "business dynamic" --format 9:16 --json
 ```
 
-Future paid templates can plug into this same shape. The current release only ships built-in free templates so user testing stays simple.
+## Agent Skills
 
-## HyperFrames Prompt Templates
+Framepack installs a skill pack for agent platforms:
 
-Framepack also ships 11 built-in HyperFrames prompt-template blueprints adapted from the Open Design HyperFrames template pattern. These are not final videos and not remote downloads. They are director-ready production blueprints that help an agent fuse user assets, user taste, Catalog candidates, scene rhythm, and HyperFrames safety rules into `COMPOSITION.md`.
+- `framepack-director`: translates fuzzy user taste into structure, visual language, motion language, risks, and acceptance criteria.
+- `framepack-template-fuser`: fuses user assets, requirements, workflow templates, prompt templates, and Catalog candidates into `COMPOSITION.md`.
+- `framepack-hyperframes-builder`: turns `COMPOSITION.md` into HyperFrames-safe code and runs checks.
+- `framepack-reference-miner`: extracts `VIDEO_DNA.md` and `TEMPLATE_BLUEPRINT.md` from reference or finished videos.
 
-Included prompt templates:
+For Claude Code the skills are installed under `.claude/skills/`. For Codex project workflows they are installed under `.framepack/agent/codex/skills/`.
 
-- `hyperframes-saas-product-promo-30s`
-- `hyperframes-app-showcase-three-phones`
-- `hyperframes-product-reveal-minimal`
-- `hyperframes-website-to-video-promo`
-- `hyperframes-tiktok-karaoke-talking-head`
-- `hyperframes-data-bar-chart-race`
-- `hyperframes-brand-sizzle-reel`
-- `hyperframes-logo-outro-cinematic`
-- `hyperframes-social-overlay-stack`
-- `hyperframes-money-counter-hype`
-- `hyperframes-flight-map-route`
+## MCP Surface
 
-`COMPOSITION.md` now includes a Template Fusion Plan: the selected prompt template is treated as a reusable directing pattern, while the user's assets, offer, proof, audience, and CTA remain the source of truth.
-
-## Skill Playbooks
-
-`init-agent` installs Framepack as a skill pack for coding agents. The installed instructions include four playbooks:
-
-- `framepack-director`: translate fuzzy user taste into professional structure, visual language, motion language, risks, and acceptance criteria. Includes 22 curated design system references.
-- `framepack-template-fuser`: fuse user assets, user requirements, workflow templates, prompt templates, and Catalog candidates into a custom `COMPOSITION.md`.
-- `framepack-hyperframes-builder`: turn the composition plan into HyperFrames code with first-frame, timeline, lint, inspect, and snapshot rules. Includes 15 compatibility rules and 8 code templates.
-- `framepack-reference-miner`: turn a finished or reference video into `VIDEO_DNA.md` and `TEMPLATE_BLUEPRINT.md` so strong work can become a reusable template.
-
-For Claude Code, skills follow the progressive disclosure pattern — `SKILL.md` is a concise index, detailed references load on demand:
-
-```text
-.claude/skills/framepack-director/SKILL.md
-.claude/skills/framepack-director/references/designs/
-.claude/skills/framepack-template-fuser/SKILL.md
-.claude/skills/framepack-template-fuser/references/catalog-usage.md
-.claude/skills/framepack-hyperframes-builder/SKILL.md
-.claude/skills/framepack-hyperframes-builder/references/compatibility-rules.md
-.claude/skills/framepack-hyperframes-builder/references/code-templates.md
-.claude/skills/framepack-reference-miner/SKILL.md
-```
-
-For Codex-facing project workflows, matching skill files are installed under:
-
-```text
-.framepack/agent/codex/skills/
-```
-
-## VIDEO_DNA: Reference Video to Composition
-
-When the user says "make it look like this video", the `framepack-reference-miner` skill extracts a `VIDEO_DNA.md` — a second-by-second technical blueprint with:
-
-- Per-second GSAP/CSS HOW-TO code (not vague descriptions)
-- Extracted design tokens (hex colors, font sizes from the video pixels)
-- ASCII layout diagrams for complex segments
-- Asset checklist with BLOCKING / RECOMMENDED / OPTIONAL priorities
-- HyperFrames feasibility assessment per segment
-
-Then create a project from the DNA:
+Framepack MCP is a knowledge and automation surface for agents. Describe it with:
 
 ```bash
-framepack create --dna ./VIDEO_DNA.md --assets ./assets --output-dir ./out --project-name my-video
+npx framepack mcp --describe
 ```
 
-This auto-extracts duration, format, and colors from the DNA file and copies it into the project.
+Current knowledge tools include:
 
-## Design System Matching
+- `querySceneTemplate`
+- `recommendAnimation`
+- `getComponentCode`
 
-Framepack auto-matches user style keywords to one of 22 curated design systems and copies the full spec into the project as `DESIGN.md`. This gives the agent exact colors, typography, spacing, and motion rules instead of guessing.
+The wider MCP surface still exposes package-era tools such as `generateProject`, `getStatus`, `validatePackage`, `runtimeLint`, and `runtimeInspect` for compatibility and agent automation. The public user path is now `create -> audit -> build -> preview -> render`.
 
-Included design systems: SpaceX, Tesla, Nvidia, Apple, Stripe, Nike, Ferrari, Lamborghini, Bugatti, BMW M, Vercel, Linear, Spotify, Discord, Figma, PlayStation, Shopify, Meta, Uber, Raycast, OpenAI, Notion.
+## Build Contract
 
-`DESIGN_TOKENS.md` extracts the hex colors and typography from the matched design system for immediate use in code.
-
-## External Capabilities
-
-`COMPOSITION.md` now recommends external tools based on the user's creative direction:
-
-- `agent-sprite-forge` for game-ad routes (sprite sheets, character packs, FX)
-- Three.js for 3D and WebGL scenes
-- D3 / Chart.js for data visualization
-- Web Audio API for audio-reactive animations
-
-These are recommendations only. Framepack does not auto-install external tools.
-
-## HyperFrames Catalog Bridge
-
-HyperFrames Catalog provides two types of prefabs:
-
-- **Components** — CSS/GSAP code snippets for captions, effects, and transitions. These are the core building blocks for composition coding. 23+ components available: `caption-kinetic-slam`, `vignette`, `shimmer-sweep`, `parallax-zoom`, etc.
-- **Blocks** — Complete 4-15 second mini-videos with their own branding. Useful as reference or when the style matches your project exactly.
-
-Install all catalog components in one step:
+`framepack build` compiles workbench planning files into a previewable HyperFrames composition:
 
 ```bash
-framepack catalog install
+npx framepack build --project-dir ./out/launch-video
 ```
 
-Or browse and install individually:
+It reads `COMPOSITION.md`, `DESIGN_TOKENS.md`, `ASSETS.md`, and `.framepack/state.json`, then writes `index.html` and `meta.json`. The generated HTML preserves `data-width`, `data-height`, `data-start`, scene timing, first-frame visibility, and `window.__timelines` registration.
 
-```bash
-framepack catalog
-framepack catalog --json
-framepack catalog recommend --template course-promo --idea "A premium course promo for founders" --style "business dynamic" --format 9:16 --json
-```
+## HyperFrames Safety Rules
 
-Workbench `COMPOSITION.md` includes a Catalog Pre-Flight section that lists mandatory install-before-code steps.
+Framepack reminds agents to avoid common render traps:
 
-The Polish Arsenal recommender reads the idea, style, format, and duration, then recommends:
-
-- template route
-- HyperFrames Catalog blocks and components
-- tuning parameters for pace, text density, motion intensity, Catalog usage, and business polish
-- animation techniques
-- motion language
-- aesthetic direction
-- avoid list
-- acceptance criteria
-
-## Agentic HITL Loop
-
-Framepack workbenches include a human-in-the-loop production loop:
-
-- `HUMAN.md` tells the user what is happening in plain language: current summary, video structure, progress, next decision, and technology choices.
-- `DIRECTION.md` gives proposal options, director translation, and human checkpoints.
-- `COMPOSITION.md` turns the approved direction into HyperFrames scene code, Catalog assembly, and animation guidance.
-- `ITERATIONS.md` records decisions, preview feedback, and next changes.
-- `.framepack/state.json` stores the same loop in machine-readable form.
-
-Agents should ask the user to choose or modify the direction before locking the first composition when taste is still fuzzy.
-
-For a quick user-facing recap at any point:
-
-```bash
-framepack workbench brief --project-dir ./out/launch-video
-```
-
-## HyperFrames Runtime
-
-Framepack targets HyperFrames as its primary render runtime. It does not ask users to choose low-level tools:
-
-- HyperFrames for programmed commercial video rendering.
-- GSAP for HyperFrames-safe timeline motion.
-- Anime.js, SVG, Canvas, PixiJS, and asset-forge tools when they fit the creative goal.
-
-## Scene Templates
-
-Framepack ships 20 built-in scene templates across 6 categories. Each template is a self-contained HTML/CSS/GSAP building block that agents can select, fill with entity data, and compose into complete videos.
-
-| Category | Templates | Use for |
-|----------|-----------|---------|
-| **opening** | dark-build, impact-slam, reveal-from-black, kinetic-burst | Video hooks, attention grabs |
-| **name-reveal** | fly-through, slam-down, split-reveal, typewriter | Name/title reveals, announcements |
-| **stats** | counter-cards, progress-bars, radial-chart | Data, metrics, social proof |
-| **footage** | fullscreen-labels, split-screen, picture-in-picture | Video footage with overlays |
-| **cta** | bold-text, button-pulse, countdown | Calls to action |
-| **transition** | hard-cut, dissolve, white-flash | Scene-to-scene transitions |
-
-Templates use CSS variables (`var(--accent-primary)`) for brand colors and include GSAP animation comments. Agents can also create and save custom templates:
-
-```bash
-framepack template save --name "my-opening" --category "opening" --tags "dark,dramatic" --project-dir ./out/my-video
-```
-
-Saved templates are auto-indexed and returned by the matching engine.
-
-## Entity Extraction
-
-`framepack create` and `framepack build` extract entities from the user's idea text:
-
-- **Names**: proper nouns, brand names, transfer patterns ("Ederson → Manchester United")
-- **Numbers**: with units ("£50m", "100 saves", "30秒")
-- **Actions**: transfer, launch, reveal, announcement, etc.
-- **Style keywords**: premium, energetic, dramatic, cinematic, etc.
-- **Duration**: from text patterns ("30 seconds", "30秒", "30-second")
-
-Extracted entities fill template placeholders automatically: `{{entityName}}`, `{{statValue}}`, `{{ctaHeadline}}`, etc.
-
-## Build Command
-
-The `framepack build` command compiles planning files into a previewable HTML composition:
-
-```bash
-npx framepack build --project-dir ./out/ederson-v3
-```
-
-It reads:
-- `COMPOSITION.md` — scene shape, code templates, creative direction
-- `DESIGN_TOKENS.md` — brand colors and typography
-- `ASSETS.md` — asset list and types
-- `.framepack/state.json` — project metadata
-
-Then generates an `index.html` with:
-- Scene templates matched per role (opening → dark-build, stats → counter-cards, etc.)
-- Entity-filled content from the user's idea
-- Complete GSAP timeline with real timing and transitions
-- Video/image assets embedded in scenes
-
-## Full Workflow
-
-```bash
-# Step 1: Plan — generates 12 workbench files + initial skeleton
-npx framepack create --idea "Ederson → Manchester United transfer promo 30s" \
-  --brand-colors "#DA291C,#000000,#FFE500" --assets ./assets \
-  --output-dir ./out --project-name ederson-v3 --format 9:16
-
-# Step 2: Compile — planning files → enhanced HTML
-npx framepack build --project-dir ./out/ederson-v3
-
-# Step 3: Preview — auto-opens browser
-npx framepack preview --project-dir ./out/ederson-v3 --open
-
-# Step 4: Render — video + audio merge
-npx framepack render --project-dir ./out/ederson-v3 --audio bgm.mp3
-```
-
-## MCP Knowledge Interface
-
-Framepack MCP is a **knowledge query interface**, not a command mirror. Three tools let agents ask "how do I make this effect?":
-
-| Tool | Query | Returns |
-|------|-------|---------|
-| `querySceneTemplate` | `{ purpose: "name-reveal", format: "9:16" }` | Matching template code + usage |
-| `recommendAnimation` | `{ element: "stat-number", style: "impact" }` | GSAP code snippet |
-| `getComponentCode` | `{ componentId: "caption-kinetic-slam" }` | Component CSS + JS |
-
-Three knowledge resources provide best practices:
-
-| Resource | Content |
-|----------|---------|
-| `framepack://knowledge/video-design` | HeyGen/Synthesia patterns, 3-second hook rule, typography scale |
-| `framepack://knowledge/hyperframes-rules` | 15 HyperFrames compatibility rules |
-| `framepack://templates/scene-templates` | Complete template index with stats |
-
-## HyperFrames Safety
-
-Framepack workbenches remind agents to avoid common render traps:
-
-- make the first scene visible in CSS
-- switch scenes with `tl.set()`, not tiny-duration `.to()`
-- do not mix animation engines on the same element
+- keep the first scene visible in CSS
+- use `tl.set()` for scene switches
+- do not nest timed video inside timed scene containers
 - register timelines on `window.__timelines`
-- no `Math.random()` in animations
-- no `repeat: -1` infinite loops
-- no async timeline construction
+- avoid `Math.random()` and infinite loops in render timelines
+- keep one animation engine in control of a given element
+- run audit/lint/preview before render
 
-The generated `index.html` skeleton already follows all these rules with proper data attributes, scene structure, entrance animations, and a paused GSAP timeline ready for the agent to extend.
+## Validation
 
-## Commands
+For development and release candidates:
 
 ```bash
-framepack --version
-framepack --help
-framepack create --idea <idea> --assets <dir> --output-dir <dir>
-framepack create --dna <VIDEO_DNA.md> --assets <dir> --output-dir <dir>
-framepack build --project-dir <dir>                # compile planning files → HTML
-framepack preview --project-dir <dir> --open       # preview + auto-open browser
-framepack render --project-dir <dir> --audio <mp3> # render to MP4 + merge audio
-framepack template save --name <n> --category <c>  # save agent template
-framepack scene-templates list                     # list all scene templates
-framepack scene-templates recommend --category <c> # recommend templates
-framepack scene-templates stats                    # template statistics
-framepack init-agent --target auto --scope project
-framepack workbench check --project-dir <dir>
-framepack workbench brief --project-dir <dir>
-framepack lint                                    # run HyperFrames lint
-framepack catalog                                 # list Catalog items
-framepack catalog install                         # batch-install all components
-framepack mcp --describe
+npm run typecheck
+npm test
+npm run build
+npm run sandbox:benchmark
+npm pack --dry-run --json
 ```
 
-Older `generate`, `validate`, `status`, and runtime commands may remain during the transition, but the 0.5 public path is the workbench.
+The product sandbox benchmark exercises create, check, brief, build, phase audits, templates, Catalog, MCP SDK, and HyperFrames lint.
+
+## Legacy Surface
+
+Older `generate`, `validate`, `status`, `capture`, `repair`, `packs`, `atlas`, and runtime commands remain available for the 0.4 package protocol and compatibility tests. New user-facing documentation should prefer the 0.6 workbench path unless it is specifically describing legacy package workflows.

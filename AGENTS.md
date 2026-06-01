@@ -1,261 +1,240 @@
 # Framepack Agent Guide
 
-Framepack is an agent-native video project compiler and video production Agent Harness.
+Framepack is an agent-native **programmatic video workbench** for Codex, Claude Code, and the HyperFrames render runtime.
 
-It turns content sources into executable video project packages. The package is an intermediate work surface for agents and HyperFrames, not usually the final human-facing video.
+The current public workflow is:
 
-Framepack is the harness and compiler layer in a mixed workflow: asset library + orchestration + generative model + post-production composition. It defines asset requirements and execution contracts; it is not a game engine and does not directly generate images.
-
-In the Agent Harness model, Codex or Claude Code is the general-purpose brain, Framepack is the video-production nervous system, and HyperFrames is the rendering body.
-
-## Quick Workflow (0.5+)
-
-```bash
-# Step 1: Plan
-npx framepack create --idea "Ederson → MUFC transfer promo 30s" \
-  --brand-colors "#DA291C,#000000,#FFE500" --assets ./assets \
-  --output-dir ./out --project-name ederson-v3 --format 9:16
-
-# Step 2: Compile
-npx framepack build --project-dir ./out/ederson-v3
-
-# Step 3: Preview
-npx framepack preview --project-dir ./out/ederson-v3 --open
-
-# Step 4: Render
-npx framepack render --project-dir ./out/ederson-v3 --audio bgm.mp3
+```text
+rough idea + assets + references
+  -> Framepack workbench
+  -> human-readable brief
+  -> design tokens + asset gaps + composition plan
+  -> audit gates
+  -> HyperFrames HTML build
+  -> preview / render / iteration
 ```
 
-## Scene Templates
+Framepack is not a generative video model and does not create pixels by itself. It gives agents a disciplined production surface for organizing assets, choosing templates, writing HyperFrames-safe composition plans, building HTML, and auditing quality before preview and render.
 
-20 built-in templates across 6 categories (opening, name-reveal, stats, footage, cta, transition). Each is a self-contained HTML/CSS/GSAP building block. The matching engine selects the best template per scene role.
+## Current Version Shape
 
-Agents can create and persist custom templates:
+The repository version is `0.6.0-alpha.2`.
+
+The 0.6 public path is the workbench path:
 
 ```bash
-npx framepack template save --name "my-opening" --category "opening" --tags "dark,dramatic"
+npx framepack create --idea "Premium 30s launch video" --assets ./assets --output-dir ./out --project-name launch-video --format 9:16
+npx framepack workbench brief --project-dir ./out/launch-video
+npx framepack workbench audit --phase preflight --project-dir ./out/launch-video
+npx framepack workbench audit --phase design --project-dir ./out/launch-video
+npx framepack workbench audit --phase composition --project-dir ./out/launch-video
+npx framepack build --project-dir ./out/launch-video
+npx framepack preview --project-dir ./out/launch-video --open
+npx framepack workbench audit --phase preview --project-dir ./out/launch-video
+npx framepack render --project-dir ./out/launch-video --audio bgm.mp3
+npx framepack workbench audit --phase render --project-dir ./out/launch-video
 ```
 
-## MCP Knowledge Tools
+Older package-protocol commands (`generate`, `status`, `validate`, `capture`, `repair`, `packs`, `atlas`, `runtime *`) remain in the codebase for compatibility and regression coverage. Do not make them the primary onboarding path unless the task explicitly concerns legacy 0.4 package workflows.
 
-Three tools for querying Framepack knowledge at coding time:
+Legacy package projects start from `PACKAGE_MANIFEST.json` and `HANDOFF.md`. For those historical package routes, agents may still use commands such as `npx framepack generate --thread-file examples/thread.txt --output-dir out --project-name thread-case`, `npx framepack generate --game-ad-description "A sprite-style course promo" --output-dir out --project-name game-ad-case`, `npx framepack capture --project-dir out/thread-case`, and `npx framepack sync-assets --project-dir out/thread-case`. Forge compatibility still includes backend-neutral task kinds such as `forge-character-pack`, `forge-map-pack`, and `forge-fx-pack`; `agent-sprite-forge` remains a recommended reference backend, not a hard dependency.
 
-- `querySceneTemplate` — find scene template code by purpose/category
-- `recommendAnimation` — get GSAP animation code for elements
-- `getComponentCode` — read bundled component HTML from Catalog
+## Agent Trigger Conditions
 
-## Mental Model
+Use Framepack when the user asks for:
 
-- Framepack prepares the project package.
-- Agents inspect, edit, materialize assets, run commands, and can use optional asset forge skills.
-- HyperFrames previews and renders the final video.
-- `agent-sprite-forge` is the first recommended 2D asset forge backend, but Framepack packages must remain backend-neutral.
+- a polished video, commercial video, launch video, explainer, course promo, game-style ad, data video, or social promo
+- HyperFrames or Remotion composition planning
+- turning assets into a video
+- "more premium", "more dynamic", "more business", "bigger text", "faster pacing", "more animation"
+- matching or mining a reference video
+- selecting templates, animation libraries, Catalog components, or video style systems
 
-## Harness Model
+## Required Reading Order In A Workbench
 
-Framepack 0.4 uses a five-part harness structure:
+After `framepack create`, read:
 
-- Sense filter: `CAPABILITY_GRAPH.json` tells agents what capabilities are present, missing, planned, or externally produced.
-- Arsenal exposure: MCP `exposeArsenal`, `getCapabilityGraph`, `explainCapabilityGaps`, and the Animation Capability Atlas expose packs, capability state, gaps, technology routes, and common technology fit without making creative decisions for the agent.
-- Motor pathways: MCP tools and CLI commands turn agent decisions into package generation, status checks, validation, repair, capture, runtime inspection, and rendering.
-- Reflexes: validation, repair, runtime lint, runtime inspect, and capability scans catch obvious drift before the model spends reasoning budget on it.
-- Memory encoding: package files persist every intermediate artifact needed for agent handoff and recovery.
-- Feedback loop: validation reports, runtime inspect reports, snapshot manifests, and visual QA evidence decide readiness from evidence.
+1. `FRAMEPACK.md`
+2. `HUMAN.md`
+3. `ASSETS.md`
+4. `ASSET_GAPS.md`
+5. `STYLE.md`
+6. `DESIGN.md`
+7. `DESIGN_TOKENS.md`
+8. `DIRECTION.md`
+9. `COMPOSITION.md`
+10. `ITERATIONS.md`
+11. `.framepack/state.json` when machine-readable state is needed
 
-## Primary Commands
+Use `HUMAN.md` whenever you need to explain progress to a non-technical user.
 
-Build the repo:
+## Workbench Files
 
-```bash
-npm install
-npm run build
+Current workbenches are compact:
+
+```text
+FRAMEPACK.md
+HUMAN.md
+ASSETS.md
+ASSET_GAPS.md
+STYLE.md
+DESIGN.md
+DESIGN_TOKENS.md
+DIRECTION.md
+COMPOSITION.md
+ITERATIONS.md
+index.html
+meta.json
+.framepack/state.json
 ```
 
-Install Framepack into a project as an agent-facing workflow:
+`index.html` and `meta.json` are part of the runtime contract. `build` must preserve composition root dimensions and timing attributes for HyperFrames.
+
+## Audit Gates
+
+Framepack has a built-in quality-control role. Run phase audits before moving between major production stages:
 
 ```bash
-npx framepack init-agent --target codex --scope project
-npx framepack init-agent --target claude-code --scope project
-npx -y -p framepack@beta framepack --version
-npx -y -p framepack@beta framepack --help
-npm exec --yes --package=framepack@beta -- framepack mcp --describe
-npx framepack mcp --describe
-npx framepack build --project-dir ./out/ederson-v3
-npx framepack preview --project-dir ./out/ederson-v3 --open
-npx framepack render --project-dir ./out/ederson-v3 --audio bgm.mp3
-npx framepack template save --name "my-opening" --category "opening" --tags "dark,dramatic"
+npx framepack workbench audit --phase preflight --project-dir <dir>
+npx framepack workbench audit --phase design --project-dir <dir>
+npx framepack workbench audit --phase composition --project-dir <dir>
+npx framepack workbench audit --phase preview --project-dir <dir>
+npx framepack workbench audit --phase render --project-dir <dir>
+```
+
+Use `--phase all --json` for automation:
+
+```bash
+npx framepack workbench audit --phase all --project-dir <dir> --json
+```
+
+If the audit returns P0/P1 blockers, stop and fix them or ask the user. Do not continue to build, preview, or render with unresolved P0/P1 blockers.
+
+The audit currently checks:
+
+- user-readable `HUMAN.md`
+- design-system and design-token presence
+- asset gaps and blocking assets
+- HITL checkpoints
+- technology/template plan
+- skill exposure and agent guidance
+- HyperFrames runtime files
+- preview/render readiness
+
+## Skills
+
+Framepack installs project-facing skills:
+
+- `framepack-director`
+- `framepack-template-fuser`
+- `framepack-hyperframes-builder`
+- `framepack-reference-miner`
+
+Claude Code target:
+
+```text
+.claude/skills/
+```
+
+Codex target:
+
+```text
+.framepack/agent/codex/SKILL.md
+.framepack/agent/codex/skills/
+```
+
+Use the director skill for fuzzy creative intent. Use the template-fuser skill when templates, Catalog candidates, and user assets need to become a custom `COMPOSITION.md`. Use the HyperFrames builder skill when editing code. Use the reference-miner skill when a finished/reference video should become `VIDEO_DNA.md` or `TEMPLATE_BLUEPRINT.md`.
+
+## Built-In Arsenal
+
+Framepack includes:
+
+- 6 workflow templates: `saas-launch`, `news-explainer`, `course-promo`, `game-ad`, `founder-story`, `data-shock`
+- 11 HyperFrames prompt-template blueprints
+- 20 built-in scene templates across 6 categories
+- 22 design-system references
+- HyperFrames Catalog bridge
+- Polish Arsenal recommendations
+- external capability recommendations such as `agent-sprite-forge`, Three.js, D3/Chart.js, Web Audio API
+
+Useful commands:
+
+```bash
+npx framepack templates
+npx framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
+npx framepack templates prompt
+npx framepack templates prompt recommend --idea "A TikTok founder video with karaoke captions" --style "big text fast social" --format 9:16 --json
 npx framepack scene-templates list
-npx framepack scene-templates recommend --category "name-reveal"
-npx framepack atlas --json
-npx framepack atlas get library.animejs --json
-npx framepack atlas recommend --workflow-pack game-ad-sprite-video --creative-direction-pack game-ad-retro-arcade --output-type game-ad --format 9:16 --json
-npx framepack packs
-npx framepack packs --json
-npx framepack packs recommend --source-type game-ad --output-type game-ad --goal "Promote a course" --audience "Founders" --format 9:16 --json
-npx framepack mcp
-npx framepack release-smoke --output-dir out/release-smoke --json
-npm run release:smoke:install
-npm run release:scenarios
-npm run release:gate
+npx framepack scene-templates recommend --category name-reveal
+npx framepack scene-templates registries
+npx framepack scene-templates search --registry hyperframes-blocks
+npx framepack catalog
+npx framepack catalog recommend --template course-promo --idea "premium founder course promo" --style "business dynamic" --format 9:16 --json
 ```
 
-Prefer MCP tools for agent automation. `mcp --describe` lists the stable tool, resource, and prompt surface; `mcp` starts the stdio server. `packs` lists built-in workflow packs and creative direction packs. `atlas` lists the Animation Capability Atlas: programmatic animation, generative media, runtime, asset forge, skill, plugin, MCP, and verification capability nodes plus recommended stacks. MCP `exposeArsenal` is the broad pre-generation context tool: it exposes the raw user signal, all packs, capability graph summary when available, and common technology fit checks while leaving intent interpretation to Codex or Claude Code. `packs recommend` and MCP `recommendPacks` provide a conservative default route before generating a package. `atlas recommend` and MCP `recommendCapabilityStack` provide a conservative technology stack recommendation for a selected route.
+External tools are recommendations. Framepack should not silently install third-party forge tools or animation libraries unless a future command explicitly implements that behavior.
 
-Generate a package:
+## MCP
+
+Describe the MCP surface:
 
 ```bash
-npx framepack generate --input examples/case-explainer-input.md --output-dir out --goal "Explain the case" --audience "Founders"
-npx framepack generate --thread-file examples/thread.txt --output-dir out --goal "Explain the thread" --audience "Founders" --project-name thread-case
-npx framepack generate --url https://example.com/product --output-dir out --goal "Explain the site" --audience "Founders" --project-name website-case
-npx framepack generate --game-ad-description "A course that teaches founders to ship agent-native video systems." --output-dir out --goal "Promote the course" --audience "Founders" --project-name sprite-video-demo --format 9:16 --auto-pack
+npx framepack mcp --describe
 ```
 
-Materialize pending source assets:
+Current knowledge tools:
+
+- `querySceneTemplate`
+- `recommendAnimation`
+- `getComponentCode`
+
+The MCP surface still exposes legacy package automation tools for compatibility. Treat MCP as an agent-facing knowledge and automation surface, not a replacement for the user-facing workbench workflow.
+
+## Agent Harness Model
+
+Framepack is a video production Agent Harness layered on top of Codex or Claude Code. In the current 0.6 workbench shape:
+
+- Sense filter: `FRAMEPACK.md`, `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `STYLE.md`, `DESIGN.md`, and `DESIGN_TOKENS.md` expose what the user wants, what assets exist, and what constraints matter.
+- Motor pathways: CLI, MCP tools, generated skills, templates, Catalog bridge, build, preview, render, and audit commands turn agent decisions into production actions.
+- Reflexes: workbench checks, phase audits, HyperFrames lint rules, runtime file checks, and sandbox benchmarks catch drift before it reaches the user.
+- Memory encoding: durable Markdown files and `.framepack/state.json` preserve creative intent, decisions, assets, gaps, iterations, and runtime evidence.
+- Feedback loop: `HUMAN.md`, `ITERATIONS.md`, phase audit output, preview evidence, and user corrections keep each round grounded in visible progress.
+
+## HyperFrames Rules
+
+When building or editing generated HTML:
+
+- keep the first scene visible in CSS
+- preserve `data-width`, `data-height`, and `data-start`
+- write `meta.json`
+- register timelines on `window.__timelines`
+- switch scenes with `tl.set()`
+- do not put timed `<video>` elements inside timed scene containers
+- avoid `Math.random()` and `repeat: -1` in render timelines
+- avoid missing `compositions/blocks/*.html` references unless the block files exist
+
+## Development Verification
+
+Before claiming a product change is complete:
 
 ```bash
-npx framepack status --project-dir out/thread-case
-npx framepack capture --project-dir out/thread-case
-npx framepack sync-assets --project-dir out/thread-case
-npx framepack validate --project-dir out/thread-case
+npm run typecheck
+npm test
+npm run build
+npm run sandbox:benchmark
+npm pack --dry-run --json
 ```
 
-Repair derived protocol drift when needed:
+`sandbox:benchmark` is the product-level internal test. It checks create, workbench check, brief, build, five phase audits, template/Catalog recommendations, MCP SDK, and HyperFrames lint.
 
-```bash
-npx framepack repair --project-dir out/thread-case
-```
+## Historical References
 
-Render through HyperFrames when the runtime is available:
-
-```bash
-npx framepack runtime doctor --project-dir out/thread-case
-npx framepack runtime lint --project-dir out/thread-case
-npx framepack runtime inspect --project-dir out/thread-case --json --samples 9
-npx framepack runtime snapshot --project-dir out/thread-case --frames 5
-npx framepack runtime upgrade-check
-npx framepack preview --project-dir out/thread-case
-npx framepack render --project-dir out/thread-case
-```
-
-`runtime lint` checks HyperFrames composition mistakes. `runtime inspect` checks visual layout and text overflow across the timeline. `runtime snapshot` captures PNG key frames for visual verification. `runtime upgrade-check` explicitly checks for HyperFrames updates. Framepack 0.2 does not expose HyperFrames `publish` because it uploads externally and returns a public URL.
-
-Run `release-smoke` before tagging or publishing a release candidate. It creates Codex and Claude Code agent workflow files, checks the MCP surface, verifies Arsenal Exposure, recommends packs, generates an auto-packed game-ad package, verifies `CAPABILITY_GRAPH.json` and `RUNTIME_MANIFEST.json`, and runs status plus validation. It does not install external forge skills, call image generation, or require HyperFrames rendering.
-
-Run `npm run release:smoke:install` as the stricter RC gate. It builds the repo, packs the npm tarball, installs it into a temporary empty consumer project, then runs the installed binary through MCP discovery, `release-smoke`, `generate --auto-pack`, `validate`, and `status --json`.
-
-Run `npm run release:scenarios` as the four-route product-readiness rehearsal. It generates markdown, thread, website, and game-ad sprite-video packages, then runs `validate` and `status --json` on each package. It does not install external forge skills, call image generation, or require HyperFrames rendering.
-
-Run `npm run release:gate` as the final RC gate. It runs typecheck, the full test suite, npm pack dry-run, and the real install smoke gate in one structured pass.
-
-## Package Protocol
-
-Start with `PACKAGE_MANIFEST.json`.
-
-For release-candidate context, read `docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md`, `docs/agent-platform/release-candidate-v0.4.0-beta.2.md`, `docs/agent-platform/v0.4-beta-product-state-cutoff.md`, `docs/agent-platform/beta-patch-radar-v0.4.md`, `docs/agent-platform/release-candidate-v0.4.0-beta.1.md`, `docs/agent-platform/beta-readiness-v0.4.md`, `docs/agent-platform/real-user-trial-v0.4.0-beta.1.md`, `docs/agent-platform/beta-feedback-loop-v0.4.md`, `docs/agent-platform/beta-onboarding-trials-v0.4.md`, `docs/agent-platform/hyperframes-compat-v0.4.md`, `docs/agent-platform/release-candidate-v0.4.0-alpha.4.md`, `docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md`, `docs/agent-platform/release-candidate-v0.4.0-alpha.3.md`, `docs/agent-platform/release-candidate-v0.4.0-alpha.2.md`, `docs/agent-platform/release-candidate-v0.4.0-alpha.1.md`, and `docs/agent-platform/real-scenario-test-report-v0.4.0-alpha.1.md`. The previous `v0.3.0-rc.1` notes remain in `docs/agent-platform/release-candidate-v0.3.0-rc.1.md`. For the next architecture learning and uplift agenda, read `docs/architecture/next-architecture-uplift.md`, then read the concrete 0.4 proposal in `docs/architecture/framepack-0.4-capability-runtime-architecture.md`.
-
-It indexes:
-
-- source files
-- planning artifacts
-- asset plans
-- execution plans
-- validation artifacts
-- runtime entrypoints
-- compatibility files
-- supported execution kinds, including optional forge kinds
-- supported package lifecycle commands in `capabilities.packageCommands`
-
-Then inspect these files as needed:
-
-- `SOURCE_MANIFEST.json`
-- `VIDEO_BRIEF.json`
-- `SCENE_PLAN.json`
-- `SCENE_ASSET_MAP.json`
-- `SOURCE_SCENE_MAP.json`
-- `ASSET_PLAN.json`
-- `ASSET_EXECUTION_PLAN.json`
-- `RUNTIME_MANIFEST.json`
-- `FORGE_TASKS.md`
-- `HANDOFF.md`
-
-## Agent Workflow
-
-0. For broad requests, run `npx framepack packs recommend --json` or use MCP `recommendPacks` to choose a workflow pack and creative direction pack before generating or continuing a package. For one-step generation, use CLI `--auto-pack` or MCP `autoRecommendPacks: true`; explicit `--workflow-pack` / `--creative-direction-pack` and MCP `workflowPackId` / `creativeDirectionPackId` still take priority.
-   For fuzzy creative requests or technology preferences, prefer MCP `exposeArsenal` first. It is an information-field tool, not an intent resolver: the agent should inspect the exposed packs, capability graph, and common technology status, then decide what to ask the user or which route to execute.
-   For animation or media technology choices, use `npx framepack atlas --json`, `npx framepack atlas get <capability-id> --json`, `npx framepack atlas recommend ... --json`, or MCP `listCapabilityAtlas` / `getCapabilityAtlasNode` / `recommendCapabilityStack`. Treat the atlas as a recommendation map, not proof that an external model, library, skill, or plugin is installed.
-   When a generated package has `VIDEO_BRIEF.json.capabilityStackSelection`, treat it as the selected technology route for this package. If the field is absent, do not infer that agent-sprite-forge, Anime.js, or any external model is required.
-1. Read `PACKAGE_MANIFEST.json` to discover the package protocol, artifacts, and runtime entrypoints.
-2. Read `HANDOFF.md` to understand the current package state and pending work.
-3. Inspect `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` before changing assets or scene mappings.
-4. Run `npx framepack status --project-dir <package>` to summarize protocol health, asset state, forge progress, runtime availability, readiness, and next actions. Use `--json` when another agent or tool needs structured status; prefer `readiness` and `nextActionItems` for automation. Each `nextActionItems` entry has a stable `id` for action dispatch. Treat `readiness` as the first phase decision: `blocked`, `needs-assets`, `needs-runtime`, or `ready`. For forge work, inspect `forgeBreakdown.byExecutionKind`, `forgeBreakdown.byBackend`, and `forgeBreakdown.byRequiredSkill` before assigning asset production.
-   For capability work, inspect `capabilityGraph.nodeIds`, `capabilityGraph.gapNodeIds`, `capabilityGraph.byStatus`, and `capabilityGraph.byDelivery`, or use MCP `getCapabilityGraph` / `explainCapabilityGaps`.
-5. Run `npx framepack capture --project-dir <package>` to materialize pending website screenshots or thread cards.
-6. Run `npx framepack sync-assets --project-dir <package>` after manual or automated asset work.
-7. Run `npx framepack repair --project-dir <package>` only when derived protocol files are stale or inconsistent but the source JSON is present.
-8. Run `npx framepack validate --project-dir <package>` to verify package protocol alignment, including `CAPABILITY_GRAPH.json` structure when present.
-9. Run `npx framepack runtime doctor --project-dir <package>` before previewing or rendering with HyperFrames.
-10. Run `npx framepack runtime lint --project-dir <package>`, `npx framepack runtime inspect --project-dir <package>`, or `npx framepack runtime snapshot --project-dir <package>` when you need HyperFrames-side composition checks.
-11. Run `npx framepack runtime upgrade-check` only when explicitly checking HyperFrames updates; do not run update checks as part of ordinary package status.
-
-`repair` is for derived protocol drift only. It rebuilds `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, `PACKAGE_MANIFEST.json`, `CAPABILITY_GRAPH.json`, and `RUNTIME_MANIFEST.json`, then validates. It does not capture assets, execute forge tasks, install skills, or mark pending assets available. If capability graph JSON is invalid or missing derivable nodes such as `video-runtime.hyperframes`, use `repair` before continuing package work.
-
-## Workflow And Creative Direction Packs
-
-Workflow packs are agent-facing production routes. They describe source types, output type, expected execution kinds, recommended forge backend, instructions, and acceptance criteria.
-
-Creative direction packs are agent-facing taste guides. They describe visual language, motion language, template guidance, and acceptance criteria.
-
-Current built-in workflow packs:
-
-- `product-explainer`
-- `thread-to-video`
-- `website-to-video`
-- `game-ad-sprite-video`
-- `course-promo`
-- `launch-review`
-- `investor-update`
-
-Current built-in creative direction packs:
-
-- `clean-saas-explainer`
-- `editorial-proof-story`
-- `game-ad-retro-arcade`
-
-Use `game-ad-sprite-video` with `game-ad-retro-arcade` when generating sprite/video promo packages. It recommends `agent-sprite-forge` but remains backend-neutral.
-
-## Asset Forge Layer
-
-`ASSET_EXECUTION_PLAN.json` can include source capture tasks and forge tasks.
-
-`SCENE_ASSET_MAP.json` is the scene-first asset lookup. Use `recommendedAssets` and top-level `assets` for the unified asset contract across website captures, thread cards, and forge-produced assets. `recommendedCaptures` and `captures` remain as compatibility fields for older website capture flows.
-
-Existing source materialization kinds:
-
-- `capture-screenshot`
-- `compose-text-card`
-
-Forge execution kinds:
-
-- `forge-sprite-sheet`
-- `forge-map-pack`
-- `forge-fx-pack`
-- `forge-prop-pack`
-- `forge-character-pack`
-
-Forge items may include `forgeBackend`, `requiredSkill`, `expectedOutputs`, `prompt`, `recommendedSceneIds`, `styleNotes`, and `acceptanceCriteria`.
-
-Execution item statuses are `pending`, `available`, `failed`, `skipped`, and `external`. If a forge backend writes metadata JSON next to the expected output path, run `npx framepack sync-assets --project-dir <package>` to sync that status into the package. For `available` or `external`, metadata must include `outputs` with package-relative file paths that exist.
-
-For `forgeBackend: "agent-sprite-forge"`, recommend installing or enabling the `agent-sprite-forge` skills before asset production if the user wants Codex to generate 2D assets directly. Use `$generate2dsprite` for sprites, character packs, prop packs, and FX packs, and `$generate2dmap` for maps/backgrounds if those skills are installed. Do not install external skills automatically. If the skills are not available, leave the task contract intact for manual production, custom forge production, or reuse of existing assets.
+Older 0.4 package-protocol evidence remains useful for archaeology and regression context, but it is not the current onboarding path. Examples include `docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md`, `docs/agent-platform/real-user-trial-v0.4.0-beta.1.md`, `docs/agent-platform/beta-readiness-v0.4.md`, `docs/agent-platform/beta-feedback-loop-v0.4.md`, `docs/agent-platform/v0.4-beta-product-state-cutoff.md`, `docs/agent-platform/beta-patch-radar-v0.4.md`, `docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md`, `docs/agent-platform/beta-onboarding-trials-v0.4.md`, `docs/agent-platform/hyperframes-compat-v0.4.md`, `docs/agent-platform/release-candidate-v0.4.0-beta.1.md`, `docs/agent-platform/release-candidate-v0.4.0-beta.2.md`, `framepack@beta`, and `docs/architecture/package-protocol-v1.md`.
 
 ## Editing Rules
 
-- Keep `PACKAGE_MANIFEST.json` consistent with package files when changing package structure.
-- Keep `src/packaging/package-protocol.ts` and `docs/architecture/package-protocol-v1.md` aligned when changing protocol v1.
-- Keep `src/packaging/package-repair.ts` aligned with protocol-derived files when changing package repair semantics.
-- Keep `SCENE_ASSET_MAP.json`, `SOURCE_SCENE_MAP.json`, and `ASSET_EXECUTION_PLAN.json` aligned when changing source-to-scene mapping.
-- Prefer adding new execution kinds to `ASSET_EXECUTION_PLAN.json` over creating source-specific plan files.
-- Keep forge tasks backend-neutral; `agent-sprite-forge` is a reference backend, not a hard dependency.
-- Keep `CAPTURE_EXECUTION_PLAN.json` as compatibility output while older flows may still read it.
-- Treat the golden package protocol summaries in `npm test` as the regression guard for package shape changes.
-- Run `npm run typecheck`, `npm test`, and `npm run build` before claiming a change is complete.
+- Keep README, `docs/README.zh-CN.md`, AGENTS, agent templates, and package metadata aligned when changing public workflow.
+- Keep `CHANGELOG.md` aligned with the current test count and release evidence.
+- Use `apply_patch` for manual edits.
+- Do not revert user changes.
+- Keep code and docs lean; avoid reintroducing the heavy legacy package mental model into new onboarding docs.

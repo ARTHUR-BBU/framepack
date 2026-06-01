@@ -13,13 +13,20 @@ Project skills are also installed under `.framepack/agent/codex/skills` for dire
 
 1. Inspect `framepack mcp --describe` when MCP is not connected.
 2. Create a workbench with `framepack create --idea "<idea>" --assets <dir> --output-dir <dir>`.
-3. Read `FRAMEPACK.md`, `HUMAN.md`, `ASSETS.md`, `STYLE.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md`.
-4. Translate fuzzy user language into concrete visual language, motion language, template route, tuning parameters, and HyperFrames/Remotion implementation choices.
-5. Use `framepack workbench brief --project-dir <dir>` whenever the user needs a plain-language progress recap.
-6. Use the HITL loop in `HUMAN.md`, `DIRECTION.md`, and `ITERATIONS.md`: ask the user to choose or modify the proposal before locking the first composition when taste is fuzzy.
-7. Run `framepack workbench check --project-dir <dir>` before claiming the workbench is ready.
-8. Keep state in workbench files, not model memory.
-9. Use HyperFrames-safe rules: CSS first frame visible, scene switches with `tl.set()`, one animation engine per element, and timeline registration on `window.__timelines`.
+3. Read `FRAMEPACK.md`, `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `STYLE.md`, `DESIGN.md`, `DESIGN_TOKENS.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md`.
+4. Run `framepack workbench audit --phase preflight --project-dir <dir>` before implementation work.
+5. Translate fuzzy user language into concrete visual language, motion language, template route, tuning parameters, and HyperFrames/Remotion implementation choices.
+6. Use `framepack workbench brief --project-dir <dir>` whenever the user needs a plain-language progress recap.
+7. Use the HITL loop in `HUMAN.md`, `DIRECTION.md`, and `ITERATIONS.md`: ask the user to choose or modify the proposal before locking the first composition when taste is fuzzy.
+8. Run `framepack workbench audit --phase design --project-dir <dir>` after design/token work.
+9. Run `framepack workbench audit --phase composition --project-dir <dir>` before `framepack build`.
+10. Build with `framepack build --project-dir <dir>`.
+11. Preview with `framepack preview --project-dir <dir> --open`, then run `framepack workbench audit --phase preview --project-dir <dir>`.
+12. Render only after P0/P1 blockers are clear, then run `framepack workbench audit --phase render --project-dir <dir>`.
+13. Keep state in workbench files, not model memory.
+14. Use HyperFrames-safe rules: CSS first frame visible, scene switches with `tl.set()`, no timed video inside timed scene containers, one animation engine per element, and timeline registration on `window.__timelines`.
+
+Stop on P0/P1 audit blockers. Fix them or ask the user before continuing.
 
 ## Playbooks
 

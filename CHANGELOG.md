@@ -10,7 +10,10 @@
 - update CLI help to list `build`, `preview`, `render`, and the full `scene-templates` surface
 - infer useful categories for GSAP/Remotion community registry results instead of falling everything back to `opening`
 - add regression coverage for the runtime contract, block-reference safety, video nesting, CLI help, and external registry categorization
-- 201/201 tests pass
+- add product-level sandbox benchmark coverage for create, workbench check, brief, build, phase audits, templates, Catalog, MCP SDK, and HyperFrames lint
+- add lifecycle audit gates: `preflight`, `design`, `composition`, `preview`, `render`, and `all`
+- update public README, Chinese README, AGENTS, and agent templates to match the 0.6 workbench/audit workflow
+- 206/206 tests pass
 
 ## 0.6.0-alpha.1
 

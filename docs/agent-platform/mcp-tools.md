@@ -1,70 +1,73 @@
 # Framepack MCP Tools
 
-Framepack exposes an MCP stdio server with tools for the complete package lifecycle:
+Framepack MCP is an agent-facing knowledge and automation surface. It is not the entire product and should not replace the durable workbench files.
+
+The current user-facing workflow is:
+
+```text
+create -> brief -> audit -> build -> preview -> render -> iterate
+```
+
+MCP helps agents query templates, animation suggestions, components, and compatibility data while they execute that workflow.
+
+## Describe The Surface
+
+```bash
+npx framepack mcp --describe
+```
+
+## Knowledge Tools
+
+Current core knowledge tools:
+
+- `querySceneTemplate`
+- `recommendAnimation`
+- `getComponentCode`
+
+These answer questions such as:
+
+- Which scene template fits this purpose?
+- What GSAP pattern should animate this element?
+- What bundled Catalog component code should be used?
+
+## Compatibility Tools
+
+The MCP surface still exposes package-era tools such as:
 
 - `generateProject`
 - `getStatus`
-- `getCapabilityGraph`
-- `explainCapabilityGaps`
-- `exposeArsenal`
-- `listCapabilityAtlas`
-- `getCapabilityAtlasNode`
-- `recommendCapabilityStack`
 - `validatePackage`
 - `repairPackage`
-- `captureAssets`
-- `syncAssets`
 - `runtimeDoctor`
 - `runtimeLint`
 - `runtimeInspect`
 - `runtimeSnapshot`
-- `explainNextActions`
-- `listWorkflowPacks`
-- `getWorkflowPack`
-- `listCreativeDirectionPacks`
-- `getCreativeDirectionPack`
 - `recommendPacks`
-- `releaseSmoke`
+- `recommendCapabilityStack`
 
-It also exposes project resources for manifest, handoff, asset execution plan, capability graph, forge tasks, and status, plus registry resources for workflow packs and creative direction packs:
+These are retained for compatibility, regression testing, and agent automation around the 0.4 package protocol. New onboarding should not present them as the primary user workflow.
 
-- `framepack://packs/workflows`
-- `framepack://packs/creative-directions`
-- `framepack://capabilities/atlas`
-- `framepack://project/{projectName}/capability-graph`
+## How Agents Should Use MCP
 
-## Role In The Ecosystem
+Agents should:
 
-MCP is the tool interface, not the whole product.
+1. Use workbench files as durable project memory.
+2. Use MCP for structured lookups and recommendations.
+3. Write decisions into `HUMAN.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md`.
+4. Run CLI audit gates before build, preview, and render.
 
-Framepack's agent platform is expected to combine:
+MCP is one layer in the product:
 
-- MCP tools for execution
-- skills for workflow playbooks
-- workflow packs for repeatable video jobs
-- creative direction packs for design and animation guidance
-- connectors for content sources, asset forge tools, render systems, and publishing systems
+```text
+skills + instructions + workbench files + MCP + CLI + HyperFrames runtime
+```
 
-MCP tools should stay stable and structured so higher-level skills and workflow packs can depend on them without parsing human-readable CLI output.
+## Audit Relationship
 
-## Creative Direction Through Tools
+The strongest quality gate is currently CLI-based:
 
-The MCP surface now exposes the first creative direction registry.
+```bash
+npx framepack workbench audit --phase all --project-dir <dir> --json
+```
 
-Agents should call `listWorkflowPacks` and `listCreativeDirectionPacks` before generating a project when the user request is broad or product-shaped. The workflow pack helps choose the source route and expected execution kinds. The creative direction pack helps choose visual language, motion language, template guidance, and acceptance criteria before rendering.
-
-For fuzzy user requests, call `exposeArsenal` before choosing a route. It returns the raw user signal, full workflow pack list, full creative direction pack list, capability graph summary when a project exists, and common technology fit checks for libraries or backends such as Three.js, GSAP, Anime.js, PixiJS, and agent-sprite-forge. This is intentionally not an intent resolver: Framepack shapes the information field, while Codex or Claude Code makes the creative and technical decision.
-
-For animation and media technology choices, call `listCapabilityAtlas`, `getCapabilityAtlasNode`, or `recommendCapabilityStack`. The Animation Capability Atlas separates programmatic animation material such as Anime.js and runtime-controlled motion from generative media material such as frontier hosted video models. It returns capability nodes, support levels, risks, scores, and recommended stacks, but it does not install external libraries, invoke hosted models, or prove local availability.
-
-For a conservative default, call `recommendPacks` with `sourceType`, `outputType`, optional `goal`, optional `audience`, and optional `format`. The response includes `workflowPack`, `creativeDirectionPack`, `packSelection`, and a human-readable `reason`. Agents should rely on IDs and `packSelection` for automation; `reason` is explanatory text.
-
-After a package exists, use `getCapabilityGraph` to read `CAPABILITY_GRAPH.json` plus its compact summary. Use `explainCapabilityGaps` when the next decision depends on missing runtime, skill, backend, or externally supplied capabilities.
-
-`generateProject` accepts optional `workflowPackId` and `creativeDirectionPackId`. When provided, Framepack validates the workflow pack against the selected source/output route and writes the pack selection into `VIDEO_BRIEF.json` and `HANDOFF.md`.
-
-`generateProject` also accepts `autoRecommendPacks: true`. When this is set and no explicit pack IDs are provided, Framepack applies the conservative recommendation automatically during generation. Explicit IDs always take priority.
-
-`releaseSmoke` runs the agent-platform RC smoke harness from MCP. It creates Codex and Claude Code workflow files, checks the MCP surface, recommends packs, generates an auto-packed game-ad package, then runs package status and validation. It is intended for release candidates and agent installer verification; it does not install external forge skills, call image generation, or require HyperFrames rendering.
-
-Future versions can move from registry guidance into richer template selection and project metadata, but agents should already treat these packs as part of the planning step.
+Agents may use MCP for context, but they should use the audit report as the gatekeeper for P0/P1 blockers.

@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+﻿import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -40,7 +40,7 @@ Turn fuzzy user language into a professional video direction before implementati
 
 ## Design System Index
 
-Before deciding colors, fonts, or visual style, match user intent to a design system and **read the corresponding file** from \`references/designs/\`. Each file contains exact hex codes, typography scales, and visual rules — use them as source of truth.
+Before deciding colors, fonts, or visual style, match user intent to a design system and **read the corresponding file** from \`references/designs/\`. Each file contains exact hex codes, typography scales, and visual rules; use them as source of truth.
 
 | User intent keywords | Load file |
 |---|---|
@@ -84,7 +84,7 @@ Fuse templates with user assets and requirements. Templates are director bluepri
 
 ## References (loaded on demand)
 
-- **[references/catalog-usage.md](references/catalog-usage.md)** — Catalog component install, block vs component usage, and pre-flight checklist. **Always read before writing custom code.**
+- **[references/catalog-usage.md](references/catalog-usage.md)** - Catalog component install, block vs component usage, and pre-flight checklist. **Always read before writing custom code.**
 
 ## Workflow
 
@@ -109,13 +109,13 @@ Turn \`COMPOSITION.md\` into HyperFrames code without breaking render safety.
 
 ## References (loaded on demand)
 
-- **[references/compatibility-rules.md](references/compatibility-rules.md)** — 15 mandatory HyperFrames render rules derived from real failures. **Always read before building.**
-- **[references/code-templates.md](references/code-templates.md)** — Reusable GSAP patterns: impact pop, kinetic type, hard snap, smooth dissolve, scale reveal, number counter, sweep line. Read when writing scene animations.
+- **[references/compatibility-rules.md](references/compatibility-rules.md)** - 15 mandatory HyperFrames render rules derived from real failures. **Always read before building.**
+- **[references/code-templates.md](references/code-templates.md)** - Reusable GSAP patterns: impact pop, kinetic type, hard snap, smooth dissolve, scale reveal, number counter, sweep line. Read when writing scene animations.
 
 ## Workflow
 
 1. Read \`FRAMEPACK.md\`, \`COMPOSITION.md\`, \`ASSETS.md\`, and \`ITERATIONS.md\`.
-2. If the project has a \`design.md\` or \`DESIGN.md\`, read it — its colors and fonts are source of truth.
+2. If the project has a \`design.md\` or \`DESIGN.md\`, read it; its colors and fonts are source of truth.
 3. Read [references/compatibility-rules.md](references/compatibility-rules.md). Apply all rules when writing code.
 4. Read [references/code-templates.md](references/code-templates.md) for animation building blocks.
 5. Run \`npx hyperframes lint\` and \`npx hyperframes inspect\` before render.
@@ -137,7 +137,7 @@ Extract a **VIDEO_DNA.md** technical blueprint from a reference video for HyperF
 
 ## Output
 
-\`VIDEO_DNA.md\` — a segment-by-second technical blueprint with:
+\`VIDEO_DNA.md\` - a segment-by-second technical blueprint with:
 - Per-second GSAP/CSS HOW-TO code (not vague descriptions)
 - Design tokens extracted from the video (hex colors, font sizes)
 - ASCII layout diagrams for complex segments
@@ -148,8 +148,8 @@ After DNA extraction, also produce \`TEMPLATE_BLUEPRINT.md\` with abstracted slo
 
 ## References
 
-- [video-dna-template.md](references/video-dna-template.md) — required output format and extraction workflow
-- [video-dna-example.md](references/video-dna-example.md) — complete worked example (8 segments, 63s video)
+- [video-dna-template.md](references/video-dna-template.md) - required output format and extraction workflow
+- [video-dna-example.md](references/video-dna-example.md) - complete worked example (8 segments, 63s video)
 
 ## Workflow
 
@@ -157,7 +157,7 @@ After DNA extraction, also produce \`TEMPLATE_BLUEPRINT.md\` with abstracted slo
 2. Watch the reference video **twice**: first pass for rhythm, second pass for per-second detail.
 3. Read the template, then extract DNA following the required format.
 4. Study the example if you need to calibrate extraction granularity.
-5. Write \`VIDEO_DNA.md\` — every second must have specific GSAP code, not descriptions.
+5. Write \`VIDEO_DNA.md\`; every second must have specific GSAP code, not descriptions.
 6. Extract design tokens (hex colors, font sizes) into the DNA's Design Tokens section.
 7. Build the asset checklist and compare against user's \`ASSETS.md\`.
 8. Update \`ASSET_GAPS.md\` with DNA-derived blocking gaps.
@@ -324,7 +324,7 @@ If the user says things like cool, premium, business, dynamic, polished, bigger 
 5. Run phase gates as work advances: \`${command} workbench audit --phase design --project-dir <dir>\`, \`${command} workbench audit --phase composition --project-dir <dir>\`, \`${command} workbench audit --phase preview --project-dir <dir>\`, then \`${command} workbench audit --phase render --project-dir <dir>\`.
 6. Translate fuzzy user taste into concrete visual language, motion language, template route, and HyperFrames/Remotion implementation choices.
 7. Keep project state in the workbench files; do not rely on model memory.
-8. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
+8. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, no timed video inside timed scene containers, one animation engine per element, and timeline registration on \`window.__timelines\`.
 
 ${skillPlaybooks()}
 `;
@@ -368,7 +368,7 @@ Framepack is installed as an agent-native video creative workbench for this proj
 - Use \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`DESIGN.md\`, \`DESIGN_TOKENS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
 - Run \`${command} workbench audit --phase preflight --project-dir <dir>\` before starting, then \`${command} workbench audit --phase design|composition|preview|render --project-dir <dir>\` at each lifecycle gate. Stop on P0/P1 blockers.
 - Recommend animation libraries, templates, game-asset tools, HyperFrames, or Remotion only when the current project needs them.
-- Project skills are installed under \`.framepack/agent/codex/skills\` — each skill contains detailed references. Use the matching Framepack skill for: director work, template fusion, HyperFrames building, or reference mining.
+- Project skills are installed under \`.framepack/agent/codex/skills\`; each skill contains detailed references. Use the matching Framepack skill for: director work, template fusion, HyperFrames building, or reference mining.
 `;
 }
 
@@ -379,11 +379,11 @@ function claudeInstructions(packageSource: PackageSource): string {
 
 Framepack is available through the project MCP server.
 
-Project skills are installed under \`.claude/skills\`. Use \`framepack-director\`, \`framepack-template-fuser\`, \`framepack-hyperframes-builder\`, and \`framepack-reference-miner\` when the task matches their descriptions. Each skill has a \`SKILL.md\` index and \`references/\` with detailed rules, templates, and code patterns — load on demand, do not read all at once.
+Project skills are installed under \`.claude/skills\`. Use \`framepack-director\`, \`framepack-template-fuser\`, \`framepack-hyperframes-builder\`, and \`framepack-reference-miner\` when the task matches their descriptions. Each skill has a \`SKILL.md\` index and \`references/\` with detailed rules, templates, and code patterns; load on demand, do not read all at once.
 
 Use Framepack when the user asks for a polished video, HyperFrames composition, asset-to-video planning, template selection, or vague creative improvements such as cooler, more business, more dynamic, bigger text, faster pacing, or like this reference.
 
-Suggested flow:
+Required flow:
 
 1. Create a workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
 2. Read \`FRAMEPACK.md\`, then \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`DESIGN.md\`, \`DESIGN_TOKENS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
@@ -391,7 +391,7 @@ Suggested flow:
 4. Run phase gates as work advances: \`${command} workbench audit --phase design --project-dir <dir>\`, \`${command} workbench audit --phase composition --project-dir <dir>\`, \`${command} workbench audit --phase preview --project-dir <dir>\`, then \`${command} workbench audit --phase render --project-dir <dir>\`.
 5. Check \`ASSET_GAPS.md\` for blocking gaps before writing code. If blocking gaps exist, tell the user what assets are needed.
 6. Translate fuzzy user intent into concrete visual language, motion language, template route, and implementation plan.
-7. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
+7. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, no timed video inside timed scene containers, one animation engine per element, and timeline registration on \`window.__timelines\`.
 8. Record render feedback and next actions in \`ITERATIONS.md\`.
 9. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
 

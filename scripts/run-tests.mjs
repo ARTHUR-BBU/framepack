@@ -2560,10 +2560,10 @@ Framepack compiles content into executable video projects.
       assert.match(readme, /COMPOSITION\.md/);
       assert.match(readme, /postinstall hook/);
       assert.match(readme, /Polish Arsenal/);
-      assert.match(chineseReadme, /程式化视频/);
+      assert.match(chineseReadme, /\u7a0b\u5f0f\u5316\u89c6\u9891/);
       assert.match(chineseReadme, /framepack create --idea/);
-      assert.match(chineseReadme, /三层机制/);
-      assert.match(chineseReadme, /内置模板 registry/);
+      assert.match(chineseReadme, /\u4e09\u5c42\u673a\u5236/);
+      assert.match(chineseReadme, /\u5185\u7f6e\u6a21\u677f registry/);
       assert.match(charter, /Framepack 0\.5 Rebirth Charter/);
       assert.match(charter, /HyperFrames creative workbench/);
       assert.match(charter, /One line beats two when one line is enough/);
@@ -2579,7 +2579,7 @@ Framepack compiles content into executable video projects.
       assert.equal(packageJson.version, "0.6.0-alpha.2");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
-      assert.match(packageJson.readme, /中文/);
+      assert.match(packageJson.readme, /\u4e2d\u6587/);
       assert.match(packageJson.readme, /workbench brief/);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -3420,12 +3420,12 @@ Framepack compiles content into executable video projects.
         "utf8",
       );
 
-      assert.match(installDoc, /initialize the agent workflow, verify version\/help\/MCP/);
-      assert.match(installDoc, /Report `readiness`, `nextActionItems`/);
-      assert.match(codexDoc, /initialize the Codex workflow, verify version\/help\/MCP/);
-      assert.match(codexDoc, /first report should include package `readiness`, `nextActionItems`/);
+      assert.match(installDoc, /create a small workbench/);
+      assert.match(installDoc, /phase audits/);
+      assert.match(codexDoc, /create a Framepack workbench/);
+      assert.match(codexDoc, /workbench audit --phase preflight/);
       assert.match(claudeDoc, /Ask Claude Code/);
-      assert.match(claudeDoc, /initialize the Claude Code workflow, verify version\/help\/MCP/);
+      assert.match(claudeDoc, /run the audit gates/);
     },
   },
   {
@@ -3813,8 +3813,8 @@ Framepack compiles content into executable video projects.
       assert.ok(packageJson.files.includes("templates"));
       assert.ok(packageJson.files.includes("docs/rebirth"));
       assert.equal(packageJson.files.includes("docs/agent-platform"), false);
-      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.md"), "utf8"), /Three Layers/);
-      assert.match(readFileSync(resolve(dirname(packageJsonPath), "docs", "README.zh-CN.md"), "utf8"), /三层机制/);
+      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.md"), "utf8"), /Programmatic Video/);
+      assert.match(readFileSync(resolve(dirname(packageJsonPath), "docs", "README.zh-CN.md"), "utf8"), /\u4e09\u5c42\u673a\u5236/);
     },
   },
   {
