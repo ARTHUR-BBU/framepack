@@ -1,4 +1,4 @@
-# Framepack Active Intervention Layer Design
+﻿# Framepack Active Intervention Layer Design
 
 Date: 2026-06-01
 Status: Draft for user review
