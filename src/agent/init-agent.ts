@@ -319,10 +319,12 @@ If the user says things like cool, premium, business, dynamic, polished, bigger 
 
 1. Prefer the MCP server. If unavailable, inspect \`${command} mcp --describe\`.
 2. Create the workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
-3. Read \`FRAMEPACK.md\` first, then \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
-4. Translate fuzzy user taste into concrete visual language, motion language, template route, and HyperFrames/Remotion implementation choices.
-5. Keep project state in the workbench files; do not rely on model memory.
-6. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
+3. Read \`FRAMEPACK.md\` first, then \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`DESIGN.md\`, \`DESIGN_TOKENS.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
+4. Run \`${command} workbench audit --phase preflight --project-dir <dir>\`. If P0/P1 blockers exist, stop and correct them or ask the user.
+5. Run phase gates as work advances: \`${command} workbench audit --phase design --project-dir <dir>\`, \`${command} workbench audit --phase composition --project-dir <dir>\`, \`${command} workbench audit --phase preview --project-dir <dir>\`, then \`${command} workbench audit --phase render --project-dir <dir>\`.
+6. Translate fuzzy user taste into concrete visual language, motion language, template route, and HyperFrames/Remotion implementation choices.
+7. Keep project state in the workbench files; do not rely on model memory.
+8. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
 
 ${skillPlaybooks()}
 `;
@@ -345,8 +347,10 @@ Agent checklist:
 2. Verify \`${command} mcp --describe\`.
 3. Create a workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
 4. Read \`FRAMEPACK.md\` and continue from the workbench files.
-5. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
-6. Use MCP/CLI only when files need to be created, inspected, or refreshed.
+5. Run \`${command} workbench audit --phase preflight --project-dir <dir>\` before creative or code work.
+6. Run \`${command} workbench audit --phase design|composition|preview|render --project-dir <dir>\` at the matching stage; do not proceed through P0/P1 blockers.
+7. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
+8. Use MCP/CLI only when files need to be created, inspected, or refreshed.
 `;
 }
 
@@ -361,7 +365,8 @@ Framepack is installed as an agent-native video creative workbench for this proj
 - Prefer MCP tools over memorized shell commands; check \`${command} mcp --describe\` if MCP is not connected.
 - Create workbenches with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
 - Start every Framepack project by reading \`FRAMEPACK.md\`.
-- Use \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
+- Use \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`DESIGN.md\`, \`DESIGN_TOKENS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\` as durable context. Do not rely on model memory.
+- Run \`${command} workbench audit --phase preflight --project-dir <dir>\` before starting, then \`${command} workbench audit --phase design|composition|preview|render --project-dir <dir>\` at each lifecycle gate. Stop on P0/P1 blockers.
 - Recommend animation libraries, templates, game-asset tools, HyperFrames, or Remotion only when the current project needs them.
 - Project skills are installed under \`.framepack/agent/codex/skills\` — each skill contains detailed references. Use the matching Framepack skill for: director work, template fusion, HyperFrames building, or reference mining.
 `;
@@ -381,12 +386,14 @@ Use Framepack when the user asks for a polished video, HyperFrames composition, 
 Suggested flow:
 
 1. Create a workbench with \`${command} create --idea "<idea>" --assets <dir> --output-dir <dir>\`.
-2. Read \`FRAMEPACK.md\`, then \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
-3. Check \`ASSET_GAPS.md\` for blocking gaps before writing code. If blocking gaps exist, tell the user what assets are needed.
-4. Translate fuzzy user intent into concrete visual language, motion language, template route, and implementation plan.
-5. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
-6. Record render feedback and next actions in \`ITERATIONS.md\`.
-7. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
+2. Read \`FRAMEPACK.md\`, then \`HUMAN.md\`, \`ASSETS.md\`, \`ASSET_GAPS.md\`, \`DESIGN.md\`, \`DESIGN_TOKENS.md\`, \`STYLE.md\`, \`DIRECTION.md\`, \`COMPOSITION.md\`, and \`ITERATIONS.md\`.
+3. Run \`${command} workbench audit --phase preflight --project-dir <dir>\`. If P0/P1 blockers exist, stop and correct them or ask the user.
+4. Run phase gates as work advances: \`${command} workbench audit --phase design --project-dir <dir>\`, \`${command} workbench audit --phase composition --project-dir <dir>\`, \`${command} workbench audit --phase preview --project-dir <dir>\`, then \`${command} workbench audit --phase render --project-dir <dir>\`.
+5. Check \`ASSET_GAPS.md\` for blocking gaps before writing code. If blocking gaps exist, tell the user what assets are needed.
+6. Translate fuzzy user intent into concrete visual language, motion language, template route, and implementation plan.
+7. Use HyperFrames-safe rules: CSS first frame visible, scene switches with \`tl.set()\`, one animation engine per element, and timeline registration on \`window.__timelines\`.
+8. Record render feedback and next actions in \`ITERATIONS.md\`.
+9. Use \`framepack workbench brief --project-dir <dir>\` when the user needs a plain-language progress recap.
 
 Fallback command surface: \`${command} mcp --describe\`.
 `;

@@ -3340,6 +3340,8 @@ Framepack compiles content into executable video projects.
       assert.match(script, /asset-gap-intelligence/);
       assert.match(script, /skill-install-surface/);
       assert.match(script, /harness-compliance-audit/);
+      assert.match(script, /preflight/);
+      assert.match(script, /phaseAudits/);
       assert.match(script, /lintWarnings/);
       assert.match(script, /sandbox-report\.json/);
       assert.match(script, /SANDBOX_REPORT\.md/);
@@ -4764,6 +4766,8 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /framepack-reference-miner/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /HUMAN\.md/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /TEMPLATE_BLUEPRINT\.md/);
+        assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "SKILL.md"), "utf8"), /workbench audit --phase preflight/);
+        assert.match(readFileSync(join(tempRoot, "AGENTS.md"), "utf8"), /workbench audit --phase/);
         assert.match(readFileSync(join(tempRoot, ".framepack", "agent", "codex", "INSTALL.md"), "utf8"), /npx -y framepack mcp/);
         const codexSkillRoot = join(tempRoot, ".framepack", "agent", "codex", "skills");
         for (const skillName of [
@@ -4806,6 +4810,7 @@ Framepack compiles content into executable video projects.
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /framepack-template-fuser/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /framepack-reference-miner/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /ASSET_GAPS\.md/);
+        assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /workbench audit --phase/);
         assert.match(readFileSync(join(tempRoot, "CLAUDE.md"), "utf8"), /\.claude\/skills/);
         const claudeSkillRoot = join(tempRoot, ".claude", "skills");
         const directorSkill = readFileSync(join(claudeSkillRoot, "framepack-director", "SKILL.md"), "utf8");
@@ -4928,6 +4933,74 @@ Framepack compiles content into executable video projects.
         assert.ok(payload.report.checks.some((check) => check.id === "asset-gap-intelligence"));
         assert.ok(payload.report.checks.some((check) => check.id === "skill-install-surface"));
         assert.ok(payload.report.checks.some((check) => check.id === "harness-compliance-audit"));
+        assert.equal(payload.report.phase, "all");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "audit lifecycle phases gate workbench progress before build and render",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-workbench-audit-phase-"));
+      const stderr = [];
+
+      try {
+        const createExitCode = await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium SaaS launch video for founders with big text and product proof.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "phase-workbench",
+            "--style",
+            "premium business dynamic",
+            "--duration",
+            "30",
+            "--format",
+            "9:16",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const projectDir = join(tempRoot, "phase-workbench");
+
+        for (const phase of ["preflight", "design", "composition", "preview", "render"]) {
+          const stdout = [];
+          const exitCode = await runCli(
+            ["workbench", "audit", "--phase", phase, "--project-dir", projectDir, "--json"],
+            {
+              stdout: (message) => stdout.push(message),
+              stderr: (message) => stderr.push(message),
+            },
+          );
+          const payload = JSON.parse(stdout.join("\n"));
+
+          assert.equal(exitCode, 0, `${phase}: ${stderr.join("\n")}`);
+          assert.equal(payload.report.phase, phase);
+          assert.equal(payload.report.status, "passed");
+          assert.ok(payload.report.checks.length > 0);
+        }
+
+        rmSync(join(projectDir, "DESIGN_TOKENS.md"), { force: true });
+        const failedStdout = [];
+        const failedExitCode = await runCli(
+          ["workbench", "audit", "--phase", "design", "--project-dir", projectDir, "--json"],
+          {
+            stdout: (message) => failedStdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const failedPayload = JSON.parse(failedStdout.join("\n"));
+
+        assert.equal(createExitCode, 0, stderr.join("\n"));
+        assert.equal(failedExitCode, 1);
+        assert.equal(failedPayload.report.phase, "design");
+        assert.ok(failedPayload.report.priorityBlockers.some((check) => check.id === "design-token-contract"));
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

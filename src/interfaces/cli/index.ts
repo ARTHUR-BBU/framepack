@@ -51,6 +51,7 @@ import {
   defaultWorkbenchProjectName,
   formatWorkbenchHumanBrief,
   auditWorkbenchProject,
+  type WorkbenchAuditPhase,
   listHyperframesCatalogPrefabs,
   listHyperframesPromptTemplates,
   listTemplateMarket,
@@ -197,7 +198,7 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack templates prompt",
   "  framepack templates recommend --idea <idea> --style <style>",
   "  framepack workbench check --project-dir <dir>",
-  "  framepack workbench audit --project-dir <dir>",
+  "  framepack workbench audit --phase <preflight|design|composition|preview|render> --project-dir <dir>",
   "  framepack workbench brief --project-dir <dir>",
   "  framepack scaffold --project-dir <dir>",
   "  framepack build --project-dir <dir>",
@@ -1320,7 +1321,11 @@ function runWorkbenchCommand(args: string[], io: CliIo): number {
   const projectDir = resolve(getRequiredArg(args, "--project-dir"));
 
   if (args[0] === "audit") {
-    const report = auditWorkbenchProject(projectDir);
+    const phase = (getOptionalArg(args, "--phase") ?? "all") as WorkbenchAuditPhase;
+    if (!["all", "preflight", "design", "composition", "preview", "render"].includes(phase)) {
+      throw new Error("Invalid --phase value. Use all, preflight, design, composition, preview, or render.");
+    }
+    const report = auditWorkbenchProject(projectDir, phase);
 
     if (args.includes("--json")) {
       io.stdout(JSON.stringify({ projectDir, report }, null, 2));

@@ -229,6 +229,7 @@ async function main() {
   const workbenchBrief = runNodeCli(["workbench", "brief", "--project-dir", projectDir]);
   const workbenchCheck = runNodeCli(["workbench", "check", "--project-dir", projectDir, "--json"]);
   const workbenchAudit = parseJson(runNodeCli(["workbench", "audit", "--project-dir", projectDir, "--json"]));
+  const phaseAudits = ["preflight", "design", "composition", "preview", "render"].map((phase) => parseJson(runNodeCli(["workbench", "audit", "--phase", phase, "--project-dir", projectDir, "--json"])).report);
   runNodeCli(["build", "--project-dir", projectDir]);
 
   const indexHtml = readProjectFile(projectDir, "index.html");
@@ -314,8 +315,13 @@ async function main() {
       id: "harness-compliance-audit",
       label: "Framepack can audit and correct workflow drift instead of trusting model memory.",
       weight: 10,
-      passed: workbenchAudit.report.status === "passed" && /HITL Loop/.test(iterationsMd) && Array.isArray(workbenchAudit.report.priorityBlockers),
-      evidence: [`workbench audit ${workbenchAudit.report.status}`, "HITL loop present", "priority blockers are machine-readable"],
+      passed: workbenchAudit.report.status === "passed" && phaseAudits.every((report) => report.status === "passed") && /HITL Loop/.test(iterationsMd) && Array.isArray(workbenchAudit.report.priorityBlockers),
+      evidence: [
+        `workbench audit ${workbenchAudit.report.status}`,
+        `phase gates ${phaseAudits.map((report) => `${report.phase}:${report.status}`).join(", ")}`,
+        "HITL loop present",
+        "priority blockers are machine-readable",
+      ],
       priority: "P0",
     }),
     scoreCheck({
@@ -382,6 +388,7 @@ async function main() {
       catalogPrefabs: catalog.prefabs?.length ?? 0,
       workbenchAuditStatus: workbenchAudit.report.status,
       workbenchAuditBlockers: workbenchAudit.report.priorityBlockers,
+      phaseAudits: phaseAudits.map((report) => ({ phase: report.phase, status: report.status, blockers: report.priorityBlockers })),
       stateKeys: Object.keys(state),
       lintOutput,
       lintWarnings,

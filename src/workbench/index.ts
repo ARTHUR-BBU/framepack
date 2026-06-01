@@ -101,13 +101,17 @@ export interface WorkbenchQaReport {
   findings: string[];
 }
 
+export type WorkbenchAuditPhase = "all" | "preflight" | "design" | "composition" | "preview" | "render";
+
 export interface WorkbenchAuditCheck extends WorkbenchQaCheck {
   priority: "P0" | "P1" | "P2";
+  phases: Exclude<WorkbenchAuditPhase, "all">[];
   correction: string;
 }
 
 export interface WorkbenchAuditReport {
   version: "framepack.workbench-audit.v1";
+  phase: WorkbenchAuditPhase;
   status: "passed" | "failed";
   checks: WorkbenchAuditCheck[];
   priorityBlockers: WorkbenchAuditCheck[];
@@ -736,6 +740,7 @@ function auditContains(input: {
   file: string;
   pattern: RegExp;
   id: string;
+  phases: Exclude<WorkbenchAuditPhase, "all">[];
   priority: WorkbenchAuditCheck["priority"];
   summary: string;
   finding: string;
@@ -745,6 +750,7 @@ function auditContains(input: {
   const passed = input.pattern.test(content);
   return {
     id: input.id,
+    phases: input.phases,
     priority: input.priority,
     status: passed ? "passed" : "failed",
     summary: passed ? input.summary : input.finding,
@@ -752,13 +758,14 @@ function auditContains(input: {
   };
 }
 
-export function auditWorkbenchFiles(files: Record<string, string>): WorkbenchAuditReport {
-  const checks: WorkbenchAuditCheck[] = [
+export function auditWorkbenchFiles(files: Record<string, string>, phase: WorkbenchAuditPhase = "all"): WorkbenchAuditReport {
+  const allChecks: WorkbenchAuditCheck[] = [
     auditContains({
       files,
       file: "DESIGN_TOKENS.md",
       pattern: /Design Tokens[\s\S]*(Colors|Palette|#(?:[0-9a-fA-F]{6}))/,
       id: "design-token-contract",
+      phases: ["preflight", "design", "composition", "preview", "render"],
       priority: "P0",
       summary: "DESIGN_TOKENS.md provides executable visual tokens.",
       finding: "DESIGN_TOKENS.md is missing executable colors or token guidance.",
@@ -769,6 +776,7 @@ export function auditWorkbenchFiles(files: Record<string, string>): WorkbenchAud
       file: "ASSET_GAPS.md",
       pattern: /Gaps found|No critical gaps detected|Blocking \(must resolve before composition\)|Optional \(can proceed without\)/,
       id: "asset-gap-intelligence",
+      phases: ["preflight", "composition"],
       priority: "P1",
       summary: "ASSET_GAPS.md explains blocking or optional asset needs.",
       finding: "ASSET_GAPS.md does not expose actionable asset gap status.",
@@ -779,6 +787,7 @@ export function auditWorkbenchFiles(files: Record<string, string>): WorkbenchAud
       file: "FRAMEPACK.md",
       pattern: /Skill\/instructions|Project skills|Trigger Framepack|agentic loop/i,
       id: "skill-install-surface",
+      phases: ["preflight"],
       priority: "P1",
       summary: "FRAMEPACK.md exposes when agents must trigger Framepack skills or instructions.",
       finding: "FRAMEPACK.md does not expose a clear skill/instruction trigger surface.",
@@ -789,6 +798,7 @@ export function auditWorkbenchFiles(files: Record<string, string>): WorkbenchAud
       file: "ITERATIONS.md",
       pattern: /HITL Loop[\s\S]*(Decision Log|Feedback Prompts|Next action)/,
       id: "harness-compliance-audit",
+      phases: ["preflight", "composition", "preview", "render"],
       priority: "P0",
       summary: "ITERATIONS.md records the HITL loop needed to supervise and correct agent work.",
       finding: "ITERATIONS.md does not record the HITL loop and correction checkpoints.",
@@ -799,6 +809,7 @@ export function auditWorkbenchFiles(files: Record<string, string>): WorkbenchAud
       file: "COMPOSITION.md",
       pattern: /Catalog Pre-Flight[\s\S]*(npx hyperframes add|Recommended prefabs|Fallback)/,
       id: "technology-install-plan",
+      phases: ["composition", "preview", "render"],
       priority: "P1",
       summary: "COMPOSITION.md contains a concrete technology or Catalog install plan.",
       finding: "COMPOSITION.md does not contain an actionable technology/Catalog install plan.",
@@ -809,18 +820,43 @@ export function auditWorkbenchFiles(files: Record<string, string>): WorkbenchAud
       file: "HUMAN.md",
       pattern: /Current Summary[\s\S]*(Next user decision|What I need from you)/,
       id: "plain-language-disclosure",
+      phases: ["preflight", "preview", "render"],
       priority: "P1",
       summary: "HUMAN.md gives the user a plain-language summary and decision point.",
       finding: "HUMAN.md does not disclose progress and next decisions in plain language.",
       correction: "Update HUMAN.md before continuing so the user understands the plan and can redirect it.",
     }),
+    auditContains({
+      files,
+      file: "index.html",
+      pattern: /data-composition-id[\s\S]*data-start="0"[\s\S]*data-width="(?:1080|1920)"[\s\S]*data-height="(?:1080|1920)"[\s\S]*window\.__timelines/,
+      id: "build-output-contract",
+      phases: ["preview", "render"],
+      priority: "P0",
+      summary: "index.html exposes the HyperFrames root contract and timeline registration.",
+      finding: "index.html is missing the HyperFrames root contract or timeline registration.",
+      correction: "Run framepack build and fix the composition before preview or render.",
+    }),
+    auditContains({
+      files,
+      file: "COMPOSITION.md",
+      pattern: /Preview Before Render[\s\S]*(User confirms|Record feedback|render)/,
+      id: "preview-before-render-loop",
+      phases: ["preview", "render"],
+      priority: "P1",
+      summary: "COMPOSITION.md requires preview and user feedback before render.",
+      finding: "COMPOSITION.md does not require preview and user feedback before render.",
+      correction: "Restore the Preview Before Render loop before handing the project to testers.",
+    }),
   ];
+  const checks = phase === "all" ? allChecks : allChecks.filter((check) => check.phases.includes(phase));
   const priorityBlockers = checks.filter(
     (check) => check.status === "failed" && (check.priority === "P0" || check.priority === "P1"),
   );
 
   return {
     version: "framepack.workbench-audit.v1",
+    phase,
     status: priorityBlockers.length === 0 ? "passed" : "failed",
     checks,
     priorityBlockers,
@@ -829,16 +865,16 @@ export function auditWorkbenchFiles(files: Record<string, string>): WorkbenchAud
   };
 }
 
-export function auditWorkbenchProject(projectDir: string): WorkbenchAuditReport {
+export function auditWorkbenchProject(projectDir: string, phase: WorkbenchAuditPhase = "all"): WorkbenchAuditReport {
   const files = Object.fromEntries(
-    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", "DESIGN.md", "DESIGN_TOKENS.md", ".framepack/state.json"]
+    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", "DESIGN.md", "DESIGN_TOKENS.md", "index.html", "meta.json", ".framepack/state.json"]
       .map((filePath) => [
         filePath,
         existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
       ]),
   );
 
-  return auditWorkbenchFiles(files);
+  return auditWorkbenchFiles(files, phase);
 }
 
 const DESIGN_SYSTEM_SIGNALS: { id: string; keywords: string[] }[] = [
