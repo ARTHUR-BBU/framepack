@@ -44,6 +44,37 @@ Use a balanced intervention model:
 
 This keeps Framepack firm enough to matter without becoming an obstructive black box.
 
+## Internal Lifecycle Hooks
+
+The Active Intervention Layer needs a named internal identity so checks do not scatter across unrelated command handlers:
+
+**Framepack Internal Lifecycle Hooks**
+
+This is not an open hook API. Framepack 0.6.x should not ship `registerHook()`, external hook registration, user hook config, plugin hook ordering, or public hook lifecycle contracts. Those features would introduce ordering, failure-level, security, configuration, agent-visibility, and MCP-exposure complexity before the internal workflow is stable.
+
+Internal Lifecycle Hooks are Framepack's built-in stage sensors. They run at Framepack-owned lifecycle boundaries such as `create`, `design`, `composition`, `build`, `preview`, `render`, and `feedback`.
+
+Their responsibilities are:
+
+- trigger audit gates and lifecycle cost gates
+- build or enrich `interventionContext`
+- write project evidence such as `.framepack/interventions.jsonl`, `.framepack/friction.jsonl`, and `.framepack/preferences.json`
+- decide whether P0 blockers stop the command
+- surface P1/P2 warnings without blocking
+- provide required reads, next command, and skill hints to the agent
+
+Architecture identity:
+
+```text
+Workbench Files
+  -> Internal Lifecycle Hooks
+  -> Audit Gates
+  -> interventionContext
+  -> Agent Action
+```
+
+Plain-language summary: Audit Gates are traffic lights, `interventionContext` is navigation voice, and Internal Lifecycle Hooks are the road sensors that notice the agent has reached an important intersection.
+
 ## Non-Goals
 
 This design does not add a global daemon, automatic skill rewriting, always-on chat monitoring, cross-project personal memory, or automatic template mutation. Those belong to stage 5 and are deferred to Framepack 0.7.0.

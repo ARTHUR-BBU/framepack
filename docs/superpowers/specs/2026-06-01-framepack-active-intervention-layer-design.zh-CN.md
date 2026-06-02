@@ -44,6 +44,40 @@ Framepack 控制力 = Harness 规则 x 低摩擦路径 x 可见反馈 x 项目�
 
 这样 Framepack 足够“有牙”，但不会变成过度阻碍 Agent 创作的黑盒。
 
+## 内部生命周期钩子层
+
+主动介入层需要一个明确身份，否则检查逻辑会散落到各个命令 handler 里，后续会变胖、变乱、难审计。
+
+正式名称：
+
+**Framepack Internal Lifecycle Hooks**
+**Framepack 内部生命周期钩子层**
+
+它不是开放式 hook API。Framepack 0.6.x 不做 `registerHook()`，不做外部 hook 注册，不做用户 hook 配置，不做插件 hook 排序，也不定义公开 hook 生命周期协议。这些能力会引入顺序、失败等级、安全边界、配置位置、agent 可见性、MCP 暴露等复杂问题，应该等内部 workflow 稳定后再考虑。
+
+Internal Lifecycle Hooks 是 Framepack 内置的阶段感应器。它在 Framepack 自己拥有的生命周期边界触发，例如 `create`、`design`、`composition`、`build`、`preview`、`render`、`feedback`。
+
+职责：
+
+- 触发 audit gates 和生命周期成本门禁。
+- 生成或补充 `interventionContext`。
+- 写入 `.framepack/interventions.jsonl`、`.framepack/friction.jsonl`、`.framepack/preferences.json` 等项目证据。
+- 判断 P0 是否阻断当前命令。
+- 对 P1/P2 强提醒但不阻断。
+- 给 Agent 提供必读文件、下一条命令和 skill hints。
+
+架构身份：
+
+```text
+Workbench Files
+  -> Internal Lifecycle Hooks
+  -> Audit Gates
+  -> interventionContext
+  -> Agent Action
+```
+
+小白版理解：Audit Gates 是红绿灯，`interventionContext` 是导航语音，Internal Lifecycle Hooks 是路口感应器。车一到路口，它负责触发红绿灯、播报导航、记录有没有闯红灯。
+
 ## 非目标
 
 本设计不做全局 daemon、不做自动 skill 改写、不做持续监听聊天、不做跨项目个人记忆、不做自动修改模板。这些属于第 5 阶段，推迟到 Framepack 0.7.0。
