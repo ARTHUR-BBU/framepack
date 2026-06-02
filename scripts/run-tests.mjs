@@ -2576,11 +2576,12 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.6.0-alpha.2");
+      assert.equal(packageJson.version, "0.6.0-alpha.3");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /\u4e2d\u6587/);
       assert.match(packageJson.readme, /workbench brief/);
+      assert.match(packageJson.readme, /active intervention|主动介入/);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
       assert.ok(Array.isArray(packageJson.files));
@@ -2978,6 +2979,9 @@ Framepack compiles content into executable video projects.
       assert.equal(exitCode, 0, stderr.join("\n"));
       assert.equal(payload.recommendation.template.id, "course-promo");
       assert.ok(payload.recommendation.template.implementationRoutes.includes("hyperframes"));
+      assert.equal(payload.interventionContext.command, "template-recommend");
+      assert.equal(payload.interventionContext.phase, "composition");
+      assert.match(payload.interventionContext.shortcut, /Xiaobai/);
     },
   },
   {
@@ -3027,6 +3031,8 @@ Framepack compiles content into executable video projects.
       assert.equal(exitCode, 0, stderr.join("\n"));
       assert.equal(payload.recommendation.template.id, "hyperframes-tiktok-karaoke-talking-head");
       assert.ok(payload.recommendation.template.catalogCommands.includes("npx hyperframes add tiktok-follow"));
+      assert.equal(payload.interventionContext.command, "prompt-template-recommend");
+      assert.ok(payload.interventionContext.skillHints.includes("framepack-template-fuser"));
     },
   },
   {
@@ -3079,6 +3085,8 @@ Framepack compiles content into executable video projects.
       assert.equal(payload.recommendation.templateId, "course-promo");
       assert.ok(payload.recommendation.prefabs.some((prefab) => prefab.id === "caption-editorial-emphasis"));
       assert.match(payload.recommendation.agentInstructions.join("\n"), /npx hyperframes catalog --json/);
+      assert.equal(payload.interventionContext.command, "catalog-recommend");
+      assert.match(payload.interventionContext.nextCommand, /framepack build/);
     },
   },
   {
@@ -3125,13 +3133,15 @@ Framepack compiles content into executable video projects.
         assert.equal(existsSync(join(projectDir, ".framepack", "state.json")), true);
         assert.equal(payload.projectDir, projectDir);
         assert.equal(payload.assets.length, 1);
+        assert.equal(existsSync(join(projectDir, ".framepack", "preferences.json")), true);
+        assert.ok(payload.preferences.fieldForces.some((force) => force.id === "premium-polish"));
         assert.equal(payload.interventionContext.version, "framepack.intervention-context.v1");
         assert.equal(payload.interventionContext.command, "create");
         assert.equal(payload.interventionContext.phase, "preflight");
         assert.equal(payload.interventionContext.status, "needs-review");
         assert.ok(payload.interventionContext.requiredReads.includes("HUMAN.md"));
         assert.match(payload.interventionContext.nextCommand, /workbench brief/);
-        assert.match(payload.interventionContext.shortcut, /小白版/);
+        assert.match(payload.interventionContext.shortcut, /Xiaobai/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -5023,6 +5033,126 @@ Framepack compiles content into executable video projects.
         assert.equal(failedPayload.interventionContext.phase, "design");
         assert.ok(failedPayload.interventionContext.blockers.some((blocker) => blocker.includes("design-token-contract")));
         assert.match(failedPayload.interventionContext.nextCommand, /Fix blockers/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "lifecycle gate blocks build on P0 blockers and records forced bypasses",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-lifecycle-gate-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const createExitCode = await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium SaaS launch video with big text and fast motion.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "gated-workbench",
+            "--style",
+            "premium business dynamic big text",
+            "--duration",
+            "30",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const projectDir = join(tempRoot, "gated-workbench");
+        rmSync(join(projectDir, "DESIGN_TOKENS.md"), { force: true });
+
+        const blockedExitCode = await runCli(
+          ["build", "--project-dir", projectDir, "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const blockedPayload = JSON.parse(stdout.join("\n"));
+
+        assert.equal(createExitCode, 0, stderr.join("\n"));
+        assert.equal(blockedExitCode, 1);
+        assert.equal(blockedPayload.gate.status, "blocked");
+        assert.ok(blockedPayload.gate.blockers.some((blocker) => blocker.includes("design-token-contract")));
+        assert.equal(existsSync(join(projectDir, ".framepack", "interventions.jsonl")), true);
+
+        const forcedStdout = [];
+        const forcedExitCode = await runCli(
+          ["build", "--project-dir", projectDir, "--force", "--json"],
+          {
+            stdout: (message) => forcedStdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const forcedPayload = JSON.parse(forcedStdout.join("\n"));
+
+        assert.equal(forcedExitCode, 0, stderr.join("\n"));
+        assert.equal(forcedPayload.gate.status, "forced");
+        assert.match(readFileSync(join(projectDir, "ITERATIONS.md"), "utf8"), /Framepack Force Bypass/);
+        assert.match(readFileSync(join(projectDir, ".framepack", "interventions.jsonl"), "utf8"), /"status":"forced"/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "workbench friction learnings and preferences summarize project supervision state",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-supervision-state-"));
+      const stderr = [];
+
+      try {
+        await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium dynamic launch video with big text.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "supervised-workbench",
+            "--style",
+            "premium dynamic big text",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const projectDir = join(tempRoot, "supervised-workbench");
+        rmSync(join(projectDir, "DESIGN_TOKENS.md"), { force: true });
+        await runCli(["build", "--project-dir", projectDir, "--json"], {
+          stdout: () => {},
+          stderr: () => {},
+        });
+
+        const frictionStdout = [];
+        const learningsStdout = [];
+        const preferencesStdout = [];
+        assert.equal(await runCli(["workbench", "friction", "--project-dir", projectDir], {
+          stdout: (message) => frictionStdout.push(message),
+          stderr: (message) => stderr.push(message),
+        }), 0);
+        assert.equal(await runCli(["workbench", "learnings", "--project-dir", projectDir], {
+          stdout: (message) => learningsStdout.push(message),
+          stderr: (message) => stderr.push(message),
+        }), 0);
+        assert.equal(await runCli(["workbench", "preferences", "--project-dir", projectDir], {
+          stdout: (message) => preferencesStdout.push(message),
+          stderr: (message) => stderr.push(message),
+        }), 0);
+
+        assert.match(frictionStdout.join("\n"), /audit-blocker/);
+        assert.match(learningsStdout.join("\n"), /design-token-missing/);
+        assert.match(preferencesStdout.join("\n"), /premium-polish/);
+        assert.equal(existsSync(join(projectDir, ".framepack", "preferences.json")), true);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -8008,6 +8138,93 @@ Framepack compiles content into executable video projects.
         );
         assert.match(stdout, /Built \d+ scenes/);
         assert.match(stdout, /Scene templates used/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "preview and render JSON outputs include intervention context",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-runtime-json-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        const createExitCode = await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium SaaS launch video for founders.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "runtime-json-workbench",
+            "--style",
+            "premium business dynamic",
+            "--duration",
+            "18",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const projectDir = join(tempRoot, "runtime-json-workbench");
+        const buildExitCode = await runCli(["build", "--project-dir", projectDir], {
+          stdout: () => {},
+          stderr: (message) => stderr.push(message),
+        });
+        const dependencies = {
+          detectRuntimeCapabilities: () => ({
+            available: true,
+            binary: "hyperframes",
+            detectedAt: "2026-06-02T00:00:00.000Z",
+            version: "0.6.0",
+            supportedCommands: ["preview", "render"],
+            supportedCatalogFeatures: [],
+            supportedRenderOptions: ["format", "fps", "quality", "strict"],
+            fallbackNotes: [],
+          }),
+          executeRuntimeCommand: ({ command }) => ({
+            action: command.action,
+            success: true,
+            outputPaths: [],
+            warnings: [],
+            summary: command.summary,
+            exitCode: 0,
+            stdout: `${command.action} ok`,
+            stderr: "",
+          }),
+        };
+
+        const previewExitCode = await runCli(
+          ["preview", "--project-dir", projectDir, "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+          dependencies,
+        );
+        const previewPayload = JSON.parse(stdout.pop());
+        const renderExitCode = await runCli(
+          ["render", "--project-dir", projectDir, "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+          dependencies,
+        );
+        const renderPayload = JSON.parse(stdout.pop());
+
+        assert.equal(createExitCode, 0, stderr.join("\n"));
+        assert.equal(buildExitCode, 0, stderr.join("\n"));
+        assert.equal(previewExitCode, 0, stderr.join("\n"));
+        assert.equal(renderExitCode, 0, stderr.join("\n"));
+        assert.equal(previewPayload.interventionContext.command, "preview");
+        assert.equal(previewPayload.gate.status, "allowed");
+        assert.equal(renderPayload.interventionContext.command, "render");
+        assert.equal(renderPayload.gate.status, "allowed");
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

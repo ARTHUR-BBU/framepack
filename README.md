@@ -133,6 +133,20 @@ npx framepack workbench audit --phase all --project-dir ./out/launch-video --jso
 
 Agents should stop on P0/P1 audit blockers before moving to build, preview, or render. The audit checks include user-readable summary, design tokens, asset gaps, HITL checkpoints, technology plan, skill exposure, HyperFrames runtime files, and preview/render readiness.
 
+Lifecycle commands now carry an active intervention context in JSON output. Agents can read `interventionContext` from `create`, `workbench brief/check/audit`, `build`, `preview`, `render`, `templates recommend`, `templates prompt recommend`, and `catalog recommend` to know the current phase, required reads, blockers, skill hints, and the next safest command.
+
+`build`, `preview`, and `render` also run lightweight lifecycle gates for 0.6 workbench projects. P0 blockers stop the command by default; `--force` is explicit, recorded in `.framepack/interventions.jsonl`, and summarized in `ITERATIONS.md`.
+
+For supervision and test review:
+
+```bash
+npx framepack workbench preferences --project-dir ./out/launch-video
+npx framepack workbench friction --project-dir ./out/launch-video
+npx framepack workbench learnings --project-dir ./out/launch-video
+```
+
+Preferences are stored in `.framepack/preferences.json`. Intervention events are stored in `.framepack/interventions.jsonl`. Friction summaries help testers see where the agent drifted, got blocked, or used `--force`.
+
 ## Built-In Arsenal
 
 Framepack includes a local arsenal that helps agents choose a strong route without guessing:

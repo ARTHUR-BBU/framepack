@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.6.0-alpha.3
+
+- add active intervention context across the workbench lifecycle and recommendation commands
+  - `create`, `workbench brief/check/audit`, `build`, `preview`, `render`, `templates recommend`, `templates prompt recommend`, and `catalog recommend` expose `interventionContext` in JSON output
+  - shortcut text now uses stable Xiaobai wording to avoid Windows terminal encoding corruption
+- add lifecycle cost gates for 0.6 workbench projects
+  - `build`, `preview`, and `render` stop on P0 blockers by default
+  - `--force` records bypass evidence in `.framepack/interventions.jsonl` and `ITERATIONS.md`
+- add project supervision surfaces
+  - `.framepack/preferences.json`
+  - `framepack workbench preferences`
+  - `framepack workbench friction`
+  - `framepack workbench learnings`
+- update README, Chinese README, AGENTS, Codex skill, Claude Code instructions, tests, and sandbox benchmark for the active-intervention workflow
+- 209/209 tests pass; sandbox benchmark remains 100/100
+
 ## 0.6.0-alpha.2
 
 - restore the `create -> build -> preview/render` runtime contract after the 0.6.0-alpha.1 regression

@@ -63,6 +63,22 @@ import {
   validateWorkbenchProject,
 } from "../../workbench/index.js";
 import {
+  appendForceSummary,
+  checkWorkbenchLifecycleGate,
+  recordGateResult,
+  type WorkbenchLifecycleAction,
+} from "../../workbench/interventions.js";
+import {
+  formatWorkbenchFriction,
+  formatWorkbenchLearnings,
+  recordWorkbenchFriction,
+} from "../../workbench/friction.js";
+import {
+  formatWorkbenchPreferences,
+  preferenceStyleSuffix,
+  writeWorkbenchPreferences,
+} from "../../workbench/preferences.js";
+import {
   loadAllTemplates,
   matchSceneTemplates,
   getTemplateStats,
@@ -201,6 +217,9 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack workbench check --project-dir <dir>",
   "  framepack workbench audit --phase <preflight|design|composition|preview|render> --project-dir <dir>",
   "  framepack workbench brief --project-dir <dir>",
+  "  framepack workbench friction --project-dir <dir>",
+  "  framepack workbench learnings --project-dir <dir>",
+  "  framepack workbench preferences --project-dir <dir> [--refresh]",
   "  framepack scaffold --project-dir <dir>",
   "  framepack build --project-dir <dir>",
   "  framepack preview --project-dir <dir> [--open]",
@@ -705,6 +724,11 @@ function runCreateCommand(args: string[], io: CliIo): number {
     durationSec,
     brandColors,
   });
+  const preferences = writeWorkbenchPreferences({
+    projectDir: project.projectDir,
+    idea,
+    style,
+  });
 
   // Copy VIDEO_DNA.md into the project if provided.
   if (dnaPath) {
@@ -720,6 +744,7 @@ function runCreateCommand(args: string[], io: CliIo): number {
       projectDir: project.projectDir,
       assets: project.assets,
       copiedDna: Boolean(dnaPath),
+      preferences,
       interventionContext: buildWorkbenchInterventionContext({
         command: "create",
         projectDir: project.projectDir,
@@ -733,6 +758,7 @@ function runCreateCommand(args: string[], io: CliIo): number {
       `Created Framepack workbench at ${project.projectDir}`,
       dnaPath ? "VIDEO_DNA.md copied into project." : null,
       `assets: ${project.assets.length}`,
+      `preferences: ${preferences.fieldForces.length} field forces recorded`,
       "next: open FRAMEPACK.md with your agent, then refine COMPOSITION.md and build the HyperFrames composition.",
     ].filter(Boolean).join("\n"),
   );
@@ -835,15 +861,23 @@ function runTemplatesCommand(args: string[], io: CliIo): number {
     if (args[1] === "recommend") {
       const durationArg = getOptionalArg(args, "--duration");
       const durationSec = durationArg ? Number(durationArg) : 45;
+      const projectDir = resolve(getOptionalArg(args, "--project-dir") ?? process.cwd());
+      const preferenceSuffix = preferenceStyleSuffix(projectDir);
       const recommendation = recommendHyperframesPromptTemplate({
         idea: getRequiredArg(args, "--idea"),
-        style: getOptionalArg(args, "--style"),
+        style: [getOptionalArg(args, "--style"), preferenceSuffix].filter(Boolean).join("; ") || undefined,
         format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
         durationSec,
       });
 
       if (args.includes("--json")) {
-        io.stdout(JSON.stringify({ recommendation }, null, 2));
+        io.stdout(JSON.stringify({
+          recommendation,
+          interventionContext: buildWorkbenchInterventionContext({
+            command: "prompt-template-recommend",
+            projectDir,
+          }),
+        }, null, 2));
         return 0;
       }
 
@@ -881,6 +915,8 @@ function runTemplatesCommand(args: string[], io: CliIo): number {
   if (args[0] === "recommend") {
     const durationArg = getOptionalArg(args, "--duration");
     const durationSec = durationArg ? Number(durationArg) : 45;
+    const projectDir = resolve(getOptionalArg(args, "--project-dir") ?? process.cwd());
+    const preferenceSuffix = preferenceStyleSuffix(projectDir);
 
     if (!Number.isFinite(durationSec) || durationSec < 5) {
       throw new Error("Invalid --duration value. Use a number of at least 5 seconds.");
@@ -888,13 +924,19 @@ function runTemplatesCommand(args: string[], io: CliIo): number {
 
     const recommendation = recommendTemplateRoute({
       idea: getRequiredArg(args, "--idea"),
-      style: getOptionalArg(args, "--style"),
+      style: [getOptionalArg(args, "--style"), preferenceSuffix].filter(Boolean).join("; ") || undefined,
       format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
       durationSec,
     });
 
     if (args.includes("--json")) {
-      io.stdout(JSON.stringify({ recommendation }, null, 2));
+      io.stdout(JSON.stringify({
+        recommendation,
+        interventionContext: buildWorkbenchInterventionContext({
+          command: "template-recommend",
+          projectDir,
+        }),
+      }, null, 2));
       return 0;
     }
 
@@ -936,15 +978,23 @@ function runCatalogCommand(args: string[], io: CliIo): number {
   }
 
   if (args[0] === "recommend") {
+    const projectDir = resolve(getOptionalArg(args, "--project-dir") ?? process.cwd());
+    const preferenceSuffix = preferenceStyleSuffix(projectDir);
     const recommendation = recommendHyperframesCatalogPrefabs({
       templateId: getRequiredArg(args, "--template") as Parameters<typeof recommendHyperframesCatalogPrefabs>[0]["templateId"],
       idea: getRequiredArg(args, "--idea"),
-      style: getOptionalArg(args, "--style"),
+      style: [getOptionalArg(args, "--style"), preferenceSuffix].filter(Boolean).join("; ") || undefined,
       format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
     });
 
     if (args.includes("--json")) {
-      io.stdout(JSON.stringify({ recommendation }, null, 2));
+      io.stdout(JSON.stringify({
+        recommendation,
+        interventionContext: buildWorkbenchInterventionContext({
+          command: "catalog-recommend",
+          projectDir,
+        }),
+      }, null, 2));
       return 0;
     }
 
@@ -1092,11 +1142,44 @@ function runScaffoldCommand(args: string[], io: CliIo): number {
 function runBuildCommand(args: string[], io: CliIo): number {
   const projectDir = getRequiredArg(args, "--project-dir");
   try {
+    const gate = checkWorkbenchLifecycleGate({
+      projectDir,
+      action: "build",
+      force: args.includes("--force"),
+    });
+    recordGateResult({ projectDir, action: "build", gate });
+    appendForceSummary({ projectDir, action: "build", gate });
+
+    if (gate.status === "blocked") {
+      const interventionContext = buildWorkbenchInterventionContext({
+        command: "build",
+        projectDir: resolve(projectDir),
+        phase: "composition",
+        report: gate.reports.find((report) => report.status === "failed"),
+      });
+      recordWorkbenchFriction({
+        version: "framepack.friction-event.v1",
+        timestamp: new Date().toISOString(),
+        projectDir: resolve(projectDir),
+        type: "audit-blocker",
+        category: "workflow-friction",
+        summary: gate.message,
+        evidence: gate.blockers,
+      });
+      if (args.includes("--json")) {
+        io.stdout(JSON.stringify({ projectDir: resolve(projectDir), gate, interventionContext }, null, 2));
+      } else {
+        io.stderr([gate.message, ...gate.blockers.map((blocker) => `- ${blocker}`), "Use --force only if you accept the rework risk."].join("\n"));
+      }
+      return 1;
+    }
+
     const result = buildWorkbenchProject(projectDir);
     if (args.includes("--json")) {
       io.stdout(JSON.stringify({
         projectDir: resolve(projectDir),
         result,
+        gate,
         interventionContext: buildWorkbenchInterventionContext({
           command: "build",
           projectDir: resolve(projectDir),
@@ -1335,8 +1418,8 @@ function runTemplateCommand(args: string[], io: CliIo): number {
 }
 
 function runWorkbenchCommand(args: string[], io: CliIo): number {
-  if (args[0] !== "check" && args[0] !== "audit" && args[0] !== "brief") {
-    throw new Error("Invalid workbench command. Use: framepack workbench check --project-dir <dir>, framepack workbench audit --project-dir <dir>, or framepack workbench brief --project-dir <dir>");
+  if (args[0] !== "check" && args[0] !== "audit" && args[0] !== "brief" && args[0] !== "friction" && args[0] !== "learnings" && args[0] !== "preferences") {
+    throw new Error("Invalid workbench command. Use: framepack workbench check|audit|brief|friction|learnings|preferences --project-dir <dir>");
   }
 
   if (args[0] === "brief") {
@@ -1358,6 +1441,24 @@ function runWorkbenchCommand(args: string[], io: CliIo): number {
   }
 
   const projectDir = resolve(getRequiredArg(args, "--project-dir"));
+
+  if (args[0] === "friction") {
+    io.stdout(formatWorkbenchFriction(projectDir));
+    return 0;
+  }
+
+  if (args[0] === "learnings") {
+    io.stdout(formatWorkbenchLearnings(projectDir));
+    return 0;
+  }
+
+  if (args[0] === "preferences") {
+    if (args.includes("--refresh")) {
+      writeWorkbenchPreferences({ projectDir });
+    }
+    io.stdout(formatWorkbenchPreferences(projectDir));
+    return 0;
+  }
 
   if (args[0] === "audit") {
     const phase = (getOptionalArg(args, "--phase") ?? "all") as WorkbenchAuditPhase;
@@ -1726,13 +1827,66 @@ function runRenderCommand(
 ): number {
   const audioFile = getOptionalArg(args, "--audio") ?? getOptionalArg(args, "--with-audio");
   const projectDir = getRequiredProjectDir(args);
+  const json = args.includes("--json");
+
+  const gate = checkWorkbenchLifecycleGate({
+    projectDir,
+    action: "render",
+    force: args.includes("--force"),
+  });
+  recordGateResult({ projectDir, action: "render", gate });
+  appendForceSummary({ projectDir, action: "render", gate });
+
+  if (gate.status === "blocked") {
+    const interventionContext = buildWorkbenchInterventionContext({
+      command: "render",
+      projectDir: resolve(projectDir),
+      phase: "render",
+      report: gate.reports.find((report) => report.status === "failed"),
+    });
+    recordWorkbenchFriction({
+      version: "framepack.friction-event.v1",
+      timestamp: new Date().toISOString(),
+      projectDir: resolve(projectDir),
+      type: "audit-blocker",
+      category: "workflow-friction",
+      summary: gate.message,
+      evidence: gate.blockers,
+    });
+    if (json) {
+      io.stdout(JSON.stringify({ projectDir: resolve(projectDir), gate, interventionContext }, null, 2));
+    } else {
+      io.stderr([gate.message, ...gate.blockers.map((blocker) => `- ${blocker}`), "Use --force only if you accept the rework risk."].join("\n"));
+    }
+    return 1;
+  }
 
   // Step 1: Run hyperframes render
-  const renderExit = runRuntimeActionCommand("render", args, io, dependencies);
+  const runtimeStdout: string[] = [];
+  const runtimeStderr: string[] = [];
+  const runtimeIo = json
+    ? { stdout: (message: string) => runtimeStdout.push(message), stderr: (message: string) => runtimeStderr.push(message) }
+    : io;
+  const renderExit = runRuntimeActionCommand("render", args, runtimeIo, dependencies);
   if (renderExit !== 0) return renderExit;
 
   // Step 2: If no audio requested, we're done
-  if (!audioFile) return 0;
+  if (!audioFile) {
+    if (json) {
+      io.stdout(JSON.stringify({
+        projectDir: resolve(projectDir),
+        status: "rendered",
+        gate,
+        runtimeOutput: runtimeStdout.join("\n"),
+        runtimeErrors: runtimeStderr.join("\n"),
+        interventionContext: buildWorkbenchInterventionContext({
+          command: "render",
+          projectDir: resolve(projectDir),
+        }),
+      }, null, 2));
+    }
+    return 0;
+  }
 
   // Step 3: Find the rendered video
   const rendersDir = join(projectDir, "renders");
@@ -1802,11 +1956,66 @@ function runPreviewCommand(
 ): number {
   const shouldOpen = args.includes("--open") || args.includes("-o");
   const port = getOptionalArg(args, "--port") ?? "3002";
+  const projectDir = getRequiredProjectDir(args);
+  const json = args.includes("--json");
+
+  const gate = checkWorkbenchLifecycleGate({
+    projectDir,
+    action: "preview",
+    force: args.includes("--force"),
+  });
+  recordGateResult({ projectDir, action: "preview", gate });
+  appendForceSummary({ projectDir, action: "preview", gate });
+
+  if (gate.status === "blocked") {
+    const interventionContext = buildWorkbenchInterventionContext({
+      command: "preview",
+      projectDir: resolve(projectDir),
+      phase: "preview",
+      report: gate.reports.find((report) => report.status === "failed"),
+    });
+    recordWorkbenchFriction({
+      version: "framepack.friction-event.v1",
+      timestamp: new Date().toISOString(),
+      projectDir: resolve(projectDir),
+      type: "audit-blocker",
+      category: "workflow-friction",
+      summary: gate.message,
+      evidence: gate.blockers,
+    });
+    if (json) {
+      io.stdout(JSON.stringify({ projectDir: resolve(projectDir), gate, interventionContext }, null, 2));
+    } else {
+      io.stderr([gate.message, ...gate.blockers.map((blocker) => `- ${blocker}`), "Use --force only if you accept the rework risk."].join("\n"));
+    }
+    return 1;
+  }
 
   // Run hyperframes preview
-  const exitCode = runRuntimeActionCommand("preview", args, io, dependencies);
+  const runtimeStdout: string[] = [];
+  const runtimeStderr: string[] = [];
+  const runtimeIo = json
+    ? { stdout: (message: string) => runtimeStdout.push(message), stderr: (message: string) => runtimeStderr.push(message) }
+    : io;
+  const exitCode = runRuntimeActionCommand("preview", args, runtimeIo, dependencies);
 
   if (exitCode !== 0) return exitCode;
+
+  if (json) {
+    io.stdout(JSON.stringify({
+      projectDir: resolve(projectDir),
+      status: "preview-started",
+      gate,
+      port,
+      runtimeOutput: runtimeStdout.join("\n"),
+      runtimeErrors: runtimeStderr.join("\n"),
+      interventionContext: buildWorkbenchInterventionContext({
+        command: "preview",
+        projectDir: resolve(projectDir),
+      }),
+    }, null, 2));
+    return 0;
+  }
 
   // Auto-open browser if requested
   if (shouldOpen) {

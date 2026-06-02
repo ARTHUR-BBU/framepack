@@ -1,4 +1,15 @@
-export type WorkbenchInterventionCommand = "create" | "check" | "audit" | "brief" | "build";
+export type WorkbenchInterventionCommand =
+  | "create"
+  | "check"
+  | "audit"
+  | "brief"
+  | "build"
+  | "preview"
+  | "render"
+  | "template-recommend"
+  | "prompt-template-recommend"
+  | "catalog-recommend";
+
 export type WorkbenchInterventionPhase = "preflight" | "design" | "composition" | "preview" | "render";
 export type WorkbenchInterventionStatus = "ready" | "needs-review" | "blocked";
 
@@ -63,7 +74,9 @@ export function buildWorkbenchInterventionContext(input: {
 
 function normalizePhase(command: WorkbenchInterventionCommand, phase?: string): WorkbenchInterventionPhase {
   if (phase === "design" || phase === "composition" || phase === "preview" || phase === "render") return phase;
-  if (command === "build") return "preview";
+  if (command === "build" || command === "preview") return "preview";
+  if (command === "render") return "render";
+  if (command === "template-recommend" || command === "prompt-template-recommend" || command === "catalog-recommend") return "composition";
   return "preflight";
 }
 
@@ -74,7 +87,15 @@ function resolveStatus(
 ): WorkbenchInterventionStatus {
   if (blockers.length > 0) return "blocked";
   if (report?.status === "failed") return "needs-review";
-  if (command === "create" || command === "brief") return "needs-review";
+  if (
+    command === "create" ||
+    command === "brief" ||
+    command === "template-recommend" ||
+    command === "prompt-template-recommend" ||
+    command === "catalog-recommend"
+  ) {
+    return "needs-review";
+  }
   return "ready";
 }
 
@@ -98,6 +119,9 @@ function requiredReadsFor(command: WorkbenchInterventionCommand, phase: Workbenc
   if (command === "build" || phase === "preview" || phase === "render") {
     return ["COMPOSITION.md", "DESIGN_TOKENS.md", "index.html", "meta.json", "ITERATIONS.md"];
   }
+  if (command === "template-recommend" || command === "prompt-template-recommend" || command === "catalog-recommend") {
+    return ["HUMAN.md", "STYLE.md", "DESIGN_TOKENS.md", "DIRECTION.md", "COMPOSITION.md"];
+  }
   if (phase === "design") return ["HUMAN.md", "STYLE.md", "DESIGN.md", "DESIGN_TOKENS.md"];
   if (phase === "composition") return ["ASSETS.md", "ASSET_GAPS.md", "DESIGN_TOKENS.md", "DIRECTION.md", "COMPOSITION.md"];
   return ["FRAMEPACK.md", "HUMAN.md", "ASSETS.md", "ASSET_GAPS.md", "DIRECTION.md", "COMPOSITION.md"];
@@ -114,10 +138,13 @@ function nextCommandFor(
   }
   if (command === "create") return `npx framepack workbench brief --project-dir "${projectDir}"`;
   if (command === "brief") return `npx framepack workbench audit --phase preflight --project-dir "${projectDir}"`;
+  if (command === "template-recommend") return `Use the selected template route in COMPOSITION.md, then run: npx framepack workbench audit --phase composition --project-dir "${projectDir}" --json`;
+  if (command === "prompt-template-recommend") return "Fuse the prompt-template scene shape into COMPOSITION.md, then run catalog recommend for polish parts.";
+  if (command === "catalog-recommend") return `Reference the selected Catalog prefabs in COMPOSITION.md, then run: npx framepack build --project-dir "${projectDir}" --json`;
   if (command === "build" || phase === "preview") return `npx framepack preview --project-dir "${projectDir}" --open`;
   if (phase === "design") return `npx framepack workbench audit --phase composition --project-dir "${projectDir}" --json`;
   if (phase === "composition") return `npx framepack build --project-dir "${projectDir}" --json`;
-  if (phase === "render") return `Review HUMAN.md and ITERATIONS.md, then collect the next user correction.`;
+  if (phase === "render") return "Review HUMAN.md and ITERATIONS.md, then collect the next user correction.";
   return `npx framepack workbench audit --phase design --project-dir "${projectDir}" --json`;
 }
 
@@ -129,6 +156,11 @@ function whyFor(
   if (status === "blocked") return "Framepack found production blockers. The agent should stop, fix them, or ask the user before moving forward.";
   if (command === "create") return "The workbench is ready, but the agent should first explain the plan in plain language before editing code.";
   if (command === "build") return "The HTML skeleton exists; preview is the next evidence point before render or user review.";
+  if (command === "preview") return "Preview is where the agent checks visible evidence before spending time on render or polish.";
+  if (command === "render") return "Render is the delivery checkpoint; the next useful action is user feedback and iteration capture.";
+  if (command === "template-recommend") return "Template choice narrows the creative route before the agent writes a custom composition.";
+  if (command === "prompt-template-recommend") return "Prompt-template choice gives HyperFrames a familiar scene grammar before custom details are added.";
+  if (command === "catalog-recommend") return "Catalog prefabs add proven polish blocks without asking the agent to invent every motion detail.";
   if (phase === "design") return "Design tokens are the creative contract. They keep later animation and template choices consistent.";
   if (phase === "composition") return "Composition is the handoff between creative direction and HyperFrames-safe production.";
   return "This context keeps the agent inside the Framepack workflow instead of jumping straight to ad hoc implementation.";
@@ -139,15 +171,20 @@ function shortcutFor(
   phase: WorkbenchInterventionPhase,
   status: WorkbenchInterventionStatus,
 ): string {
-  if (status === "blocked") return "小白版：先补齐红灯问题，再继续做视频。";
-  if (command === "create") return "小白版：项目骨架已生成，下一步先看懂方案。";
-  if (command === "build" || phase === "preview") return "小白版：代码已经搭好，下一步看预览画面是否靠谱。";
-  if (phase === "composition") return "小白版：这里决定视频怎么演、怎么动、怎么衔接。";
-  return "小白版：每过一关都先检查，避免后面返工。";
+  if (status === "blocked") return "Xiaobai: fix the red-light issue first, then continue the video.";
+  if (command === "create") return "Xiaobai: the project shell is ready; first read the plain-language plan.";
+  if (command === "build" || command === "preview" || phase === "preview") return "Xiaobai: the HTML is ready; next check the preview before rendering.";
+  if (command === "render" || phase === "render") return "Xiaobai: the video is being delivered; next collect feedback and iterate.";
+  if (command === "template-recommend") return "Xiaobai: pick the video route first, then write the detailed choreography.";
+  if (command === "prompt-template-recommend") return "Xiaobai: use a proven scene pattern so the video does not start from a blank page.";
+  if (command === "catalog-recommend") return "Xiaobai: add proven animation parts to make the video look more polished.";
+  if (phase === "composition") return "Xiaobai: this decides how the video performs, moves, and cuts.";
+  return "Xiaobai: check each stage before moving on to avoid rework.";
 }
 
 function skillHintsFor(command: WorkbenchInterventionCommand, phase: WorkbenchInterventionPhase): string[] {
-  if (command === "build" || phase === "preview" || phase === "render") return ["framepack-hyperframes-builder"];
+  if (command === "build" || command === "preview" || phase === "preview" || phase === "render") return ["framepack-hyperframes-builder"];
+  if (command === "template-recommend" || command === "prompt-template-recommend" || command === "catalog-recommend") return ["framepack-template-fuser", "framepack-director"];
   if (phase === "composition") return ["framepack-template-fuser", "framepack-director"];
   if (phase === "design") return ["framepack-director"];
   return ["framepack-director", "framepack-template-fuser"];

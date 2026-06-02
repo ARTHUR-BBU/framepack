@@ -206,6 +206,17 @@ async function main() {
     "9:16",
     "--json",
   ]));
+  const templateRecommendation = parseJson(runNodeCli([
+    "templates",
+    "recommend",
+    "--idea",
+    "A premium launch video for an agent-native video workflow",
+    "--style",
+    "business dynamic kinetic big text",
+    "--format",
+    "9:16",
+    "--json",
+  ]));
 
   runNodeCli([
     "create",
@@ -230,7 +241,10 @@ async function main() {
   const workbenchCheck = runNodeCli(["workbench", "check", "--project-dir", projectDir, "--json"]);
   const workbenchAudit = parseJson(runNodeCli(["workbench", "audit", "--project-dir", projectDir, "--json"]));
   const phaseAudits = ["preflight", "design", "composition", "preview", "render"].map((phase) => parseJson(runNodeCli(["workbench", "audit", "--phase", phase, "--project-dir", projectDir, "--json"])).report);
-  runNodeCli(["build", "--project-dir", projectDir]);
+  const buildJson = parseJson(runNodeCli(["build", "--project-dir", projectDir, "--json"]));
+  const frictionSummary = runNodeCli(["workbench", "friction", "--project-dir", projectDir]);
+  const learningsSummary = runNodeCli(["workbench", "learnings", "--project-dir", projectDir]);
+  const preferencesSummary = runNodeCli(["workbench", "preferences", "--project-dir", projectDir]);
 
   const indexHtml = readProjectFile(projectDir, "index.html");
   const compositionMd = readProjectFile(projectDir, "COMPOSITION.md");
@@ -241,6 +255,8 @@ async function main() {
   const iterationsMd = readProjectFile(projectDir, "ITERATIONS.md");
   const state = parseJson(readProjectFile(projectDir, ".framepack/state.json"));
   const meta = parseJson(readProjectFile(projectDir, "meta.json"));
+  const preferences = parseJson(readProjectFile(projectDir, ".framepack/preferences.json"));
+  const interventionsLog = readFileSync(join(projectDir, ".framepack", "interventions.jsonl"), "utf8");
 
   let lintOutput = "";
   let lintOk = false;
@@ -266,7 +282,7 @@ async function main() {
     scoreCheck({
       id: "mcp-callability",
       label: "MCP tools are not only described; selected tools are callable through the SDK.",
-      weight: 12,
+      weight: 10,
       passed: mcp.toolNames.includes("recommendPacks") && mcp.calls.every((call) => call.ok),
       evidence: [`tools ${mcp.toolNames.length}`, `called ${mcp.calls.map((call) => call.name).join(", ")}`],
       priority: "P0",
@@ -290,7 +306,7 @@ async function main() {
     scoreCheck({
       id: "design-token-contract",
       label: "DESIGN.md/DESIGN_TOKENS.md give agents an executable visual source of truth.",
-      weight: 10,
+      weight: 8,
       passed: existsSync(join(projectDir, "DESIGN.md")) && /Design Tokens/.test(designTokensMd) && /#[0-9a-fA-F]{6}|Colors|Palette/.test(designTokensMd) && /--accent-primary/.test(indexHtml),
       evidence: ["DESIGN.md present", "DESIGN_TOKENS.md has usable visual tokens", "HTML consumes CSS design variables"],
       priority: "P0",
@@ -298,7 +314,7 @@ async function main() {
     scoreCheck({
       id: "asset-gap-intelligence",
       label: "ASSET_GAPS.md exposes blocking and optional material gaps before composition work.",
-      weight: 8,
+      weight: 6,
       passed: /Gaps found|No critical gaps detected/.test(assetGapsMd) && /Blocking|Optional|Next Step|Catalog/.test(assetGapsMd),
       evidence: ["ASSET_GAPS.md has gap status", "asset recommendations are actionable"],
       priority: "P1",
@@ -306,7 +322,7 @@ async function main() {
     scoreCheck({
       id: "skill-install-surface",
       label: "The package tells agents how Framepack skills and instructions must be installed or triggered.",
-      weight: 8,
+      weight: 6,
       passed: /framepack init-agent/.test(readProjectFile(projectDir, "FRAMEPACK.md")) && /Project skills|Skill\/instructions/.test(readProjectFile(projectDir, "FRAMEPACK.md")),
       evidence: ["FRAMEPACK.md includes init-agent instruction", "skill trigger surface is visible"],
       priority: "P1",
@@ -327,9 +343,9 @@ async function main() {
     scoreCheck({
       id: "template-arsenal",
       label: "Built-in scene templates and route recommendations are available.",
-      weight: 8,
-      passed: templateStats.builtin >= 20 && templateStats.blocks >= 8 && /HyperFrames Prompt Template/.test(compositionMd),
-      evidence: [`builtin ${templateStats.builtin ?? 0}`, `blocks ${templateStats.blocks ?? 0}`, "COMPOSITION.md has prompt-template plan"],
+      weight: 6,
+      passed: templateStats.builtin >= 20 && templateStats.blocks >= 8 && /HyperFrames Prompt Template/.test(compositionMd) && templateRecommendation.interventionContext?.phase === "composition",
+      evidence: [`builtin ${templateStats.builtin ?? 0}`, `blocks ${templateStats.blocks ?? 0}`, "COMPOSITION.md has prompt-template plan", "template recommendation has intervention context"],
       priority: "P1",
     }),
     scoreCheck({
@@ -343,9 +359,22 @@ async function main() {
     scoreCheck({
       id: "composition-build-contract",
       label: "Build emits a HyperFrames-safe HTML skeleton and runtime metadata.",
-      weight: 10,
-      passed: /data-composition-id/.test(indexHtml) && /data-start="0"/.test(indexHtml) && /data-width="1080"/.test(indexHtml) && /data-height="1920"/.test(indexHtml) && /window\.__timelines/.test(indexHtml) && meta.rootEntry === "index.html" && !/<section[\s\S]*?<video/.test(indexHtml),
-      evidence: ["root data attrs present", "timeline registered", "video elements stay outside timed scenes", `rootEntry ${meta.rootEntry}`],
+      weight: 8,
+      passed: /data-composition-id/.test(indexHtml) && /data-start="0"/.test(indexHtml) && /data-width="1080"/.test(indexHtml) && /data-height="1920"/.test(indexHtml) && /window\.__timelines/.test(indexHtml) && meta.rootEntry === "index.html" && !/<section[\s\S]*?<video/.test(indexHtml) && buildJson.gate?.status === "allowed",
+      evidence: ["root data attrs present", "timeline registered", "video elements stay outside timed scenes", `rootEntry ${meta.rootEntry}`, `build gate ${buildJson.gate?.status}`],
+      priority: "P0",
+    }),
+    scoreCheck({
+      id: "active-intervention-supervision",
+      label: "Framepack records project preferences, lifecycle interventions, and supervision summaries.",
+      weight: 12,
+      passed: buildJson.interventionContext?.command === "build" && Array.isArray(preferences.fieldForces) && preferences.fieldForces.length > 0 && /"status":"allowed"/.test(interventionsLog) && /Framepack friction log/.test(frictionSummary) && /Framepack learnings/.test(learningsSummary) && /Framepack preferences/.test(preferencesSummary),
+      evidence: [
+        `build intervention ${buildJson.interventionContext?.command}`,
+        `preferences ${preferences.fieldForces.length}`,
+        "interventions log exists",
+        "friction/learnings/preferences commands return summaries",
+      ],
       priority: "P0",
     }),
     scoreCheck({

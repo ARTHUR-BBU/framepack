@@ -143,6 +143,35 @@ npx framepack workbench audit --phase all --project-dir ./out/launch-video --jso
 
 审计会检查：小白摘要、设计令牌、素材缺口、用户确认点、技术路线、skill 暴露、HyperFrames 运行时文件、预览和渲染准备情况。
 
+## 主动介入与项目监督
+
+Framepack 现在会在关键 JSON 输出里提供 `interventionContext`。agent 不需要靠记忆猜下一步，而是可以直接读取当前阶段、必读文件、阻断项、推荐 skill、下一条命令和小白版解释。
+
+覆盖命令包括：
+
+```bash
+npx framepack create --idea "..." --output-dir ./out --project-name demo --json
+npx framepack workbench audit --phase all --project-dir ./out/demo --json
+npx framepack build --project-dir ./out/demo --json
+npx framepack preview --project-dir ./out/demo --json
+npx framepack render --project-dir ./out/demo --json
+npx framepack templates recommend --idea "..." --style "..." --json
+npx framepack templates prompt recommend --idea "..." --style "..." --json
+npx framepack catalog recommend --template course-promo --idea "..." --json
+```
+
+对 0.6 workbench 项目，`build`、`preview`、`render` 会运行生命周期成本闸门。P0 问题会默认拦住命令；如果用户明确接受风险，可以加 `--force`，但 Framepack 会把这次绕过写入 `.framepack/interventions.jsonl` 和 `ITERATIONS.md`。
+
+项目内监督命令：
+
+```bash
+npx framepack workbench preferences --project-dir ./out/demo
+npx framepack workbench friction --project-dir ./out/demo
+npx framepack workbench learnings --project-dir ./out/demo
+```
+
+小白理解：Framepack 不只是“生成文件”，还会像制片主任一样记住你的审美偏好、检查红灯问题、记录绕过风险，并把项目卡点变成下一轮改进线索。
+
 ## 内置能力
 
 Framepack 内置了一个轻量但可扩展的创意武器库：

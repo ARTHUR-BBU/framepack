@@ -1,6 +1,6 @@
 {
   "name": "framepack",
-  "version": "0.6.0-alpha.2",
+  "version": "0.6.0-alpha.3",
   "private": false,
   "type": "module",
   "main": "./dist/cli.js",
@@ -8,7 +8,7 @@
     "framepack": "dist/cli.js"
   },
   "description": "A lightweight HyperFrames creative workbench for assets, prompts, composition, audit gates, and iteration.",
-  "readme": "# Framepack\n\nFramepack is a programmatic video workbench for coding agents and HyperFrames. It turns rough ideas, user assets, references, and fuzzy taste words into a professional video plan, then guides create, workbench brief, audit, build, preview, render, and iteration.\n\n中文: Framepack 是程式化视频工作台。它把外行的模糊审美愿望翻译成 agent 能执行、HyperFrames 能生产的专业视频方案。\n\nQuick path:\n\n```bash\nnpm install framepack\nnpx framepack create --idea \"A premium launch video\" --assets ./assets --output-dir ./out --project-name launch-video\nnpx framepack workbench brief --project-dir ./out/launch-video\nnpx framepack workbench audit --phase all --project-dir ./out/launch-video --json\nnpx framepack build --project-dir ./out/launch-video\nnpx framepack preview --project-dir ./out/launch-video --open\n```\n",
+  "readme": "# Framepack\n\nFramepack is a programmatic video workbench for coding agents and HyperFrames. It turns rough ideas, user assets, references, and fuzzy taste words into a professional video plan, then guides create, workbench brief, audit, build, preview, render, and iteration.\n\n中文: Framepack 是程式化视频工作台。它把外行的模糊审美愿望翻译成 agent 能执行、HyperFrames 能生产的专业视频方案，并用主动介入上下文、审计门禁、项目偏好、摩擦记录和迭代记忆监督整个流程。\n\nQuick path:\n\n```bash\nnpm install framepack\nnpx framepack create --idea \"A premium launch video\" --assets ./assets --output-dir ./out --project-name launch-video\nnpx framepack workbench brief --project-dir ./out/launch-video\nnpx framepack workbench audit --phase all --project-dir ./out/launch-video --json\nnpx framepack build --project-dir ./out/launch-video\nnpx framepack preview --project-dir ./out/launch-video --open\n```\n",
   "files": [
     "dist",
     "examples",

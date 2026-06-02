@@ -121,6 +121,20 @@ The audit currently checks:
 - HyperFrames runtime files
 - preview/render readiness
 
+Lifecycle commands expose active guidance in JSON output. When using `--json`, always read `interventionContext` from `create`, `workbench brief/check/audit`, `build`, `preview`, `render`, `templates recommend`, `templates prompt recommend`, and `catalog recommend`. It tells you the current phase, required files, blockers, skill hints, plain-language shortcut, and next command.
+
+For 0.6 workbench projects, `build`, `preview`, and `render` run lifecycle cost gates. P0 blockers stop the command by default. Use `--force` only when the user explicitly accepts the risk; forced bypasses are recorded in `.framepack/interventions.jsonl` and summarized in `ITERATIONS.md`.
+
+Use these supervision commands during testing and feedback:
+
+```bash
+npx framepack workbench preferences --project-dir <dir>
+npx framepack workbench friction --project-dir <dir>
+npx framepack workbench learnings --project-dir <dir>
+```
+
+`.framepack/preferences.json` stores project-level style field forces such as premium polish, business clarity, fast kinetic pacing, and large focal text.
+
 ## Skills
 
 Framepack installs project-facing skills:
