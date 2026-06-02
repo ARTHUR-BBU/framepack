@@ -21,6 +21,13 @@ import {
   findTemplateForSceneRole,
   type SceneTemplate,
 } from "./scene-templates.js";
+export {
+  buildWorkbenchInterventionContext,
+  type WorkbenchInterventionCommand,
+  type WorkbenchInterventionContext,
+  type WorkbenchInterventionPhase,
+  type WorkbenchInterventionStatus,
+} from "./intervention-context.js";
 
 export type WorkbenchAssetKind = "image" | "video" | "audio" | "text" | "other";
 

@@ -3108,6 +3108,7 @@ Framepack compiles content into executable video projects.
             "premium editorial motion",
             "--duration",
             "30",
+            "--json",
           ],
           {
             stdout: (message) => stdout.push(message),
@@ -3116,12 +3117,21 @@ Framepack compiles content into executable video projects.
         );
 
         const projectDir = join(tempRoot, "course-promo-workbench");
+        const payload = JSON.parse(stdout.join("\n"));
 
         assert.equal(exitCode, 0, stderr.join("\n"));
         assert.equal(existsSync(join(projectDir, "FRAMEPACK.md")), true);
         assert.equal(existsSync(join(projectDir, "COMPOSITION.md")), true);
         assert.equal(existsSync(join(projectDir, ".framepack", "state.json")), true);
-        assert.match(stdout.join("\n"), /Created Framepack workbench/);
+        assert.equal(payload.projectDir, projectDir);
+        assert.equal(payload.assets.length, 1);
+        assert.equal(payload.interventionContext.version, "framepack.intervention-context.v1");
+        assert.equal(payload.interventionContext.command, "create");
+        assert.equal(payload.interventionContext.phase, "preflight");
+        assert.equal(payload.interventionContext.status, "needs-review");
+        assert.ok(payload.interventionContext.requiredReads.includes("HUMAN.md"));
+        assert.match(payload.interventionContext.nextCommand, /workbench brief/);
+        assert.match(payload.interventionContext.shortcut, /小白版/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -4877,6 +4887,10 @@ Framepack compiles content into executable video projects.
         assert.equal(createExitCode, 0, stderr.join("\n"));
         assert.equal(checkExitCode, 0, stderr.join("\n"));
         assert.equal(payload.report.status, "passed");
+        assert.equal(payload.interventionContext.version, "framepack.intervention-context.v1");
+        assert.equal(payload.interventionContext.command, "check");
+        assert.equal(payload.interventionContext.status, "ready");
+        assert.match(payload.interventionContext.nextCommand, /workbench audit --phase design/);
         assert.ok(payload.report.checks.some((check) => check.id === "hitl-loop"));
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
@@ -4934,6 +4948,10 @@ Framepack compiles content into executable video projects.
         assert.ok(payload.report.checks.some((check) => check.id === "skill-install-surface"));
         assert.ok(payload.report.checks.some((check) => check.id === "harness-compliance-audit"));
         assert.equal(payload.report.phase, "all");
+        assert.equal(payload.interventionContext.command, "audit");
+        assert.equal(payload.interventionContext.phase, "preflight");
+        assert.equal(payload.interventionContext.status, "ready");
+        assert.ok(payload.interventionContext.skillHints.includes("framepack-director"));
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -5001,6 +5019,10 @@ Framepack compiles content into executable video projects.
         assert.equal(failedExitCode, 1);
         assert.equal(failedPayload.report.phase, "design");
         assert.ok(failedPayload.report.priorityBlockers.some((check) => check.id === "design-token-contract"));
+        assert.equal(failedPayload.interventionContext.status, "blocked");
+        assert.equal(failedPayload.interventionContext.phase, "design");
+        assert.ok(failedPayload.interventionContext.blockers.some((blocker) => blocker.includes("design-token-contract")));
+        assert.match(failedPayload.interventionContext.nextCommand, /Fix blockers/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -7847,7 +7869,7 @@ Framepack compiles content into executable video projects.
 
   {
     name: "build command reads project state and generates HTML",
-    run() {
+    run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "framepack-build-"));
       try {
         // Create a minimal project structure
@@ -7923,6 +7945,22 @@ Framepack compiles content into executable video projects.
         assert.equal(runtimeMeta.width, 1920);
         assert.equal(runtimeMeta.height, 1080);
         assert.equal(runtimeMeta.duration, 18);
+
+        const stdout = [];
+        const stderr = [];
+        const exitCode = await runCli(["build", "--project-dir", tempRoot, "--json"], {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        });
+        const payload = JSON.parse(stdout.join("\n"));
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.equal(payload.result.projectDir, tempRoot);
+        assert.equal(payload.interventionContext.command, "build");
+        assert.equal(payload.interventionContext.phase, "preview");
+        assert.equal(payload.interventionContext.status, "ready");
+        assert.match(payload.interventionContext.nextCommand, /framepack preview/);
+        assert.ok(payload.interventionContext.requiredReads.includes("meta.json"));
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }

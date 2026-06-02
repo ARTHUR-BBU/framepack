@@ -47,6 +47,7 @@ import {
 } from "../../workflow-packs/registry.js";
 import {
   createWorkbenchProject,
+  buildWorkbenchInterventionContext,
   buildWorkbenchProject,
   defaultWorkbenchProjectName,
   formatWorkbenchHumanBrief,
@@ -714,6 +715,19 @@ function runCreateCommand(args: string[], io: CliIo): number {
     } catch { /* best effort */ }
   }
 
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify({
+      projectDir: project.projectDir,
+      assets: project.assets,
+      copiedDna: Boolean(dnaPath),
+      interventionContext: buildWorkbenchInterventionContext({
+        command: "create",
+        projectDir: project.projectDir,
+      }),
+    }, null, 2));
+    return 0;
+  }
+
   io.stdout(
     [
       `Created Framepack workbench at ${project.projectDir}`,
@@ -1079,6 +1093,18 @@ function runBuildCommand(args: string[], io: CliIo): number {
   const projectDir = getRequiredArg(args, "--project-dir");
   try {
     const result = buildWorkbenchProject(projectDir);
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify({
+        projectDir: resolve(projectDir),
+        result,
+        interventionContext: buildWorkbenchInterventionContext({
+          command: "build",
+          projectDir: resolve(projectDir),
+        }),
+      }, null, 2));
+      return 0;
+    }
+
     io.stdout([
       `Built ${result.sceneCount} scenes to ${result.htmlPath}`,
       `Design tokens applied: ${result.tokensApplied ? "yes" : "default"}`,
@@ -1314,7 +1340,20 @@ function runWorkbenchCommand(args: string[], io: CliIo): number {
   }
 
   if (args[0] === "brief") {
-    io.stdout(formatWorkbenchHumanBrief(getRequiredArg(args, "--project-dir")));
+    const projectDir = resolve(getRequiredArg(args, "--project-dir"));
+    const brief = formatWorkbenchHumanBrief(projectDir);
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify({
+        projectDir,
+        brief,
+        interventionContext: buildWorkbenchInterventionContext({
+          command: "brief",
+          projectDir,
+        }),
+      }, null, 2));
+      return 0;
+    }
+    io.stdout(brief);
     return 0;
   }
 
@@ -1328,7 +1367,16 @@ function runWorkbenchCommand(args: string[], io: CliIo): number {
     const report = auditWorkbenchProject(projectDir, phase);
 
     if (args.includes("--json")) {
-      io.stdout(JSON.stringify({ projectDir, report }, null, 2));
+      io.stdout(JSON.stringify({
+        projectDir,
+        report,
+        interventionContext: buildWorkbenchInterventionContext({
+          command: "audit",
+          phase,
+          projectDir,
+          report,
+        }),
+      }, null, 2));
     } else {
       io.stdout(
         [
@@ -1349,7 +1397,15 @@ function runWorkbenchCommand(args: string[], io: CliIo): number {
   const report = validateWorkbenchProject(projectDir);
 
   if (args.includes("--json")) {
-    io.stdout(JSON.stringify({ projectDir, report }, null, 2));
+    io.stdout(JSON.stringify({
+      projectDir,
+      report,
+      interventionContext: buildWorkbenchInterventionContext({
+        command: "check",
+        projectDir,
+        report,
+      }),
+    }, null, 2));
   } else {
     io.stdout(
       [
