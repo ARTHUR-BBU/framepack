@@ -12,6 +12,28 @@ GBrain 的参考文章给我们的核心启发是：一个 Harness 真正有力�
 
 Framepack 现在已经有很好的基础：workbench 文件、审计门禁、项目 skills、MCP、模板/Catalog/设计资产库、build/preview/render 命令、sandbox benchmark。下一步要加的是一层 **Active Intervention Layer 主动介入层**，让这些能力在正确的时刻自动出现。
 
+## Harness 控制论
+
+Framepack 是外挂型 Harness，不是基础设施控制器。它不能物理强制 Codex 或 Claude Code 使用自己的 workflow：宿主 Agent 拥有终端、文件系统、环境变量，也有足够能力自己写 HTML、调用 HyperFrames、甚至绕开 Framepack 直接做视频。
+
+这个边界非常重要。Framepack 不应该照搬 proxy 型控制模型，因为那类模型只有在 Harness 控制网络、容器、凭据或执行边界时才成立。Framepack 的控制模型应该是摩擦力设计：
+
+```text
+Framepack 控制力 = Harness 规则 x 低摩擦路径 x 可见反馈 x 项目记忆
+```
+
+产品目标不是“让 Agent 无法离开”，而是“让 Framepack 路线成为最省力、最清楚、最专业的路线”。Agent 永远是自由的，但最好的路应该正好是 Framepack 设计的路。
+
+这会把主动介入层升级成摩擦感知型 Harness：
+
+- Skills 在 Agent 即兴发挥前定义战术手册。
+- CLI 和 MCP 命令让正确动作比手工乱写更快。
+- Intervention context 不要求 Agent 自己查，就把下一步递到手边。
+- Cost gates 只在继续推进会造成高返工成本时阻止。
+- Friction logs 把绕路和失败变成未来产品改进证据。
+
+网球双打这个比喻很准确：Codex 是技术更强的选手，Framepack 是更懂战术的搭档。Framepack 不拥有球场。它要赢，是靠在下一拍到来前就站到正确位置。
+
 ## 设计原则
 
 采用折中的介入模型：
@@ -30,9 +52,9 @@ Framepack 现在已经有很好的基础：workbench 文件、审计门禁、项
 
 本设计不自动安装外部动画库、asset forge 后端或模型服务。
 
-## 第 1 阶段：介入上下文
+## 第 1 阶段：低摩擦介入上下文
 
-每个重要 Framepack 命令都应该返回一个简短的指导块，告诉 Agent：刚才发生了什么、项目现在处于什么阶段、下一步应该做什么。
+每个重要 Framepack 命令都应该返回一个简短的指导块，告诉 Agent：刚才发生了什么、项目现在处于什么阶段、下一步应该做什么，以及为什么这条路比临场乱写更省力。
 
 首批覆盖命令：
 
@@ -54,6 +76,8 @@ Framepack 现在已经有很好的基础：workbench 文件、审计门禁、项
 - 相关 workbench 文件
 - 已选择的 template / Catalog / design 路线
 - skill 提醒：例如 `framepack-director`、`framepack-template-fuser`、`framepack-hyperframes-builder`、`framepack-reference-miner`
+- `why` 字段：说明按建议走能避免什么成本
+- `shortcut` 字段：让 Framepack 路径看起来比手工处理更省事
 
 CLI 的普通输出要短，JSON 输出要包含结构化的 `interventionContext`。
 
@@ -66,6 +90,8 @@ CLI 的普通输出要短，JSON 输出要包含结构化的 `interventionContex
     "status": "needs-review",
     "requiredReads": ["HUMAN.md", "DIRECTION.md", "COMPOSITION.md"],
     "nextCommand": "npx framepack workbench audit --phase composition --project-dir <dir>",
+    "why": "This catches missing design tokens and asset gaps before build, avoiding a failed HyperFrames preview.",
+    "shortcut": "Run this before editing index.html manually.",
     "blockers": [],
     "warnings": ["Confirm asset gaps before build."],
     "skillHints": ["framepack-template-fuser"]
@@ -73,9 +99,9 @@ CLI 的普通输出要短，JSON 输出要包含结构化的 `interventionContex
 }
 ```
 
-## 第 2 阶段：生命周期质量闸门
+## 第 2 阶段：生命周期成本闸门
 
-Framepack 应该阻止 Agent 随意跳过关键制作门禁。
+Framepack 应该阻止 Agent 随意跳过关键制作门禁，但产品语言上要把它解释为成本闸门，而不是权力闸门。它阻止继续，是因为继续会制造高返工成本，而不是因为 Framepack 想控制宿主 Agent。
 
 门禁策略：
 
@@ -84,6 +110,7 @@ Framepack 应该阻止 Agent 随意跳过关键制作门禁。
 - `render` 前检查 preview readiness 和 render safety。
 - P0 阻塞项默认阻止命令继续，除非使用 `--force`。
 - P1/P2 不阻止命令，但必须出现在 CLI 输出、JSON 输出和 intervention log 中。
+- 每次阻止都要解释避免了什么成本，例如反复 preview 修复、render metadata 损坏、字体和设计令牌不一致
 
 必须写入的持久记录：
 
@@ -114,6 +141,7 @@ Framepack 应该阻止 Agent 随意跳过关键制作门禁。
 - 引用了不存在的 block HTML
 - timed video 嵌套进 timed scene container
 - render 输出缺失或文件大小异常
+- 绕路信号，例如手工重写 HTML、不跑 audit 直接 render，或用户/测试反馈说 workflow 被跳过
 
 新增命令：
 
@@ -124,7 +152,21 @@ npx framepack workbench learnings --project-dir <dir>
 
 `friction` 汇总原始问题。`learnings` 把问题归类成产品级改进线索，例如 “composition build contract drift” 或 “agent skipped design-token gate”。
 
-## 第 4 阶段：项目级偏好捕获
+摩擦捕获要区分普通技术错误和引力失败。引力失败是指 Agent 或用户因为 Framepack 路径显得慢、不清楚、产出弱或没帮助，而选择离开 Framepack 路线。这类信号是最重要的产品证据。
+
+示例：
+
+```json
+{
+  "type": "bypass-signal",
+  "where": "after-composition",
+  "agentBehavior": "manual-html-rewrite",
+  "likelyCause": "Framepack build output was not expressive enough",
+  "suggestedDesignResponse": "Improve template-fuser guidance or build skeleton defaults"
+}
+```
+
+## 第 4 阶段：项目级场力偏好
 
 Framepack 应该把用户模糊的审美愿望捕获到项目内，而不是依赖 Agent 记忆。
 
@@ -153,10 +195,26 @@ Framepack 应该把用户模糊的审美愿望捕获到项目内，而不是依�
 - 参考风格线索
 - 禁忌项
 - 置信度：explicit、inferred、weak
+- 场力约束：带权重的约束，作用于 composition、template selection、caption、pacing 和 visual style
 
 `create` 运行时也应该更新 `STYLE.md` 和 `DIRECTION.md`。后续命令可以读取偏好文件来改进推荐。
 
-## 第 5 阶段：离线自进化推迟到 0.7.0
+示例：
+
+```json
+{
+  "fieldForces": [
+    {
+      "id": "large-focal-text",
+      "strength": "high",
+      "source": "explicit-user-style",
+      "appliesTo": ["composition", "template-selection", "caption-design"]
+    }
+  ]
+}
+```
+
+## 第 5 阶段：场域自维护循环推迟到 0.7.0
 
 GBrain 式长循环机制很有价值，但不应该塞进 0.6 的主动介入切片里。
 
@@ -170,6 +228,8 @@ GBrain 式长循环机制很有价值，但不应该塞进 0.6 的主动介入�
 - skill 改进建议
 - 摩擦驱动的模板更新
 - 跨项目 calibration profile
+- 引力分析：哪些步骤最常被 Agent 绕过，以及为什么
+- 场力强度分析：哪些项目偏好经常被忽略或误译
 
 0.6 要做的是为未来准备干净数据：`friction.jsonl`、`interventions.jsonl`、`preferences.json`。0.6 不尝试让系统自动进化。
 
@@ -184,6 +244,7 @@ src/workbench/intervention-context.ts
 src/workbench/lifecycle-gates.ts
 src/workbench/friction-log.ts
 src/workbench/preferences.ts
+src/workbench/field-forces.ts
 ```
 
 CLI 层在已有 workbench/build/audit 逻辑之后调用这些模块。MCP 层后续可以暴露同样的结构化数据，但第一优先级是 CLI 行为。
@@ -278,6 +339,8 @@ Framepack 不只是创建文件。它会观察制作阶段，提醒 Agent 什么
 第二个风险是输出太吵。普通 CLI 输出里的 intervention context 必须短，详细信息只放到 JSON。
 
 第三个风险是假装拥有不存在的记忆。第 4 阶段只做项目本地偏好，全局偏好记忆明确推迟。
+
+第四个风险是误解宿主/外挂边界。Framepack 无法强制 CLI/MCP/skill surface 之外的任意 Agent 行为。设计重点必须持续放在提升 Framepack 路径的吸引力上，而不是假装自己拥有整个环境。
 
 ## 验收标准
 

@@ -12,6 +12,28 @@ The GBrain reference notes show the key product lesson: a Harness becomes powerf
 
 Framepack already has the right foundation: workbench files, audit gates, project skills, MCP, template/Catalog/design arsenals, build/preview/render commands, and sandbox benchmarking. The next step is an Active Intervention Layer that makes those pieces show up at the right time.
 
+## Harness Control Theory
+
+Framepack is an add-on Harness, not an infrastructure controller. It cannot physically force Codex or Claude Code to use its workflow: the host agent owns the terminal, filesystem, environment, and enough programming ability to write HTML, call HyperFrames, or build a video path by itself.
+
+That boundary matters. Framepack should not copy proxy-style control models that work only when the Harness owns the network, container, credentials, or execution boundary. Framepack's control model is friction design:
+
+```text
+Framepack control = harness rules x low-friction path x visible feedback x project memory
+```
+
+The product goal is not "make the agent unable to leave". The goal is "make the Framepack route the cheapest, clearest, most professional route". Agents remain free, but the best path should be the Framepack path.
+
+This turns the Active Intervention Layer into a friction-aware Harness:
+
+- Skills define the tactical playbook before the agent starts improvising.
+- CLI and MCP commands make the correct action faster than manual work.
+- Intervention context gives the next best move without requiring the agent to search.
+- Cost gates block only when continuing would likely create expensive rework.
+- Friction logs turn bypasses and failures into future product evidence.
+
+The tennis doubles metaphor is useful: Codex is the stronger technical player, Framepack is the tactical partner. Framepack does not own the court. It wins by being in the right place before the next shot.
+
 ## Design Principle
 
 Use a balanced intervention model:
@@ -30,9 +52,9 @@ This design does not replace Codex or Claude Code. Framepack remains a domain Ha
 
 This design does not install external animation libraries, forge backends, or model services automatically.
 
-## Stage 1: Intervention Context
+## Stage 1: Low-Friction Intervention Context
 
-Every important Framepack command should return a compact guidance block that tells the agent what it has just changed, what the project state is, and what it should do next.
+Every important Framepack command should return a compact guidance block that tells the agent what it has just changed, what the project state is, what it should do next, and why that route is cheaper than improvising.
 
 Initial command coverage:
 
@@ -54,6 +76,8 @@ The context block should include:
 - relevant workbench files
 - selected template/Catalog/design route when known
 - skill reminders when the agent is likely to need `framepack-director`, `framepack-template-fuser`, `framepack-hyperframes-builder`, or `framepack-reference-miner`
+- a short `why` field explaining the cost avoided by following the recommendation
+- a `shortcut` field that makes the Framepack path feel easier than manual work
 
 Human-readable CLI output should stay short. JSON output should include a structured `interventionContext` object.
 
@@ -66,6 +90,8 @@ Example shape:
     "status": "needs-review",
     "requiredReads": ["HUMAN.md", "DIRECTION.md", "COMPOSITION.md"],
     "nextCommand": "npx framepack workbench audit --phase composition --project-dir <dir>",
+    "why": "This catches missing design tokens and asset gaps before build, avoiding a failed HyperFrames preview.",
+    "shortcut": "Run this before editing index.html manually.",
     "blockers": [],
     "warnings": ["Confirm asset gaps before build."],
     "skillHints": ["framepack-template-fuser"]
@@ -73,9 +99,9 @@ Example shape:
 }
 ```
 
-## Stage 2: Lifecycle Quality Gates
+## Stage 2: Lifecycle Cost Gates
 
-Framepack should prevent agents from casually skipping critical production gates.
+Framepack should prevent agents from casually skipping critical production gates, but the product language should frame these as cost gates rather than authority gates. A gate blocks because continuing would likely create rework, not because Framepack wants to dominate the host agent.
 
 Gate policy:
 
@@ -84,6 +110,7 @@ Gate policy:
 - `render` checks preview readiness and render safety.
 - P0 blockers stop the command unless `--force` is provided.
 - P1/P2 findings do not stop the command, but they appear in CLI output, JSON output, and intervention logs.
+- each blocked command explains the avoided cost, such as repeated preview fixes, broken render metadata, or inconsistent typography
 
 Required durable record:
 
@@ -114,6 +141,7 @@ Capture events:
 - missing block HTML references
 - timed video nested inside timed scene containers
 - render output missing or suspiciously small
+- bypass signals, such as manual HTML rewrites, direct render attempts without audit, or user/test feedback saying the workflow was skipped
 
 Add commands:
 
@@ -124,7 +152,21 @@ npx framepack workbench learnings --project-dir <dir>
 
 `friction` reports raw issues. `learnings` groups them into product-level improvement hints, such as "composition build contract drift" or "agent skipped design-token gate".
 
-## Stage 4: Project Preference Capture
+Friction capture should distinguish ordinary technical errors from attraction failures. An attraction failure means the agent or user chose to leave the Framepack path because it felt slower, unclear, weak, or unhelpful. These are the most important product signals.
+
+Example:
+
+```json
+{
+  "type": "bypass-signal",
+  "where": "after-composition",
+  "agentBehavior": "manual-html-rewrite",
+  "likelyCause": "Framepack build output was not expressive enough",
+  "suggestedDesignResponse": "Improve template-fuser guidance or build skeleton defaults"
+}
+```
+
+## Stage 4: Project Field Preferences
 
 Framepack should capture fuzzy user taste inside the project, not rely on the agent to remember it.
 
@@ -153,10 +195,26 @@ Captured dimensions:
 - reference style hints
 - avoid list
 - confidence: explicit, inferred, or weak
+- field forces: weighted constraints that apply to composition, template selection, captions, pacing, and visual style
 
 Preference capture should also update `STYLE.md` and `DIRECTION.md` when `create` runs. Later commands can read the preference file to improve recommendations.
 
-## Stage 5: Offline Self-Evolution Deferred To 0.7.0
+Example:
+
+```json
+{
+  "fieldForces": [
+    {
+      "id": "large-focal-text",
+      "strength": "high",
+      "source": "explicit-user-style",
+      "appliesTo": ["composition", "template-selection", "caption-design"]
+    }
+  ]
+}
+```
+
+## Stage 5: Field Maintenance Loop Deferred To 0.7.0
 
 The GBrain-style long-loop mechanisms are valuable, but they should not ship in the 0.6 active intervention slice.
 
@@ -170,6 +228,8 @@ Deferred to 0.7.0:
 - skill improvement proposals
 - friction-driven template updates
 - calibration profiles across projects
+- attraction analysis: which steps agents bypass and why
+- field-strength analysis: which project preferences are repeatedly ignored or mistranslated
 
 0.6 should prepare data for this future by writing clean `friction.jsonl`, `interventions.jsonl`, and `preferences.json`. It should not yet try to evolve itself automatically.
 
@@ -184,6 +244,7 @@ src/workbench/intervention-context.ts
 src/workbench/lifecycle-gates.ts
 src/workbench/friction-log.ts
 src/workbench/preferences.ts
+src/workbench/field-forces.ts
 ```
 
 The CLI layer calls these modules after existing workbench/build/audit logic. The MCP layer can expose the same structured data later, but CLI behavior is the first priority.
@@ -278,6 +339,8 @@ The main risk is over-intervention. If every warning blocks progress, agents wil
 The second risk is noisy output. Intervention context must be compact in normal CLI output and detailed only in JSON.
 
 The third risk is pretending to have memory we do not have. Stage 4 is project-local; global preference memory is explicitly deferred.
+
+The fourth risk is misunderstanding the host/add-on boundary. Framepack cannot force arbitrary agent behavior outside its own CLI/MCP/skill surfaces. The design must keep improving the attractiveness of the Framepack route rather than pretending to own the whole environment.
 
 ## Acceptance Criteria
 
