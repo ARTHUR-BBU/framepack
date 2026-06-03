@@ -69,8 +69,11 @@ import {
   type WorkbenchLifecycleAction,
 } from "../../workbench/interventions.js";
 import {
+  createWorkbenchFrictionPayload,
   formatWorkbenchFriction,
   formatWorkbenchLearnings,
+  recordWorkbenchBypassSignal,
+  recordWorkbenchCommandFailure,
   recordWorkbenchFriction,
 } from "../../workbench/friction.js";
 import {
@@ -1443,11 +1446,34 @@ function runWorkbenchCommand(args: string[], io: CliIo): number {
   const projectDir = resolve(getRequiredArg(args, "--project-dir"));
 
   if (args[0] === "friction") {
+    if (args.includes("--record-bypass")) {
+      const summary = getRequiredArg(args, "--summary");
+      const evidence = getOptionalArg(args, "--evidence");
+      const event = recordWorkbenchBypassSignal({
+        projectDir,
+        summary,
+        evidence: evidence ? evidence.split("|").map((item) => item.trim()).filter(Boolean) : [],
+      });
+      if (args.includes("--json")) {
+        io.stdout(JSON.stringify({ projectDir, event, friction: createWorkbenchFrictionPayload(projectDir) }, null, 2));
+      } else {
+        io.stdout(`Recorded Framepack bypass signal: ${event.summary}`);
+      }
+      return 0;
+    }
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify(createWorkbenchFrictionPayload(projectDir), null, 2));
+      return 0;
+    }
     io.stdout(formatWorkbenchFriction(projectDir));
     return 0;
   }
 
   if (args[0] === "learnings") {
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify(createWorkbenchFrictionPayload(projectDir), null, 2));
+      return 0;
+    }
     io.stdout(formatWorkbenchLearnings(projectDir));
     return 0;
   }
@@ -1868,7 +1894,15 @@ function runRenderCommand(
     ? { stdout: (message: string) => runtimeStdout.push(message), stderr: (message: string) => runtimeStderr.push(message) }
     : io;
   const renderExit = runRuntimeActionCommand("render", args, runtimeIo, dependencies);
-  if (renderExit !== 0) return renderExit;
+  if (renderExit !== 0) {
+    recordWorkbenchCommandFailure({
+      projectDir,
+      action: "render",
+      summary: runtimeStderr.join("\n") || "HyperFrames render returned a non-zero exit code.",
+      evidence: [runtimeStdout.join("\n"), runtimeStderr.join("\n")].filter(Boolean),
+    });
+    return renderExit;
+  }
 
   // Step 2: If no audio requested, we're done
   if (!audioFile) {
@@ -1892,6 +1926,12 @@ function runRenderCommand(
   const rendersDir = join(projectDir, "renders");
   if (!existsSync(rendersDir)) {
     io.stderr("No renders/ directory found. Run render without --audio first to check output.");
+    recordWorkbenchCommandFailure({
+      projectDir,
+      action: "render-audio",
+      summary: "No renders/ directory found for audio merge.",
+      evidence: ["Run render without --audio first to check output."],
+    });
     return 1;
   }
 
@@ -1902,6 +1942,12 @@ function runRenderCommand(
 
   if (renderedFiles.length === 0) {
     io.stderr("No .mp4 files found in renders/. Run render first.");
+    recordWorkbenchCommandFailure({
+      projectDir,
+      action: "render-audio",
+      summary: "No .mp4 files found in renders/ for audio merge.",
+      evidence: [`rendersDir: ${rendersDir}`],
+    });
     return 1;
   }
 
@@ -1910,6 +1956,12 @@ function runRenderCommand(
 
   if (!existsSync(audioPath)) {
     io.stderr(`Audio file not found: ${audioPath}`);
+    recordWorkbenchCommandFailure({
+      projectDir,
+      action: "render-audio",
+      summary: `Audio file not found: ${audioPath}`,
+      evidence: [audioPath],
+    });
     return 1;
   }
 
@@ -1925,6 +1977,12 @@ function runRenderCommand(
       "",
       "Then re-run: npx framepack render --project-dir . --audio bgm.mp3",
     ].join("\n"));
+    recordWorkbenchCommandFailure({
+      projectDir,
+      action: "render-audio",
+      summary: "ffmpeg is required for audio merge but was not available.",
+      evidence: ["Install ffmpeg before audio merge."],
+    });
     return 1;
   }
 
@@ -1945,6 +2003,12 @@ function runRenderCommand(
     return 0;
   } catch (err) {
     io.stderr(`ffmpeg merge failed: ${err instanceof Error ? err.message : String(err)}`);
+    recordWorkbenchCommandFailure({
+      projectDir,
+      action: "render-audio",
+      summary: err instanceof Error ? err.message : String(err),
+      evidence: [outputFile],
+    });
     return 1;
   }
 }
@@ -1999,7 +2063,15 @@ function runPreviewCommand(
     : io;
   const exitCode = runRuntimeActionCommand("preview", args, runtimeIo, dependencies);
 
-  if (exitCode !== 0) return exitCode;
+  if (exitCode !== 0) {
+    recordWorkbenchCommandFailure({
+      projectDir,
+      action: "preview",
+      summary: runtimeStderr.join("\n") || "HyperFrames preview returned a non-zero exit code.",
+      evidence: [runtimeStdout.join("\n"), runtimeStderr.join("\n")].filter(Boolean),
+    });
+    return exitCode;
+  }
 
   if (json) {
     io.stdout(JSON.stringify({

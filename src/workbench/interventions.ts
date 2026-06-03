@@ -88,7 +88,7 @@ export function checkWorkbenchLifecycleGate(input: {
   };
 }
 
-function isWorkbenchProject(projectDir: string): boolean {
+export function isWorkbenchProject(projectDir: string): boolean {
   if (!existsSync(join(projectDir, "FRAMEPACK.md")) || !existsSync(join(projectDir, ".framepack", "state.json"))) {
     return false;
   }

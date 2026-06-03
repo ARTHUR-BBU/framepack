@@ -1,6 +1,6 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { readWorkbenchInterventions } from "./interventions.js";
+import { isWorkbenchProject, readWorkbenchInterventions } from "./interventions.js";
 
 export interface WorkbenchFrictionEvent {
   version: "framepack.friction-event.v1";
@@ -22,6 +22,44 @@ export function recordWorkbenchFriction(event: WorkbenchFrictionEvent): void {
   const framepackDir = join(event.projectDir, ".framepack");
   mkdirSync(framepackDir, { recursive: true });
   appendFileSync(join(framepackDir, "friction.jsonl"), `${JSON.stringify(event)}\n`, "utf8");
+}
+
+export function recordWorkbenchCommandFailure(input: {
+  projectDir: string;
+  action: string;
+  summary: string;
+  evidence?: string[];
+}): void {
+  const projectDir = resolve(input.projectDir);
+  if (!isWorkbenchProject(projectDir)) return;
+  recordWorkbenchFriction({
+    version: "framepack.friction-event.v1",
+    timestamp: new Date().toISOString(),
+    projectDir,
+    type: "command-failure",
+    category: classifyFriction(`${input.action} ${input.summary} ${(input.evidence ?? []).join(" ")}`),
+    summary: `${input.action} failed: ${input.summary}`,
+    evidence: input.evidence ?? [],
+  });
+}
+
+export function recordWorkbenchBypassSignal(input: {
+  projectDir: string;
+  summary: string;
+  evidence?: string[];
+}): WorkbenchFrictionEvent {
+  const projectDir = resolve(input.projectDir);
+  const event: WorkbenchFrictionEvent = {
+    version: "framepack.friction-event.v1",
+    timestamp: new Date().toISOString(),
+    projectDir,
+    type: "agent-bypass-signal",
+    category: classifyFriction(input.summary),
+    summary: input.summary,
+    evidence: input.evidence ?? [],
+  };
+  recordWorkbenchFriction(event);
+  return event;
 }
 
 export function readWorkbenchFriction(projectDir: string): WorkbenchFrictionEvent[] {
@@ -71,6 +109,18 @@ export function formatWorkbenchFriction(projectDir: string): string {
       ? ["No friction event recorded yet."]
       : events.map((event) => `- ${event.type}/${event.category}: ${event.summary}`)),
   ].join("\n");
+}
+
+export function createWorkbenchFrictionPayload(projectDir: string): {
+  projectDir: string;
+  events: WorkbenchFrictionEvent[];
+  learnings: WorkbenchLearning[];
+} {
+  return {
+    projectDir: resolve(projectDir),
+    events: readWorkbenchFriction(projectDir),
+    learnings: summarizeWorkbenchLearnings(projectDir),
+  };
 }
 
 export function formatWorkbenchLearnings(projectDir: string): string {

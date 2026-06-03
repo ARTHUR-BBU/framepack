@@ -5159,6 +5159,61 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "workbench friction records manual bypass signals",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-bypass-signal-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium product video where an agent might bypass the workflow.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "bypass-workbench",
+            "--style",
+            "premium dynamic",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const projectDir = join(tempRoot, "bypass-workbench");
+        const exitCode = await runCli(
+          [
+            "workbench",
+            "friction",
+            "--project-dir",
+            projectDir,
+            "--record-bypass",
+            "--summary",
+            "Agent manually rewrote index.html without running composition audit.",
+            "--evidence",
+            "manual-html-rewrite|audit skipped",
+            "--json",
+          ],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const payload = JSON.parse(stdout.join("\n"));
+
+        assert.equal(exitCode, 0, stderr.join("\n"));
+        assert.equal(payload.event.type, "agent-bypass-signal");
+        assert.ok(payload.friction.events.some((event) => event.type === "agent-bypass-signal"));
+        assert.match(readFileSync(join(projectDir, ".framepack", "friction.jsonl"), "utf8"), /manual-html-rewrite/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
     name: "audit reports harness drift when critical workbench files are skipped",
     run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "framepack-workbench-audit-drift-"));
@@ -8225,6 +8280,85 @@ Framepack compiles content into executable video projects.
         assert.equal(previewPayload.gate.status, "allowed");
         assert.equal(renderPayload.interventionContext.command, "render");
         assert.equal(renderPayload.gate.status, "allowed");
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "preview runtime failures are captured as friction events",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-preview-friction-"));
+      const stdout = [];
+      const stderr = [];
+
+      try {
+        await runCli(
+          [
+            "create",
+            "--idea",
+            "A premium SaaS launch video for preview failure capture.",
+            "--output-dir",
+            tempRoot,
+            "--project-name",
+            "preview-friction-workbench",
+            "--style",
+            "premium business dynamic",
+            "--duration",
+            "18",
+          ],
+          {
+            stdout: () => {},
+            stderr: (message) => stderr.push(message),
+          },
+        );
+        const projectDir = join(tempRoot, "preview-friction-workbench");
+        await runCli(["build", "--project-dir", projectDir], {
+          stdout: () => {},
+          stderr: (message) => stderr.push(message),
+        });
+        const dependencies = {
+          detectRuntimeCapabilities: () => ({
+            available: true,
+            binary: "hyperframes",
+            detectedAt: "2026-06-03T00:00:00.000Z",
+            version: "0.6.0",
+            supportedCommands: ["preview"],
+            supportedCatalogFeatures: [],
+            supportedRenderOptions: [],
+            fallbackNotes: [],
+          }),
+          executeRuntimeCommand: ({ command }) => ({
+            action: command.action,
+            success: false,
+            outputPaths: [],
+            warnings: [],
+            summary: "preview failed",
+            exitCode: 7,
+            stdout: "",
+            stderr: "missing timeline registration",
+          }),
+        };
+
+        const previewExitCode = await runCli(
+          ["preview", "--project-dir", projectDir, "--json"],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          },
+          dependencies,
+        );
+        const frictionStdout = [];
+        const frictionExitCode = await runCli(["workbench", "friction", "--project-dir", projectDir, "--json"], {
+          stdout: (message) => frictionStdout.push(message),
+          stderr: (message) => stderr.push(message),
+        });
+        const frictionPayload = JSON.parse(frictionStdout.join("\n"));
+
+        assert.equal(previewExitCode, 7);
+        assert.equal(frictionExitCode, 0, stderr.join("\n"));
+        assert.ok(frictionPayload.events.some((event) => event.type === "command-failure" && /preview failed/.test(event.summary)));
+        assert.match(readFileSync(join(projectDir, ".framepack", "friction.jsonl"), "utf8"), /missing timeline registration/);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
