@@ -159,6 +159,18 @@ const framepack04ManualBetaTestGuidePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md",
 );
+const framepack06ManualBetaTestGuidePath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/manual-beta-test-guide-v0.6.zh-CN.md",
+);
+const framepack06WorkbenchTrialsPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/workbench-trials-v0.6.md",
+);
+const framepack06AfCompletionReportPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/agent-platform/v0.6-a-f-completion-report.md",
+);
 const framepack04BetaReadinessPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/agent-platform/beta-readiness-v0.4.md",
@@ -3612,9 +3624,9 @@ Framepack compiles content into executable video projects.
       assert.match(agents, /beta-patch-radar-v0\.4/);
     },
   },
-  {
-    name: "document the v0.4 beta manual test guide",
-    run: () => {
+    {
+      name: "document the v0.4 beta manual test guide",
+      run: () => {
       const guide = readFileSync(framepack04ManualBetaTestGuidePath, "utf8");
       const readme = readFileSync(readmePath, "utf8");
       const chineseReadme = readFileSync(chineseReadmePath, "utf8");
@@ -3638,11 +3650,53 @@ Framepack compiles content into executable video projects.
       assert.equal(packageJson.files.includes("README.zh-CN.md"), false);
       assert.match(readme, /docs\/README\.zh-CN\.md/);
       assert.match(agents, /manual-beta-test-guide-v0\.4\.zh-CN/);
+      },
     },
-  },
-  {
-    name: "document separate beta onboarding trials",
-    run: () => {
+    {
+      name: "document the v0.6 workbench manual guide and customer-style trials",
+      run: () => {
+        const guide = readFileSync(framepack06ManualBetaTestGuidePath, "utf8");
+        const trials = readFileSync(framepack06WorkbenchTrialsPath, "utf8");
+        const report = readFileSync(framepack06AfCompletionReportPath, "utf8");
+        const agents = readFileSync(agentsPath, "utf8");
+        const changelog = readFileSync(resolve(dirname(packageJsonPath), "CHANGELOG.md"), "utf8");
+
+        assert.match(guide, /MANUAL-BETA-TEST-V0\.6-01/);
+        assert.match(guide, /0\.6\.0-alpha\.3/);
+        assert.match(guide, /npm run workbench:trials/);
+        assert.match(guide, /WORKBENCH_TRIAL_REPORT\.md/);
+        assert.match(guide, /npx framepack workbench friction --project-dir/);
+        assert.match(guide, /recurringRisks/);
+        assert.match(guide, /SaaS Launch/);
+        assert.match(guide, /Course Promo/);
+        assert.match(guide, /Data \/ News Explainer/);
+        assert.match(guide, /小白理解/);
+        assert.doesNotMatch(guide, /鍐|涓|鏄|绋|�/);
+
+        assert.match(trials, /WORKBENCH-TRIALS-V0\.6-01/);
+        assert.match(trials, /Trial A: SaaS Launch/);
+        assert.match(trials, /Trial B: Course Promo/);
+        assert.match(trials, /Trial C: Data \/ News Explainer/);
+        assert.match(trials, /no unresolved P1 `recurringRisks`/);
+        assert.match(trials, /sandbox:benchmark/);
+        assert.match(report, /V0\.6-AF-COMPLETION-01/);
+        assert.match(report, /A: Active Intervention Context/);
+        assert.match(report, /F: Product Sandbox And Beta Gate/);
+        assert.match(report, /P1 `recurringRisks`/);
+        assert.match(report, /npm run workbench:trials/);
+        assert.match(changelog, /213\/213 tests pass/);
+        assert.match(changelog, /workbench trials pass 3\/3/);
+        assert.match(agents, /manual-beta-test-guide-v0\.6\.zh-CN/);
+        assert.match(agents, /workbench-trials-v0\.6/);
+
+        const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
+        assert.equal(packageJson.scripts["workbench:trials"], "npm run build && node scripts/run-workbench-trials.mjs");
+        assert.ok(packageJson.files.includes("scripts/run-workbench-trials.mjs"));
+      },
+    },
+    {
+      name: "document separate beta onboarding trials",
+      run: () => {
       const onboardingTrials = readFileSync(framepack04BetaOnboardingTrialsPath, "utf8");
       const betaReadiness = readFileSync(framepack04BetaReadinessPath, "utf8");
       const readme = readFileSync(readmePath, "utf8");

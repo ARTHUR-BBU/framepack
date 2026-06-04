@@ -23,11 +23,13 @@ Required flow:
 10. Preview with `framepack preview --project-dir <dir> --open`, then run `framepack workbench audit --phase preview --project-dir <dir>`.
 11. Render only after P0/P1 blockers are clear, then run `framepack workbench audit --phase render --project-dir <dir>`.
 12. When a Framepack command supports `--json`, read `interventionContext` before deciding the next action.
-13. Use `framepack workbench preferences/friction/learnings --project-dir <dir>` to explain stored taste signals, blockers, force bypasses, and test learnings.
+13. Use `framepack workbench preferences/friction/learnings --project-dir <dir>` to explain stored taste signals, blockers, force bypasses, recurring P1 risks, and test learnings.
 14. Use HyperFrames-safe rules: CSS first frame visible, scene switches with `tl.set()`, no timed video inside timed scene containers, one animation engine per element, and timeline registration on `window.__timelines`.
 15. Record render feedback and next actions in `ITERATIONS.md`.
 
 Stop on P0/P1 audit blockers. `build`, `preview`, and `render` can block on P0 issues; use `--force` only when the user explicitly accepts the risk, because Framepack records that bypass in `.framepack/interventions.jsonl` and `ITERATIONS.md`.
+
+If `workbench friction --json` or `workbench learnings --json` returns `recurringRisks`, treat those as active production risks. Three repeated events in one category are enough to block beta/customer handoff until the correction is recorded.
 
 ## Framepack Playbooks
 

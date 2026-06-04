@@ -17,6 +17,7 @@
     "docs/rebirth",
     "scripts/postinstall.mjs",
     "scripts/run-sandbox-benchmark.mjs",
+    "scripts/run-workbench-trials.mjs",
     "templates",
     "LICENSE",
     "CHANGELOG.md"
@@ -36,6 +37,7 @@
     "release:scenarios": "npm run build && node scripts/run-real-scenarios.mjs",
     "release:smoke:install": "npm run build && node scripts/run-install-smoke.mjs",
     "sandbox:benchmark": "npm run build && node scripts/run-sandbox-benchmark.mjs",
+    "workbench:trials": "npm run build && node scripts/run-workbench-trials.mjs",
     "postinstall": "node scripts/postinstall.mjs",
     "test": "npm run build && node scripts/run-tests.mjs",
     "test:watch": "npm run build && node --watch scripts/run-tests.mjs"

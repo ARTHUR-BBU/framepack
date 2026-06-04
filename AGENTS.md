@@ -18,7 +18,7 @@ Framepack is not a generative video model and does not create pixels by itself. 
 
 ## Current Version Shape
 
-The repository version is `0.6.0-alpha.2`.
+The repository version is `0.6.0-alpha.3`.
 
 The 0.6 public path is the workbench path:
 
@@ -134,6 +134,9 @@ npx framepack workbench learnings --project-dir <dir>
 ```
 
 `.framepack/preferences.json` stores project-level style field forces such as premium polish, business clarity, fast kinetic pacing, and large focal text.
+`.framepack/friction.jsonl` stores command failures, bypass signals, and audit blockers. If the same friction category appears 3 or more times, JSON output exposes it in `recurringRisks` as a P1 beta-readiness risk; stop customer handoff until it is corrected.
+
+For product-level manual testing, use `docs/agent-platform/manual-beta-test-guide-v0.6.zh-CN.md` and `docs/agent-platform/workbench-trials-v0.6.md`. The required customer-style trials before beta are SaaS launch, course promo, and data/news explainer.
 
 ## Skills
 

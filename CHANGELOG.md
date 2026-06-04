@@ -13,8 +13,15 @@
   - `framepack workbench preferences`
   - `framepack workbench friction`
   - `framepack workbench learnings`
+- add recurring friction risk detection
+  - repeated friction categories now appear as P1 `recurringRisks`
+  - preview/render command failures and manual bypass signals are captured in `.framepack/friction.jsonl`
+- add 0.6 workbench beta-test evidence
+  - Chinese manual test guide: `docs/agent-platform/manual-beta-test-guide-v0.6.zh-CN.md`
+  - three customer-style workbench trials: SaaS launch, course promo, and data/news explainer
+  - `npm run workbench:trials` produces `out/workbench-trials-v0.6/latest/WORKBENCH_TRIAL_REPORT.md`
 - update README, Chinese README, AGENTS, Codex skill, Claude Code instructions, tests, and sandbox benchmark for the active-intervention workflow
-- 209/209 tests pass; sandbox benchmark remains 100/100
+- 213/213 tests pass; sandbox benchmark remains 100/100; workbench trials pass 3/3
 
 ## 0.6.0-alpha.2
 
