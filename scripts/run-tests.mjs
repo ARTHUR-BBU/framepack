@@ -115,6 +115,10 @@ const chineseReadmePath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../docs/README.zh-CN.md",
 );
+const framepack06RoadmapPath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  "../docs/superpowers/plans/2026-06-02-framepack-0.6-to-0.7-roadmap.md",
+);
 const packageJsonPath = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../package.json",
@@ -2547,6 +2551,7 @@ Framepack compiles content into executable video projects.
     run: () => {
       const readme = readFileSync(readmePath, "utf8");
       const chineseReadme = readFileSync(chineseReadmePath, "utf8");
+      const roadmap = readFileSync(framepack06RoadmapPath, "utf8");
       const charter = readFileSync(
         resolve(dirname(packageJsonPath), "docs", "rebirth", "framepack-0.5-charter.md"),
         "utf8",
@@ -2564,6 +2569,11 @@ Framepack compiles content into executable video projects.
       assert.match(chineseReadme, /framepack create --idea/);
       assert.match(chineseReadme, /\u4e09\u5c42\u673a\u5236/);
       assert.match(chineseReadme, /\u5185\u7f6e\u6a21\u677f registry/);
+      assert.match(chineseReadme, /interventionContext/);
+      assert.match(chineseReadme, /\.framepack\/friction\.jsonl/);
+      assert.doesNotMatch(chineseReadme, /鍐|涓|鏄|绋|�/);
+      assert.match(roadmap, /Framepack 内部生命周期钩子层/);
+      assert.doesNotMatch(roadmap, /鍐|涓|鏄|绋|�/);
       assert.match(charter, /Framepack 0\.5 Rebirth Charter/);
       assert.match(charter, /HyperFrames creative workbench/);
       assert.match(charter, /One line beats two when one line is enough/);
@@ -2582,6 +2592,7 @@ Framepack compiles content into executable video projects.
       assert.match(packageJson.readme, /\u4e2d\u6587/);
       assert.match(packageJson.readme, /workbench brief/);
       assert.match(packageJson.readme, /active intervention|主动介入/);
+      assert.doesNotMatch(packageJson.readme, /鍐|涓|鏄|绋|�/);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
       assert.ok(Array.isArray(packageJson.files));

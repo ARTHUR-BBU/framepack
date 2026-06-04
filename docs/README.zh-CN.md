@@ -18,6 +18,8 @@ Framepack 是一个面向 Codex、Claude Code 等 coding agent 的**程式化视
 
 Framepack 的作用就是把这些外行语言翻译成专业视频方案，让 coding agent 知道下一步该怎么做。它不负责凭空生成画面，而是组织用户已有素材，推荐模板和动画路线，写清楚制作方案，生成 HyperFrames 安全的 HTML，并在预览和渲染前做质检。
 
+一句话：Framepack 把“我想要好看、酷、商务、动感”翻译成 agent 能执行、HyperFrames 能生产的专业视频工作台。
+
 ## 程式化视频 vs 生成式视频
 
 **生成式视频**是让模型根据 prompt 生成新画面。
@@ -38,9 +40,11 @@ Framepack 的作用就是把这些外行语言翻译成专业视频方案，让 
 npm install framepack
 ```
 
-## 三层机制
+Framepack 通过三层机制工作：
 
-Framepack 通过三层机制工作：agent instructions / skills 负责触发和专业 playbook，MCP / CLI 负责工具调用和知识查询，workbench files 负责把用户意图、设计、素材、方案、审计和迭代记录持久化下来。
+- `agent instructions / skills`：负责触发 Framepack 流程和专业 playbook。
+- `MCP / CLI`：负责工具调用、知识查询、构建、预览、渲染和审计。
+- `workbench files`：负责把用户意图、设计、素材、方案、审计和迭代记录持久化下来。
 
 默认安装后，Framepack 会写入项目级 agent 指南：
 
@@ -59,7 +63,7 @@ CLAUDE.md
 FRAMEPACK_SKIP_AGENT_INSTALL=1 npm install framepack
 ```
 
-## 推荐用法
+## 推荐给 agent 的自然语言
 
 你可以直接对 Codex 或 Claude Code 说：
 
@@ -170,6 +174,8 @@ npx framepack workbench friction --project-dir ./out/demo
 npx framepack workbench learnings --project-dir ./out/demo
 ```
 
+`.framepack/preferences.json` 会保存项目审美偏好。`.framepack/friction.jsonl` 会记录失败、绕路和反复出现的问题。`workbench learnings` 会把这些问题归类成可行动的改进线索。
+
 小白理解：Framepack 不只是“生成文件”，还会像制片主任一样记住你的审美偏好、检查红灯问题、记录绕过风险，并把项目卡点变成下一轮改进线索。
 
 ## 内置能力
@@ -177,7 +183,6 @@ npx framepack workbench learnings --project-dir ./out/demo
 Framepack 内置了一个轻量但可扩展的创意武器库：
 
 - 内置模板 registry：`saas-launch`、`news-explainer`、`course-promo`、`game-ad`、`founder-story`、`data-shock`
-- 6 个工作流模板：`saas-launch`、`news-explainer`、`course-promo`、`game-ad`、`founder-story`、`data-shock`
 - 11 个 HyperFrames prompt-template 蓝图
 - 20 个场景模板，覆盖 opening、name-reveal、stats、footage、cta、transition
 - 22 个设计系统参考，例如 Apple、Stripe、SpaceX、Tesla、Nike、Nvidia、Linear、OpenAI、Notion
@@ -192,6 +197,7 @@ npx framepack templates recommend --idea "A course promo for founders" --style "
 npx framepack templates prompt
 npx framepack templates prompt recommend --idea "A TikTok founder video with karaoke captions" --style "big text fast social" --format 9:16 --json
 npx framepack scene-templates list
+npx framepack scene-templates recommend --category name-reveal
 npx framepack catalog recommend --template course-promo --idea "premium founder course promo" --style "business dynamic" --format 9:16 --json
 ```
 
