@@ -18,6 +18,14 @@ export interface WorkbenchLearning {
   recommendation: string;
 }
 
+export interface WorkbenchRecurringRisk {
+  priority: "P1" | "P2";
+  category: string;
+  count: number;
+  summary: string;
+  correction: string;
+}
+
 export function recordWorkbenchFriction(event: WorkbenchFrictionEvent): void {
   const framepackDir = join(event.projectDir, ".framepack");
   mkdirSync(framepackDir, { recursive: true });
@@ -99,8 +107,21 @@ export function summarizeWorkbenchLearnings(projectDir: string): WorkbenchLearni
   }));
 }
 
+export function summarizeWorkbenchRecurringRisks(projectDir: string): WorkbenchRecurringRisk[] {
+  return summarizeWorkbenchLearnings(projectDir)
+    .filter((item) => item.count >= 3)
+    .map((item) => ({
+      priority: "P1",
+      category: item.category,
+      count: item.count,
+      summary: `${item.category} appeared ${item.count} times in the project friction log.`,
+      correction: `Stop beta/customer handoff until this recurring ${item.category} risk is corrected. ${item.recommendation}`,
+    }));
+}
+
 export function formatWorkbenchFriction(projectDir: string): string {
   const events = readWorkbenchFriction(projectDir);
+  const recurringRisks = summarizeWorkbenchRecurringRisks(projectDir);
   return [
     "Framepack friction log",
     `projectDir: ${resolve(projectDir)}`,
@@ -108,6 +129,13 @@ export function formatWorkbenchFriction(projectDir: string): string {
     ...(events.length === 0
       ? ["No friction event recorded yet."]
       : events.map((event) => `- ${event.type}/${event.category}: ${event.summary}`)),
+    "",
+    ...(recurringRisks.length === 0
+      ? ["Recurring risks: none."]
+      : [
+        "Recurring risks:",
+        ...recurringRisks.map((risk) => `- ${risk.priority} ${risk.category} (${risk.count}): ${risk.correction}`),
+      ]),
   ].join("\n");
 }
 
@@ -115,16 +143,19 @@ export function createWorkbenchFrictionPayload(projectDir: string): {
   projectDir: string;
   events: WorkbenchFrictionEvent[];
   learnings: WorkbenchLearning[];
+  recurringRisks: WorkbenchRecurringRisk[];
 } {
   return {
     projectDir: resolve(projectDir),
     events: readWorkbenchFriction(projectDir),
     learnings: summarizeWorkbenchLearnings(projectDir),
+    recurringRisks: summarizeWorkbenchRecurringRisks(projectDir),
   };
 }
 
 export function formatWorkbenchLearnings(projectDir: string): string {
   const learnings = summarizeWorkbenchLearnings(projectDir);
+  const recurringRisks = summarizeWorkbenchRecurringRisks(projectDir);
   return [
     "Framepack learnings",
     `projectDir: ${resolve(projectDir)}`,
@@ -132,6 +163,13 @@ export function formatWorkbenchLearnings(projectDir: string): string {
     ...(learnings.length === 0
       ? ["No learning yet. Run audits, preview, render, and feedback loops first."]
       : learnings.map((item) => `- ${item.category} (${item.count}): ${item.recommendation}`)),
+    "",
+    ...(recurringRisks.length === 0
+      ? ["Recurring risks: none."]
+      : [
+        "Recurring risks:",
+        ...recurringRisks.map((risk) => `- ${risk.priority} ${risk.category} (${risk.count}): ${risk.correction}`),
+      ]),
   ].join("\n");
 }
 

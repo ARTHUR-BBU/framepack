@@ -5158,9 +5158,9 @@ Framepack compiles content into executable video projects.
       }
     },
   },
-  {
-    name: "workbench friction records manual bypass signals",
-    run: async () => {
+    {
+      name: "workbench friction records manual bypass signals",
+      run: async () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "framepack-bypass-signal-"));
       const stdout = [];
       const stderr = [];
@@ -5211,11 +5211,74 @@ Framepack compiles content into executable video projects.
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
+      },
     },
-  },
-  {
-    name: "audit reports harness drift when critical workbench files are skipped",
-    run: () => {
+    {
+      name: "workbench friction flags recurring categories as beta-readiness risks",
+      run: async () => {
+        const tempRoot = mkdtempSync(join(tmpdir(), "framepack-recurring-friction-"));
+        const stderr = [];
+
+        try {
+          await runCli(
+            [
+              "create",
+              "--idea",
+              "A data explainer where composition keeps drifting from the approved plan.",
+              "--output-dir",
+              tempRoot,
+              "--project-name",
+              "recurring-friction-workbench",
+              "--style",
+              "premium dynamic",
+            ],
+            {
+              stdout: () => {},
+              stderr: (message) => stderr.push(message),
+            },
+          );
+          const projectDir = join(tempRoot, "recurring-friction-workbench");
+
+          for (const evidence of ["first drift", "second drift", "third drift"]) {
+            assert.equal(await runCli(
+              [
+                "workbench",
+                "friction",
+                "--project-dir",
+                projectDir,
+                "--record-bypass",
+                "--summary",
+                "Agent changed composition structure without rerunning composition audit.",
+                "--evidence",
+                evidence,
+              ],
+              {
+                stdout: () => {},
+                stderr: (message) => stderr.push(message),
+              },
+            ), 0);
+          }
+
+          const stdout = [];
+          assert.equal(await runCli(["workbench", "friction", "--project-dir", projectDir, "--json"], {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => stderr.push(message),
+          }), 0);
+          const payload = JSON.parse(stdout.join("\n"));
+
+          assert.ok(payload.recurringRisks.some((risk) => (
+            risk.priority === "P1" &&
+            risk.category === "composition-contract-drift" &&
+            risk.count === 3
+          )));
+        } finally {
+          rmSync(tempRoot, { recursive: true, force: true });
+        }
+      },
+    },
+    {
+      name: "audit reports harness drift when critical workbench files are skipped",
+      run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "framepack-workbench-audit-drift-"));
 
       try {
