@@ -58,6 +58,7 @@ import {
   listTemplateMarket,
   recommendHyperframesCatalogPrefabs,
   recommendHyperframesPromptTemplate,
+  recommendGsapMotionSkills,
   recommendTemplateRoute,
   scaffoldWorkbenchProject,
   validateWorkbenchProject,
@@ -202,7 +203,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.6.0-alpha.2";
+const FRAMEPACK_CLI_VERSION = "0.6.0-alpha.3";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -931,10 +932,18 @@ function runTemplatesCommand(args: string[], io: CliIo): number {
       format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
       durationSec,
     });
+    const gsapMotionRecommendation = recommendGsapMotionSkills({
+      idea: getRequiredArg(args, "--idea"),
+      style: [getOptionalArg(args, "--style"), preferenceSuffix].filter(Boolean).join("; ") || undefined,
+      templateId: recommendation.template.id,
+      format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
+      durationSec,
+    });
 
     if (args.includes("--json")) {
       io.stdout(JSON.stringify({
         recommendation,
+        gsapMotionRecommendation,
         interventionContext: buildWorkbenchInterventionContext({
           command: "template-recommend",
           projectDir,
@@ -950,6 +959,7 @@ function runTemplatesCommand(args: string[], io: CliIo): number {
         `Template: ${recommendation.template.id} (${recommendation.template.label})`,
         `Access: ${recommendation.template.access}`,
         `Reason: ${recommendation.reason}`,
+        `GSAP motion skills: ${gsapMotionRecommendation.skills.map((skill) => skill.id).join(", ")}`,
         "",
         "Implementation routes:",
         ...recommendation.template.implementationRoutes.map((route) => `- ${route}`),
@@ -989,10 +999,17 @@ function runCatalogCommand(args: string[], io: CliIo): number {
       style: [getOptionalArg(args, "--style"), preferenceSuffix].filter(Boolean).join("; ") || undefined,
       format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
     });
+    const gsapMotionRecommendation = recommendGsapMotionSkills({
+      idea: getRequiredArg(args, "--idea"),
+      style: [getOptionalArg(args, "--style"), preferenceSuffix].filter(Boolean).join("; ") || undefined,
+      templateId: getRequiredArg(args, "--template"),
+      format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
+    });
 
     if (args.includes("--json")) {
       io.stdout(JSON.stringify({
         recommendation,
+        gsapMotionRecommendation,
         interventionContext: buildWorkbenchInterventionContext({
           command: "catalog-recommend",
           projectDir,
@@ -1012,6 +1029,9 @@ function runCatalogCommand(args: string[], io: CliIo): number {
         "",
         "Agent instructions:",
         ...recommendation.agentInstructions.map((instruction) => `- ${instruction}`),
+        "",
+        "GSAP motion skills:",
+        ...gsapMotionRecommendation.skills.map((skill) => `- ${skill.id}: ${skill.plainLanguageSummary}`),
       ].join("\n"),
     );
     return 0;

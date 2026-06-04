@@ -201,6 +201,14 @@ npx framepack scene-templates recommend --category name-reveal
 npx framepack catalog recommend --template course-promo --idea "premium founder course promo" --style "business dynamic" --format 9:16 --json
 ```
 
+## GSAP Motion Skill Registry（动效导演库）
+
+Framepack 现在内置一套轻量的 GSAP Motion Skill Registry。它不是给 Claude Code 或 Codex 额外安装 12 个独立 skill，而是 Framepack 自己内部的一组“动效菜谱”。
+
+首批 12 个动效能力覆盖 Hero、Text、Product、Data、Layout、Scroll Story、FLIP、Scrubbed Sequence。用户说“苹果发布会感”“大字冲击”“滚动叙事”“卡片展开”“产品一步步演示”时，Framepack 会把这些模糊表达翻译成具体的 motion skill，写入 `COMPOSITION.md` 和 JSON 推荐结果，并在 `framepack build` 时生成 HyperFrames 可渲染的 GSAP timeline。
+
+小白理解：不是把整本 GSAP 教科书塞给 agent，而是在关键节点告诉 agent“这一场戏该用哪几个专业动作套路”。ScrollTrigger、FLIP、scrubbed walkthrough 这类重交互会被转成稳定的视频时间线，不会依赖真实滚动、鼠标或拖拽才能渲染。
+
 ## Agent Skills
 
 Framepack 会安装四个核心 playbook：

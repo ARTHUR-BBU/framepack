@@ -21,6 +21,13 @@ import {
   findTemplateForSceneRole,
   type SceneTemplate,
 } from "./scene-templates.js";
+import {
+  extractGsapMotionSkillIds,
+  getGsapMotionSkill,
+  listGsapMotionSkills,
+  recommendGsapMotionSkills,
+  type GsapMotionRecommendation,
+} from "./gsap-motion-skills.js";
 export {
   buildWorkbenchInterventionContext,
   type WorkbenchInterventionCommand,
@@ -52,6 +59,7 @@ export interface PolishArsenalRecommendation {
   directorTranslation: DirectorTranslation;
   catalogRecommendation: HyperframesCatalogRecommendation;
   promptTemplateRecommendation: HyperframesPromptTemplateRecommendation;
+  gsapMotionRecommendation: GsapMotionRecommendation;
   professionalCreativeLanguage: string;
   animationTechniques: string[];
   aestheticDirection: string[];
@@ -255,6 +263,7 @@ function createHumanDigest(input: {
   const template = input.recommendation.template;
   const promptTemplate = input.recommendation.promptTemplateRecommendation.template;
   const catalogNames = input.recommendation.catalogRecommendation.prefabs.map((prefab) => prefab.label);
+  const motionSkillNames = input.recommendation.gsapMotionRecommendation.skills.map((skill) => skill.displayName);
   const pace = input.tuningParameters.find((parameter) => parameter.id === "pace")?.defaultValue ?? "medium";
   const motion = input.tuningParameters.find((parameter) => parameter.id === "motionIntensity")?.defaultValue ?? "medium";
 
@@ -277,6 +286,7 @@ function createHumanDigest(input: {
     technologyPlainWords: [
       `Template route: ${template.label} means the video has a proven story shape instead of random scenes.`,
       `Recommended HyperFrames prompt template: ${promptTemplate.title}. This gives the agent a production-tested scene rhythm and HyperFrames rules to adapt.`,
+      `GSAP motion recipes: ${motionSkillNames.join(", ")}. These are built-in animation choices that guide the agent instead of asking it to invent motion from scratch.`,
       `Pace is currently ${pace}; motion intensity is ${motion}. These are the main knobs for making the video calmer, faster, more premium, or more explosive.`,
       catalogNames.length > 0
         ? `HyperFrames Catalog candidates: ${catalogNames.join(", ")}. These are reusable video blocks/components, not mandatory installs.`
@@ -312,16 +322,25 @@ export function recommendPolishArsenal(input: {
     format: input.format,
     durationSec: input.durationSec,
   });
+  const gsapMotionRecommendation = recommendGsapMotionSkills({
+    idea: input.idea,
+    style,
+    templateId: template.id,
+    format: input.format,
+    durationSec: input.durationSec,
+  });
 
   return {
     template,
     directorTranslation,
     catalogRecommendation,
     promptTemplateRecommendation,
+    gsapMotionRecommendation,
     professionalCreativeLanguage: `${template.visualLanguage[0]} with ${premium ? "premium commercial restraint" : "clear editorial confidence"} and ${fast ? "compressed high-energy pacing" : "measured narrative pacing"}.`,
     animationTechniques: [
       ...new Set([
         ...template.motionLanguage,
+        ...gsapMotionRecommendation.skills.map((skill) => skill.displayName),
         "kinetic typography",
         mobile ? "vertical focal framing" : "wide composition staging",
         fast ? "hard scene snaps" : "smooth scene dissolves",
@@ -340,6 +359,7 @@ export function recommendPolishArsenal(input: {
     ],
     acceptanceCriteria: [
       ...template.acceptanceCriteria,
+      ...gsapMotionRecommendation.acceptanceCriteria,
       "first frame is visible without waiting for JavaScript animation",
       "main message is readable within three seconds",
       "each motion choice supports attention, proof, or transition",
@@ -351,8 +371,10 @@ export {
   listHyperframesCatalogPrefabs,
   listHyperframesPromptTemplates,
   listTemplateMarket,
+  listGsapMotionSkills,
   recommendHyperframesCatalogPrefabs,
   recommendHyperframesPromptTemplate,
+  recommendGsapMotionSkills,
   recommendTemplateRoute,
 };
 
@@ -560,6 +582,30 @@ function templateFusionPlan(recommendation: PolishArsenalRecommendation) {
   ].join("\n");
 }
 
+function gsapMotionPlan(recommendation: GsapMotionRecommendation) {
+  return [
+    "## GSAP Motion Skills",
+    "",
+    recommendation.plainLanguageSummary,
+    "",
+    "Selected skills:",
+    "",
+    ...recommendation.skills.map((skill) => [
+      `- \`${skill.id}\` (${skill.category}): ${skill.plainLanguageSummary}`,
+      `  Best for: ${skill.bestFor.join(", ")}.`,
+      `  HyperFrames rule: ${skill.hyperframesNotes.join(" ")}`,
+    ].join("\n")),
+    "",
+    "Agent instructions:",
+    "",
+    bulletList(recommendation.agentInstructions),
+    "",
+    "Motion acceptance criteria:",
+    "",
+    bulletList(recommendation.acceptanceCriteria),
+  ].join("\n");
+}
+
 function numberedList(items: string[]) {
   return items.map((item, index) => `${index + 1}. ${item}`).join("\n");
 }
@@ -711,6 +757,14 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
     }),
     validateContains({
       files,
+      file: "COMPOSITION.md",
+      pattern: /GSAP Motion Skills/,
+      id: "gsap-motion-plan",
+      summary: "COMPOSITION.md includes a GSAP Motion Skills plan.",
+      finding: "COMPOSITION.md is missing a GSAP Motion Skills plan.",
+    }),
+    validateContains({
+      files,
       file: "DESIGN_TOKENS.md",
       pattern: /Design Tokens/,
       id: "design-tokens",
@@ -821,6 +875,17 @@ export function auditWorkbenchFiles(files: Record<string, string>, phase: Workbe
       summary: "COMPOSITION.md contains a concrete technology or Catalog install plan.",
       finding: "COMPOSITION.md does not contain an actionable technology/Catalog install plan.",
       correction: "Add install commands, fallback strategy, and user-confirmation notes for recommended technologies.",
+    }),
+    auditContains({
+      files,
+      file: "COMPOSITION.md",
+      pattern: /GSAP Motion Skills[\s\S]*(Selected skills|Motion acceptance criteria)/,
+      id: "gsap-motion-skill-plan",
+      phases: ["composition", "preview", "render"],
+      priority: "P1",
+      summary: "COMPOSITION.md contains a concrete GSAP Motion Skill plan.",
+      finding: "COMPOSITION.md does not contain a GSAP Motion Skill plan.",
+      correction: "Run the Framepack recommendation flow again or add selected GSAP Motion Skills before build.",
     }),
     auditContains({
       files,
@@ -1333,6 +1398,7 @@ function buildSkeletonHtml(input: {
   designTokens?: DesignTokensResolved | null;
   assets?: WorkbenchAsset[];
   pacing?: "slow" | "medium" | "fast";
+  gsapMotionSkillIds?: string[];
 }): string {
   const tokens = input.designTokens ?? DEFAULT_TOKENS;
   const [width, height] = input.format === "9:16" ? [1080, 1920] : [1920, 1080];
@@ -1469,6 +1535,7 @@ ${content}
 
   // Build entrance + transition tweens
   const tweens: string[] = [];
+  tweens.push(...buildGsapMotionSkillTweens(input.gsapMotionSkillIds ?? [], "scene-0", 0.15));
 
   for (let i = 0; i < timed.length; i++) {
     const scene = timed[i];
@@ -1777,6 +1844,7 @@ function buildFiles(input: {
     "- Motion: GSAP timeline for HyperFrames-safe scene control.",
     `- Template: ${recommendation.template.id} (${recommendation.template.label}).`,
     `- HyperFrames prompt template: ${recommendation.promptTemplateRecommendation.template.id} (${recommendation.promptTemplateRecommendation.template.title}).`,
+    `- GSAP motion skills: ${recommendation.gsapMotionRecommendation.skills.map((skill) => skill.id).join(", ")}.`,
     `- Professional translation: ${recommendation.professionalCreativeLanguage}`,
     `- Animation techniques: ${recommendation.animationTechniques.join(", ")}.`,
     `- Aesthetic direction: ${recommendation.aestheticDirection.join(", ")}.`,
@@ -1958,6 +2026,8 @@ function buildFiles(input: {
       "",
       templateFusionPlan(recommendation),
       "",
+      gsapMotionPlan(recommendation.gsapMotionRecommendation),
+      "",
       catalogPlan(recommendation.catalogRecommendation),
       "",
       "## Acceptance Criteria",
@@ -2071,6 +2141,7 @@ function buildFiles(input: {
         directorTranslation: recommendation.directorTranslation,
         catalogRecommendation: recommendation.catalogRecommendation,
         promptTemplateRecommendation: recommendation.promptTemplateRecommendation,
+        gsapMotionRecommendation: recommendation.gsapMotionRecommendation,
         hitlLoop,
         tuningParameters,
         humanDigest,
@@ -2100,6 +2171,7 @@ function buildHtmlWithDesign(input: { projectName: string; idea: string; style: 
       designTokens: parseDesignTokens(designFiles["DESIGN_TOKENS.md"] ?? ""),
       assets: input.assets,
       pacing: input.style.toLowerCase().includes("fast") ? "fast" : undefined,
+      gsapMotionSkillIds: recommendation.gsapMotionRecommendation.skills.map((skill) => skill.id),
     }),
     ...designFiles,
   };
@@ -2280,6 +2352,7 @@ export function buildWorkbenchProject(projectDir: string): {
   // Read COMPOSITION.md for richer scene context
   const compositionMd = readIfExists(join(dir, "COMPOSITION.md")) ?? "";
   const sceneDescriptions = parseSceneDescriptions(compositionMd);
+  const gsapMotionSkillIds = extractGsapMotionSkillIds(compositionMd);
 
   // Get scenes from template
   const scenes = SKELETON_SCENES[templateId] ?? SKELETON_SCENES["saas-launch"];
@@ -2296,6 +2369,7 @@ export function buildWorkbenchProject(projectDir: string): {
     scenes,
     sceneDescriptions,
     compositionMd,
+    gsapMotionSkillIds,
   });
 
   const htmlPath = join(dir, "index.html");
@@ -2413,6 +2487,7 @@ function buildEnhancedHtml(input: {
   scenes: { id: string; label: string; duration: number }[];
   sceneDescriptions: Map<string, SceneDescription>;
   compositionMd: string;
+  gsapMotionSkillIds?: string[];
 }): string {
   const tokens = input.designTokens ?? DEFAULT_TOKENS;
   const [width, height] = input.format === "9:16" ? [1080, 1920] : [1920, 1080];
@@ -2518,6 +2593,7 @@ ${content}
 
   // Build enhanced GSAP timeline
   const tweens: string[] = [];
+  tweens.push(...buildGsapMotionSkillTweens(input.gsapMotionSkillIds ?? [], "scene-0", 0.15));
 
   for (let i = 0; i < timed.length; i++) {
     const scene = timed[i];
@@ -2804,6 +2880,104 @@ function findBestTransition(templates: CodeTemplate[], sceneId: string): string 
     if (lower.includes("snap") && sceneId !== "cta") return t.code;
   }
   return null;
+}
+
+function buildGsapMotionSkillTweens(skillIds: string[], sceneEl: string, start: number): string[] {
+  const uniqueSkills = [...new Set(skillIds)]
+    .map((id) => getGsapMotionSkill(id))
+    .filter((skill): skill is NonNullable<ReturnType<typeof getGsapMotionSkill>> => Boolean(skill))
+    .slice(0, 4);
+
+  return uniqueSkills.flatMap((skill, index) => {
+    const offset = Math.round((start + index * 0.18) * 100) / 100;
+    const target = `#${sceneEl} .scene-content`;
+    const title = `#${sceneEl} .scene-title`;
+    const subtitle = `#${sceneEl} .scene-subtitle`;
+    const marker = `  // GSAP Motion Skill: ${skill.id} (${skill.codegenPreset})`;
+    const label = `  tl.add("framepack-motion-skill-${skill.id}", ${offset});`;
+
+    switch (skill.codegenPreset) {
+      case "hero-keynote":
+        return [
+          marker,
+          label,
+          `  tl.from("${title}", { opacity: 0, y: 44, scale: 0.96, filter: "blur(10px)", duration: 0.9, ease: "power3.out" }, ${offset});`,
+          `  tl.from("${subtitle}", { opacity: 0, y: 22, duration: 0.65, ease: "power2.out" }, ${offset + 0.35});`,
+        ];
+      case "hero-ai-launch":
+        return [
+          marker,
+          label,
+          `  tl.from("${target}", { opacity: 0, scale: 0.92, filter: "drop-shadow(0 0 0px var(--accent-primary))", duration: 0.8, ease: "power3.out" }, ${offset});`,
+          `  tl.to("${target}", { filter: "drop-shadow(0 0 26px var(--accent-primary))", duration: 0.5, yoyo: true, repeat: 1 }, ${offset + 0.25});`,
+        ];
+      case "text-kinetic":
+        return [
+          marker,
+          label,
+          `  tl.from("${title}", { opacity: 0, y: 72, skewY: 4, scale: 1.08, duration: 0.55, ease: "back.out(1.35)" }, ${offset});`,
+        ];
+      case "text-stagger":
+        return [
+          marker,
+          label,
+          `  tl.from("${title}, ${subtitle}", { opacity: 0, y: 24, duration: 0.45, stagger: 0.12, ease: "power2.out" }, ${offset});`,
+        ];
+      case "product-luxury":
+        return [
+          marker,
+          label,
+          `  tl.from("${target}", { opacity: 0, y: 36, scale: 0.96, duration: 0.75, ease: "power3.out" }, ${offset});`,
+        ];
+      case "product-spotlight":
+        return [
+          marker,
+          label,
+          `  tl.from("${target}", { opacity: 0, x: 34, duration: 0.6, ease: "power2.out" }, ${offset});`,
+          `  tl.to("${target}", { scale: 1.025, duration: 0.45, ease: "power1.inOut" }, ${offset + 0.45});`,
+        ];
+      case "data-counter":
+      case "data-chart":
+        return [
+          marker,
+          label,
+          `  tl.from("#${sceneEl} .stat-number, ${title}", { opacity: 0, y: 42, scale: 0.92, duration: 0.65, stagger: 0.08, ease: "power3.out" }, ${offset});`,
+        ];
+      case "layout-bento":
+      case "layout-card-focus":
+        return [
+          marker,
+          label,
+          `  tl.from("#${sceneEl} .stat-card, ${target}", { opacity: 0, y: 28, scale: 0.94, duration: 0.55, stagger: 0.08, ease: "power2.out" }, ${offset});`,
+        ];
+      case "heavy-scroll-story":
+        return [
+          marker,
+          label,
+          `  tl.from("${target}", { opacity: 0, y: 90, duration: 0.75, ease: "power2.out" }, ${offset});`,
+          `  tl.to("${target}", { y: -18, duration: 1.2, ease: "none" }, ${offset + 0.5});`,
+        ];
+      case "heavy-flip-morph":
+        return [
+          marker,
+          label,
+          `  tl.from("${target}", { opacity: 0, scaleX: 0.82, scaleY: 0.92, transformOrigin: "50% 50%", duration: 0.7, ease: "power3.out" }, ${offset});`,
+        ];
+      case "heavy-scrubbed-walkthrough":
+        return [
+          marker,
+          label,
+          `  tl.fromTo("${target}", { opacity: 0.6, x: 42 }, { opacity: 1, x: 0, duration: 0.5, ease: "power2.out" }, ${offset});`,
+          `  tl.to("${target}", { x: -20, duration: 0.85, ease: "none" }, ${offset + 0.5});`,
+        ];
+      default:
+        return [
+          marker,
+          label,
+          `  tl.from("${target}", { opacity: 0, y: 24, duration: 0.5, ease: "power2.out" }, ${offset});`,
+        ];
+    }
+  });
 }
 
 export function defaultWorkbenchProjectName(idea: string) {

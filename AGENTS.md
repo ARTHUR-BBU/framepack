@@ -49,6 +49,7 @@ Use Framepack when the user asks for:
 - "more premium", "more dynamic", "more business", "bigger text", "faster pacing", "more animation"
 - matching or mining a reference video
 - selecting templates, animation libraries, Catalog components, or video style systems
+- "Apple keynote motion", "ScrollTrigger", "FLIP", "scrubbed walkthrough", "bento reveal", or other GSAP-style motion direction
 
 ## Required Reading Order In A Workbench
 
@@ -171,6 +172,7 @@ Framepack includes:
 - 20 built-in scene templates across 6 categories
 - 22 design-system references
 - HyperFrames Catalog bridge
+- GSAP Motion Skill Registry with 12 internal motion recipes across Hero, Text, Product, Data, Layout, Scroll Story, FLIP, and Scrubbed Sequence
 - Polish Arsenal recommendations
 - external capability recommendations such as `agent-sprite-forge`, Three.js, D3/Chart.js, Web Audio API
 
@@ -190,6 +192,8 @@ npx framepack catalog recommend --template course-promo --idea "premium founder 
 ```
 
 External tools are recommendations. Framepack should not silently install third-party forge tools or animation libraries unless a future command explicitly implements that behavior.
+
+GSAP Motion Skills are internal registry items, not separate agent skills. Agents should read the selected motion skills from `COMPOSITION.md`, recommendation JSON, and `.framepack/state.json`, then let `framepack build` convert them into HyperFrames-safe GSAP timelines. ScrollTrigger/FLIP/scrubbed ideas must be render-safe unless the user explicitly wants an interactive web page.
 
 ## MCP
 
@@ -228,6 +232,7 @@ When building or editing generated HTML:
 - switch scenes with `tl.set()`
 - do not put timed `<video>` elements inside timed scene containers
 - avoid `Math.random()` and `repeat: -1` in render timelines
+- convert ScrollTrigger, FLIP, and scrubbed interaction intent into deterministic timeline beats for video render
 - avoid missing `compositions/blocks/*.html` references unless the block files exist
 
 ## Development Verification

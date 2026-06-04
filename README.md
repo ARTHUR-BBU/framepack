@@ -156,6 +156,7 @@ Framepack includes a local arsenal that helps agents choose a strong route witho
 - 20 scene templates across opening, name-reveal, stats, footage, CTA, and transition categories
 - 22 curated design-system references such as Apple, Stripe, SpaceX, Tesla, Nike, Nvidia, Linear, OpenAI, and Notion
 - HyperFrames Catalog bridge for components and blocks
+- GSAP Motion Skill Registry with 12 template-attached motion recipes across Hero, Text, Product, Data, Layout, Scroll Story, FLIP, and Scrubbed Sequence
 - Polish Arsenal recommendations for style, motion language, template route, avoid list, and acceptance criteria
 
 Useful commands:
@@ -169,6 +170,8 @@ npx framepack scene-templates list
 npx framepack scene-templates recommend --category name-reveal
 npx framepack catalog recommend --template course-promo --idea "premium founder course promo" --style "business dynamic" --format 9:16 --json
 ```
+
+GSAP Motion Skills are internal Framepack motion recipes, not 12 separate agent skills. They are written into `COMPOSITION.md`, exposed in recommendation JSON, and converted by `framepack build` into HyperFrames-safe GSAP timeline code. Heavy interaction ideas such as ScrollTrigger, FLIP, and scrubbed walkthroughs are translated into deterministic render-safe timelines unless the user explicitly asks for an interactive web page.
 
 ## Agent Skills
 

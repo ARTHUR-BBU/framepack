@@ -87,7 +87,9 @@ import {
   listHyperframesPromptTemplates,
   listTemplateMarket,
   listWorkbenchTemplates,
+  listGsapMotionSkills,
   recommendPolishArsenal,
+  recommendGsapMotionSkills,
   recommendHyperframesCatalogPrefabs,
   recommendHyperframesPromptTemplate,
   recommendTemplateRoute,
@@ -2639,7 +2641,7 @@ Framepack compiles content into executable video projects.
 
       assert.equal(versionExitCode, 0);
       assert.deepEqual(versionStderr, []);
-      assert.equal(versionStdout.join("\n").trim(), "0.6.0-alpha.2");
+      assert.equal(versionStdout.join("\n").trim(), JSON.parse(readFileSync(packageJsonPath, "utf8")).version);
       assert.equal(helpExitCode, 0);
       assert.deepEqual(helpStderr, []);
       assert.match(helpStdout.join("\n"), /Framepack CLI/);
@@ -2858,6 +2860,47 @@ Framepack compiles content into executable video projects.
     },
   },
   {
+    name: "expose a compact GSAP Motion Skill registry for template-attached animation",
+    run: () => {
+      const skills = listGsapMotionSkills();
+      const categories = new Set(skills.map((skill) => skill.category));
+
+      assert.equal(skills.length, 12);
+      assert.deepEqual([...categories].sort(), [
+        "data",
+        "flip",
+        "hero",
+        "layout",
+        "product",
+        "scroll-story",
+        "scrubbed-sequence",
+        "text",
+      ]);
+      assert.ok(skills.every((skill) => skill.hyperframesNotes.some((note) => /timeline|render|HyperFrames/i.test(note))));
+      assert.ok(skills.every((skill) => skill.codegenPreset));
+    },
+  },
+  {
+    name: "recommend GSAP Motion Skills from fuzzy creative intent",
+    run: () => {
+      const recommendation = recommendGsapMotionSkills({
+        idea: "An Apple keynote style SaaS launch with big kinetic text and scroll storytelling.",
+        style: "premium dynamic big text scroll reveal",
+        templateId: "saas-launch",
+        format: "16:9",
+        durationSec: 30,
+      });
+
+      const ids = recommendation.skills.map((skill) => skill.id);
+      assert.ok(ids.includes("apple-keynote-hero"));
+      assert.ok(ids.includes("kinetic-headline-reveal"));
+      assert.ok(ids.includes("scroll-story-pin-sequence"));
+      assert.match(recommendation.plainLanguageSummary, /motion director/i);
+      assert.ok(recommendation.agentInstructions.some((instruction) => /COMPOSITION\.md/.test(instruction)));
+      assert.ok(recommendation.acceptanceCriteria.some((criterion) => /render-safe/i.test(criterion)));
+    },
+  },
+  {
     name: "write Polish Arsenal recommendations into direction and composition files",
     run: () => {
       const tempRoot = mkdtempSync(join(tmpdir(), "framepack-polish-workbench-"));
@@ -2889,9 +2932,12 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["COMPOSITION.md"], /Catalog Pre-Flight/);
         assert.match(project.files["COMPOSITION.md"], /caption-editorial-emphasis/);
         assert.match(project.files["COMPOSITION.md"], /npx hyperframes catalog --json/);
+        assert.match(project.files["COMPOSITION.md"], /GSAP Motion Skills/);
+        assert.match(project.files["COMPOSITION.md"], /kinetic-headline-reveal/);
         assert.match(project.files["COMPOSITION.md"], /Kinetic typography/i);
         assert.match(project.files["COMPOSITION.md"], /Acceptance Criteria/);
         assert.match(project.files[".framepack/state.json"], /"directorTranslation"/);
+        assert.match(project.files[".framepack/state.json"], /"gsapMotionRecommendation"/);
         assert.match(project.files[".framepack/state.json"], /"catalogRecommendation"/);
         assert.match(project.files[".framepack/state.json"], /"hitlLoop"/);
         assert.match(project.files[".framepack/state.json"], /"tuningParameters"/);
@@ -2926,6 +2972,7 @@ Framepack compiles content into executable video projects.
       assert.ok(report.checks.some((check) => check.id === "human-digest"));
       assert.ok(report.checks.some((check) => check.id === "structure-summary"));
       assert.ok(report.checks.some((check) => check.id === "prompt-template-plan"));
+      assert.ok(report.checks.some((check) => check.id === "gsap-motion-plan"));
     },
   },
   {
@@ -3002,6 +3049,7 @@ Framepack compiles content into executable video projects.
       assert.equal(exitCode, 0, stderr.join("\n"));
       assert.equal(payload.recommendation.template.id, "course-promo");
       assert.ok(payload.recommendation.template.implementationRoutes.includes("hyperframes"));
+      assert.ok(payload.gsapMotionRecommendation.skills.some((skill) => skill.id === "kinetic-headline-reveal"));
       assert.equal(payload.interventionContext.command, "template-recommend");
       assert.equal(payload.interventionContext.phase, "composition");
       assert.match(payload.interventionContext.shortcut, /Xiaobai/);
@@ -3107,6 +3155,7 @@ Framepack compiles content into executable video projects.
       assert.equal(exitCode, 0, stderr.join("\n"));
       assert.equal(payload.recommendation.templateId, "course-promo");
       assert.ok(payload.recommendation.prefabs.some((prefab) => prefab.id === "caption-editorial-emphasis"));
+      assert.ok(payload.gsapMotionRecommendation.skills.length > 0);
       assert.match(payload.recommendation.agentInstructions.join("\n"), /npx hyperframes catalog --json/);
       assert.equal(payload.interventionContext.command, "catalog-recommend");
       assert.match(payload.interventionContext.nextCommand, /framepack build/);
@@ -8224,6 +8273,11 @@ Framepack compiles content into executable video projects.
           "## Code Templates",
           "Impact Pop (text shock): `tl.from(\".headline\", { scale: 5, ease: \"back.out(1.7)\", duration: 0.3 }, sceneStart + 0.2)`",
           "Hard Scene Snap: `tl.set(\"#prev .content\", { opacity: 0 }, cutTime); tl.from(\"#next .content\", { opacity: 0, duration: 0.15 }, cutTime)`",
+          "",
+          "## GSAP Motion Skills",
+          "- `apple-keynote-hero`: keynote-style hero entrance.",
+          "- `kinetic-headline-reveal`: big text impact.",
+          "- `scroll-story-pin-sequence`: render-safe ScrollTrigger-style sequence.",
         ].join("\n"));
 
         const result = buildWorkbenchProject(tempRoot);
@@ -8251,6 +8305,9 @@ Framepack compiles content into executable video projects.
         assert.ok(html.includes("FF6600"), "Should use design token colors");
         assert.ok(html.includes("gsap.timeline"), "Should have GSAP timeline");
         assert.ok(html.includes("__timelines"), "Should register timeline");
+        assert.ok(html.includes("GSAP Motion Skill: apple-keynote-hero"), "Should inject selected motion skill code");
+        assert.ok(html.includes("framepack-motion-skill"), "Should mark generated motion skill tweens");
+        assert.equal(html.includes("ScrollTrigger.create"), false, "Scroll skills must be render-safe timeline code");
 
         const runtimeMeta = JSON.parse(readFileSync(join(tempRoot, "meta.json"), "utf8"));
         assert.equal(runtimeMeta.rootEntry, "index.html");
