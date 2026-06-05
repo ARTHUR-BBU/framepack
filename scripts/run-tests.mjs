@@ -3733,7 +3733,8 @@ Framepack compiles content into executable video projects.
         assert.match(report, /F: Product Sandbox And Beta Gate/);
         assert.match(report, /P1 `recurringRisks`/);
         assert.match(report, /npm run workbench:trials/);
-        assert.match(changelog, /213\/213 tests pass/);
+        assert.match(changelog, /GSAP Motion Skill Registry/);
+        assert.match(changelog, /215\/215 tests pass/);
         assert.match(changelog, /workbench trials pass 3\/3/);
         assert.match(agents, /manual-beta-test-guide-v0\.6\.zh-CN/);
         assert.match(agents, /workbench-trials-v0\.6/);

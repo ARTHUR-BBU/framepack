@@ -2,6 +2,12 @@
 
 ## 0.6.0-alpha.3
 
+- add GSAP Motion Skill Registry as a template-attached motion layer
+  - first batch includes 12 internal motion recipes across Hero, Text, Product, Data, Layout, Scroll Story, FLIP, and Scrubbed Sequence
+  - `recommendPolishArsenal`, `templates recommend`, and `catalog recommend` now expose GSAP motion recommendations
+  - `COMPOSITION.md`, `.framepack/state.json`, and `HUMAN.md` record selected motion skills for agent handoff
+  - `framepack build` converts selected motion skills into HyperFrames-safe GSAP timeline code
+  - ScrollTrigger, FLIP, and scrubbed walkthrough intent is translated into render-safe timeline beats by default
 - add active intervention context across the workbench lifecycle and recommendation commands
   - `create`, `workbench brief/check/audit`, `build`, `preview`, `render`, `templates recommend`, `templates prompt recommend`, and `catalog recommend` expose `interventionContext` in JSON output
   - shortcut text now uses stable Xiaobai wording to avoid Windows terminal encoding corruption
@@ -20,8 +26,8 @@
   - Chinese manual test guide: `docs/agent-platform/manual-beta-test-guide-v0.6.zh-CN.md`
   - three customer-style workbench trials: SaaS launch, course promo, and data/news explainer
   - `npm run workbench:trials` produces `out/workbench-trials-v0.6/latest/WORKBENCH_TRIAL_REPORT.md`
-- update README, Chinese README, AGENTS, Codex skill, Claude Code instructions, tests, and sandbox benchmark for the active-intervention workflow
-- 213/213 tests pass; sandbox benchmark remains 100/100; workbench trials pass 3/3
+- update README, Chinese README, AGENTS, Codex skill, Claude Code instructions, tests, and sandbox benchmark for the active-intervention and GSAP motion workflow
+- 215/215 tests pass; sandbox benchmark remains 100/100; workbench trials pass 3/3
 
 ## 0.6.0-alpha.2
 
