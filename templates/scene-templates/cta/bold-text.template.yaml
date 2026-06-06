@@ -1,0 +1,33 @@
+spec_version: 1
+id: bold-text
+category: cta
+tags:
+  - cta
+  - bold
+  - text
+  - action
+  - closing
+format: any
+best_for:
+  - Final payoff
+  - Call-to-action outro
+required_slots:
+  - ctaHeadline
+  - ctaSubtext
+  - ctaText
+visual_signature: Clear final action scene with cta, bold, text, action, closing typography.
+content_rules:
+  forbidden_placeholders:
+    - Your Brand
+    - Coming Soon
+    - Showcase the key feature
+    - Key Metric
+  max_title_length: 72
+  needs_visual_backing: true
+fallback_policy: Use project idea, COMPOSITION.md, and assets before any generic fallback.
+license:
+  spdx: Apache-2.0
+  commercial_use: true
+  attribution_required: false
+provenance:
+  origin: framepack

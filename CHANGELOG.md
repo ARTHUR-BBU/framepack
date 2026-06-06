@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.0-alpha.4
+
+- add semantic content materialization for workbench builds
+  - `framepack build` now preserves `idea` in machine state and uses it with `COMPOSITION.md`, assets, and scene descriptions to fill visible scene copy
+  - sports/player-style tests verify real subject text such as Ederson and Manchester United appears in generated HTML
+  - build output is guarded against generic placeholder leakage such as `Your Brand`, `Coming Soon`, `Showcase the key feature`, and `Key Metric`
+- add project content graph and terminal director board
+  - build writes `.framepack/content-graph.json`
+  - `framepack workbench graph --project-dir <dir>` shows scene timing, title, subtitle, template, asset, and risk flags for humans and agents
+  - `framepack workbench graph --json` exposes the same graph for automation
+- add YAML scene template contracts
+  - 20 built-in scene templates now include `.template.yaml` metadata for best use, required slots, visual signature, content rules, fallback policy, license, and provenance
+  - template loading prefers YAML contracts while keeping existing JSON template metadata compatible
+- improve idea entity extraction for multi-word names and roles
+- update README and tests for content graph, semantic build, and YAML template contracts
+- 218/218 tests pass
+
 ## 0.6.0-alpha.3
 
 - add GSAP Motion Skill Registry as a template-attached motion layer

@@ -2,7 +2,7 @@
 
 > ID: MANUAL-BETA-TEST-V0.6-01
 > Scope: 0.6 workbench path
-> Version under test: 0.6.0-alpha.3
+> Version under test: 0.6.0-alpha.4
 
 ## 测试目标
 
@@ -20,7 +20,7 @@ npx framepack mcp --describe
 
 期望：
 
-- 版本显示 `0.6.0-alpha.3` 或当前待测版本。
+- 版本显示 `0.6.0-alpha.4` 或当前待测版本。
 - 项目中存在 `AGENTS.md`、`CLAUDE.md`、`.mcp.json`。
 - Codex skill 位于 `.framepack/agent/codex/SKILL.md` 和 `.framepack/agent/codex/skills/`。
 - Claude Code skills 位于 `.claude/skills/`。

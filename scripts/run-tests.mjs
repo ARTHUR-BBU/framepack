@@ -101,6 +101,7 @@ import {
   loadAllTemplates,
   matchSceneTemplates,
   getTemplateStats,
+  loadTemplateContracts,
   listRegistries,
   fetchRegistryIndex,
 } from "../dist/workbench/scene-templates.js";
@@ -2600,7 +2601,7 @@ Framepack compiles content into executable video projects.
       const cliEntrypoint = readFileSync(join(dirname(packageJsonPath), "dist", "cli.js"), "utf8");
 
       assert.equal(packageJson.name, "framepack");
-      assert.equal(packageJson.version, "0.6.0-alpha.3");
+      assert.equal(packageJson.version, "0.6.0-alpha.4");
       assert.equal(packageJson.private, false);
       assert.match(packageJson.readme, /programmatic video workbench/);
       assert.match(packageJson.readme, /\u4e2d\u6587/);
@@ -2717,6 +2718,46 @@ Framepack compiles content into executable video projects.
           false,
           "Created timed videos must not be nested inside timed scene elements",
         );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "materialize real sports content into build output without placeholder leakage",
+    run: () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-semantic-build-"));
+      const assetDir = join(tempRoot, "source-assets");
+
+      try {
+        mkdirSync(assetDir, { recursive: true });
+        writeFileSync(join(assetDir, "ederson-footage-hf.mp4"), "mp4", "utf8");
+        writeFileSync(join(assetDir, "ederson-portrait.jpg"), "jpg", "utf8");
+        writeFileSync(join(assetDir, "stadium-audio.mp3"), "mp3", "utf8");
+
+        createWorkbenchProject({
+          projectName: "ederson-united-promo",
+          idea: "A 30s sports transfer promo about Ederson joining Manchester United as a midfield controller.",
+          assetDir,
+          outputDir: tempRoot,
+          style: "premium sports hype, big text, fast pacing, dramatic proof moments",
+          durationSec: 30,
+          format: "9:16",
+        });
+
+        const projectDir = join(tempRoot, "ederson-united-promo");
+        const result = buildWorkbenchProject(projectDir);
+        const html = readFileSync(join(projectDir, "index.html"), "utf8");
+        const graph = JSON.parse(readFileSync(join(projectDir, ".framepack", "content-graph.json"), "utf8"));
+
+        assert.ok(result.templatesUsed.length > 0, "semantic build should use scene templates");
+        assert.match(html, /Ederson/i);
+        assert.match(html, /Manchester United/i);
+        assert.match(html, /midfield/i);
+        assert.doesNotMatch(html, /Your Brand|Coming Soon|Showcase the key feature|Key Metric/);
+        assert.ok(graph.nodes.some((node) => node.type === "scene" && /Ederson/i.test(node.title)));
+        assert.ok(graph.nodes.some((node) => node.type === "asset" && /ederson-footage-hf\.mp4/.test(node.label)));
+        assert.equal(graph.risks.some((risk) => risk.priority === "P0"), false);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -3711,7 +3752,7 @@ Framepack compiles content into executable video projects.
         const changelog = readFileSync(resolve(dirname(packageJsonPath), "CHANGELOG.md"), "utf8");
 
         assert.match(guide, /MANUAL-BETA-TEST-V0\.6-01/);
-        assert.match(guide, /0\.6\.0-alpha\.3/);
+        assert.match(guide, /0\.6\.0-alpha\.4/);
         assert.match(guide, /npm run workbench:trials/);
         assert.match(guide, /WORKBENCH_TRIAL_REPORT\.md/);
         assert.match(guide, /npx framepack workbench friction --project-dir/);
@@ -5464,6 +5505,61 @@ Framepack compiles content into executable video projects.
         assert.match(output, /Video Structure/);
         assert.match(output, /Next user decision/);
         assert.match(output, /Technology in plain words/);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "render a terminal director board for the workbench content graph",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-workbench-graph-"));
+      const assetDir = join(tempRoot, "assets");
+
+      try {
+        mkdirSync(assetDir, { recursive: true });
+        writeFileSync(join(assetDir, "ederson-footage-hf.mp4"), "mp4", "utf8");
+        writeFileSync(join(assetDir, "ederson-portrait.jpg"), "jpg", "utf8");
+
+        assert.equal(await runCli([
+          "create",
+          "--idea",
+          "A 30s sports transfer promo about Ederson joining Manchester United as a midfield controller.",
+          "--assets",
+          assetDir,
+          "--output-dir",
+          tempRoot,
+          "--project-name",
+          "graph-workbench",
+          "--format",
+          "9:16",
+          "--duration",
+          "30",
+        ], { stdout: () => {}, stderr: () => {} }), 0);
+
+        const projectDir = join(tempRoot, "graph-workbench");
+        assert.equal(await runCli(["build", "--project-dir", projectDir], { stdout: () => {}, stderr: () => {} }), 0);
+
+        const graphStdout = [];
+        const graphStderr = [];
+        assert.equal(await runCli(["workbench", "graph", "--project-dir", projectDir], {
+          stdout: (message) => graphStdout.push(message),
+          stderr: (message) => graphStderr.push(message),
+        }), 0);
+        assert.deepEqual(graphStderr, []);
+        assert.match(graphStdout.join("\n"), /Framepack Director Board/);
+        assert.match(graphStdout.join("\n"), /Ederson/i);
+        assert.match(graphStdout.join("\n"), /Template:/);
+        assert.match(graphStdout.join("\n"), /Asset:/);
+
+        const jsonStdout = [];
+        assert.equal(await runCli(["workbench", "graph", "--project-dir", projectDir, "--json"], {
+          stdout: (message) => jsonStdout.push(message),
+          stderr: () => {},
+        }), 0);
+        const payload = JSON.parse(jsonStdout.join("\n"));
+        assert.equal(payload.graph.version, "framepack.content-graph.v1");
+        assert.ok(payload.interventionContext);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -7900,6 +7996,21 @@ Framepack compiles content into executable video projects.
         assert.ok(Array.isArray(content.tags), `${jf} should have tags array`);
         assert.ok(typeof content.minDuration === "number", `${jf} should have minDuration`);
         assert.ok(typeof content.maxDuration === "number", `${jf} should have maxDuration`);
+      }
+    },
+  },
+  {
+    name: "scene template contracts expose agent-readable YAML metadata",
+    run() {
+      const contracts = loadTemplateContracts();
+
+      assert.ok(contracts.length >= 20, `Expected 20+ YAML template contracts, got ${contracts.length}`);
+      for (const contract of contracts) {
+        assert.ok(contract.id, "contract should have id");
+        assert.ok(contract.visualSignature, `${contract.id} should describe visualSignature`);
+        assert.ok(contract.bestFor.length > 0, `${contract.id} should describe bestFor`);
+        assert.ok(contract.requiredSlots.length > 0, `${contract.id} should describe requiredSlots`);
+        assert.ok(contract.contentRules.forbiddenPlaceholders.includes("Your Brand"), `${contract.id} should forbid generic brand placeholders`);
       }
     },
   },

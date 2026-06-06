@@ -1,6 +1,6 @@
 {
   "name": "framepack",
-  "version": "0.6.0-alpha.3",
+  "version": "0.6.0-alpha.4",
   "private": false,
   "type": "module",
   "main": "./dist/cli.js",
@@ -8,7 +8,7 @@
     "framepack": "dist/cli.js"
   },
   "description": "A lightweight HyperFrames creative workbench for assets, prompts, composition, audit gates, and iteration.",
-  "readme": "# Framepack\n\nFramepack is a programmatic video workbench for coding agents and HyperFrames. It turns rough ideas, user assets, references, and fuzzy taste words into a professional video plan, then guides create, workbench brief, audit, build, preview, render, and iteration.\n\nFramepack includes a GSAP Motion Skill Registry: 12 internal motion recipes across Hero, Text, Product, Data, Layout, Scroll Story, FLIP, and Scrubbed Sequence. They are written into COMPOSITION.md and converted by build into HyperFrames-safe GSAP timelines.\n\n中文: Framepack 是程式化视频工作台。它把外行的模糊审美愿望翻译成 agent 能执行、HyperFrames 能生产的专业视频方案，并用主动介入上下文、审计门禁、项目偏好、摩擦记录和迭代记忆监督整个流程。GSAP Motion Skill Registry 是内部动效导演库，不是 12 个独立 agent skills。\n\nQuick path:\n\n```bash\nnpm install framepack\nnpx framepack create --idea \"A premium launch video\" --assets ./assets --output-dir ./out --project-name launch-video\nnpx framepack workbench brief --project-dir ./out/launch-video\nnpx framepack workbench audit --phase all --project-dir ./out/launch-video --json\nnpx framepack build --project-dir ./out/launch-video\nnpx framepack preview --project-dir ./out/launch-video --open\n```\n",
+  "readme": "# Framepack\n\nFramepack is a programmatic video workbench for coding agents and HyperFrames. It turns rough ideas, user assets, references, fuzzy taste words, and template choices into a professional video plan, then guides create, brief, audit, build, content graph inspection, preview, render, and iteration.\n\nFramepack 0.6.x focuses on the project-local agentic workflow: design tokens, asset gaps, template/Catalog recommendations, semantic scene materialization, lifecycle audit gates, active intervention context, friction logs, and HyperFrames-safe HTML output.\n\nFramepack includes a GSAP Motion Skill Registry: internal motion recipes across Hero, Text, Product, Data, Layout, Scroll Story, FLIP, and Scrubbed Sequence. They are written into COMPOSITION.md and converted by build into render-safe timeline beats.\n\n中文: Framepack 是程式化视频工作台。它把“更高级、更动感、更商务、字更大、节奏更快”这类外行愿望，翻译成 agent 能执行、HyperFrames 能生产的专业视频方案。它管理素材、推荐模板和动效、生成可审计的导演方案、构建 HTML，并用主动介入和质检门禁减少黑屏、占位符和返工。\n\nQuick path:\n\n```bash\nnpm install framepack\nnpx framepack create --idea \"A premium launch video\" --assets ./assets --output-dir ./out --project-name launch-video\nnpx framepack workbench brief --project-dir ./out/launch-video\nnpx framepack workbench audit --phase all --project-dir ./out/launch-video --json\nnpx framepack build --project-dir ./out/launch-video\nnpx framepack workbench graph --project-dir ./out/launch-video\nnpx framepack preview --project-dir ./out/launch-video --open\n```\n",
   "files": [
     "dist",
     "examples",
@@ -49,6 +49,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "hyperframes": "^0.6.40",
+    "yaml": "^2.9.0",
     "zod": "^4.4.3"
   }
 }

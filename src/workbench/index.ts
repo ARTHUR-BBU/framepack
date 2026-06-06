@@ -20,6 +20,7 @@ import {
 import {
   findTemplateForSceneRole,
   type SceneTemplate,
+  type SceneTemplateContract,
 } from "./scene-templates.js";
 import {
   extractGsapMotionSkillIds,
@@ -132,6 +133,46 @@ export interface WorkbenchAuditReport {
   priorityBlockers: WorkbenchAuditCheck[];
   findings: string[];
   corrections: string[];
+}
+
+export interface SceneContentPlan {
+  sceneId: string;
+  role: string;
+  label: string;
+  start: number;
+  duration: number;
+  title: string;
+  subtitle: string;
+  proofText: string;
+  ctaText: string;
+  templateId: string | null;
+  assetRefs: string[];
+  motionSkills: string[];
+  riskFlags: string[];
+}
+
+export interface WorkbenchContentGraphNode {
+  id: string;
+  type: "scene" | "asset" | "template" | "risk";
+  label: string;
+  title?: string;
+  role?: string;
+  priority?: "P0" | "P1" | "P2";
+}
+
+export interface WorkbenchContentGraphEdge {
+  from: string;
+  to: string;
+  type: "sequence" | "uses-asset" | "uses-template" | "has-risk";
+}
+
+export interface WorkbenchContentGraph {
+  version: "framepack.content-graph.v1";
+  projectName: string;
+  nodes: WorkbenchContentGraphNode[];
+  edges: WorkbenchContentGraphEdge[];
+  scenes: SceneContentPlan[];
+  risks: Array<{ id: string; priority: "P0" | "P1" | "P2"; summary: string }>;
 }
 
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
@@ -1237,6 +1278,16 @@ export function extractIdeaEntities(idea: string): IdeaEntities {
   const numbers: string[] = [];
   const actions: string[] = [];
   const styleKeywords: string[] = [];
+  const addName = (name: string) => {
+    const cleaned = name.trim().replace(/\s+/g, " ");
+    if (cleaned.length <= 1 || names.includes(cleaned)) return;
+    const shorterIndex = names.findIndex((existing) => cleaned.includes(existing) && cleaned.length > existing.length);
+    if (shorterIndex >= 0) {
+      names[shorterIndex] = cleaned;
+      return;
+    }
+    if (!names.some((existing) => existing.includes(cleaned) && existing.length > cleaned.length)) names.push(cleaned);
+  };
 
   // Extract quoted names/brands
   const quoted = idea.match(/["""]([^""]+)["""]|«([^»]+)»/g);
@@ -1276,8 +1327,23 @@ export function extractIdeaEntities(idea: string): IdeaEntities {
   // Extract action keywords
   const actionWords = ["transfer", "announcement", "launch", "reveal", "release", "debut", "arrival", "signing", "promo", "trailer", "teaser", "commercial", "ad"];
   const lowerIdea = idea.toLowerCase();
+  const phraseStopWords = new Set(["A", "An", "The", "This", "That", "And", "But", "For", "With", "Make", "Create", "Build", "Using", "About", "From", "Into", "To", "As"]);
+  for (const phrase of idea.match(/\b[A-Z][a-zA-Z0-9]*(?:\s+[A-Z][a-zA-Z0-9]*){0,3}\b/g) ?? []) {
+    if (!phraseStopWords.has(phrase.trim())) addName(phrase);
+  }
+  for (const match of idea.matchAll(/\babout\s+([A-Z][a-zA-Z0-9]*(?:\s+[A-Z][a-zA-Z0-9]*){0,3})/gi)) {
+    if (match[1]) addName(match[1]);
+  }
+  for (const match of idea.matchAll(/\b(?:joining|to)\s+([A-Z][a-zA-Z0-9]*(?:\s+[A-Z][a-zA-Z0-9]*){0,3})/gi)) {
+    if (match[1]) addName(match[1]);
+  }
   for (const aw of actionWords) {
     if (lowerIdea.includes(aw)) actions.push(aw);
+  }
+
+  const roleWords = ["midfielder", "midfield", "controller", "founder", "course", "product", "platform", "brand", "team", "club"];
+  for (const rw of roleWords) {
+    if (lowerIdea.includes(rw) && !actions.includes(rw)) actions.push(rw);
   }
 
   // Extract style keywords
@@ -1399,12 +1465,12 @@ function buildSkeletonHtml(input: {
   assets?: WorkbenchAsset[];
   pacing?: "slow" | "medium" | "fast";
   gsapMotionSkillIds?: string[];
+  sceneContentPlans?: SceneContentPlan[];
+  sceneDescriptions?: Map<string, SceneDescription>;
 }): string {
   const tokens = input.designTokens ?? DEFAULT_TOKENS;
   const [width, height] = input.format === "9:16" ? [1080, 1920] : [1920, 1080];
   const scenes = SKELETON_SCENES[input.templateId] ?? SKELETON_SCENES["saas-launch"];
-  const totalSceneDuration = scenes.reduce((sum, s) => sum + s.duration, 0);
-  const scaleFactor = totalSceneDuration > 0 ? input.durationSec / totalSceneDuration : 1;
   const isFastPaced = FAST_TEMPLATES.has(input.templateId) || input.pacing === "fast";
   const isPortrait = input.format === "9:16";
   const shortIdea = input.idea.length > 60 ? input.idea.slice(0, 57) + "..." : input.idea;
@@ -1427,23 +1493,23 @@ function buildSkeletonHtml(input: {
 
   // Extract entities from idea for template filling
   const entities = extractIdeaEntities(input.idea);
-  const entityName = entities.names[0] || "Your Brand";
-  const entityTagline = entities.names.length > 1 ? entities.names[1] : entities.actions[0] || "Coming Soon";
-  const entitySubtitle = entities.actions[0] || entities.styleKeywords[0] || "";
-  const statValue = entities.numbers[0]?.replace(/[£€$¥]/, "") || "100";
-  const statPrefix = entities.numbers[0]?.match(/[£€$¥]/)?.[0] || "";
-  const statLabel = entities.numbers[0] || "Key Metric";
-
-  // Calculate scene timing
-  let currentTime = 0;
-  const timed = scenes.map((scene) => {
-    const dur = Math.round(scene.duration * scaleFactor * 10) / 10;
-    const start = Math.round(currentTime * 10) / 10;
-    currentTime += dur;
-    return { ...scene, dur, start };
+  const entityName = entities.names[0] || titleFromProjectName(input.projectName);
+  const entityTagline = entities.names.length > 1 ? entities.names[1] : entities.actions[0] || input.idea;
+  const entitySubtitle = entities.actions[0] || entities.styleKeywords[0] || input.idea;
+  const statValue = entities.numbers[0]?.replace(/[????]/, "") || "1";
+  const statPrefix = entities.numbers[0]?.match(/[????]/)?.[0] || "";
+  const statLabel = entities.numbers[0] || entitySubtitle;
+  const timed = timeSkeletonScenes(scenes, input.durationSec);
+  const scenePlans = input.sceneContentPlans ?? createSceneContentPlans({
+    projectName: input.projectName,
+    idea: input.idea,
+    format: input.format,
+    scenes: timed,
+    assets: input.assets ?? [],
+    sceneDescriptions: input.sceneDescriptions ?? new Map(),
+    gsapMotionSkillIds: input.gsapMotionSkillIds ?? [],
   });
 
-  // Build scene HTML with role-specific content
   const videoAssets = (input.assets ?? []).filter(a => a.kind === "video");
   const imageAssets = (input.assets ?? []).filter(a => a.kind === "image");
 
@@ -2124,6 +2190,8 @@ function buildFiles(input: {
         version: "framepack.workbench.v1",
         mode: "hyperframes-creative-workbench",
         projectName: input.projectName,
+        idea: input.idea,
+        style: input.style,
         format: input.format,
         durationSec: input.durationSec,
         entrypoints: {
@@ -2356,6 +2424,23 @@ export function buildWorkbenchProject(projectDir: string): {
 
   // Get scenes from template
   const scenes = SKELETON_SCENES[templateId] ?? SKELETON_SCENES["saas-launch"];
+  const timedScenes = timeSkeletonScenes(scenes, durationSec);
+  const sceneContentPlans = createSceneContentPlans({
+    projectName,
+    idea,
+    format,
+    scenes: timedScenes,
+    assets,
+    sceneDescriptions,
+    gsapMotionSkillIds,
+  });
+  const contentGraph = createWorkbenchContentGraph({
+    projectName,
+    plans: sceneContentPlans,
+    assets,
+  });
+  mkdirSync(join(dir, ".framepack"), { recursive: true });
+  writeFileSync(join(dir, ".framepack", "content-graph.json"), JSON.stringify(contentGraph, null, 2), "utf8");
 
   // Build enhanced HTML
   const html = buildEnhancedHtml({
@@ -2367,6 +2452,7 @@ export function buildWorkbenchProject(projectDir: string): {
     designTokens: tokens,
     assets,
     scenes,
+    sceneContentPlans,
     sceneDescriptions,
     compositionMd,
     gsapMotionSkillIds,
@@ -2390,10 +2476,10 @@ export function buildWorkbenchProject(projectDir: string): {
     }, null, 2));
   }
   const templatesUsed: string[] = [];
-  const entities = extractIdeaEntities(idea);
-  for (const scene of scenes) {
-    const tpl = findTemplateForSceneRole(scene.id, format, scene.duration);
-    if (isSafeInlineSceneTemplate(tpl)) templatesUsed.push(tpl.id);
+  for (const scene of sceneContentPlans) {
+    if (scene.templateId && !templatesUsed.includes(scene.templateId)) {
+      templatesUsed.push(scene.templateId);
+    }
   }
 
   return {
@@ -2476,6 +2562,228 @@ function parseSceneDescriptions(compositionMd: string): Map<string, SceneDescrip
   return descriptions;
 }
 
+function timeSkeletonScenes(
+  scenes: { id: string; label: string; duration: number }[],
+  durationSec: number,
+): { id: string; label: string; duration: number; dur: number; start: number }[] {
+  const totalSceneDuration = scenes.reduce((sum, scene) => sum + scene.duration, 0);
+  const scaleFactor = totalSceneDuration > 0 ? durationSec / totalSceneDuration : 1;
+  let currentTime = 0;
+  return scenes.map((scene) => {
+    const dur = Math.round(scene.duration * scaleFactor * 10) / 10;
+    const start = Math.round(currentTime * 10) / 10;
+    currentTime += dur;
+    return { ...scene, dur, start };
+  });
+}
+
+function createSceneContentPlans(input: {
+  projectName: string;
+  idea: string;
+  format: "16:9" | "9:16";
+  scenes: { id: string; label: string; duration: number; dur: number; start: number }[];
+  assets: WorkbenchAsset[];
+  sceneDescriptions: Map<string, SceneDescription>;
+  gsapMotionSkillIds: string[];
+}): SceneContentPlan[] {
+  const entities = extractIdeaEntities(input.idea);
+  const primaryName = cleanVisibleText(entities.names[0] ?? titleFromProjectName(input.projectName));
+  const secondaryName = cleanVisibleText(entities.names.find((name) => name !== primaryName) ?? "");
+  const actionPhrase = cleanVisibleText(entities.actions.join(" "));
+  const subjectLine = [primaryName, secondaryName].filter(Boolean).join(" to ") || primaryName;
+  const proofPhrase = actionPhrase || "proof moment";
+  const visualAssets = input.assets.filter((asset) => asset.kind === "video" || asset.kind === "image");
+
+  return input.scenes.map((scene, index) => {
+    const template = findTemplateForSceneRole(scene.id, input.format, scene.dur);
+    const contract = template?.contract;
+    const desc = input.sceneDescriptions.get(scene.id);
+    const asset = pickAssetForScene(scene.id, index, visualAssets);
+    const role = SCENE_ROLE_CONFIG[scene.id]?.html ?? "generic";
+    const title = createSceneTitle(scene.id, primaryName, secondaryName, input.idea);
+    const subtitle = createSceneSubtitle(scene.id, primaryName, secondaryName, proofPhrase, desc?.label ?? scene.label, input.idea);
+    const proofText = createProofText(primaryName, secondaryName, proofPhrase);
+    const ctaText = createCtaText(primaryName, secondaryName);
+    const riskFlags = createSceneRiskFlags({
+      title,
+      subtitle,
+      asset,
+      contract,
+      role,
+    });
+
+    return {
+      sceneId: scene.id,
+      role,
+      label: desc?.label ?? scene.label,
+      start: scene.start,
+      duration: scene.dur,
+      title,
+      subtitle,
+      proofText,
+      ctaText,
+      templateId: template?.id ?? null,
+      assetRefs: asset ? [asset.name] : [],
+      motionSkills: input.gsapMotionSkillIds,
+      riskFlags,
+    };
+  });
+}
+
+function createWorkbenchContentGraph(input: {
+  projectName: string;
+  plans: SceneContentPlan[];
+  assets: WorkbenchAsset[];
+}): WorkbenchContentGraph {
+  const nodes: WorkbenchContentGraphNode[] = [];
+  const edges: WorkbenchContentGraphEdge[] = [];
+  const risks: Array<{ id: string; priority: "P0" | "P1" | "P2"; summary: string }> = [];
+
+  for (const [index, scene] of input.plans.entries()) {
+    const sceneNodeId = `scene:${scene.sceneId}:${index}`;
+    nodes.push({
+      id: sceneNodeId,
+      type: "scene",
+      label: scene.label,
+      title: scene.title,
+      role: scene.role,
+    });
+    if (index > 0) {
+      edges.push({ from: `scene:${input.plans[index - 1].sceneId}:${index - 1}`, to: sceneNodeId, type: "sequence" });
+    }
+    if (scene.templateId) {
+      const templateNodeId = `template:${scene.templateId}`;
+      if (!nodes.some((node) => node.id === templateNodeId)) {
+        nodes.push({ id: templateNodeId, type: "template", label: scene.templateId });
+      }
+      edges.push({ from: sceneNodeId, to: templateNodeId, type: "uses-template" });
+    }
+    for (const assetName of scene.assetRefs) {
+      const assetNodeId = `asset:${assetName}`;
+      if (!nodes.some((node) => node.id === assetNodeId)) {
+        nodes.push({ id: assetNodeId, type: "asset", label: assetName });
+      }
+      edges.push({ from: sceneNodeId, to: assetNodeId, type: "uses-asset" });
+    }
+    for (const [riskIndex, risk] of scene.riskFlags.entries()) {
+      const priority: "P0" | "P1" | "P2" = /placeholder|missing content/i.test(risk) ? "P0" : "P1";
+      const riskId = `risk:${scene.sceneId}:${riskIndex}`;
+      nodes.push({ id: riskId, type: "risk", label: risk, priority });
+      edges.push({ from: sceneNodeId, to: riskId, type: "has-risk" });
+      risks.push({ id: riskId, priority, summary: risk });
+    }
+  }
+
+  return {
+    version: "framepack.content-graph.v1",
+    projectName: input.projectName,
+    nodes,
+    edges,
+    scenes: input.plans,
+    risks,
+  };
+}
+
+export function readWorkbenchContentGraph(projectDir: string): WorkbenchContentGraph {
+  const graphPath = join(resolve(projectDir), ".framepack", "content-graph.json");
+  if (!existsSync(graphPath)) {
+    throw new Error("Missing .framepack/content-graph.json. Run `framepack build --project-dir <dir>` first.");
+  }
+  return JSON.parse(readFileSync(graphPath, "utf8")) as WorkbenchContentGraph;
+}
+
+export function formatWorkbenchContentGraph(projectDir: string): string {
+  const graph = readWorkbenchContentGraph(projectDir);
+  const lines = [
+    "Framepack Director Board",
+    "",
+    `Project: ${graph.projectName}`,
+    `Scenes: ${graph.scenes.length}`,
+    `Risks: ${graph.risks.length}`,
+    "",
+  ];
+
+  for (const scene of graph.scenes) {
+    lines.push(`[${scene.start}-${Math.round((scene.start + scene.duration) * 10) / 10}s] ${scene.sceneId}`);
+    lines.push(`  Template: ${scene.templateId ?? "built-in semantic content"}`);
+    lines.push(`  Title: ${scene.title}`);
+    lines.push(`  Subtitle: ${scene.subtitle}`);
+    lines.push(`  Asset: ${scene.assetRefs.join(", ") || "programmatic visual backing"}`);
+    lines.push(`  Risk: ${scene.riskFlags.length > 0 ? scene.riskFlags.join("; ") : "ok"}`);
+    lines.push("");
+  }
+
+  return lines.join("\n").trimEnd();
+}
+
+function createSceneTitle(sceneId: string, primaryName: string, secondaryName: string, idea: string): string {
+  if (sceneId === "hook" || sceneId === "headline" || sceneId === "promise") {
+    return secondaryName ? `${primaryName} to ${secondaryName}` : primaryName;
+  }
+  if (sceneId === "proof" || sceneId === "stats" || sceneId === "number") return "Proof in motion";
+  if (sceneId === "product" || sceneId === "action" || sceneId === "path") return secondaryName ? `${secondaryName} rebuild` : `${primaryName} in action`;
+  if (sceneId === "cta" || sceneId === "reward" || sceneId === "conviction") return secondaryName ? `${secondaryName} awaits` : `${primaryName} is the move`;
+  return cleanVisibleText(idea.slice(0, 56)) || primaryName;
+}
+
+function createSceneSubtitle(sceneId: string, primaryName: string, secondaryName: string, proofPhrase: string, label: string, idea: string): string {
+  if (sceneId === "hook" || sceneId === "headline") return secondaryName ? `${primaryName} brings ${proofPhrase} to ${secondaryName}` : cleanVisibleText(idea);
+  if (sceneId === "proof" || sceneId === "stats" || sceneId === "number") return `${primaryName} as ${proofPhrase}`;
+  if (sceneId === "cta" || sceneId === "reward" || sceneId === "conviction") return secondaryName ? `Watch the ${secondaryName} story land` : "Make the next move clear";
+  return cleanVisibleText(label.replace(/[鈥-].*$/, "")) || cleanVisibleText(idea);
+}
+
+function createProofText(primaryName: string, secondaryName: string, proofPhrase: string): string {
+  return [primaryName, secondaryName, proofPhrase].filter(Boolean).join(" / ");
+}
+
+function createCtaText(primaryName: string, secondaryName: string): string {
+  return secondaryName ? `Follow ${primaryName} at ${secondaryName}` : `Watch ${primaryName}`;
+}
+
+function pickAssetForScene(sceneId: string, index: number, assets: WorkbenchAsset[]): WorkbenchAsset | undefined {
+  if (assets.length === 0) return undefined;
+  const videos = assets.filter((asset) => asset.kind === "video");
+  const images = assets.filter((asset) => asset.kind === "image");
+  if ((sceneId === "hook" || sceneId === "product" || sceneId === "action") && videos.length > 0) {
+    return videos[index % videos.length];
+  }
+  if (images.length > 0) return images[index % images.length];
+  return assets[index % assets.length];
+}
+
+function createSceneRiskFlags(input: {
+  title: string;
+  subtitle: string;
+  asset: WorkbenchAsset | undefined;
+  contract: SceneTemplateContract | undefined;
+  role: HtmlTemplate;
+}): string[] {
+  const forbidden = input.contract?.contentRules.forbiddenPlaceholders ?? ["Your Brand", "Coming Soon", "Showcase the key feature", "Key Metric"];
+  const combined = `${input.title} ${input.subtitle}`;
+  const risks: string[] = [];
+  for (const item of forbidden) {
+    if (combined.includes(item)) risks.push(`placeholder leaked: ${item}`);
+  }
+  if (!input.title.trim() || !input.subtitle.trim()) risks.push("missing content slot");
+  if (!input.asset && input.contract?.contentRules.needsVisualBacking !== false && input.role !== "headline") {
+    risks.push("no user asset assigned; use programmatic visual backing");
+  }
+  return risks;
+}
+
+function titleFromProjectName(projectName: string): string {
+  return projectName
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ") || "Framepack Video";
+}
+
+function cleanVisibleText(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
 function buildEnhancedHtml(input: {
   projectName: string;
   format: "16:9" | "9:16";
@@ -2485,6 +2793,7 @@ function buildEnhancedHtml(input: {
   designTokens?: DesignTokensResolved | null;
   assets?: WorkbenchAsset[];
   scenes: { id: string; label: string; duration: number }[];
+  sceneContentPlans?: SceneContentPlan[];
   sceneDescriptions: Map<string, SceneDescription>;
   compositionMd: string;
   gsapMotionSkillIds?: string[];
@@ -2492,8 +2801,6 @@ function buildEnhancedHtml(input: {
   const tokens = input.designTokens ?? DEFAULT_TOKENS;
   const [width, height] = input.format === "9:16" ? [1080, 1920] : [1920, 1080];
   const scenes = input.scenes;
-  const totalSceneDuration = scenes.reduce((sum, s) => sum + s.duration, 0);
-  const scaleFactor = totalSceneDuration > 0 ? input.durationSec / totalSceneDuration : 1;
   const isFastPaced = FAST_TEMPLATES.has(input.templateId) || input.compositionMd.toLowerCase().includes("fast");
   const isPortrait = input.format === "9:16";
   const shortIdea = input.idea.length > 60 ? input.idea.slice(0, 57) + "..." : input.idea;
@@ -2515,19 +2822,21 @@ function buildEnhancedHtml(input: {
   };
 
   const entities = extractIdeaEntities(input.idea);
-  const entityName = entities.names[0] || "Your Brand";
-  const entityTagline = entities.names.length > 1 ? entities.names[1] : entities.actions[0] || "Coming Soon";
-  const entitySubtitle = entities.actions[0] || entities.styleKeywords[0] || "";
-  const statValue = entities.numbers[0]?.replace(/[£€$¥]/, "") || "100";
-  const statPrefix = entities.numbers[0]?.match(/[£€$¥]/)?.[0] || "";
-  const statLabel = entities.numbers[0] || "Key Metric";
-
-  let currentTime = 0;
-  const timed = scenes.map((scene) => {
-    const dur = Math.round(scene.duration * scaleFactor * 10) / 10;
-    const start = Math.round(currentTime * 10) / 10;
-    currentTime += dur;
-    return { ...scene, dur, start };
+  const entityName = entities.names[0] || titleFromProjectName(input.projectName);
+  const entityTagline = entities.names.length > 1 ? entities.names[1] : entities.actions[0] || input.idea;
+  const entitySubtitle = entities.actions[0] || entities.styleKeywords[0] || input.idea;
+  const statValue = entities.numbers[0]?.replace(/[????]/, "") || "1";
+  const statPrefix = entities.numbers[0]?.match(/[????]/)?.[0] || "";
+  const statLabel = entities.numbers[0] || entitySubtitle;
+  const timed = timeSkeletonScenes(scenes, input.durationSec);
+  const scenePlans = input.sceneContentPlans ?? createSceneContentPlans({
+    projectName: input.projectName,
+    idea: input.idea,
+    format: input.format,
+    scenes: timed,
+    assets: input.assets ?? [],
+    sceneDescriptions: input.sceneDescriptions,
+    gsapMotionSkillIds: input.gsapMotionSkillIds ?? [],
   });
 
   const videoAssets = (input.assets ?? []).filter(a => a.kind === "video");
@@ -2540,6 +2849,7 @@ function buildEnhancedHtml(input: {
   const enhancedRootVideos: string[] = [];
 
   const sceneDivs = timed.map((scene, idx) => {
+    const plan = scenePlans[idx];
     const role = SCENE_ROLE_CONFIG[scene.id] ?? { animation: "slide-up" as AnimationTemplate, html: "generic" as HtmlTemplate };
     const template = findTemplateForSceneRole(scene.id, input.format, scene.dur);
     // Skip block templates — they only work when blocks are actually installed
@@ -2548,15 +2858,30 @@ function buildEnhancedHtml(input: {
     let content: string;
     if (usableTemplate) {
       content = fillTemplatePlaceholders(usableTemplate.html, {
-        entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel,
+        entityName: plan?.title ?? entityName,
+        entityTagline: plan?.subtitle ?? entityTagline,
+        entitySubtitle: plan?.proofText ?? entitySubtitle,
+        statValue,
+        statPrefix,
+        statLabel: plan?.subtitle ?? statLabel,
         sceneIndex: idx, sceneStart: scene.start, sceneDuration: scene.dur,
-        videoSrc: videoAssets.length > 0 ? `assets/${videoAssets[idx % videoAssets.length].name}` : "",
+        videoSrc: plan?.assetRefs[0] ? `assets/${plan.assetRefs[0]}` : videoAssets.length > 0 ? `assets/${videoAssets[idx % videoAssets.length].name}` : "",
         prevSceneId: `scene-${Math.max(0, idx - 1)}`,
         nextSceneId: `scene-${idx}`,
       });
       content = content.replace(/<!--[\s\S]*?-->/g, "").trim();
     } else {
-      content = buildSceneContent(scene.id, role.html, input.idea, entityName, entityTagline, entitySubtitle, statValue, statPrefix, statLabel);
+      content = buildSceneContent(
+        scene.id,
+        role.html,
+        input.idea,
+        plan?.title ?? entityName,
+        plan?.subtitle ?? entityTagline,
+        plan?.proofText ?? entitySubtitle,
+        statValue,
+        statPrefix,
+        plan?.subtitle ?? statLabel,
+      );
     }
 
     // Scene description guidance as HTML comment (for agent reference)
@@ -2564,16 +2889,21 @@ function buildEnhancedHtml(input: {
     const guidanceComment = desc ? `\n        <!-- Scene guidance: ${desc.label} -->` : "";
 
     // Collect video elements for composition root (not inside scene div)
-    const needsVideo = (role.html === "product" || scene.id === "action" || scene.id === "hook") && idx < videoAssets.length;
+    const planVideo = plan?.assetRefs[0] ? videoAssets.find((asset) => asset.name === plan.assetRefs[0]) : undefined;
+    const needsVideo = Boolean(planVideo) || ((role.html === "product" || scene.id === "action" || scene.id === "hook") && idx < videoAssets.length);
     const hasVideoInContent = content.includes("<video");
     if (needsVideo && !hasVideoInContent) {
-      enhancedRootVideos.push(`  <video id="bg-video-${idx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${videoAssets[idx % videoAssets.length].name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;"></video>`);
+      const video = planVideo ?? videoAssets[idx % videoAssets.length];
+      if (video) {
+        enhancedRootVideos.push(`  <video id="bg-video-${idx}" data-start="${scene.start}" data-duration="${scene.dur}" data-media-start="0" muted playsinline src="assets/${video.name}" style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;"></video>`);
+      }
     }
 
     // Add image for product scenes
-    const imgIdx = role.html === "product" && idx < imageAssets.length && !usableTemplate ? idx : -1;
-    const imgEl = imgIdx >= 0
-      ? `\n      <img src="assets/${imageAssets[idx].name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
+    const planImage = plan?.assetRefs[0] ? imageAssets.find((asset) => asset.name === plan.assetRefs[0]) : undefined;
+    const image = planImage ?? (!planVideo && imageAssets.length > 0 ? imageAssets[idx % imageAssets.length] : undefined);
+    const imgEl = image && !usableTemplate
+      ? `\n      <img src="assets/${image.name}" style="max-width:${f.imgMax};max-height:50%;object-fit:contain;border-radius:12px;opacity:0.9;" />`
       : "";
 
     if (usableTemplate && content.includes('class="scene clip"')) {

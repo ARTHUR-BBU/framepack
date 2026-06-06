@@ -18,7 +18,7 @@ Framepack is not a generative video model and does not create pixels by itself. 
 
 ## Current Version Shape
 
-The repository version is `0.6.0-alpha.3`.
+The repository version is `0.6.0-alpha.4`.
 
 The 0.6 public path is the workbench path:
 
@@ -130,10 +130,12 @@ Use these supervision commands during testing and feedback:
 
 ```bash
 npx framepack workbench preferences --project-dir <dir>
+npx framepack workbench graph --project-dir <dir>
 npx framepack workbench friction --project-dir <dir>
 npx framepack workbench learnings --project-dir <dir>
 ```
 
+`workbench graph` is the terminal director board. Run it after `build` to inspect scene timing, visible titles, template matches, assigned assets, and semantic risk flags before preview/render.
 `.framepack/preferences.json` stores project-level style field forces such as premium polish, business clarity, fast kinetic pacing, and large focal text.
 `.framepack/friction.jsonl` stores command failures, bypass signals, and audit blockers. If the same friction category appears 3 or more times, JSON output exposes it in `recurringRisks` as a P1 beta-readiness risk; stop customer handoff until it is corrected.
 
@@ -170,6 +172,7 @@ Framepack includes:
 - 6 workflow templates: `saas-launch`, `news-explainer`, `course-promo`, `game-ad`, `founder-story`, `data-shock`
 - 11 HyperFrames prompt-template blueprints
 - 20 built-in scene templates across 6 categories
+- YAML scene template contracts for best use, required content slots, visual signature, forbidden placeholders, fallback policy, license, and provenance
 - 22 design-system references
 - HyperFrames Catalog bridge
 - GSAP Motion Skill Registry with 12 internal motion recipes across Hero, Text, Product, Data, Layout, Scroll Story, FLIP, and Scrubbed Sequence
@@ -260,3 +263,18 @@ Older 0.4 package-protocol evidence remains useful for archaeology and regressio
 - Use `apply_patch` for manual edits.
 - Do not revert user changes.
 - Keep code and docs lean; avoid reintroducing the heavy legacy package mental model into new onboarding docs.
+
+<!-- FRAMEPACK MANAGED BLOCK START -->
+## Framepack Agent Workflow
+
+Framepack is installed as an agent-native video creative workbench for this project.
+
+- Trigger Framepack for vague video requests, asset-to-video work, HyperFrames composition, template selection, or polish direction.
+- Prefer MCP tools over memorized shell commands; check `npx -y framepack mcp --describe` if MCP is not connected.
+- Create workbenches with `npx -y framepack create --idea "<idea>" --assets <dir> --output-dir <dir>`.
+- Start every Framepack project by reading `FRAMEPACK.md`.
+- Use `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `DESIGN.md`, `DESIGN_TOKENS.md`, `STYLE.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md` as durable context. Do not rely on model memory.
+- Run `npx -y framepack workbench audit --phase preflight --project-dir <dir>` before starting, then `npx -y framepack workbench audit --phase design|composition|preview|render --project-dir <dir>` at each lifecycle gate. Stop on P0/P1 blockers.
+- Recommend animation libraries, templates, game-asset tools, HyperFrames, or Remotion only when the current project needs them.
+- Project skills are installed under `.framepack/agent/codex/skills`; each skill contains detailed references. Use the matching Framepack skill for: director work, template fusion, HyperFrames building, or reference mining.
+<!-- FRAMEPACK MANAGED BLOCK END -->

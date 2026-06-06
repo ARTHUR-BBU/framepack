@@ -1,7 +1,7 @@
 # Framepack 0.6 Workbench Internal Trial Matrix
 
 > ID: WORKBENCH-TRIALS-V0.6-01
-> Version under test: 0.6.0-alpha.3
+> Version under test: 0.6.0-alpha.4
 > Scope: product-grade internal testing before 0.6.0-beta.1
 
 ## Purpose

@@ -1,0 +1,38 @@
+spec_version: 1
+id: progress-bars
+category: stats
+tags:
+  - progress
+  - bar
+  - saas
+  - growth
+  - comparison
+format: any
+best_for:
+  - Proof moment
+  - Data-backed reveal
+required_slots:
+  - bar1Label
+  - bar1Value
+  - bar2Label
+  - bar2Value
+  - bar3Label
+  - bar3Value
+  - proofText
+visual_signature: Proof-forward stats composition using progress, bar, saas,
+  growth, comparison motion.
+content_rules:
+  forbidden_placeholders:
+    - Your Brand
+    - Coming Soon
+    - Showcase the key feature
+    - Key Metric
+  max_title_length: 72
+  needs_visual_backing: true
+fallback_policy: Use project idea, COMPOSITION.md, and assets before any generic fallback.
+license:
+  spdx: Apache-2.0
+  commercial_use: true
+  attribution_required: false
+provenance:
+  origin: framepack

@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
 // ── Types ──────────────────────────────────────────────
 
@@ -31,6 +32,32 @@ export interface SceneTemplate {
   requiredTokens: string[];
   minDuration: number;
   maxDuration: number;
+  contract?: SceneTemplateContract;
+}
+
+export interface SceneTemplateContract {
+  id: string;
+  category: SceneTemplateCategory;
+  tags: string[];
+  format: SceneTemplateFormat;
+  bestFor: string[];
+  requiredSlots: string[];
+  visualSignature: string;
+  contentRules: {
+    forbiddenPlaceholders: string[];
+    maxTitleLength?: number;
+    needsVisualBacking?: boolean;
+  };
+  fallbackPolicy: string;
+  license?: {
+    spdx?: string;
+    commercialUse?: boolean;
+    attributionRequired?: boolean;
+  };
+  provenance?: {
+    origin?: string;
+    sourceUrl?: string;
+  };
 }
 
 export interface SceneTemplateQuery {
@@ -97,6 +124,7 @@ export function loadBuiltinTemplates(): SceneTemplate[] {
         const html = existsSync(htmlPath)
           ? readFileSync(htmlPath, "utf-8")
           : "";
+        const contract = readTemplateContract(catDir, file.replace(".json", ""), meta, html);
 
         templates.push({
           id: meta.id || file.replace(".json", ""),
@@ -108,6 +136,7 @@ export function loadBuiltinTemplates(): SceneTemplate[] {
           requiredTokens: meta.requiredTokens || [],
           minDuration: meta.minDuration || 2,
           maxDuration: meta.maxDuration || 15,
+          contract,
         });
       } catch {
         // skip malformed templates
@@ -117,6 +146,12 @@ export function loadBuiltinTemplates(): SceneTemplate[] {
 
   _builtinCache = templates;
   return templates;
+}
+
+export function loadTemplateContracts(projectDir?: string): SceneTemplateContract[] {
+  return loadAllTemplates(projectDir)
+    .filter((template) => template.source === "builtin" || template.source === "agent-created")
+    .map((template) => template.contract ?? createFallbackContract(template, template.html));
 }
 
 /**
@@ -287,6 +322,10 @@ export function saveAgentTemplate(
 
   writeFileSync(join(catDir, `${template.id}.json`), JSON.stringify(meta, null, 2));
   writeFileSync(join(catDir, `${template.id}.html`), template.html);
+  writeFileSync(
+    join(catDir, `${template.id}.template.yaml`),
+    stringifyYaml(createFallbackContract({ ...template, source: "agent-created" }, template.html)),
+  );
 
   // Invalidate cache
   _builtinCache = null;
@@ -529,6 +568,175 @@ function resolveTemplatesDir(): string {
   return candidates[0];
 }
 
+function readTemplateContract(
+  catDir: string,
+  baseName: string,
+  meta: Record<string, unknown>,
+  html: string,
+): SceneTemplateContract {
+  const yamlPath = join(catDir, `${baseName}.template.yaml`);
+  if (existsSync(yamlPath)) {
+    try {
+      return normalizeTemplateContract(parseYaml(readFileSync(yamlPath, "utf-8")), meta, html);
+    } catch {
+      return createFallbackContractFromMeta(meta, html);
+    }
+  }
+
+  return createFallbackContractFromMeta(meta, html);
+}
+
+function normalizeTemplateContract(
+  raw: unknown,
+  meta: Record<string, unknown>,
+  html: string,
+): SceneTemplateContract {
+  const value = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const rules = (value.contentRules ?? value.content_rules ?? {}) as Record<string, unknown>;
+  const license = (value.license ?? {}) as Record<string, unknown>;
+  const provenance = (value.provenance ?? {}) as Record<string, unknown>;
+  const category = String(value.category ?? meta.category ?? "opening") as SceneTemplateCategory;
+  const tags = toStringArray(value.tags ?? meta.tags);
+
+  return {
+    id: String(value.id ?? meta.id ?? "template"),
+    category,
+    tags,
+    format: String(value.format ?? meta.format ?? "any") as SceneTemplateFormat,
+    bestFor: nonEmptyStringArray(value.bestFor ?? value.best_for, inferBestFor(category, tags)),
+    requiredSlots: nonEmptyStringArray(value.requiredSlots ?? value.required_slots, inferRequiredSlots(html, category)),
+    visualSignature: String(value.visualSignature ?? value.visual_signature ?? inferVisualSignature(category, tags)),
+    contentRules: {
+      forbiddenPlaceholders: nonEmptyStringArray(
+        rules.forbiddenPlaceholders ?? rules.forbidden_placeholders,
+        DEFAULT_FORBIDDEN_PLACEHOLDERS,
+      ),
+      maxTitleLength: toOptionalNumber(rules.maxTitleLength ?? rules.max_title_length),
+      needsVisualBacking: typeof rules.needsVisualBacking === "boolean"
+        ? rules.needsVisualBacking
+        : typeof rules.needs_visual_backing === "boolean"
+          ? rules.needs_visual_backing
+          : category !== "transition",
+    },
+    fallbackPolicy: String(value.fallbackPolicy ?? value.fallback_policy ?? "Use project idea, COMPOSITION.md, and assets before any generic fallback."),
+    license: {
+      spdx: typeof license.spdx === "string" ? license.spdx : "Apache-2.0",
+      commercialUse: typeof license.commercialUse === "boolean"
+        ? license.commercialUse
+        : typeof license.commercial_use === "boolean"
+          ? license.commercial_use
+          : true,
+      attributionRequired: typeof license.attributionRequired === "boolean"
+        ? license.attributionRequired
+        : typeof license.attribution_required === "boolean"
+          ? license.attribution_required
+          : false,
+    },
+    provenance: {
+      origin: typeof provenance.origin === "string" ? provenance.origin : "framepack",
+      sourceUrl: typeof provenance.sourceUrl === "string"
+        ? provenance.sourceUrl
+        : typeof provenance.source_url === "string"
+          ? provenance.source_url
+          : undefined,
+    },
+  };
+}
+
+function createFallbackContractFromMeta(meta: Record<string, unknown>, html: string): SceneTemplateContract {
+  const template: SceneTemplate = {
+    id: String(meta.id ?? "template"),
+    category: String(meta.category ?? "opening") as SceneTemplateCategory,
+    tags: toStringArray(meta.tags),
+    format: String(meta.format ?? "any") as SceneTemplateFormat,
+    source: "builtin",
+    html,
+    requiredTokens: toStringArray(meta.requiredTokens),
+    minDuration: Number(meta.minDuration ?? 2),
+    maxDuration: Number(meta.maxDuration ?? 15),
+  };
+  return createFallbackContract(template, html);
+}
+
+function createFallbackContract(template: SceneTemplate, html: string): SceneTemplateContract {
+  return {
+    id: template.id,
+    category: template.category,
+    tags: template.tags,
+    format: template.format,
+    bestFor: inferBestFor(template.category, template.tags),
+    requiredSlots: inferRequiredSlots(html, template.category),
+    visualSignature: inferVisualSignature(template.category, template.tags),
+    contentRules: {
+      forbiddenPlaceholders: DEFAULT_FORBIDDEN_PLACEHOLDERS,
+      maxTitleLength: 72,
+      needsVisualBacking: template.category !== "transition",
+    },
+    fallbackPolicy: "Use project idea, COMPOSITION.md, and assets before any generic fallback.",
+    license: {
+      spdx: "Apache-2.0",
+      commercialUse: true,
+      attributionRequired: false,
+    },
+    provenance: {
+      origin: "framepack",
+    },
+  };
+}
+
+const DEFAULT_FORBIDDEN_PLACEHOLDERS = [
+  "Your Brand",
+  "Coming Soon",
+  "Showcase the key feature",
+  "Key Metric",
+];
+
+function inferRequiredSlots(html: string, category: SceneTemplateCategory): string[] {
+  const slots = new Set<string>();
+  for (const match of html.matchAll(/\{\{([a-zA-Z0-9_]+)\}\}/g)) {
+    const slot = match[1];
+    if (slot && !slot.startsWith("scene")) slots.add(slot);
+  }
+  if (category === "cta") slots.add("ctaText");
+  if (category === "stats") slots.add("proofText");
+  if (category === "footage") slots.add("asset");
+  if (slots.size === 0) slots.add("title");
+  return [...slots];
+}
+
+function inferBestFor(category: SceneTemplateCategory, tags: string[]): string[] {
+  const tagText = tags.join(" ").toLowerCase();
+  if (tagText.includes("sports")) return ["Sports player reveal", "High-impact transfer promo"];
+  if (category === "stats") return ["Proof moment", "Data-backed reveal"];
+  if (category === "footage") return ["User footage showcase", "Product or media highlight"];
+  if (category === "cta") return ["Final payoff", "Call-to-action outro"];
+  if (category === "transition") return ["Scene transition", "Pacing reset"];
+  if (category === "name-reveal") return ["Name reveal", "Brand or subject introduction"];
+  return ["Opening hook", "High-energy visual promise"];
+}
+
+function inferVisualSignature(category: SceneTemplateCategory, tags: string[]): string {
+  const text = tags.join(", ");
+  if (category === "stats") return `Proof-forward stats composition using ${text || "number-driven"} motion.`;
+  if (category === "footage") return `Footage-led scene with strong labels and ${text || "media-first"} framing.`;
+  if (category === "cta") return `Clear final action scene with ${text || "bold"} typography.`;
+  if (category === "transition") return `Short deterministic transition beat using ${text || "clean"} motion.`;
+  return `Bold opening composition using ${text || "kinetic"} visual energy.`;
+}
+
+function nonEmptyStringArray(value: unknown, fallback: string[]): string[] {
+  const arr = toStringArray(value);
+  return arr.length > 0 ? arr : fallback;
+}
+
+function toStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0) : [];
+}
+
+function toOptionalNumber(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 function getGlobalTemplateDir(): string {
   const home = process.env.USERPROFILE || process.env.HOME || "";
   return join(home, ".framepack", "templates");
@@ -573,8 +781,9 @@ function loadTemplatesFromCategoryDir(
     try {
       const meta = JSON.parse(readFileSync(jsonPath, "utf-8"));
       const html = existsSync(htmlPath) ? readFileSync(htmlPath, "utf-8") : "";
+      const id = meta.id || file.replace(".json", "");
       out.push({
-        id: meta.id || file.replace(".json", ""),
+        id,
         category: meta.category || category,
         tags: meta.tags || [],
         format: meta.format || "any",
@@ -583,6 +792,7 @@ function loadTemplatesFromCategoryDir(
         requiredTokens: meta.requiredTokens || [],
         minDuration: meta.minDuration || 2,
         maxDuration: meta.maxDuration || 15,
+        contract: readTemplateContract(catDir, id, meta, html),
       });
     } catch {
       // skip malformed

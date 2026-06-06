@@ -22,12 +22,13 @@ Project skills are also installed under `.framepack/agent/codex/skills` for dire
 9. Run `framepack workbench audit --phase design --project-dir <dir>` after design/token work.
 10. Run `framepack workbench audit --phase composition --project-dir <dir>` before `framepack build`.
 11. Build with `framepack build --project-dir <dir>`.
-12. Preview with `framepack preview --project-dir <dir> --open`, then run `framepack workbench audit --phase preview --project-dir <dir>`.
-13. Render only after P0/P1 blockers are clear, then run `framepack workbench audit --phase render --project-dir <dir>`.
-14. When a Framepack command supports `--json`, read `interventionContext` before deciding the next action.
-15. Use `framepack workbench preferences/friction/learnings --project-dir <dir>` to explain stored taste signals, blockers, force bypasses, recurring P1 risks, and test learnings.
-16. Keep state in workbench files, not model memory.
-17. Use HyperFrames-safe rules: CSS first frame visible, scene switches with `tl.set()`, no timed video inside timed scene containers, one animation engine per element, timeline registration on `window.__timelines`, and render-safe timeline beats for ScrollTrigger/FLIP/scrubbed motion intent.
+12. Run `framepack workbench graph --project-dir <dir>` after build to inspect the director board: scenes, template choices, assigned assets, and semantic risks.
+13. Preview with `framepack preview --project-dir <dir> --open`, then run `framepack workbench audit --phase preview --project-dir <dir>`.
+14. Render only after P0/P1 blockers are clear, then run `framepack workbench audit --phase render --project-dir <dir>`.
+15. When a Framepack command supports `--json`, read `interventionContext` before deciding the next action.
+16. Use `framepack workbench preferences/friction/learnings --project-dir <dir>` to explain stored taste signals, blockers, force bypasses, recurring P1 risks, and test learnings.
+17. Keep state in workbench files, not model memory.
+18. Use HyperFrames-safe rules: CSS first frame visible, scene switches with `tl.set()`, no timed video inside timed scene containers, one animation engine per element, timeline registration on `window.__timelines`, and render-safe timeline beats for ScrollTrigger/FLIP/scrubbed motion intent.
 
 Stop on P0/P1 audit blockers. `build`, `preview`, and `render` can block on P0 issues; use `--force` only when the user explicitly accepts the risk, because Framepack records that bypass in `.framepack/interventions.jsonl` and `ITERATIONS.md`.
 

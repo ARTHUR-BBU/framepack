@@ -1,0 +1,33 @@
+spec_version: 1
+id: split-reveal
+category: name-reveal
+tags:
+  - split
+  - cinematic
+  - reveal
+  - movie
+  - title
+format: any
+best_for:
+  - Name reveal
+  - Brand or subject introduction
+required_slots:
+  - entityName
+  - entitySubtitle
+visual_signature: Bold opening composition using split, cinematic, reveal,
+  movie, title visual energy.
+content_rules:
+  forbidden_placeholders:
+    - Your Brand
+    - Coming Soon
+    - Showcase the key feature
+    - Key Metric
+  max_title_length: 72
+  needs_visual_backing: true
+fallback_policy: Use project idea, COMPOSITION.md, and assets before any generic fallback.
+license:
+  spdx: Apache-2.0
+  commercial_use: true
+  attribution_required: false
+provenance:
+  origin: framepack

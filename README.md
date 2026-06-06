@@ -88,6 +88,9 @@ npx framepack workbench audit --phase composition --project-dir ./out/launch-vid
 # Step 4: Build HyperFrames HTML
 npx framepack build --project-dir ./out/launch-video
 
+# Step 4.5: Inspect the terminal director board
+npx framepack workbench graph --project-dir ./out/launch-video
+
 # Step 5: Preview and render
 npx framepack preview --project-dir ./out/launch-video --open
 npx framepack workbench audit --phase preview --project-dir ./out/launch-video
@@ -113,6 +116,7 @@ launch-video/
   ITERATIONS.md         feedback and decision history
   index.html            initial HyperFrames-safe composition skeleton
   meta.json             runtime metadata for preview/render
+  .framepack/content-graph.json scene, asset, template, and risk graph
   .framepack/state.json machine-readable workbench state
 ```
 
@@ -140,12 +144,13 @@ Lifecycle commands now carry an active intervention context in JSON output. Agen
 For supervision and test review:
 
 ```bash
+npx framepack workbench graph --project-dir ./out/launch-video
 npx framepack workbench preferences --project-dir ./out/launch-video
 npx framepack workbench friction --project-dir ./out/launch-video
 npx framepack workbench learnings --project-dir ./out/launch-video
 ```
 
-Preferences are stored in `.framepack/preferences.json`. Intervention events are stored in `.framepack/interventions.jsonl`. Friction summaries help testers see where the agent drifted, got blocked, or used `--force`.
+`workbench graph` renders a terminal director board from `.framepack/content-graph.json`: each scene, chosen template, assigned asset, visible title, subtitle, and risk flag. Preferences are stored in `.framepack/preferences.json`. Intervention events are stored in `.framepack/interventions.jsonl`. Friction summaries help testers see where the agent drifted, got blocked, or used `--force`.
 
 ## Built-In Arsenal
 
@@ -154,6 +159,7 @@ Framepack includes a local arsenal that helps agents choose a strong route witho
 - 6 workflow templates: `saas-launch`, `news-explainer`, `course-promo`, `game-ad`, `founder-story`, `data-shock`
 - 11 HyperFrames prompt-template blueprints adapted from the Open Design template pattern
 - 20 scene templates across opening, name-reveal, stats, footage, CTA, and transition categories
+- YAML scene template contracts that describe best use, required content slots, visual signature, forbidden placeholders, fallback policy, license, and provenance
 - 22 curated design-system references such as Apple, Stripe, SpaceX, Tesla, Nike, Nvidia, Linear, OpenAI, and Notion
 - HyperFrames Catalog bridge for components and blocks
 - GSAP Motion Skill Registry with 12 template-attached motion recipes across Hero, Text, Product, Data, Layout, Scroll Story, FLIP, and Scrubbed Sequence
@@ -168,6 +174,7 @@ npx framepack templates prompt
 npx framepack templates prompt recommend --idea "A TikTok founder video with karaoke captions" --style "big text fast social" --format 9:16 --json
 npx framepack scene-templates list
 npx framepack scene-templates recommend --category name-reveal
+npx framepack workbench graph --project-dir ./out/launch-video --json
 npx framepack catalog recommend --template course-promo --idea "premium founder course promo" --style "business dynamic" --format 9:16 --json
 ```
 

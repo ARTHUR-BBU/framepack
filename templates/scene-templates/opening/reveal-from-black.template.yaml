@@ -1,0 +1,34 @@
+spec_version: 1
+id: reveal-from-black
+category: opening
+tags:
+  - elegant
+  - reveal
+  - fade
+  - premium
+  - apple
+  - minimal
+format: any
+best_for:
+  - Opening hook
+  - High-energy visual promise
+required_slots:
+  - entityName
+  - entityTagline
+visual_signature: Bold opening composition using elegant, reveal, fade, premium,
+  apple, minimal visual energy.
+content_rules:
+  forbidden_placeholders:
+    - Your Brand
+    - Coming Soon
+    - Showcase the key feature
+    - Key Metric
+  max_title_length: 72
+  needs_visual_backing: true
+fallback_policy: Use project idea, COMPOSITION.md, and assets before any generic fallback.
+license:
+  spdx: Apache-2.0
+  commercial_use: true
+  attribution_required: false
+provenance:
+  origin: framepack

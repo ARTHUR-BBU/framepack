@@ -50,7 +50,9 @@ import {
   buildWorkbenchInterventionContext,
   buildWorkbenchProject,
   defaultWorkbenchProjectName,
+  formatWorkbenchContentGraph,
   formatWorkbenchHumanBrief,
+  readWorkbenchContentGraph,
   auditWorkbenchProject,
   type WorkbenchAuditPhase,
   listHyperframesCatalogPrefabs,
@@ -203,7 +205,7 @@ const DEFAULT_IO: CliIo = {
   stderr: (message) => console.error(message),
 };
 
-const FRAMEPACK_CLI_VERSION = "0.6.0-alpha.3";
+const FRAMEPACK_CLI_VERSION = "0.6.0-alpha.4";
 
 const FRAMEPACK_CLI_HELP = [
   "Framepack CLI",
@@ -221,6 +223,7 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack workbench check --project-dir <dir>",
   "  framepack workbench audit --phase <preflight|design|composition|preview|render> --project-dir <dir>",
   "  framepack workbench brief --project-dir <dir>",
+  "  framepack workbench graph --project-dir <dir> [--json]",
   "  framepack workbench friction --project-dir <dir>",
   "  framepack workbench learnings --project-dir <dir>",
   "  framepack workbench preferences --project-dir <dir> [--refresh]",
@@ -1441,8 +1444,8 @@ function runTemplateCommand(args: string[], io: CliIo): number {
 }
 
 function runWorkbenchCommand(args: string[], io: CliIo): number {
-  if (args[0] !== "check" && args[0] !== "audit" && args[0] !== "brief" && args[0] !== "friction" && args[0] !== "learnings" && args[0] !== "preferences") {
-    throw new Error("Invalid workbench command. Use: framepack workbench check|audit|brief|friction|learnings|preferences --project-dir <dir>");
+  if (args[0] !== "check" && args[0] !== "audit" && args[0] !== "brief" && args[0] !== "graph" && args[0] !== "friction" && args[0] !== "learnings" && args[0] !== "preferences") {
+    throw new Error("Invalid workbench command. Use: framepack workbench check|audit|brief|graph|friction|learnings|preferences --project-dir <dir>");
   }
 
   if (args[0] === "brief") {
@@ -1464,6 +1467,22 @@ function runWorkbenchCommand(args: string[], io: CliIo): number {
   }
 
   const projectDir = resolve(getRequiredArg(args, "--project-dir"));
+
+  if (args[0] === "graph") {
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify({
+        projectDir,
+        graph: readWorkbenchContentGraph(projectDir),
+        interventionContext: buildWorkbenchInterventionContext({
+          command: "brief",
+          projectDir,
+        }),
+      }, null, 2));
+      return 0;
+    }
+    io.stdout(formatWorkbenchContentGraph(projectDir));
+    return 0;
+  }
 
   if (args[0] === "friction") {
     if (args.includes("--record-bypass")) {
