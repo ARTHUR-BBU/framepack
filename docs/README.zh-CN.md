@@ -1,261 +1,119 @@
 # Framepack 中文说明
 
-Framepack 是一个面向 Codex、Claude Code 等 coding agent 的**程式化视频工作台**，主要配合 HyperFrames 渲染运行时使用。
+Framepack 服务的是 **面向 HyperFrames 程式化商业视频创意与编排**。
 
-它把用户不成熟的想法、已有素材、参考视频和模糊审美词，翻译成 agent 可以执行的视频项目：设计方向、视觉令牌、素材缺口、模板路线、动效语言、HyperFrames composition 方案、构建输出、审计门禁和迭代记录。
+换成小白话：它是给 agent 用的商业视频创意武器库和编排工作台，主要服务 HyperFrames。现在 v0.7 是一个 **Hermes Agent Plugin**——寄生在 agent 身体里的"器官"。
 
-## 小白版解释
+一句话：
 
-很多用户其实不知道自己需要什么技术、模板、动画库或视频结构，只会说：
+> Framepack 不做导演。agent 是导演；Framepack 是导演顾问、制片、武器库管理员和 HyperFrames 质检官。
 
-- 高级一点
-- 商务一点
-- 动感一点
-- 字大一点
-- 节奏快一点
-- 多一点动画
-- 像这个参考视频
+它不替 agent 想创意，也不假装一键生成好视频。它更像一个懂行的制片办公室：把模板、活动宣传片节奏、设计参考、动效语汇、技术库、参考视频反推、下载缓存、二创组合、成品模板沉淀和渲染检查都管理起来。
 
-Framepack 的作用就是把这些外行语言翻译成专业视频方案，让 coding agent 知道下一步该怎么做。它不负责凭空生成画面，而是组织用户已有素材，推荐模板和动画路线，写清楚制作方案，生成 HyperFrames 安全的 HTML，并在预览和渲染前做质检。
+## 架构大转弯（v0.7）
 
-一句话：Framepack 把“我想要好看、酷、商务、动感”翻译成 agent 能执行、HyperFrames 能生产的专业视频工作台。
+v0.6 时代，Framepack 是一个 CLI 工具——agent 像打电话一样主动调用它。v0.7 时代，Framepack 是一个**寄生 Plugin**——它住在 agent 的身体里，监视 agent 的每一次工具调用，在关键时刻"借脑"注入建议。
 
-## 程式化视频 vs 生成式视频
+```text
+v0.6（旧）：CLI + MCP — agent 主动调用 Framepack
+v0.7（新）：Hermes Plugin — Framepack 主动向 agent 注入反馈
+```
 
-**生成式视频**是让模型根据 prompt 生成新画面。
+类比：v0.6 是"外卖电话"——你饿了叫外卖，Framepack 给你送饭。v0.7 是"器官移植"——Framepack 直接接入你的神经，你拿起筷子的时候它已经在提醒你"这个菜太烫了先吹一下"。
 
-**程式化视频**是用 HTML、CSS、GSAP、图片、视频片段、文字、图标、UI 截图和模板，把已有素材编排成可控的视频。
+## Plugin 架构
 
-| 对比项 | 生成式视频 | Framepack + HyperFrames |
-| --- | --- | --- |
-| 输入 | prompt | 素材 + 意图 + 参考 |
-| 输出 | 新画面 | 可控的视频工程 |
-| 控制粒度 | 偏整体风格 | 元素、时间线、布局、文案都可控 |
-| 适合 | 开放式视觉生成 | 品牌视频、产品宣传、课程推广、数据动画、模板化内容 |
-| Framepack 角色 | 不是生成器 | 工作台、导演助手、模板路由、质检层 |
+```
+Hermes Agent Loop（agent 的神经中枢）
+  └── Plugin hooks（两个钩子函数）
+        ├── 🚨 pre_tool_call  → index.html 写入前拦截
+        ├── 📋 post_tool_call → STORYBOARD.md 结构分析（LLM 借脑）
+        ├── 🎬 post_tool_call → COMPOSITION.md 模板审查（LLM 借脑）
+        ├── 🔍 post_tool_call → index.html 正则审计（零 token）
+        ├── 🔫 post_tool_call → arsenal.json 武器验证
+        └── 🧬 post_tool_call → VIDEO_DNA.md / TEMPLATE_BLUEPRINT.md 结构检查
+      └── Skills（6 个知识库，注入 LLM 调用）
+        ├── framepack-director（导演指南）
+        ├── framepack-template-fuser（模板匹配引擎）
+        ├── framepack-hyperframes-builder（渲染安全规则）
+        ├── framepack-arsenal（武器目录）
+        ├── framepack-gsap（GSAP 动画引擎）
+        └── framepack-reference-miner（参考视频反推）
+```
 
 ## 安装
+
+### v0.7 — Hermes Plugin
+
+```bash
+# 复制到 Hermes plugins 目录
+cp -r framepack-plugin ~/.hermes/plugins/framepack
+
+# 启用并重启
+hermes plugins enable framepack
+# 重启 Hermes
+```
+
+### v0.6 — CLI（旧版，保留兼容）
 
 ```bash
 npm install framepack
 ```
 
-Framepack 通过三层机制工作：
+## 小白类比
 
-- `agent instructions / skills`：负责触发 Framepack 流程和专业 playbook。
-- `MCP / CLI`：负责工具调用、知识查询、构建、预览、渲染和审计。
-- `workbench files`：负责把用户意图、设计、素材、方案、审计和迭代记录持久化下来。
+agent 是导演，Framepack 是制片办公室加器材库。它不抢导演的椅子，但它会把分镜参考、灯光方案、器材、素材清单、历史成功案例和验收清单准备好。
 
-默认安装后，Framepack 会写入项目级 agent 指南：
+现在 v0.7 的比喻更准确：agent 是司机，Framepack 是副驾驶座上的导航仪——你不用低头操作，它自己会在你接近路口时说"前面左转"。
 
-```text
-AGENTS.md
-CLAUDE.md
-.mcp.json
-.framepack/agent/codex/SKILL.md
-.framepack/agent/codex/skills/
-.claude/skills/
-```
+## Framepack 管什么
 
-如果不想自动写入这些文件，可以设置：
-
-```bash
-FRAMEPACK_SKIP_AGENT_INSTALL=1 npm install framepack
-```
-
-## 推荐给 agent 的自然语言
-
-你可以直接对 Codex 或 Claude Code 说：
-
-```text
-用 Framepack 把我的想法和 assets 文件夹做成一个高级、动感、商务感强、文字焦点清晰的 HyperFrames 视频工作台。请用小白语言解释方案，运行审计门禁，然后构建和预览。
-```
-
-也可以直接运行命令：
-
-```bash
-npx framepack create \
-  --idea "一个面向创业者的 30 秒高级产品发布视频" \
-  --assets ./assets \
-  --output-dir ./out \
-  --project-name launch-video \
-  --format 9:16 \
-  --style "高级 SaaS 发布感，强动效，大字号焦点文字"
-```
-
-## 标准流程
-
-```bash
-# 1. 创建工作台
-npx framepack create --idea "一个 30 秒产品发布视频" --assets ./assets --output-dir ./out --project-name launch-video --format 9:16
-
-# 2. 用小白语言解释当前方案
-npx framepack workbench brief --project-dir ./out/launch-video
-
-# 3. 进入构建前审计
-npx framepack workbench audit --phase preflight --project-dir ./out/launch-video
-npx framepack workbench audit --phase design --project-dir ./out/launch-video
-npx framepack workbench audit --phase composition --project-dir ./out/launch-video
-
-# 4. 编译成 HyperFrames HTML
-npx framepack build --project-dir ./out/launch-video
-
-# 5. 预览和渲染
-npx framepack preview --project-dir ./out/launch-video --open
-npx framepack workbench audit --phase preview --project-dir ./out/launch-video
-npx framepack render --project-dir ./out/launch-video --audio bgm.mp3
-npx framepack workbench audit --phase render --project-dir ./out/launch-video
-```
+- **模板路线**：活动宣传片、SaaS 发布、课程推广、数据/新闻解释、游戏广告、体育集锦、转会官宣、球员致敬。
+- **Storyboard**：`STORYBOARD.md` 先把创意主线说清楚，再进入代码。
+- **武器库**：`.framepack/arsenal.json` 记录项目用到的武器、候选资源、二创组合。
+- **参考反推**：`VIDEO_DNA.md` 和 `TEMPLATE_BLUEPRINT.md` 把参考视频或成品视频变成可复用结构。
+- **设计参考**：精选视觉系统，给 agent 具体的颜色、字体、间距、节奏语言。
+- **动效配方**：GSAP 安全模式，可改编，不盲抄。
+- **可信资源**：注册来源可缓存，搜索结果只当候选。
+- **HyperFrames 质检**：首帧可见、场景切换用 `tl.set()`、禁止随机渲染时间线、`window.__timelines` 已注册。
 
 ## 工作台文件
 
-`framepack create` 会生成一组精简的工作台文件：
-
 ```text
-launch-video/
-  FRAMEPACK.md          agent 工作流和阅读顺序
-  HUMAN.md              给用户看的小白摘要
-  ASSETS.md             用户素材和素材角色
-  ASSET_GAPS.md         阻塞性和可选素材缺口
-  STYLE.md              品牌方向和调参信息
-  DESIGN.md             匹配到的设计系统参考
-  DESIGN_TOKENS.md      可执行的颜色和字体令牌
-  DIRECTION.md          专业创意方向
-  COMPOSITION.md        HyperFrames 制作方案和模板路线
-  ITERATIONS.md         反馈、决策和迭代记录
-  index.html            初始 HyperFrames HTML 骨架
-  meta.json             预览和渲染需要的运行时元数据
-  .framepack/state.json 机器可读状态
+FRAMEPACK.md              agent 入口
+HUMAN.md                  人类可读摘要
+ASSETS.md                 用户素材
+ASSET_GAPS.md             缺失或可选素材
+STORYBOARD.md             agent 创意主线
+STYLE.md                  视觉和动效风格
+DESIGN.md                 匹配的设计参考
+DESIGN_TOKENS.md          可执行的颜色和字体
+DIRECTION.md              创意方向和选项
+COMPOSITION.md            HyperFrames 编排计划
+ITERATIONS.md             反馈和修改历史
+index.html                HyperFrames 安全脚手架
+meta.json                 运行时元数据
+VIDEO_DNA.md              参考视频结构分析
+TEMPLATE_BLUEPRINT.md     从 DNA 派生的可复用模板
+.framepack/arsenal.json   项目武器清单
+.framepack/content-graph.json
+.framepack/state.json
 ```
 
-用户优先看 `HUMAN.md`。agent 优先读 `FRAMEPACK.md`。
-
-## 质检员：Audit Gates
-
-Framepack 不只是生成文件，还要监督 agent 不要跑偏。
+## 开发
 
 ```bash
-npx framepack workbench audit --phase preflight --project-dir ./out/launch-video
-npx framepack workbench audit --phase design --project-dir ./out/launch-video
-npx framepack workbench audit --phase composition --project-dir ./out/launch-video
-npx framepack workbench audit --phase preview --project-dir ./out/launch-video
-npx framepack workbench audit --phase render --project-dir ./out/launch-video
-npx framepack workbench audit --phase all --project-dir ./out/launch-video --json
-```
+# Plugin 测试（Python）
+cd framepack-plugin
+python -m pytest tests/ -q
 
-如果出现 P0/P1 问题，agent 应该先修正或向用户确认，不能直接进入 build、preview 或 render。
-
-审计会检查：小白摘要、设计令牌、素材缺口、用户确认点、技术路线、skill 暴露、HyperFrames 运行时文件、预览和渲染准备情况。
-
-## 主动介入与项目监督
-
-Framepack 现在会在关键 JSON 输出里提供 `interventionContext`。agent 不需要靠记忆猜下一步，而是可以直接读取当前阶段、必读文件、阻断项、推荐 skill、下一条命令和小白版解释。
-
-覆盖命令包括：
-
-```bash
-npx framepack create --idea "..." --output-dir ./out --project-name demo --json
-npx framepack workbench audit --phase all --project-dir ./out/demo --json
-npx framepack build --project-dir ./out/demo --json
-npx framepack preview --project-dir ./out/demo --json
-npx framepack render --project-dir ./out/demo --json
-npx framepack templates recommend --idea "..." --style "..." --json
-npx framepack templates prompt recommend --idea "..." --style "..." --json
-npx framepack catalog recommend --template course-promo --idea "..." --json
-```
-
-对 0.6 workbench 项目，`build`、`preview`、`render` 会运行生命周期成本闸门。P0 问题会默认拦住命令；如果用户明确接受风险，可以加 `--force`，但 Framepack 会把这次绕过写入 `.framepack/interventions.jsonl` 和 `ITERATIONS.md`。
-
-项目内监督命令：
-
-```bash
-npx framepack workbench preferences --project-dir ./out/demo
-npx framepack workbench friction --project-dir ./out/demo
-npx framepack workbench learnings --project-dir ./out/demo
-```
-
-`.framepack/preferences.json` 会保存项目审美偏好。`.framepack/friction.jsonl` 会记录失败、绕路和反复出现的问题。`workbench learnings` 会把这些问题归类成可行动的改进线索。
-
-小白理解：Framepack 不只是“生成文件”，还会像制片主任一样记住你的审美偏好、检查红灯问题、记录绕过风险，并把项目卡点变成下一轮改进线索。
-
-## 内置能力
-
-Framepack 内置了一个轻量但可扩展的创意武器库：
-
-- 内置模板 registry：`saas-launch`、`news-explainer`、`course-promo`、`game-ad`、`founder-story`、`data-shock`
-- 11 个 HyperFrames prompt-template 蓝图
-- 20 个场景模板，覆盖 opening、name-reveal、stats、footage、cta、transition
-- 22 个设计系统参考，例如 Apple、Stripe、SpaceX、Tesla、Nike、Nvidia、Linear、OpenAI、Notion
-- HyperFrames Catalog bridge，用于组件和 block 推荐
-- Polish Arsenal 推荐器，用于输出模板路线、动效语言、禁忌清单和验收标准
-
-常用命令：
-
-```bash
-npx framepack templates
-npx framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
-npx framepack templates prompt
-npx framepack templates prompt recommend --idea "A TikTok founder video with karaoke captions" --style "big text fast social" --format 9:16 --json
-npx framepack scene-templates list
-npx framepack scene-templates recommend --category name-reveal
-npx framepack catalog recommend --template course-promo --idea "premium founder course promo" --style "business dynamic" --format 9:16 --json
-```
-
-## GSAP Motion Skill Registry（动效导演库）
-
-Framepack 现在内置一套轻量的 GSAP Motion Skill Registry。它不是给 Claude Code 或 Codex 额外安装 12 个独立 skill，而是 Framepack 自己内部的一组“动效菜谱”。
-
-首批 12 个动效能力覆盖 Hero、Text、Product、Data、Layout、Scroll Story、FLIP、Scrubbed Sequence。用户说“苹果发布会感”“大字冲击”“滚动叙事”“卡片展开”“产品一步步演示”时，Framepack 会把这些模糊表达翻译成具体的 motion skill，写入 `COMPOSITION.md` 和 JSON 推荐结果，并在 `framepack build` 时生成 HyperFrames 可渲染的 GSAP timeline。
-
-小白理解：不是把整本 GSAP 教科书塞给 agent，而是在关键节点告诉 agent“这一场戏该用哪几个专业动作套路”。ScrollTrigger、FLIP、scrubbed walkthrough 这类重交互会被转成稳定的视频时间线，不会依赖真实滚动、鼠标或拖拽才能渲染。
-
-## Agent Skills
-
-Framepack 会安装四个核心 playbook：
-
-- `framepack-director`：把模糊审美翻译成专业结构、视觉语言、动效语言、风险和验收标准。
-- `framepack-template-fuser`：把用户素材、用户要求、工作流模板、prompt 模板和 Catalog 候选融合成 `COMPOSITION.md`。
-- `framepack-hyperframes-builder`：把 `COMPOSITION.md` 变成 HyperFrames 安全代码，并执行检查。
-- `framepack-reference-miner`：从参考视频或成品视频提取 `VIDEO_DNA.md` 和 `TEMPLATE_BLUEPRINT.md`。
-
-Claude Code 的 skills 在 `.claude/skills/`。Codex 项目工作流的 skills 在 `.framepack/agent/codex/skills/`。
-
-## MCP
-
-Framepack MCP 是给 agent 用的知识和自动化接口：
-
-```bash
-npx framepack mcp --describe
-```
-
-当前核心知识工具：
-
-- `querySceneTemplate`
-- `recommendAnimation`
-- `getComponentCode`
-
-MCP 中仍保留一些 0.4 package 时代的工具，方便兼容和自动化测试。普通用户主线应优先使用 `create -> audit -> build -> preview -> render`。
-
-## HyperFrames 安全规则
-
-Framepack 会提醒 agent 避免常见渲染问题：
-
-- 首场景必须在 CSS 中可见
-- 场景切换用 `tl.set()`
-- 不要把带时间属性的 video 嵌套进带时间属性的 scene 容器
-- timeline 注册到 `window.__timelines`
-- render timeline 中不要用 `Math.random()` 和无限循环
-- 同一元素不要混用多个动画引擎
-- render 前必须先 audit、lint、preview
-
-## 开发验证
-
-```bash
-npm run typecheck
+# 旧版 CLI 测试（TypeScript）
 npm test
 npm run build
-npm run sandbox:benchmark
-npm pack --dry-run --json
 ```
 
-`sandbox:benchmark` 会跑 create、check、brief、build、五阶段 audit、模板、Catalog、MCP SDK 和 HyperFrames lint，是当前产品级内测的核心入口。
+127/127 Plugin 测试通过，221/221 CLI 测试通过。
+
+## License
+
+MIT

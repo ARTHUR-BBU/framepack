@@ -1,57 +1,65 @@
 # Framepack Agent Guide
 
-Framepack is an agent-native **programmatic video workbench** for Codex, Claude Code, and the HyperFrames render runtime.
+Framepack serves **HyperFrames programmatic commercial video ideation and composition**.
 
-The current public workflow is:
+It is a **Hermes Agent Plugin** — a parasitic organ that lives inside the agent loop, hooks into tool calls, and proactively injects advice.
+
+The agent is the director. Framepack is the director's advisor, producer, arsenal manager, and HyperFrames quality gate.
+
+Do not treat Framepack as a one-click creative director. Treat it as a focused production system that helps the agent avoid starting from zero, manage reusable weapons, mine references, preserve useful remixes, and pass strict render checks.
+
+## Product Spine
 
 ```text
-rough idea + assets + references
-  -> Framepack workbench
-  -> human-readable brief
-  -> design tokens + asset gaps + composition plan
-  -> audit gates
-  -> HyperFrames HTML build
-  -> preview / render / iteration
+idea / assets / reference
+  -> agent-led creative direction and storyboard
+  -> Framepack Plugin hooks detect workbench file writes
+  -> hooks inject real-time feedback (LLM analysis + regex audits)
+  -> agent composes HyperFrames-safe video
+  -> Framepack validates render safety, arsenal completeness, and DNA structure
+  -> save reusable weapons, remixes, and templates
 ```
 
-Framepack is not a generative video model and does not create pixels by itself. It gives agents a disciplined production surface for organizing assets, choosing templates, writing HyperFrames-safe composition plans, building HTML, and auditing quality before preview and render.
+If a capability does not serve this spine, keep it out of the primary onboarding path. Legacy CLI commands can remain for compatibility, but the Plugin is the primary product.
 
-## Current Version Shape
+## Trigger Framepack When
 
-The repository version is `0.6.0-alpha.4`.
+Use Framepack for:
 
-The 0.6 public path is the workbench path:
+- activity/event promos, conference promos, summit videos, launch-event trailers, webinars, salons, livestream previews
+- polished product videos, SaaS launches, course promos, founder promos, data/news explainers
+- sports highlights, transfer announcements, player tributes
+- turning assets into a programmed video
+- HyperFrames composition planning or render-safety checks
+- reference-video mining, storyboard extraction, reusable template creation
+- requests such as "more premium", "more dynamic", "more business", "bigger text", "faster pacing", "more animation", or "like this reference"
+- motion direction such as Apple keynote, ScrollTrigger, FLIP, scrubbed walkthrough, bento reveal, kinetic captions, countdown, lineup reveal
 
-```bash
-npx framepack create --idea "Premium 30s launch video" --assets ./assets --output-dir ./out --project-name launch-video --format 9:16
-npx framepack workbench brief --project-dir ./out/launch-video
-npx framepack workbench audit --phase preflight --project-dir ./out/launch-video
-npx framepack workbench audit --phase design --project-dir ./out/launch-video
-npx framepack workbench audit --phase composition --project-dir ./out/launch-video
-npx framepack build --project-dir ./out/launch-video
-npx framepack preview --project-dir ./out/launch-video --open
-npx framepack workbench audit --phase preview --project-dir ./out/launch-video
-npx framepack render --project-dir ./out/launch-video --audio bgm.mp3
-npx framepack workbench audit --phase render --project-dir ./out/launch-video
+## Plugin Architecture
+
+Framepack v0.7 is a Hermes Plugin with 6 hooks and 6 skills:
+
+```text
+Hermes Agent Loop
+  └── Plugin hooks (pre_tool_call + post_tool_call)
+        ├── 🚨 pre_tool_call  → index.html (write scan)
+        ├── 📋 post_tool_call → STORYBOARD.md (LLM)
+        ├── 🎬 post_tool_call → COMPOSITION.md (LLM)
+        ├── 🔍 post_tool_call → index.html (regex)
+        ├── 🔫 post_tool_call → arsenal.json
+        └── 🧬 post_tool_call → VIDEO_DNA.md / TEMPLATE_BLUEPRINT.md
+      └── Skills (knowledge injected into LLM hooks)
+        ├── framepack-director
+        ├── framepack-template-fuser
+        ├── framepack-hyperframes-builder
+        ├── framepack-arsenal
+        ├── framepack-gsap
+        └── framepack-reference-miner
 ```
 
-Older package-protocol commands (`generate`, `status`, `validate`, `capture`, `repair`, `packs`, `atlas`, `runtime *`) remain in the codebase for compatibility and regression coverage. Do not make them the primary onboarding path unless the task explicitly concerns legacy 0.4 package workflows.
+The Plugin automatically fires when the agent writes any of the watched files. No manual `framepack` commands needed — the Plugin is always watching.
 
-Legacy package projects start from `PACKAGE_MANIFEST.json` and `HANDOFF.md`. For those historical package routes, agents may still use commands such as `npx framepack generate --thread-file examples/thread.txt --output-dir out --project-name thread-case`, `npx framepack generate --game-ad-description "A sprite-style course promo" --output-dir out --project-name game-ad-case`, `npx framepack capture --project-dir out/thread-case`, and `npx framepack sync-assets --project-dir out/thread-case`. Forge compatibility still includes backend-neutral task kinds such as `forge-character-pack`, `forge-map-pack`, and `forge-fx-pack`; `agent-sprite-forge` remains a recommended reference backend, not a hard dependency.
-
-## Agent Trigger Conditions
-
-Use Framepack when the user asks for:
-
-- a polished video, commercial video, launch video, explainer, course promo, game-style ad, data video, or social promo
-- HyperFrames or Remotion composition planning
-- turning assets into a video
-- "more premium", "more dynamic", "more business", "bigger text", "faster pacing", "more animation"
-- matching or mining a reference video
-- selecting templates, animation libraries, Catalog components, or video style systems
-- "Apple keynote motion", "ScrollTrigger", "FLIP", "scrubbed walkthrough", "bento reveal", or other GSAP-style motion direction
-
-## Required Reading Order In A Workbench
+## Required Reading In A Workbench
 
 After `framepack create`, read:
 
@@ -59,25 +67,26 @@ After `framepack create`, read:
 2. `HUMAN.md`
 3. `ASSETS.md`
 4. `ASSET_GAPS.md`
-5. `STYLE.md`
-6. `DESIGN.md`
-7. `DESIGN_TOKENS.md`
-8. `DIRECTION.md`
-9. `COMPOSITION.md`
-10. `ITERATIONS.md`
-11. `.framepack/state.json` when machine-readable state is needed
+5. `STORYBOARD.md`
+6. `.framepack/arsenal.json`
+7. `STYLE.md`
+8. `DESIGN.md`
+9. `DESIGN_TOKENS.md`
+10. `DIRECTION.md`
+11. `COMPOSITION.md`
+12. `ITERATIONS.md`
+13. `.framepack/state.json` when machine-readable state is needed
 
-Use `HUMAN.md` whenever you need to explain progress to a non-technical user.
+Use `HUMAN.md` for non-technical user updates. Use `STORYBOARD.md` and `.framepack/arsenal.json` before writing code.
 
 ## Workbench Files
-
-Current workbenches are compact:
 
 ```text
 FRAMEPACK.md
 HUMAN.md
 ASSETS.md
 ASSET_GAPS.md
+STORYBOARD.md
 STYLE.md
 DESIGN.md
 DESIGN_TOKENS.md
@@ -86,147 +95,81 @@ COMPOSITION.md
 ITERATIONS.md
 index.html
 meta.json
+VIDEO_DNA.md
+TEMPLATE_BLUEPRINT.md
+.framepack/arsenal.json
+.framepack/content-graph.json
 .framepack/state.json
 ```
 
-`index.html` and `meta.json` are part of the runtime contract. `build` must preserve composition root dimensions and timing attributes for HyperFrames.
+## Legacy CLI Commands (v0.6)
 
-## Audit Gates
+The CLI is preserved for backward compatibility. The Plugin is the primary interface.
 
-Framepack has a built-in quality-control role. Run phase audits before moving between major production stages:
-
-```bash
-npx framepack workbench audit --phase preflight --project-dir <dir>
-npx framepack workbench audit --phase design --project-dir <dir>
-npx framepack workbench audit --phase composition --project-dir <dir>
-npx framepack workbench audit --phase preview --project-dir <dir>
-npx framepack workbench audit --phase render --project-dir <dir>
-```
-
-Use `--phase all --json` for automation:
+Create and inspect:
 
 ```bash
-npx framepack workbench audit --phase all --project-dir <dir> --json
+npx framepack create --idea "Premium founder summit event promo" --assets ./assets --output-dir ./out --project-name summit --format 9:16
+npx framepack workbench brief --project-dir ./out/summit
+npx framepack workbench graph --project-dir ./out/summit
 ```
 
-If the audit returns P0/P1 blockers, stop and fix them or ask the user. Do not continue to build, preview, or render with unresolved P0/P1 blockers.
-
-The audit currently checks:
-
-- user-readable `HUMAN.md`
-- design-system and design-token presence
-- asset gaps and blocking assets
-- HITL checkpoints
-- technology/template plan
-- skill exposure and agent guidance
-- HyperFrames runtime files
-- preview/render readiness
-
-Lifecycle commands expose active guidance in JSON output. When using `--json`, always read `interventionContext` from `create`, `workbench brief/check/audit`, `build`, `preview`, `render`, `templates recommend`, `templates prompt recommend`, and `catalog recommend`. It tells you the current phase, required files, blockers, skill hints, plain-language shortcut, and next command.
-
-For 0.6 workbench projects, `build`, `preview`, and `render` run lifecycle cost gates. P0 blockers stop the command by default. Use `--force` only when the user explicitly accepts the risk; forced bypasses are recorded in `.framepack/interventions.jsonl` and summarized in `ITERATIONS.md`.
-
-Use these supervision commands during testing and feedback:
+Manage the arsenal:
 
 ```bash
-npx framepack workbench preferences --project-dir <dir>
-npx framepack workbench graph --project-dir <dir>
-npx framepack workbench friction --project-dir <dir>
-npx framepack workbench learnings --project-dir <dir>
+npx framepack arsenal list
+npx framepack arsenal recommend --idea "Premium summit event promo" --format 9:16 --type event-promo
+npx framepack arsenal add --from ./snippets/impact-pop.txt --kind motion --project-dir ./out/summit --name impact-pop
+npx framepack arsenal save --project-dir ./out/summit --name summit-remix
+npx framepack arsenal cache --project-dir ./out/summit --json
 ```
 
-`workbench graph` is the terminal director board. Run it after `build` to inspect scene timing, visible titles, template matches, assigned assets, and semantic risk flags before preview/render.
-`.framepack/preferences.json` stores project-level style field forces such as premium polish, business clarity, fast kinetic pacing, and large focal text.
-`.framepack/friction.jsonl` stores command failures, bypass signals, and audit blockers. If the same friction category appears 3 or more times, JSON output exposes it in `recurringRisks` as a P1 beta-readiness risk; stop customer handoff until it is corrected.
-
-For product-level manual testing, use `docs/agent-platform/manual-beta-test-guide-v0.6.zh-CN.md` and `docs/agent-platform/workbench-trials-v0.6.md`. The required customer-style trials before beta are SaaS launch, course promo, and data/news explainer.
-
-## Skills
-
-Framepack installs project-facing skills:
-
-- `framepack-director`
-- `framepack-template-fuser`
-- `framepack-hyperframes-builder`
-- `framepack-reference-miner`
-
-Claude Code target:
-
-```text
-.claude/skills/
-```
-
-Codex target:
-
-```text
-.framepack/agent/codex/SKILL.md
-.framepack/agent/codex/skills/
-```
-
-Use the director skill for fuzzy creative intent. Use the template-fuser skill when templates, Catalog candidates, and user assets need to become a custom `COMPOSITION.md`. Use the HyperFrames builder skill when editing code. Use the reference-miner skill when a finished/reference video should become `VIDEO_DNA.md` or `TEMPLATE_BLUEPRINT.md`.
-
-## Built-In Arsenal
-
-Framepack includes:
-
-- 6 workflow templates: `saas-launch`, `news-explainer`, `course-promo`, `game-ad`, `founder-story`, `data-shock`
-- 11 HyperFrames prompt-template blueprints
-- 20 built-in scene templates across 6 categories
-- YAML scene template contracts for best use, required content slots, visual signature, forbidden placeholders, fallback policy, license, and provenance
-- 22 design-system references
-- HyperFrames Catalog bridge
-- GSAP Motion Skill Registry with 12 internal motion recipes across Hero, Text, Product, Data, Layout, Scroll Story, FLIP, and Scrubbed Sequence
-- Polish Arsenal recommendations
-- external capability recommendations such as `agent-sprite-forge`, Three.js, D3/Chart.js, Web Audio API
-
-Useful commands:
+Mine references:
 
 ```bash
-npx framepack templates
-npx framepack templates recommend --idea "A course promo for founders" --style "premium dynamic" --format 9:16 --json
-npx framepack templates prompt
-npx framepack templates prompt recommend --idea "A TikTok founder video with karaoke captions" --style "big text fast social" --format 9:16 --json
-npx framepack scene-templates list
-npx framepack scene-templates recommend --category name-reveal
-npx framepack scene-templates registries
-npx framepack scene-templates search --registry hyperframes-blocks
-npx framepack catalog
-npx framepack catalog recommend --template course-promo --idea "premium founder course promo" --style "business dynamic" --format 9:16 --json
+npx framepack reference mine --project-dir ./out/summit --video ./reference.mp4
 ```
 
-External tools are recommendations. Framepack should not silently install third-party forge tools or animation libraries unless a future command explicitly implements that behavior.
-
-GSAP Motion Skills are internal registry items, not separate agent skills. Agents should read the selected motion skills from `COMPOSITION.md`, recommendation JSON, and `.framepack/state.json`, then let `framepack build` convert them into HyperFrames-safe GSAP timelines. ScrollTrigger/FLIP/scrubbed ideas must be render-safe unless the user explicitly wants an interactive web page.
-
-## MCP
-
-Describe the MCP surface:
+Audit and render:
 
 ```bash
-npx framepack mcp --describe
+npx framepack workbench audit --phase preflight --project-dir ./out/summit
+npx framepack workbench audit --phase composition --project-dir ./out/summit
+npx framepack build --project-dir ./out/summit
+npx framepack preview --project-dir ./out/summit --open
+npx framepack workbench audit --phase preview --project-dir ./out/summit
+npx framepack render --project-dir ./out/summit --audio bgm.mp3
+npx framepack workbench audit --phase render --project-dir ./out/summit
 ```
 
-Current knowledge tools:
+Stop on unresolved P0/P1 blockers. Use `--force` only when the user explicitly accepts the risk; forced bypasses are recorded.
 
-- `querySceneTemplate`
-- `recommendAnimation`
-- `getComponentCode`
+## Arsenal Rules
 
-The MCP surface still exposes legacy package automation tools for compatibility. Treat MCP as an agent-facing knowledge and automation surface, not a replacement for the user-facing workbench workflow.
+- Built-in weapons are references, not final creative decisions.
+- Project-local weapons belong in `.framepack/arsenal.json`.
+- Trusted downloaded resources belong in `.framepack/arsenal-cache/manifest.json`.
+- Search results are candidates first, not automatic downloads.
+- Useful new combinations should be saved with `framepack arsenal save`.
+- Finished or reference videos should become `VIDEO_DNA.md` and `TEMPLATE_BLUEPRINT.md` when they can teach future projects.
 
-## Agent Harness Model
+## Reference Mining Rules
 
-Framepack is a video production Agent Harness layered on top of Codex or Claude Code. In the current 0.6 workbench shape:
+`framepack reference mine` should produce reusable knowledge:
 
-- Sense filter: `FRAMEPACK.md`, `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `STYLE.md`, `DESIGN.md`, and `DESIGN_TOKENS.md` expose what the user wants, what assets exist, and what constraints matter.
-- Motor pathways: CLI, MCP tools, generated skills, templates, Catalog bridge, build, preview, render, and audit commands turn agent decisions into production actions.
-- Reflexes: workbench checks, phase audits, HyperFrames lint rules, runtime file checks, and sandbox benchmarks catch drift before it reaches the user.
-- Memory encoding: durable Markdown files and `.framepack/state.json` preserve creative intent, decisions, assets, gaps, iterations, and runtime evidence.
-- Feedback loop: `HUMAN.md`, `ITERATIONS.md`, phase audit output, preview evidence, and user corrections keep each round grounded in visible progress.
+- rhythm
+- scene roles
+- visual grammar
+- motion grammar
+- asset requirements
+- reusable slots
+- HyperFrames constraints
+
+Do not copy references blindly. Extract reusable structure.
 
 ## HyperFrames Rules
 
-When building or editing generated HTML:
+When building or editing HTML:
 
 - keep the first scene visible in CSS
 - preserve `data-width`, `data-height`, and `data-start`
@@ -235,14 +178,27 @@ When building or editing generated HTML:
 - switch scenes with `tl.set()`
 - do not put timed `<video>` elements inside timed scene containers
 - avoid `Math.random()` and `repeat: -1` in render timelines
-- convert ScrollTrigger, FLIP, and scrubbed interaction intent into deterministic timeline beats for video render
+- convert ScrollTrigger, FLIP, and scrubbed interaction intent into deterministic timeline beats
 - avoid missing `compositions/blocks/*.html` references unless the block files exist
+
+## Skills
+
+Framepack installs these project-facing skills:
+
+- `framepack-director`: fuzzy intent into creative direction and storyboard language
+- `framepack-template-fuser`: assets + templates + arsenal into `COMPOSITION.md`
+- `framepack-hyperframes-builder`: HyperFrames-safe code and render checks
+- `framepack-reference-miner`: reference or finished video into DNA and blueprint
 
 ## Development Verification
 
 Before claiming a product change is complete:
 
 ```bash
+# Plugin
+cd framepack-plugin && python -m pytest tests/ -q
+
+# Legacy CLI
 npm run typecheck
 npm test
 npm run build
@@ -250,19 +206,16 @@ npm run sandbox:benchmark
 npm pack --dry-run --json
 ```
 
-`sandbox:benchmark` is the product-level internal test. It checks create, workbench check, brief, build, five phase audits, template/Catalog recommendations, MCP SDK, and HyperFrames lint.
-
-## Historical References
-
-Older 0.4 package-protocol evidence remains useful for archaeology and regression context, but it is not the current onboarding path. Examples include `docs/agent-platform/real-user-trial-v0.4.0-alpha.3.md`, `docs/agent-platform/real-user-trial-v0.4.0-beta.1.md`, `docs/agent-platform/beta-readiness-v0.4.md`, `docs/agent-platform/beta-feedback-loop-v0.4.md`, `docs/agent-platform/v0.4-beta-product-state-cutoff.md`, `docs/agent-platform/beta-patch-radar-v0.4.md`, `docs/agent-platform/manual-beta-test-guide-v0.4.zh-CN.md`, `docs/agent-platform/beta-onboarding-trials-v0.4.md`, `docs/agent-platform/hyperframes-compat-v0.4.md`, `docs/agent-platform/release-candidate-v0.4.0-beta.1.md`, `docs/agent-platform/release-candidate-v0.4.0-beta.2.md`, `framepack@beta`, and `docs/architecture/package-protocol-v1.md`.
+Keep `CHANGELOG.md` aligned with the current test count and release evidence.
 
 ## Editing Rules
 
 - Keep README, `docs/README.zh-CN.md`, AGENTS, agent templates, and package metadata aligned when changing public workflow.
-- Keep `CHANGELOG.md` aligned with the current test count and release evidence.
+- Prefer focused, reusable arsenal structures over broad legacy workflow expansion.
+- Cut or downgrade capabilities that conflict with the agent-as-director positioning.
 - Use `apply_patch` for manual edits.
 - Do not revert user changes.
-- Keep code and docs lean; avoid reintroducing the heavy legacy package mental model into new onboarding docs.
+- Keep code and docs lean in structure, even when the arsenal grows.
 
 <!-- FRAMEPACK MANAGED BLOCK START -->
 ## Framepack Agent Workflow

@@ -29,6 +29,10 @@ import {
   recommendGsapMotionSkills,
   type GsapMotionRecommendation,
 } from "./gsap-motion-skills.js";
+import {
+  createProjectArsenalManifest,
+  type ProjectArsenalManifest,
+} from "./arsenal.js";
 export {
   buildWorkbenchInterventionContext,
   type WorkbenchInterventionCommand,
@@ -194,12 +198,16 @@ function createDirectorTranslation(input: {
   premium: boolean;
 }): DirectorTranslation {
   const narrativePatterns: Record<TemplateRouteId, string> = {
+    "event-promo": "hook-value-lineup-energy-countdown-cta",
     "saas-launch": "hook-product-proof-cta",
     "news-explainer": "headline-context-implication",
     "course-promo": "promise-path-proof-cta",
     "game-ad": "action-progression-reward",
     "founder-story": "tension-origin-conviction",
     "data-shock": "number-context-action",
+    "sports-highlight": "identity-action-proof-payoff",
+    "transfer-announcement": "tease-identity-new-home-reveal",
+    "player-tribute": "legacy-moments-gratitude",
   };
 
   return {
@@ -335,6 +343,58 @@ function createHumanDigest(input: {
       "HyperFrames/Remotion are the production targets; Framepack is the planning and agentic workflow layer.",
     ],
   };
+}
+
+function createStoryboardMarkdown(input: {
+  idea: string;
+  format: "16:9" | "9:16";
+  durationSec: number;
+  recommendation: PolishArsenalRecommendation;
+  projectArsenal: ProjectArsenalManifest;
+}): string {
+  const template = input.recommendation.template;
+  const arsenalNames = input.projectArsenal.items.slice(0, 5).map((item) => item.name);
+  const eventShape = template.id === "event-promo"
+    ? [
+        "Hook: name the event promise in one strong line.",
+        "Value: explain why this event matters now.",
+        "Lineup/agenda: show speakers, topics, venue, or proof.",
+        "Energy: create the feeling of a live room or countdown.",
+        "CTA: hold the date, place, and registration action long enough to read.",
+      ]
+    : [
+        "Hook: make the viewer understand the subject immediately.",
+        "Path: show the idea, product, person, or proof moving forward.",
+        "Proof: use assets and concise captions to make the claim believable.",
+        "Payoff: close with a memorable line or next action.",
+      ];
+
+  return [
+    "# Storyboard",
+    "",
+    "Agent is the director. Framepack is the director's advisor, producer, arsenal manager, and HyperFrames quality gate.",
+    "",
+    `Idea: ${input.idea}`,
+    `Route: ${template.id} (${template.label})`,
+    `Format: ${input.format}`,
+    `Duration: ${input.durationSec} seconds`,
+    "",
+    "## Creative Spine",
+    "",
+    ...eventShape.map((beat, index) => `${index + 1}. ${beat}`),
+    "",
+    "## Arsenal To Consider",
+    "",
+    ...(arsenalNames.length > 0 ? arsenalNames.map((name) => `- ${name}`) : ["- Inspect `.framepack/arsenal.json` before inventing from zero."]),
+    "",
+    "## Agent Notes",
+    "",
+    "- Use this as a human-readable storyboard, not a locked script.",
+    "- Remix templates, motion recipes, and libraries when the user's goal calls for it.",
+    "- Save useful new combinations with `framepack arsenal save` so the project can teach the next one.",
+    "- Final code must obey the HyperFrames safety checklist in `COMPOSITION.md`.",
+    "",
+  ].join("\n");
 }
 
 export function recommendPolishArsenal(input: {
@@ -798,6 +858,22 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
     }),
     validateContains({
       files,
+      file: "STORYBOARD.md",
+      pattern: /Agent is the director|Storyboard/i,
+      id: "agent-led-storyboard",
+      summary: "STORYBOARD.md frames the agent-led creative spine.",
+      finding: "STORYBOARD.md is missing the agent-led creative spine.",
+    }),
+    validateContains({
+      files,
+      file: ".framepack/arsenal.json",
+      pattern: /framepack\.arsenal-project\.v1/,
+      id: "project-arsenal",
+      summary: ".framepack/arsenal.json records reusable weapons and remixes.",
+      finding: ".framepack/arsenal.json is missing the project arsenal manifest.",
+    }),
+    validateContains({
+      files,
       file: "COMPOSITION.md",
       pattern: /GSAP Motion Skills/,
       id: "gsap-motion-plan",
@@ -827,7 +903,7 @@ export function validateWorkbenchFiles(files: Record<string, string>): Workbench
 
 export function validateWorkbenchProject(projectDir: string): WorkbenchQaReport {
   const files = Object.fromEntries(
-    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", "DESIGN.md", "DESIGN_TOKENS.md", ".framepack/state.json"]
+    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "STORYBOARD.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", "DESIGN.md", "DESIGN_TOKENS.md", ".framepack/arsenal.json", ".framepack/state.json"]
       .map((filePath) => [
         filePath,
         existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
@@ -908,6 +984,28 @@ export function auditWorkbenchFiles(files: Record<string, string>, phase: Workbe
     }),
     auditContains({
       files,
+      file: "STORYBOARD.md",
+      pattern: /Agent is the director|Creative Spine|Reference-derived storyboard/i,
+      id: "agent-led-storyboard-audit",
+      phases: ["preflight", "composition"],
+      priority: "P1",
+      summary: "STORYBOARD.md gives the agent a creative spine before code.",
+      finding: "STORYBOARD.md is missing or does not clarify the agent-led creative spine.",
+      correction: "Create or repair STORYBOARD.md before writing HyperFrames code.",
+    }),
+    auditContains({
+      files,
+      file: ".framepack/arsenal.json",
+      pattern: /framepack\.arsenal-project\.v1[\s\S]*"items"/,
+      id: "arsenal-management-audit",
+      phases: ["preflight", "composition", "preview"],
+      priority: "P1",
+      summary: ".framepack/arsenal.json tracks weapons, candidates, downloads, and remixes.",
+      finding: ".framepack/arsenal.json is missing the reusable weapon management layer.",
+      correction: "Run framepack create or framepack arsenal commands to restore the project arsenal manifest.",
+    }),
+    auditContains({
+      files,
       file: "COMPOSITION.md",
       pattern: /Catalog Pre-Flight[\s\S]*(npx hyperframes add|Recommended prefabs|Fallback)/,
       id: "technology-install-plan",
@@ -980,7 +1078,7 @@ export function auditWorkbenchFiles(files: Record<string, string>, phase: Workbe
 
 export function auditWorkbenchProject(projectDir: string, phase: WorkbenchAuditPhase = "all"): WorkbenchAuditReport {
   const files = Object.fromEntries(
-    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", "DESIGN.md", "DESIGN_TOKENS.md", "index.html", "meta.json", ".framepack/state.json"]
+    ["FRAMEPACK.md", "ASSETS.md", "ASSET_GAPS.md", "STORYBOARD.md", "HUMAN.md", "STYLE.md", "DIRECTION.md", "COMPOSITION.md", "ITERATIONS.md", "DESIGN.md", "DESIGN_TOKENS.md", "index.html", "meta.json", ".framepack/arsenal.json", ".framepack/state.json"]
       .map((filePath) => [
         filePath,
         existsSync(join(projectDir, filePath)) ? readFileSync(join(projectDir, filePath), "utf8") : "",
@@ -1903,6 +2001,12 @@ function buildFiles(input: {
     hitlLoop,
     tuningParameters,
   });
+  const projectArsenal = createProjectArsenalManifest({
+    projectName: input.projectName,
+    idea: input.idea,
+    format: input.format,
+    type: recommendation.template.id === "event-promo" ? "event-promo" : undefined,
+  });
   const humanDigestMarkdown = formatHumanDigest(humanDigest);
   const capabilityRecs = buildCapabilityRecommendations(input.idea, input.style, recommendation.template.id);
   const recommendedStack = [
@@ -1936,13 +2040,14 @@ function buildFiles(input: {
       "",
       "## Agent Workflow",
       "",
-      "1. Read `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `DESIGN.md`, `DESIGN_TOKENS.md`, `STYLE.md`, `DIRECTION.md`, and `COMPOSITION.md` before writing code.",
+      "1. Read `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `STORYBOARD.md`, `DESIGN.md`, `DESIGN_TOKENS.md`, `STYLE.md`, `DIRECTION.md`, `COMPOSITION.md`, and `.framepack/arsenal.json` before writing code.",
       "2. Discuss unclear creative choices with the user in natural language.",
-      "3. Use Framepack recommendations as a production brief, not as rigid rails.",
-      "4. Build or refine the HyperFrames composition.",
-      "5. Preview before render: `npx hyperframes preview --port 3002`, let the user confirm, then `npx hyperframes render`.",
-      "6. Record each render/review loop in `ITERATIONS.md`.",
-      "7. Use the HITL loop before committing to a composition direction when the user's taste is fuzzy.",
+      "3. Treat Framepack as director advisor, producer, arsenal manager, and HyperFrames quality gate; the agent remains the director.",
+      "4. Use Framepack recommendations as reusable weapons and references, not rigid rails.",
+      "5. Build or refine the HyperFrames composition.",
+      "6. Preview before render: `npx hyperframes preview --port 3002`, let the user confirm, then `npx hyperframes render`.",
+      "7. Record each render/review loop and reusable remixes in `ITERATIONS.md`.",
+      "8. Use the HITL loop before committing to a composition direction when the user's taste is fuzzy.",
       "",
       "## Current Agentic Loop",
       "",
@@ -1966,6 +2071,13 @@ function buildFiles(input: {
       assetList,
       "",
     ].join("\n"),
+    "STORYBOARD.md": createStoryboardMarkdown({
+      idea: input.idea,
+      format: input.format,
+      durationSec: input.durationSec,
+      recommendation,
+      projectArsenal,
+    }),
     "HUMAN.md": humanDigestMarkdown,
     "STYLE.md": [
       "# Style Direction",
@@ -2199,12 +2311,14 @@ function buildFiles(input: {
           human: "HUMAN.md",
           assets: "ASSETS.md",
           assetGaps: "ASSET_GAPS.md",
+          storyboard: "STORYBOARD.md",
           design: "DESIGN.md",
           designTokens: "DESIGN_TOKENS.md",
           style: "STYLE.md",
           direction: "DIRECTION.md",
           composition: "COMPOSITION.md",
           iterations: "ITERATIONS.md",
+          arsenal: ".framepack/arsenal.json",
         },
         directorTranslation: recommendation.directorTranslation,
         catalogRecommendation: recommendation.catalogRecommendation,
@@ -2217,6 +2331,7 @@ function buildFiles(input: {
       null,
       2,
     ),
+    ".framepack/arsenal.json": JSON.stringify(projectArsenal, null, 2),
     "meta.json": JSON.stringify({
       rootEntry: "index.html",
       compositionDirectory: ".",

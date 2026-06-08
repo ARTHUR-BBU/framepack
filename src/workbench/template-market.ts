@@ -1,10 +1,14 @@
 export type TemplateRouteId =
+  | "event-promo"
   | "saas-launch"
   | "news-explainer"
   | "course-promo"
   | "game-ad"
   | "founder-story"
-  | "data-shock";
+  | "data-shock"
+  | "sports-highlight"
+  | "transfer-announcement"
+  | "player-tribute";
 
 export interface TemplateMarketItem {
   id: TemplateRouteId;
@@ -31,6 +35,23 @@ export interface TemplateRouteRecommendation {
 }
 
 const TEMPLATE_MARKET: TemplateMarketItem[] = [
+  {
+    id: "event-promo",
+    label: "Event Promo",
+    kind: "workflow-template",
+    access: "built-in",
+    license: "included",
+    priceCents: null,
+    contributionModel: "github-pr-reviewed",
+    tags: ["event", "promo", "conference", "summit", "webinar", "launch-event", "活动", "宣传片"],
+    match: ["event", "conference", "summit", "webinar", "expo", "agenda", "speaker", "venue", "countdown", "活动", "发布会", "峰会", "展会", "沙龙", "直播"],
+    visualLanguage: ["high-energy venue atmosphere", "speaker and agenda hierarchy", "countdown-led urgency"],
+    motionLanguage: ["speaker lineup reveal", "agenda beat cards", "countdown pulse"],
+    templateGuidance: ["open with the event promise", "prove the audience value", "show speakers or agenda", "build live energy", "close with date and CTA"],
+    acceptanceCriteria: ["event name and date are readable early", "CTA has a final readable hold", "agenda/speaker proof is not buried"],
+    implementationRoutes: ["hyperframes", "remotion"],
+    assetNeeds: ["event name", "date and venue", "speaker/agenda proof", "CTA"],
+  },
   {
     id: "saas-launch",
     label: "SaaS Launch",
@@ -132,6 +153,57 @@ const TEMPLATE_MARKET: TemplateMarketItem[] = [
     acceptanceCriteria: ["key number is legible instantly", "chart motion supports the argument"],
     implementationRoutes: ["hyperframes", "remotion"],
     assetNeeds: ["headline metric", "comparison point", "source or proof"],
+  },
+  {
+    id: "sports-highlight",
+    label: "Sports Highlight",
+    kind: "workflow-template",
+    access: "built-in",
+    license: "included",
+    priceCents: null,
+    contributionModel: "github-pr-reviewed",
+    tags: ["sports", "highlight", "athlete", "team", "hype"],
+    match: ["sports", "football", "soccer", "player", "athlete", "team", "match", "highlight", "keeper", "goalkeeper"],
+    visualLanguage: ["stadium contrast", "athlete-first framing", "bold short captions"],
+    motionLanguage: ["impact cuts", "stat slams", "footage-driven rhythm"],
+    templateGuidance: ["open on the athlete identity", "cut through action proof", "land a signature moment"],
+    acceptanceCriteria: ["athlete identity is clear", "footage carries the rhythm"],
+    implementationRoutes: ["hyperframes"],
+    assetNeeds: ["player footage", "portrait or team image", "stat/proof line"],
+  },
+  {
+    id: "transfer-announcement",
+    label: "Transfer Announcement",
+    kind: "workflow-template",
+    access: "built-in",
+    license: "included",
+    priceCents: null,
+    contributionModel: "github-pr-reviewed",
+    tags: ["sports", "transfer", "announcement", "club", "player"],
+    match: ["transfer", "announcement", "joins", "signing", "club", "manchester", "united", "city"],
+    visualLanguage: ["dramatic reveal", "club-color restraint", "headline-led suspense"],
+    motionLanguage: ["dark build", "glitch tease", "name reveal"],
+    templateGuidance: ["tease the move", "prove the player identity", "reveal the new home"],
+    acceptanceCriteria: ["new club reveal lands clearly", "copy feels like announcement language, not keywords"],
+    implementationRoutes: ["hyperframes"],
+    assetNeeds: ["player name", "club identity", "reveal line"],
+  },
+  {
+    id: "player-tribute",
+    label: "Player Tribute",
+    kind: "workflow-template",
+    access: "built-in",
+    license: "included",
+    priceCents: null,
+    contributionModel: "github-pr-reviewed",
+    tags: ["sports", "tribute", "legacy", "player", "career"],
+    match: ["tribute", "legacy", "career", "thank you", "legend", "player"],
+    visualLanguage: ["cinematic memory", "emotional captions", "slow proof montage"],
+    motionLanguage: ["photo parallax", "quote reveals", "soft dissolves"],
+    templateGuidance: ["start with legacy", "show moments", "close with gratitude or next chapter"],
+    acceptanceCriteria: ["emotional arc is readable", "ending feels intentional"],
+    implementationRoutes: ["hyperframes"],
+    assetNeeds: ["career moments", "quote", "closing message"],
   },
 ];
 

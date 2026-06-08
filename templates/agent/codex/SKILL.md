@@ -1,53 +1,97 @@
 ---
 name: framepack
-description: Use Framepack when a user wants a polished HyperFrames or Remotion video from vague creative intent, assets, references, or prompt/composition work.
+description: Use Framepack when a user wants an agent-led HyperFrames video, event promo, asset-to-video workflow, reference-video mining, reusable video template, or fuzzy video polish direction.
 ---
 
 # Framepack Codex Skill
 
-Use Framepack when the user asks for video creative work, asset-to-video planning, HyperFrames or Remotion composition, more polish, more motion, a business-looking video, a game-style ad, or a result inspired by a reference. Also use it when the user asks for Apple keynote motion, ScrollTrigger-style storytelling, FLIP layout morphs, scrubbed walkthroughs, bento reveals, big kinetic text, or other GSAP-style motion direction.
+Framepack serves HyperFrames programmatic commercial video ideation and composition.
 
-Project skills are also installed under `.framepack/agent/codex/skills` for director work, template fusion, HyperFrames building, and reference mining.
+It is a commercial video arsenal for HyperFrames agents.
 
-## Workflow
+The agent is the director. Framepack is the director's advisor, producer, arsenal manager, and HyperFrames quality gate.
 
-1. Inspect `framepack mcp --describe` when MCP is not connected.
-2. Create a workbench with `framepack create --idea "<idea>" --assets <dir> --output-dir <dir>`.
-3. Read `FRAMEPACK.md`, `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `STYLE.md`, `DESIGN.md`, `DESIGN_TOKENS.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md`.
-4. Run `framepack workbench audit --phase preflight --project-dir <dir>` before implementation work.
-5. Translate fuzzy user language into concrete visual language, motion language, template route, tuning parameters, and HyperFrames/Remotion implementation choices.
-6. Read the selected GSAP Motion Skills in `COMPOSITION.md` or recommendation JSON. They are internal Framepack motion recipes, not separate agent skills.
-7. Use `framepack workbench brief --project-dir <dir>` whenever the user needs a plain-language progress recap.
-8. Use the HITL loop in `HUMAN.md`, `DIRECTION.md`, and `ITERATIONS.md`: ask the user to choose or modify the proposal before locking the first composition when taste is fuzzy.
-9. Run `framepack workbench audit --phase design --project-dir <dir>` after design/token work.
-10. Run `framepack workbench audit --phase composition --project-dir <dir>` before `framepack build`.
-11. Build with `framepack build --project-dir <dir>`.
-12. Run `framepack workbench graph --project-dir <dir>` after build to inspect the director board: scenes, template choices, assigned assets, and semantic risks.
-13. Preview with `framepack preview --project-dir <dir> --open`, then run `framepack workbench audit --phase preview --project-dir <dir>`.
-14. Render only after P0/P1 blockers are clear, then run `framepack workbench audit --phase render --project-dir <dir>`.
-15. When a Framepack command supports `--json`, read `interventionContext` before deciding the next action.
-16. Use `framepack workbench preferences/friction/learnings --project-dir <dir>` to explain stored taste signals, blockers, force bypasses, recurring P1 risks, and test learnings.
-17. Keep state in workbench files, not model memory.
-18. Use HyperFrames-safe rules: CSS first frame visible, scene switches with `tl.set()`, no timed video inside timed scene containers, one animation engine per element, timeline registration on `window.__timelines`, and render-safe timeline beats for ScrollTrigger/FLIP/scrubbed motion intent.
+Use it for event promos, product launches, SaaS videos, course promos, data/news explainers, sports highlights, transfer announcements, player tributes, reference mining, and requests like more premium, faster, more dynamic, bigger text, more animation, or like this reference.
 
-Stop on P0/P1 audit blockers. `build`, `preview`, and `render` can block on P0 issues; use `--force` only when the user explicitly accepts the risk, because Framepack records that bypass in `.framepack/interventions.jsonl` and `ITERATIONS.md`.
+## Principle
 
-If `workbench friction --json` or `workbench learnings --json` returns `recurringRisks`, treat those as active production risks. Three repeated events in one category are enough to block beta/customer handoff until the correction is recorded.
+Framepack should not replace agent creativity. It should expose reusable weapons, preserve project memory, help mine references, and enforce render safety.
 
-## Playbooks
+## Start
 
-### framepack-director
+```bash
+framepack create --idea "<idea>" --assets <dir> --output-dir <dir>
+framepack arsenal recommend --idea "<idea>" --format <16:9|9:16> --type event-promo
+```
 
-Use when the user gives fuzzy taste words, a rough idea, or a reference. Translate the request into audience, story structure, visual language, motion language, template route, risks, and acceptance criteria. Explain the current choice in `HUMAN.md` before locking a direction.
+If MCP is unavailable, inspect:
 
-### framepack-template-fuser
+```bash
+framepack mcp --describe
+```
 
-Use when a template, user assets, and user requirements must become a custom video plan. Treat templates as director blueprints, not finished videos. Keep user assets and intent as source of truth, then write the adapted scene rhythm, Catalog candidates, copy roles, and acceptance criteria into `COMPOSITION.md`.
+## Read Before Code
 
-### framepack-hyperframes-builder
+1. `FRAMEPACK.md`
+2. `HUMAN.md`
+3. `ASSETS.md`
+4. `ASSET_GAPS.md`
+5. `STORYBOARD.md`
+6. `.framepack/arsenal.json`
+7. `STYLE.md`
+8. `DESIGN.md`
+9. `DESIGN_TOKENS.md`
+10. `DIRECTION.md`
+11. `COMPOSITION.md`
+12. `ITERATIONS.md`
 
-Use when turning `COMPOSITION.md` into HyperFrames code. Keep the first frame visible, switch scenes with `tl.set()`, register timelines on `window.__timelines`, avoid multiple animation engines on one element, then run lint, inspect, and snapshot checks before final render.
+## Arsenal Lifecycle
 
-### framepack-reference-miner
+```bash
+framepack arsenal list
+framepack arsenal recommend --idea "<idea>" --format 9:16 --type event-promo
+framepack arsenal add --from <path> --kind <template|motion|library|reference> --project-dir <dir> --name <name>
+framepack arsenal save --project-dir <dir> --name <name>
+framepack arsenal cache --project-dir <dir> --json
+```
 
-Use when the user provides a finished video, reference video, or wants to turn a result into a reusable template. Extract the structure into `VIDEO_DNA.md`, convert reusable production rules into `TEMPLATE_BLUEPRINT.md`, then update `DIRECTION.md` and `COMPOSITION.md` from that blueprint.
+Use `.framepack/arsenal.json` as the project memory for weapons, downloads, candidates, and remixes.
+
+## Reference Mining
+
+```bash
+framepack reference mine --project-dir <dir> --video <file>
+```
+
+Use it to produce `VIDEO_DNA.md`, `STORYBOARD.md`, and `TEMPLATE_BLUEPRINT.md`. Extract reusable rhythm and structure; do not blindly copy.
+
+## Build And Audit
+
+```bash
+framepack workbench audit --phase preflight --project-dir <dir>
+framepack workbench audit --phase composition --project-dir <dir>
+framepack build --project-dir <dir>
+framepack workbench graph --project-dir <dir>
+framepack preview --project-dir <dir> --open
+framepack workbench audit --phase preview --project-dir <dir>
+framepack render --project-dir <dir>
+framepack workbench audit --phase render --project-dir <dir>
+```
+
+Stop on P0/P1 blockers unless the user explicitly accepts the risk.
+
+## HyperFrames Rules
+
+- first scene visible in CSS
+- scene switches with `tl.set()`
+- timeline registered on `window.__timelines`
+- no timed video inside timed scene containers
+- no `Math.random()` or `repeat: -1` in render timelines
+- convert ScrollTrigger, FLIP, and scrubbed ideas into deterministic timeline beats
+
+## Project Skills
+
+- `framepack-director`: fuzzy intent into storyboard and direction
+- `framepack-template-fuser`: assets + templates + arsenal into `COMPOSITION.md`
+- `framepack-hyperframes-builder`: HyperFrames-safe code
+- `framepack-reference-miner`: reference video into reusable DNA and blueprint

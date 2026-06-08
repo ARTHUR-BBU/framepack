@@ -2562,7 +2562,7 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "document the reborn HyperFrames workbench in the README",
+    name: "document the focused agent arsenal positioning in the README",
     run: () => {
       const readme = readFileSync(readmePath, "utf8");
       const chineseReadme = readFileSync(chineseReadmePath, "utf8");
@@ -2572,20 +2572,24 @@ Framepack compiles content into executable video projects.
         "utf8",
       );
 
-      assert.match(readme, /programmatic video workbench/);
-      assert.match(readme, /Programmatic Video vs Generative Video/);
-      assert.match(readme, /outsider language into a professional video plan/);
+      assert.match(readme, /HyperFrames programmatic commercial video ideation and composition/);
+      assert.match(readme, /面向 HyperFrames 程式化商业视频创意与编排/);
+      assert.match(readme, /director's advisor, producer, arsenal manager, and HyperFrames quality gate/);
+      assert.match(readme, /What Framepack Manages/);
       assert.match(readme, /framepack create --idea/);
+      assert.match(readme, /framepack arsenal recommend/);
+      assert.match(readme, /framepack reference mine/);
       assert.match(readme, /ASSETS\.md/);
+      assert.match(readme, /STORYBOARD\.md/);
       assert.match(readme, /COMPOSITION\.md/);
-      assert.match(readme, /postinstall hook/);
-      assert.match(readme, /Polish Arsenal/);
-      assert.match(chineseReadme, /\u7a0b\u5f0f\u5316\u89c6\u9891/);
+      assert.match(readme, /arsenal -> storyboard -> HyperFrames-safe execution -> audit -> reuse/);
+      assert.doesNotMatch(readme, /Programmatic Video vs Generative Video/);
+      assert.match(chineseReadme, /\u89c6\u9891\u521b\u610f\u6b66\u5668\u5e93/);
       assert.match(chineseReadme, /framepack create --idea/);
-      assert.match(chineseReadme, /\u4e09\u5c42\u673a\u5236/);
-      assert.match(chineseReadme, /\u5185\u7f6e\u6a21\u677f registry/);
-      assert.match(chineseReadme, /interventionContext/);
-      assert.match(chineseReadme, /\.framepack\/friction\.jsonl/);
+      assert.match(chineseReadme, /\u6b66\u5668\u5e93/);
+      assert.match(chineseReadme, /Framepack \u4e0d\u505a\u5bfc\u6f14/);
+      assert.match(chineseReadme, /VIDEO_DNA\.md/);
+      assert.match(chineseReadme, /\.framepack\/arsenal\.json/);
       assert.doesNotMatch(chineseReadme, /鍐|涓|鏄|绋|�/);
       assert.match(roadmap, /Framepack 内部生命周期钩子层/);
       assert.doesNotMatch(roadmap, /鍐|涓|鏄|绋|�/);
@@ -2603,10 +2607,12 @@ Framepack compiles content into executable video projects.
       assert.equal(packageJson.name, "framepack");
       assert.equal(packageJson.version, "0.6.0-alpha.4");
       assert.equal(packageJson.private, false);
-      assert.match(packageJson.readme, /programmatic video workbench/);
+      assert.match(packageJson.readme, /HyperFrames programmatic commercial video ideation and composition/);
+      assert.match(packageJson.readme, /面向 HyperFrames 程式化商业视频创意与编排/);
       assert.match(packageJson.readme, /\u4e2d\u6587/);
-      assert.match(packageJson.readme, /workbench brief/);
-      assert.match(packageJson.readme, /active intervention|主动介入/);
+      assert.match(packageJson.readme, /arsenal recommend/);
+      assert.match(packageJson.readme, /reference mine/);
+      assert.match(packageJson.readme, /quality gate|质检门禁/);
       assert.doesNotMatch(packageJson.readme, /鍐|涓|鏄|绋|�/);
       assert.equal(packageJson.bin.framepack, "dist/cli.js");
       assert.ok(cliEntrypoint.startsWith("#!/usr/bin/env node"));
@@ -2702,6 +2708,10 @@ Framepack compiles content into executable video projects.
         assert.match(project.files["COMPOSITION.md"], /HyperFrames Prompt Template/);
         assert.match(project.files["COMPOSITION.md"], /Template Fusion Plan/);
         assert.match(project.files["COMPOSITION.md"], /45-second/);
+        assert.match(project.files["STORYBOARD.md"], /Storyboard/);
+        assert.match(project.files["STORYBOARD.md"], /Agent is the director/);
+        assert.match(project.files[".framepack/arsenal.json"], /framepack\.arsenal-project\.v1/);
+        assert.match(project.files[".framepack/arsenal.json"], /agent-video-launch/);
         assert.match(project.files["HUMAN.md"], /Recommended HyperFrames prompt template/);
         assert.match(project.files["ITERATIONS.md"], /Initial creative package/);
         assert.match(project.files["ITERATIONS.md"], /Human Review Notes/);
@@ -2718,6 +2728,155 @@ Framepack compiles content into executable video projects.
           false,
           "Created timed videos must not be nested inside timed scene elements",
         );
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "recommend event promo arsenal items without making creative decisions",
+    run: async () => {
+      const stdout = [];
+      const stderr = [];
+      const exitCode = await runCli(
+        [
+          "arsenal",
+          "recommend",
+          "--idea",
+          "A premium summit event promo with speakers, agenda, venue energy, countdown, and CTA.",
+          "--format",
+          "9:16",
+          "--type",
+          "event-promo",
+          "--json",
+        ],
+        {
+          stdout: (message) => stdout.push(message),
+          stderr: (message) => stderr.push(message),
+        },
+      );
+      const payload = JSON.parse(stdout.join("\n"));
+
+      assert.equal(exitCode, 0);
+      assert.deepEqual(stderr, []);
+      assert.equal(payload.type, "event-promo");
+      assert.ok(payload.items.some((item) => item.id === "workflow.event-promo"));
+      assert.ok(payload.items.some((item) => item.kind === "motion"));
+      assert.ok(payload.items.some((item) => item.kind === "library" && item.source.trusted === true));
+      assert.match(payload.agentBoundary, /Agent is the director/);
+      assert.doesNotMatch(JSON.stringify(payload), /autoSelectedFinalTemplate/);
+    },
+  },
+  {
+    name: "manage project and global arsenal cache through CLI",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-arsenal-cli-"));
+      const assetDir = join(tempRoot, "assets");
+
+      try {
+        mkdirSync(assetDir, { recursive: true });
+        writeFileSync(join(assetDir, "hero.mp4"), "mp4", "utf8");
+
+        createWorkbenchProject({
+          projectName: "summit-promo",
+          idea: "A premium AI summit event promo for founders.",
+          assetDir,
+          outputDir: tempRoot,
+          style: "cinematic event promo with keynote energy",
+          durationSec: 30,
+          format: "9:16",
+        });
+
+        const projectDir = join(tempRoot, "summit-promo");
+        const sourcePath = join(tempRoot, "impact-pop.txt");
+        writeFileSync(sourcePath, "gsap impact pop snippet", "utf8");
+
+        const addStdout = [];
+        const addExitCode = await runCli(
+          ["arsenal", "add", "--from", sourcePath, "--kind", "motion", "--project-dir", projectDir, "--name", "impact-pop"],
+          {
+            stdout: (message) => addStdout.push(message),
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+        const saveStdout = [];
+        const saveExitCode = await runCli(
+          ["arsenal", "save", "--project-dir", projectDir, "--name", "summit-event-remix"],
+          {
+            stdout: (message) => saveStdout.push(message),
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+        const cacheStdout = [];
+        const cacheExitCode = await runCli(["arsenal", "cache", "--project-dir", projectDir, "--json"], {
+          stdout: (message) => cacheStdout.push(message),
+          stderr: (message) => {
+            throw new Error(message);
+          },
+        });
+        const projectArsenal = JSON.parse(readFileSync(join(projectDir, ".framepack", "arsenal.json"), "utf8"));
+        const globalManifest = JSON.parse(readFileSync(join(projectDir, ".framepack", "arsenal-cache", "manifest.json"), "utf8"));
+        const cachePayload = JSON.parse(cacheStdout.join("\n"));
+
+        assert.equal(addExitCode, 0);
+        assert.equal(saveExitCode, 0);
+        assert.equal(cacheExitCode, 0);
+        assert.ok(projectArsenal.items.some((item) => item.id.includes("impact-pop") && item.kind === "motion"));
+        assert.ok(projectArsenal.remixes.some((remix) => remix.name === "summit-event-remix"));
+        assert.ok(globalManifest.items.some((item) => item.name === "summit-event-remix"));
+        assert.equal(cachePayload.downloads.every((download) => download.source.trusted === true), true);
+      } finally {
+        rmSync(tempRoot, { recursive: true, force: true });
+      }
+    },
+  },
+  {
+    name: "mine a reference video into reusable DNA storyboard and template blueprint",
+    run: async () => {
+      const tempRoot = mkdtempSync(join(tmpdir(), "framepack-reference-mine-"));
+      const assetDir = join(tempRoot, "assets");
+
+      try {
+        mkdirSync(assetDir, { recursive: true });
+        const referenceVideo = join(assetDir, "reference.mp4");
+        writeFileSync(referenceVideo, "mp4", "utf8");
+
+        createWorkbenchProject({
+          projectName: "reference-event-promo",
+          idea: "Reverse a finished event promo into a reusable storyboard.",
+          assetDir,
+          outputDir: tempRoot,
+          style: "event promo reference mining",
+          durationSec: 30,
+          format: "9:16",
+        });
+
+        const projectDir = join(tempRoot, "reference-event-promo");
+        const stdout = [];
+        const exitCode = await runCli(
+          ["reference", "mine", "--project-dir", projectDir, "--video", referenceVideo],
+          {
+            stdout: (message) => stdout.push(message),
+            stderr: (message) => {
+              throw new Error(message);
+            },
+          },
+        );
+        const dna = readFileSync(join(projectDir, "VIDEO_DNA.md"), "utf8");
+        const blueprint = readFileSync(join(projectDir, "TEMPLATE_BLUEPRINT.md"), "utf8");
+        const storyboard = readFileSync(join(projectDir, "STORYBOARD.md"), "utf8");
+
+        assert.equal(exitCode, 0);
+        assert.match(stdout.join("\n"), /VIDEO_DNA.md/);
+        assert.match(dna, /ReferenceDNA/);
+        assert.match(dna, /rhythm/);
+        assert.match(blueprint, /Template Blueprint/);
+        assert.match(blueprint, /reusable slots/i);
+        assert.match(storyboard, /Reference-derived storyboard/i);
       } finally {
         rmSync(tempRoot, { recursive: true, force: true });
       }
@@ -2764,13 +2923,24 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "expose built-in workbench template registry for outsider-friendly video routes",
+    name: "expose built-in workbench template registry for agent arsenal video routes",
     run: () => {
       const templates = listWorkbenchTemplates();
 
       assert.deepEqual(
         templates.map((template) => template.id),
-        ["saas-launch", "news-explainer", "course-promo", "game-ad", "founder-story", "data-shock"],
+        [
+          "event-promo",
+          "saas-launch",
+          "news-explainer",
+          "course-promo",
+          "game-ad",
+          "founder-story",
+          "data-shock",
+          "sports-highlight",
+          "transfer-announcement",
+          "player-tribute",
+        ],
       );
       assert.ok(templates.every((template) => template.visualLanguage.length > 0));
       assert.ok(templates.every((template) => template.motionLanguage.length > 0));
@@ -2782,7 +2952,7 @@ Framepack compiles content into executable video projects.
     run: () => {
       const templates = listTemplateMarket();
 
-      assert.equal(templates.length, 6);
+      assert.equal(templates.length, 10);
       assert.ok(templates.every((template) => template.access === "built-in"));
       assert.ok(templates.every((template) => template.license === "included"));
       assert.ok(templates.every((template) => template.priceCents === null));
@@ -3056,8 +3226,9 @@ Framepack compiles content into executable video projects.
       const payload = JSON.parse(stdout.join("\n"));
 
       assert.equal(exitCode, 0, stderr.join("\n"));
-      assert.equal(payload.templates.length, 6);
+      assert.equal(payload.templates.length, 10);
       assert.equal(payload.templates[0].access, "built-in");
+      assert.ok(payload.templates.some((template) => template.id === "event-promo"));
       assert.ok(payload.templates.some((template) => template.id === "course-promo"));
     },
   },
@@ -3515,11 +3686,9 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "document the v0.4 alpha real user trial",
+    name: "keep historical trial evidence while AGENTS teaches the arsenal-first spine",
     run: () => {
       const trialReport = readFileSync(framepack04RealUserTrialPath, "utf8");
-      const readme = readFileSync(readmePath, "utf8");
-      const chineseReadme = readFileSync(chineseReadmePath, "utf8");
       const agents = readFileSync(agentsPath, "utf8");
 
       assert.match(trialReport, /REAL-USER-TRIAL-03/);
@@ -3532,7 +3701,10 @@ Framepack compiles content into executable video projects.
       assert.match(trialReport, /forge-fx-pack/);
       assert.match(trialReport, /agent-sprite-forge/);
       assert.match(trialReport, /needs-assets/);
-      assert.match(agents, /real-user-trial-v0\.4\.0-alpha\.3/);
+      assert.match(agents, /HyperFrames programmatic commercial video ideation and composition/);
+      assert.match(agents, /arsenal recommendation and project memory/);
+      assert.match(agents, /Cut or downgrade capabilities that conflict with the agent-as-director positioning/);
+      assert.doesNotMatch(agents, /real-user-trial-v0\.4\.0-alpha\.3/);
     },
   },
   {
@@ -3588,7 +3760,8 @@ Framepack compiles content into executable video projects.
       assert.match(betaReadiness, /BETA-CANDIDATE-10/);
       assert.match(betaReadiness, /real-user-trial-v0\.4\.0-beta\.1/);
       assert.match(betaReadiness, /Framepack does not claim assets are produced until outputs and metadata exist/);
-      assert.match(agents, /beta-readiness-v0\.4/);
+      assert.match(agents, /HyperFrames programmatic commercial video ideation and composition/);
+      assert.doesNotMatch(agents, /beta-readiness-v0\.4/);
     },
   },
   {
@@ -3612,7 +3785,8 @@ Framepack compiles content into executable video projects.
       assert.match(betaTrial, /runtimeDoctorHas0640": true/);
       assert.match(betaTrial, /Npm Cache Note/);
       assert.match(betaReadiness, /real-user-trial-v0\.4\.0-beta\.1/);
-      assert.match(agents, /real-user-trial-v0\.4\.0-beta\.1/);
+      assert.match(agents, /arsenal recommendation and project memory/);
+      assert.doesNotMatch(agents, /real-user-trial-v0\.4\.0-beta\.1/);
     },
   },
   {
@@ -3646,7 +3820,8 @@ Framepack compiles content into executable video projects.
       assert.match(issueTemplate, /P0: blocks installation/);
       assert.match(issueTemplate, /runtime inspect JSON or snapshot manifest/);
       assert.match(betaReadiness, /beta-feedback-loop-v0\.4/);
-      assert.match(agents, /beta-feedback-loop-v0\.4/);
+      assert.match(agents, /Project-local weapons belong in `.framepack\/arsenal\.json`/);
+      assert.doesNotMatch(agents, /beta-feedback-loop-v0\.4/);
     },
   },
   {
@@ -3678,7 +3853,8 @@ Framepack compiles content into executable video projects.
       assert.match(cutoff, /Plain-Language Summary/);
       assert.match(betaReadiness, /v0\.4-beta-product-state-cutoff/);
       assert.match(betaReadiness, /BETA-CUTOFF-12/);
-      assert.match(agents, /v0\.4-beta-product-state-cutoff/);
+      assert.match(agents, /Cut or downgrade capabilities that conflict with the agent-as-director positioning/);
+      assert.doesNotMatch(agents, /v0\.4-beta-product-state-cutoff/);
     },
   },
   {
@@ -3711,7 +3887,8 @@ Framepack compiles content into executable video projects.
       assert.match(radar, /Plain-Language Summary/);
       assert.match(cutoff, /beta-patch-radar-v0\.4/);
       assert.match(betaReadiness, /beta-patch-radar-v0\.4/);
-      assert.match(agents, /beta-patch-radar-v0\.4/);
+      assert.match(agents, /Keep code and docs lean in structure/);
+      assert.doesNotMatch(agents, /beta-patch-radar-v0\.4/);
     },
   },
     {
@@ -3739,7 +3916,8 @@ Framepack compiles content into executable video projects.
       assert.match(guide, /小白总结/);
       assert.equal(packageJson.files.includes("README.zh-CN.md"), false);
       assert.match(readme, /docs\/README\.zh-CN\.md/);
-      assert.match(agents, /manual-beta-test-guide-v0\.4\.zh-CN/);
+      assert.match(agents, /event promos/);
+      assert.doesNotMatch(agents, /manual-beta-test-guide-v0\.4\.zh-CN/);
       },
     },
     {
@@ -3775,10 +3953,11 @@ Framepack compiles content into executable video projects.
         assert.match(report, /P1 `recurringRisks`/);
         assert.match(report, /npm run workbench:trials/);
         assert.match(changelog, /GSAP Motion Skill Registry/);
-        assert.match(changelog, /215\/215 tests pass/);
+        assert.match(changelog, /221\/221 tests pass/);
         assert.match(changelog, /workbench trials pass 3\/3/);
-        assert.match(agents, /manual-beta-test-guide-v0\.6\.zh-CN/);
-        assert.match(agents, /workbench-trials-v0\.6/);
+        assert.match(agents, /activity\/event promos/);
+        assert.match(agents, /framepack reference mine/);
+        assert.match(agents, /framepack arsenal save/);
 
         const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
         assert.equal(packageJson.scripts["workbench:trials"], "npm run build && node scripts/run-workbench-trials.mjs");
@@ -3806,7 +3985,8 @@ Framepack compiles content into executable video projects.
       assert.match(onboardingTrials, /product-explainer/);
       assert.match(onboardingTrials, /thread-to-video/);
       assert.match(betaReadiness, /beta-onboarding-trials-v0\.4/);
-      assert.match(agents, /beta-onboarding-trials-v0\.4/);
+      assert.match(agents, /Framepack installs these project-facing skills/);
+      assert.doesNotMatch(agents, /beta-onboarding-trials-v0\.4/);
     },
   },
   {
@@ -3831,7 +4011,8 @@ Framepack compiles content into executable video projects.
       assert.match(betaReadiness, /hyperframes-compat-v0\.4/);
       assert.match(betaReadiness, /hyperframes \^0\.6\.40/);
       assert.match(betaReadiness, /npm run release:gate/);
-      assert.match(agents, /hyperframes-compat-v0\.4/);
+      assert.match(agents, /HyperFrames quality gate/);
+      assert.doesNotMatch(agents, /hyperframes-compat-v0\.4/);
     },
   },
   {
@@ -3852,8 +4033,9 @@ Framepack compiles content into executable video projects.
       assert.match(betaNotes, /Plain-Language Summary/);
       assert.match(changelog, /0\.4\.0-beta\.1/);
       assert.match(changelog, /HyperFrames runtime dependency to `\^0\.6\.40`/);
-      assert.match(agents, /release-candidate-v0\.4\.0-beta\.1/);
-      assert.match(agents, /framepack@beta/);
+      assert.match(agents, /focused production system/);
+      assert.doesNotMatch(agents, /release-candidate-v0\.4\.0-beta\.1/);
+      assert.doesNotMatch(agents, /framepack@beta/);
     },
   },
   {
@@ -3922,7 +4104,7 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "document the Framepack 0.4 Agent Harness positioning",
+    name: "keep Agent Harness architecture evidence while AGENTS teaches arsenal-first execution",
     run: () => {
       const agents = readFileSync(agentsPath, "utf8");
       const architectureDoc = readFileSync(
@@ -3934,7 +4116,7 @@ Framepack compiles content into executable video projects.
         "utf8",
       );
 
-      for (const doc of [agents, architectureDoc, planDoc]) {
+      for (const doc of [architectureDoc, planDoc]) {
         assert.match(doc, /Agent Harness/);
         assert.match(doc, /Sense filter/);
         assert.match(doc, /Motor pathways/);
@@ -3945,6 +4127,10 @@ Framepack compiles content into executable video projects.
 
       assert.match(architectureDoc, /field engineering rather than a fixed rail workflow/);
       assert.match(planDoc, /video production Agent Harness/);
+      assert.match(agents, /HyperFrames programmatic commercial video ideation and composition/);
+      assert.match(agents, /Framepack arsenal recommendation and project memory/);
+      assert.match(agents, /save reusable weapons, remixes, and templates/);
+      assert.doesNotMatch(agents, /Agent Harness/);
     },
   },
   {
@@ -3962,21 +4148,21 @@ Framepack compiles content into executable video projects.
     },
   },
   {
-    name: "ship agent and example entry files for the published repo",
+    name: "ship arsenal-first agent and example entry files for the published repo",
     run: () => {
       const agents = readFileSync(agentsPath, "utf8");
       const threadExample = readFileSync(threadExamplePath, "utf8");
       const websiteExample = readFileSync(websiteExamplePath, "utf8");
       const chineseReadme = readFileSync(chineseReadmePath, "utf8");
 
-      assert.match(agents, /PACKAGE_MANIFEST\.json/);
-      assert.match(agents, /HANDOFF\.md/);
-      assert.match(agents, /capture --project-dir/);
-      assert.match(agents, /sync-assets --project-dir/);
-      assert.match(agents, /npx framepack generate --thread-file/);
-      assert.match(agents, /--game-ad-description/);
-      assert.match(agents, /agent-sprite-forge/);
-      assert.match(agents, /forge-character-pack/);
+      assert.match(agents, /HyperFrames programmatic commercial video ideation and composition/);
+      assert.match(agents, /STORYBOARD\.md/);
+      assert.match(agents, /\.framepack\/arsenal\.json/);
+      assert.match(agents, /npx framepack arsenal recommend/);
+      assert.match(agents, /npx framepack reference mine/);
+      assert.match(chineseReadme, /视频创意武器库/);
+      assert.doesNotMatch(agents, /PACKAGE_MANIFEST\.json/);
+      assert.doesNotMatch(agents, /npx framepack generate --thread-file/);
       assert.match(threadExample, /Framepack turns content into executable video project packages/);
       assert.match(websiteExample, /Framepack Demo Site/);
     },
@@ -3989,8 +4175,11 @@ Framepack compiles content into executable video projects.
       assert.ok(packageJson.files.includes("templates"));
       assert.ok(packageJson.files.includes("docs/rebirth"));
       assert.equal(packageJson.files.includes("docs/agent-platform"), false);
-      assert.match(readFileSync(resolve(dirname(packageJsonPath), "README.md"), "utf8"), /Programmatic Video/);
-      assert.match(readFileSync(resolve(dirname(packageJsonPath), "docs", "README.zh-CN.md"), "utf8"), /\u4e09\u5c42\u673a\u5236/);
+      assert.match(
+        readFileSync(resolve(dirname(packageJsonPath), "README.md"), "utf8"),
+        /HyperFrames programmatic commercial video ideation and composition/,
+      );
+      assert.match(readFileSync(resolve(dirname(packageJsonPath), "docs", "README.zh-CN.md"), "utf8"), /视频创意武器库/);
     },
   },
   {

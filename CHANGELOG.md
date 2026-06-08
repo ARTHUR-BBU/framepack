@@ -1,7 +1,76 @@
 # Changelog
 
+## 0.7.0 — Hermes Agent Plugin (2026-06-08)
+
+### Architecture Shift
+
+- **Complete paradigm shift: from CLI/MCP tool to Hermes Agent Plugin.**
+  - v0.6: agent calls Framepack like a tool (CLI + MCP)
+  - v0.7: Framepack lives inside the agent loop, hooks into tool calls, and proactively injects advice
+  - MCP officially retired (code preserved for reference, not maintained)
+  - CLI demoted to Plugin's underlying engine; Plugin is the primary interface
+
+### Plugin Core
+
+- `plugin.yaml` — Hermes Plugin manifest with metadata, hooks declaration, and skill registration
+- `__init__.py` — `register(ctx)` entry point, registers 6 skills and 2 hooks
+- `core/arsenal.py` — weapon recommendation engine (259 lines, translated from v0.6 TypeScript)
+- `core/trusted_sources.py` — security gate for weapon source URLs (76 lines)
+
+### Hooks (6 triggers, 2 hooks)
+
+- **pre_tool_call** 🚨 — scans `write_file` args for HyperFrames violations BEFORE writing
+  - 3 P0 violations → 🚨 STOP injection
+  - 3+ P1 violations → ⚠️ WARNING
+  - Zero token cost, pure regex (8 checks)
+
+- **post_tool_call** — 5 file-type triggers:
+  - 📋 `STORYBOARD.md` → LLM analysis (project type, structure, HyperFrames issues, weapon recommendations)
+  - 🎬 `COMPOSITION.md` → LLM template-fit review (coverage, template appropriateness, HyperFrames compatibility)
+  - 🔍 `index.html` → regex audit (8 checks: data-width/height/start, Math.random, repeat:-1, ScrollTrigger, FLIP, window.__timelines)
+  - 🔫 `arsenal.json` → weapon validation (known IDs, mandatory weapons, recommended weapons)
+  - 🧬 `VIDEO_DNA.md` / `TEMPLATE_BLUEPRINT.md` → structural completeness check (7 DNA dimensions, 3 blueprint sections)
+
+### Skills (6 production skills)
+
+- `framepack-director` — storyboard structure, 10 project types, 8 HyperFrames rules, weapon mapping
+- `framepack-template-fuser` — scene-to-template matching rules, coverage requirements
+- `framepack-hyperframes-builder` — P0/P1/P2 render safety constraints, scene lifecycle
+- `framepack-arsenal` — 9 built-in weapons, recommendation rules, trusted source whitelist
+- `framepack-gsap` — GSAP API reference, HyperFrames safety rules, 6 animation recipes (8.9KB)
+- `framepack-reference-miner` — 7-dimension video DNA methodology, structured templates (7.2KB)
+
+### Safety
+
+- Prompt injection sanitization: `_sanitize_message()` strips 6 dangerous instruction patterns from LLM output before injection
+- `_safe_inject()` wrapper: all 10 `inject_message` calls wrapped in try/except, failures logged not propagated
+- `max_tokens` bumped from 512 → 1024 to prevent JSON truncation
+- Issue count bug fixed: header strings no longer counted as real issues
+- `Math.random` detection now case-insensitive
+- Skill file loading cached at module level (one read per session)
+
+### Engineering
+
+- **127/127 tests pass** (pytest, 0.53s)
+- Hook file: 1130 lines (up from 845)
+- Legacy v0.6 CLI: 221/221 tests pass
+- `core/arsenal.py` and `core/trusted_sources.py` wired into hooks (no more dead code)
+- `_VALID_WEAPON_IDS` dynamically derived from `BUILT_IN_ARSENAL` (single source of truth)
+
 ## 0.6.0-alpha.4
 
+- align the public naming with the chosen product phrase
+  - Framepack now serves HyperFrames programmatic commercial video ideation and composition
+  - README, Chinese README, package metadata, AGENTS, and agent templates now reflect `面向 HyperFrames 程式化商业视频创意与编排`
+- reposition Framepack around the agent arsenal model
+  - Framepack is now documented and wired as the agent's advisor, producer, arsenal manager, and HyperFrames quality gate rather than the creative director
+  - workbenches now include `STORYBOARD.md` and `.framepack/arsenal.json` as first-class context files
+  - `framepack arsenal list|recommend|add|save|cache` manages reusable weapons, trusted cached resources, project remixes, and saved template combinations
+  - `framepack reference mine --project-dir <dir> --video <file>` creates `VIDEO_DNA.md`, refreshes `STORYBOARD.md`, and writes `TEMPLATE_BLUEPRINT.md`
+  - added `event-promo`, `sports-highlight`, `transfer-announcement`, and `player-tribute` workflow routes, with event promos treated as a primary video category
+  - workbench validation and audit now detect missing storyboard and project arsenal manifests
+  - README, Chinese README, AGENTS, package metadata, and tests now protect the arsenal-first positioning
+  - 221/221 tests pass; sandbox benchmark remains 100/100; `npm pack --dry-run --json` succeeds
 - add semantic content materialization for workbench builds
   - `framepack build` now preserves `idea` in machine state and uses it with `COMPOSITION.md`, assets, and scene descriptions to fill visible scene copy
   - sports/player-style tests verify real subject text such as Ederson and Manchester United appears in generated HTML

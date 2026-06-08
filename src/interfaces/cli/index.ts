@@ -96,6 +96,16 @@ import {
   type SceneTemplateCategory,
   type ExternalTemplateEntry,
 } from "../../workbench/scene-templates.js";
+import {
+  addArsenalItem,
+  listArsenalItems,
+  mineReferenceVideo,
+  readGlobalArsenal,
+  readProjectArsenal,
+  recommendArsenal,
+  saveProjectRemix,
+  type ArsenalKind,
+} from "../../workbench/arsenal.js";
 
 export interface CliIo {
   stdout: (message: string) => void;
@@ -142,6 +152,8 @@ type CliCommandName =
   | "catalog"
   | "packs"
   | "templates"
+  | "arsenal"
+  | "reference"
   | "workbench"
   | "release-smoke"
   | "generate"
@@ -220,6 +232,12 @@ const FRAMEPACK_CLI_HELP = [
   "  framepack templates",
   "  framepack templates prompt",
   "  framepack templates recommend --idea <idea> --style <style>",
+  "  framepack arsenal list [--json]",
+  "  framepack arsenal recommend --idea <idea> --format <16:9|9:16> --type event-promo [--json]",
+  "  framepack arsenal add --from <path> --kind <template|motion|library|reference> --project-dir <dir> [--name <name>]",
+  "  framepack arsenal save --project-dir <dir> --name <name>",
+  "  framepack arsenal cache --project-dir <dir> [--json]",
+  "  framepack reference mine --project-dir <dir> --video <file>",
   "  framepack workbench check --project-dir <dir>",
   "  framepack workbench audit --phase <preflight|design|composition|preview|render> --project-dir <dir>",
   "  framepack workbench brief --project-dir <dir>",
@@ -360,6 +378,8 @@ function getCommandName(args: string[]): CliCommandName {
     command === "catalog" ||
     command === "packs" ||
     command === "templates" ||
+    command === "arsenal" ||
+    command === "reference" ||
     command === "workbench" ||
     command === "release-smoke" ||
     command === "generate" ||
@@ -380,7 +400,7 @@ function getCommandName(args: string[]): CliCommandName {
     return command;
   }
 
-  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, lint, preview, render, scaffold, scene-templates, sync-assets, or sync-captures.");
+  throw new Error("Missing or invalid command. Use --help, --version, create, init, init-agent, mcp, atlas, catalog, packs, templates, arsenal, reference, workbench, release-smoke, generate, status, validate, repair, capture, runtime doctor, runtime lint, runtime inspect, runtime snapshot, runtime upgrade-check, lint, preview, render, scaffold, scene-templates, sync-assets, or sync-captures.");
 }
 
 function getCommandArgs(args: string[]): string[] {
@@ -406,6 +426,8 @@ function getCommandArgs(args: string[]): string[] {
     first === "catalog" ||
     first === "packs" ||
     first === "templates" ||
+    first === "arsenal" ||
+    first === "reference" ||
     first === "workbench" ||
     first === "release-smoke" ||
     first === "generate" ||
@@ -418,7 +440,8 @@ function getCommandArgs(args: string[]): string[] {
     first === "sync-captures" ||
     first === "sync-assets" ||
     first === "scene-templates" ||
-    first === "template"
+    first === "template" ||
+    first === "build"
   ) {
     return args.slice(1);
   }
@@ -985,6 +1008,112 @@ function runTemplatesCommand(args: string[], io: CliIo): number {
       ...payload.templates.map((template) => `- ${template.id}: ${template.label} (${template.access}, ${template.license})`),
     ].join("\n"),
   );
+  return 0;
+}
+
+function isArsenalKind(value: string): value is ArsenalKind {
+  return ["template", "motion", "library", "reference", "design", "hyperframes-rule"].includes(value);
+}
+
+function runArsenalCommand(args: string[], io: CliIo): number {
+  const subcommand = args[0] ?? "list";
+
+  if (subcommand === "recommend") {
+    const recommendation = recommendArsenal({
+      idea: getRequiredArg(args, "--idea"),
+      format: getOptionalArg(args, "--format") as "16:9" | "9:16" | undefined,
+      type: getOptionalArg(args, "--type"),
+    });
+
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify(recommendation, null, 2));
+      return 0;
+    }
+
+    io.stdout([
+      "Framepack Arsenal Recommendation",
+      "",
+      `Type: ${recommendation.type}`,
+      recommendation.agentBoundary,
+      "",
+      ...recommendation.items.map((item) => `- ${item.id} (${item.kind}): ${item.name}`),
+    ].join("\n"));
+    return 0;
+  }
+
+  if (subcommand === "add") {
+    const kind = getRequiredArg(args, "--kind");
+    if (!isArsenalKind(kind)) {
+      throw new Error("Invalid --kind. Use template, motion, library, reference, design, or hyperframes-rule.");
+    }
+    const item = addArsenalItem({
+      projectDir: getRequiredProjectDir(args),
+      from: getRequiredArg(args, "--from"),
+      kind,
+      name: getOptionalArg(args, "--name"),
+    });
+    io.stdout(`Added arsenal item ${item.id} (${item.kind})`);
+    return 0;
+  }
+
+  if (subcommand === "save") {
+    const remix = saveProjectRemix({
+      projectDir: getRequiredProjectDir(args),
+      name: getRequiredArg(args, "--name"),
+    });
+    io.stdout(`Saved arsenal remix ${remix.name} as ${remix.savedAsItemId}`);
+    return 0;
+  }
+
+  if (subcommand === "cache") {
+    const projectDir = getRequiredProjectDir(args);
+    const payload = readGlobalArsenal(projectDir);
+    if (args.includes("--json")) {
+      io.stdout(JSON.stringify(payload, null, 2));
+      return 0;
+    }
+    io.stdout([
+      "Framepack Arsenal Cache",
+      "",
+      `Items: ${payload.items.length}`,
+      `Downloads: ${payload.downloads.length}`,
+      ...payload.items.map((item) => `- ${item.id}: ${item.name}`),
+    ].join("\n"));
+    return 0;
+  }
+
+  if (subcommand === "project") {
+    const projectDir = getRequiredProjectDir(args);
+    const payload = readProjectArsenal(projectDir);
+    io.stdout(JSON.stringify(payload, null, 2));
+    return 0;
+  }
+
+  const payload = { items: listArsenalItems() };
+  if (args.includes("--json")) {
+    io.stdout(JSON.stringify(payload, null, 2));
+    return 0;
+  }
+
+  io.stdout([
+    "Framepack Arsenal",
+    "",
+    "Agent is the director. Framepack manages reusable weapons and HyperFrames quality gates.",
+    "",
+    ...payload.items.map((item) => `- ${item.id} (${item.kind}): ${item.name}`),
+  ].join("\n"));
+  return 0;
+}
+
+function runReferenceCommand(args: string[], io: CliIo): number {
+  if (args[0] !== "mine") {
+    throw new Error("Missing reference subcommand. Use: framepack reference mine --project-dir <dir> --video <file>");
+  }
+
+  const projectDir = getRequiredProjectDir(args);
+  const videoPath = getRequiredArg(args, "--video");
+  mineReferenceVideo({ projectDir, videoPath });
+  io.stdout(`Reference mined into ${join(projectDir, "VIDEO_DNA.md")} and ${join(projectDir, "TEMPLATE_BLUEPRINT.md")}`);
   return 0;
 }
 
@@ -2256,6 +2385,14 @@ export async function runCli(
 
     if (command === "templates") {
       return runTemplatesCommand(args.slice(1), io);
+    }
+
+    if (command === "arsenal") {
+      return runArsenalCommand(args.slice(1), io);
+    }
+
+    if (command === "reference") {
+      return runReferenceCommand(args.slice(1), io);
     }
 
     if (command === "workbench") {
