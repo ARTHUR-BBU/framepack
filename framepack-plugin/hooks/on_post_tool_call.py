@@ -114,6 +114,10 @@ def register(ctx):
             _handle_video_dna(ctx, file_path)
         elif _is_template_blueprint_file(file_path):
             _handle_template_blueprint(ctx, file_path)
+        elif _is_design_file(file_path):
+            _handle_design(ctx, file_path)
+        elif _is_design_tokens_file(file_path):
+            _handle_design_tokens(ctx, file_path)
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
 
@@ -247,6 +251,32 @@ def _is_template_blueprint_file(file_path: str) -> bool:
 
     basename = os.path.basename(file_path)
     return basename.upper() == "TEMPLATE_BLUEPRINT.MD"
+
+
+def _is_design_file(file_path: str) -> bool:
+    """Check if the written file is a Framepack design document.
+
+    Matches: DESIGN.md anywhere in the path.
+    Case-insensitive on the basename (Windows compatibility).
+    """
+    if not file_path:
+        return False
+
+    basename = os.path.basename(file_path)
+    return basename.upper() == "DESIGN.MD"
+
+
+def _is_design_tokens_file(file_path: str) -> bool:
+    """Check if the written file is a Framepack design tokens document.
+
+    Matches: DESIGN_TOKENS.md anywhere in the path.
+    Case-insensitive on the basename (Windows compatibility).
+    """
+    if not file_path:
+        return False
+
+    basename = os.path.basename(file_path)
+    return basename.upper() == "DESIGN_TOKENS.MD"
 
 
 def _read_file_safe(file_path: str) -> str:
@@ -628,6 +658,284 @@ def _build_composition_advice(analysis: dict) -> str:
     summary = analysis.get("summary", "")
     if summary:
         parts.append(f"\n💡 {summary}")
+
+    return "\n".join(parts)
+
+
+# ── Design Handler (LLM analysis) ──
+
+
+_DESIGN_SYSTEM_PROMPT = """\
+Analyze this DESIGN.md document from a Framepack video production workbench.
+
+DESIGN.md defines the visual language — typography, color intent, layout
+philosophy, spacing rhythm, and motion style. It is NOT a CSS file; it is
+a design brief that the agent translates into code.
+
+Your analysis MUST cover:
+
+1. **Typography** — What hierarchy exists? Which sizes for which roles?
+   Is the type scale coherent (heading → subhead → body → caption → label)?
+   Any font pairing issues? Does the system account for both large display
+   type (hero moments) and small data/stat type?
+
+2. **Visual Language** — What is the design vocabulary? Flat/3D/glassy?
+   Clean editorial or gritty texture? Any reference to material design,
+   Swiss style, brutalist, Apple HIG, or other schools? Is the language
+   consistent across all scenes?
+
+3. **Layout System** — Is there a grid? How does content anchor?
+   Centered vs asymmetric? Does the layout account for the 9:16 vertical
+   format specifically, or is it generic?
+
+4. **Motion Philosophy** — How does DESIGN.md describe motion? Fast/slow?
+   Hard cuts vs smooth easing? Any reference to specific animation schools
+   (Apple keynote, kinetic typography, bounce, stagger)?
+
+5. **Color Intent** — Beyond hex values, what's the color STORY? Warm vs
+   cold? Accent pop? Gradients or flat? How do colors map to emotions
+   across scenes?
+
+Output ONLY valid JSON. No markdown fences, no backticks:
+
+{
+  "summary": "A non-obvious directorial insight about this design. Never restate the project type. Describe what makes this design special or what it's missing.",
+  "typography_score": "strong|adequate|missing",
+  "typography_issues": ["issue 1", "issue 2"],
+  "visual_language_score": "strong|adequate|missing",
+  "visual_language_issues": ["issue 1"],
+  "layout_score": "strong|adequate|missing",
+  "layout_issues": ["issue 1"],
+  "motion_score": "strong|adequate|missing",
+  "motion_issues": ["issue 1"],
+  "color_score": "strong|adequate|missing",
+  "color_issues": ["issue 1"],
+  "critical_issues": ["MUST FIX issue 1", "MUST FIX issue 2"],
+  "design_tokens_covered": ["colors", "fonts", "spacing"],
+  "design_tokens_missing": ["something the design references but DESIGN_TOKENS.md must provide"]
+}
+
+Rules:
+- Count issues BEFORE writing them. The `critical_issues` count MUST equal `len(critical_issues)`.
+- "missing" means the dimension is entirely absent from DESIGN.md. Use this sparingly.
+- "adequate" means present but could be stronger.
+- "strong" means thorough and opinionated.
+- Summary MUST be a non-obvious directorial insight. Never say "comprehensive design document."
+"""
+
+
+def _handle_design(ctx, file_path: str) -> None:
+    """Detect DESIGN.md → analyze visual language → inject advice."""
+    logger.info("Design detected: %s", file_path)
+
+    try:
+        content = _read_file_safe(file_path)
+    except Exception as e:
+        logger.warning("Could not read design: %s", e)
+        return
+
+    if not content.strip():
+        logger.info("Design is empty, skipping analysis")
+        return
+
+    analysis = _analyze_design(ctx, content)
+    if analysis is None:
+        logger.warning("Design analysis failed, skipping advice")
+        return
+
+    message = _build_design_advice(analysis)
+    _safe_inject(ctx, message, role="user")
+    logger.info("Design advice injected")
+
+
+def _analyze_design(ctx, content: str) -> dict | None:
+    """Send DESIGN.md content to LLM for creative analysis."""
+    max_chars = 8000
+    truncated = content[:max_chars]
+    if len(content) > max_chars:
+        truncated += (
+            f"\n\n[... {len(content) - max_chars} more characters truncated ...]"
+        )
+
+    try:
+        result = ctx.llm.complete(
+            messages=[
+                {"role": "system", "content": _DESIGN_SYSTEM_PROMPT},
+                {"role": "user", "content": truncated},
+            ],
+            temperature=0.2,
+            max_tokens=1024,
+            purpose="framepack-design-analysis",
+        )
+
+        parsed = _extract_json(result.text)
+        if parsed is None:
+            logger.warning("LLM returned unparseable design analysis: %s",
+                           result.text[:200])
+            return None
+
+        return parsed
+
+    except Exception as e:
+        logger.warning("Design LLM analysis failed: %s", e)
+        return None
+
+
+def _build_design_advice(analysis: dict) -> str:
+    """Build advice message from design analysis."""
+    parts = ["🎨 **Framepack Design Analysis**\n"]
+
+    # Typography
+    typo_score = analysis.get("typography_score", "adequate")
+    icon = {"strong": "✅", "adequate": "⚠️", "missing": "🔴"}.get(typo_score, "⚠️")
+    parts.append(f"{icon} Typography: **{typo_score}**")
+    for issue in analysis.get("typography_issues", []):
+        parts.append(f"   - {issue}")
+
+    # Visual Language
+    vl_score = analysis.get("visual_language_score", "adequate")
+    icon = {"strong": "✅", "adequate": "⚠️", "missing": "🔴"}.get(vl_score, "⚠️")
+    parts.append(f"{icon} Visual Language: **{vl_score}**")
+    for issue in analysis.get("visual_language_issues", []):
+        parts.append(f"   - {issue}")
+
+    # Layout
+    layout_score = analysis.get("layout_score", "adequate")
+    icon = {"strong": "✅", "adequate": "⚠️", "missing": "🔴"}.get(layout_score, "⚠️")
+    parts.append(f"{icon} Layout System: **{layout_score}**")
+    for issue in analysis.get("layout_issues", []):
+        parts.append(f"   - {issue}")
+
+    # Motion
+    motion_score = analysis.get("motion_score", "adequate")
+    icon = {"strong": "✅", "adequate": "⚠️", "missing": "🔴"}.get(motion_score, "⚠️")
+    parts.append(f"{icon} Motion Philosophy: **{motion_score}**")
+    for issue in analysis.get("motion_issues", []):
+        parts.append(f"   - {issue}")
+
+    # Color
+    color_score = analysis.get("color_score", "adequate")
+    icon = {"strong": "✅", "adequate": "⚠️", "missing": "🔴"}.get(color_score, "⚠️")
+    parts.append(f"{icon} Color Intent: **{color_score}**")
+    for issue in analysis.get("color_issues", []):
+        parts.append(f"   - {issue}")
+
+    # Critical issues
+    critical = analysis.get("critical_issues", [])
+    if critical:
+        parts.append(f"\n🔴 **Critical ({len(critical)}):**")
+        for ci in critical:
+            parts.append(f"  - {ci}")
+
+    # Token coverage
+    covered = analysis.get("design_tokens_covered", [])
+    missing_tokens = analysis.get("design_tokens_missing", [])
+    if missing_tokens:
+        parts.append(f"\n💡 **Missing from DESIGN_TOKENS.md:**")
+        for mt in missing_tokens:
+            parts.append(f"  - {mt}")
+    elif covered:
+        parts.append(f"\n✅ Token categories covered: {', '.join(covered)}")
+
+    summary = analysis.get("summary", "")
+    if summary:
+        parts.append(f"\n💡 {summary}")
+
+    return "\n".join(parts)
+
+
+# ── Design Tokens Handler (structural validation, zero tokens) ──
+
+_DESIGN_TOKENS_REQUIRED_SECTIONS = [
+    ("Color Tokens", "## Color", "Concrete hex/RGB values for every semantic color role"),
+    ("Font Tokens", "## Font", "Font families, weights, sizes as reusable tokens"),
+    ("Spacing Tokens", "## Spacing", "Margin/padding/gap scale (4px base, 8px grid, etc.)"),
+    ("Animation Tokens", "## Animation", "Duration presets, easing curves, stagger defaults"),
+]
+
+
+def _handle_design_tokens(ctx, file_path: str) -> None:
+    """Detect DESIGN_TOKENS.md → validate sections → inject gaps report."""
+    logger.info("Design tokens detected: %s", file_path)
+
+    try:
+        content = _read_file_safe(file_path)
+    except Exception as e:
+        logger.warning("Could not read design tokens: %s", e)
+        return
+
+    if not content.strip():
+        logger.info("DESIGN_TOKENS.md is empty — suggesting generation")
+        _safe_inject(ctx,
+            "🎨 **Framepack Design Tokens — Empty**\n\n"
+            "DESIGN_TOKENS.md is empty. Generate concrete token values:\n"
+            "→ `## Color` — hex/RGB for primary, accent, bg, text, overlay\n"
+            "→ `## Font` — family, weight, size tokens (xs/sm/md/lg/xl/display)\n"
+            "→ `## Spacing` — margin/padding/gap scale in px\n"
+            "→ `## Animation` — duration presets, easing defaults\n\n"
+            "These tokens feed directly into CSS custom properties and GSAP configs.",
+            role="user",
+        )
+        return
+
+    result = _validate_design_tokens_sections(content)
+    message = _build_design_tokens_message(result)
+    if message:
+        _safe_inject(ctx, message, role="user")
+        logger.info("Design tokens validation injected (%d/%d sections present)",
+                     len(result["present"]), len(_DESIGN_TOKENS_REQUIRED_SECTIONS))
+
+
+def _validate_design_tokens_sections(content: str) -> dict:
+    """Check which required sections are present in DESIGN_TOKENS.md.
+
+    Uses the same structural pattern as _validate_dna_sections.
+    """
+    present = []
+    missing = []
+    for name, marker, desc in _DESIGN_TOKENS_REQUIRED_SECTIONS:
+        if marker.lower() in content.lower():
+            present.append((name, desc))
+        else:
+            missing.append((name, desc))
+
+    return {
+        "present": present,
+        "missing": missing,
+        "complete": len(missing) == 0,
+    }
+
+
+def _build_design_tokens_message(result: dict) -> str | None:
+    """Build DESIGN_TOKENS.md validation message, or None if complete."""
+    if result["complete"]:
+        return (
+            "🎨 **Framepack Design Tokens — Complete**\n\n"
+            f"All {len(_DESIGN_TOKENS_REQUIRED_SECTIONS)}/{len(_DESIGN_TOKENS_REQUIRED_SECTIONS)} "
+            "token categories present. Ready for CSS variable generation."
+        )
+
+    missing = result["missing"]
+    present = result["present"]
+
+    parts = ["🎨 **Framepack Design Tokens — Incomplete**\n"]
+
+    if present:
+        parts.append(f"✅ Present ({len(present)}/{len(_DESIGN_TOKENS_REQUIRED_SECTIONS)}):")
+        for name, desc in present:
+            parts.append(f"   {name} — {desc}")
+
+    parts.append("")
+    parts.append(f"❌ Missing ({len(missing)}/{len(_DESIGN_TOKENS_REQUIRED_SECTIONS)}):")
+    for name, desc in missing:
+        parts.append(f"   {name} — {desc}")
+
+    parts.append("")
+    parts.append(
+        "**Fix:** Add the missing sections with concrete values. "
+        "Without animation tokens, GSAP durations default to guesswork. "
+        "Without spacing tokens, layouts break on the first scene change."
+    )
 
     return "\n".join(parts)
 

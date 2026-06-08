@@ -30,12 +30,16 @@ from hooks.on_post_tool_call import (
     _is_arsenal_file,
     _is_video_dna_file,
     _is_template_blueprint_file,
+    _is_design_file,
+    _is_design_tokens_file,
     _build_storyboard_advice,
     _build_composition_advice,
+    _build_design_advice,
     _build_html_audit_message,
     _build_arsenal_message,
     _build_dna_message,
     _build_blueprint_message,
+    _build_design_tokens_message,
     _read_file_safe,
     _extract_json,
     _load_skill_content,
@@ -44,14 +48,23 @@ from hooks.on_post_tool_call import (
     _validate_arsenal,
     _validate_dna_sections,
     _validate_blueprint_sections,
+    _validate_design_tokens_sections,
     _DNA_REQUIRED_SECTIONS,
     _BLUEPRINT_REQUIRED_SECTIONS,
+    _DESIGN_TOKENS_REQUIRED_SECTIONS,
+    _DESIGN_SYSTEM_PROMPT,
     _STORYBOARD_SYSTEM_PROMPT,
     _COMPOSITION_SYSTEM_PROMPT,
     _sanitize_message,
     _safe_inject,
     _cached_skill_load,
     _VALID_WEAPON_IDS,
+)
+from hooks.on_pre_tool_call import (
+    _check_workbench_readiness,
+    _build_readiness_message,
+    _WORKBENCH_REQUIRED_FILES,
+    _WORKBENCH_RECOMMENDED_FILES,
 )
 
 
@@ -1168,3 +1181,287 @@ class TestArsenalWireUp:
         from core.arsenal import BUILT_IN_ARSENAL
         built_in_ids = {item.id for item in BUILT_IN_ARSENAL}
         assert _VALID_WEAPON_IDS.issubset(built_in_ids)
+
+
+# ── Design File Detection ──
+
+
+class TestDesignDetection:
+    """Test that we correctly identify DESIGN.md and DESIGN_TOKENS.md files."""
+
+    def test_matches_design_md(self):
+        assert _is_design_file("/project/DESIGN.md") is True
+
+    def test_matches_design_lowercase(self):
+        assert _is_design_file("/project/design.md") is True
+
+    def test_ignores_other_files(self):
+        assert _is_design_file("/project/README.md") is False
+        assert _is_design_file("/project/STORYBOARD.md") is False
+
+    def test_matches_design_tokens_md(self):
+        assert _is_design_tokens_file("/project/DESIGN_TOKENS.md") is True
+
+    def test_matches_design_tokens_lowercase(self):
+        assert _is_design_tokens_file("/project/design_tokens.md") is True
+
+    def test_ignores_plain_design_for_tokens(self):
+        assert _is_design_tokens_file("/project/DESIGN.md") is False
+
+
+# ── Design Advice Formatting ──
+
+
+class TestDesignAdvice:
+    """Verify _build_design_advice output formatting."""
+
+    def test_builds_complete_analysis(self):
+        analysis = {
+            "summary": "Strong typographic contrast but missing motion direction.",
+            "typography_score": "strong",
+            "typography_issues": [],
+            "visual_language_score": "adequate",
+            "visual_language_issues": ["No texture/flat-only"],
+            "layout_score": "adequate",
+            "layout_issues": [],
+            "motion_score": "missing",
+            "motion_issues": ["No motion philosophy defined"],
+            "color_score": "strong",
+            "color_issues": [],
+            "critical_issues": ["MUST FIX: motion direction missing"],
+            "design_tokens_covered": ["colors"],
+            "design_tokens_missing": ["fonts", "spacing", "animation"],
+        }
+        msg = _build_design_advice(analysis)
+        assert "Typography: **strong**" in msg
+        assert "Visual Language: **adequate**" in msg
+        assert "Motion Philosophy: **missing**" in msg
+        assert "MUST FIX: motion direction missing" in msg
+        assert "Missing from DESIGN_TOKENS.md" in msg
+
+    def test_builds_minimal_analysis(self):
+        analysis = {
+            "summary": "Minimal design.",
+        }
+        msg = _build_design_advice(analysis)
+        assert "🎨" in msg
+        # Should not crash with missing keys
+
+    def test_handles_empty_analysis(self):
+        msg = _build_design_advice({})
+        assert "🎨" in msg
+        assert "Typography" in msg
+
+
+# ── Design System Prompt ──
+
+
+class TestDesignSystemPrompt:
+    """Verify DESIGN system prompt integrity."""
+
+    def test_contains_typography_dimension(self):
+        assert "Typography" in _DESIGN_SYSTEM_PROMPT
+
+    def test_contains_motion_dimension(self):
+        assert "Motion Philosophy" in _DESIGN_SYSTEM_PROMPT
+
+    def test_contains_color_intent_dimension(self):
+        assert "Color Intent" in _DESIGN_SYSTEM_PROMPT
+
+    def test_contains_counting_rule(self):
+        assert "Count issues" in _DESIGN_SYSTEM_PROMPT
+
+    def test_asserts_strong_language(self):
+        assert "MUST" in _DESIGN_SYSTEM_PROMPT
+
+    def test_forbids_markdown_fences(self):
+        assert "No markdown fences" in _DESIGN_SYSTEM_PROMPT
+
+
+# ── Design Tokens Structural Validation ──
+
+
+class TestDesignTokensValidation:
+    """Verify _validate_design_tokens_sections correctly identifies sections."""
+
+    def test_all_sections_present(self):
+        content = """## Color\nPrimary: #DA291C\n\n## Font\nFamily: Inter\n\n## Spacing\nBase: 4px\n\n## Animation\nDuration: 0.3s"""
+        result = _validate_design_tokens_sections(content)
+        assert result["complete"] is True
+        assert len(result["missing"]) == 0
+        assert len(result["present"]) == 4
+
+    def test_missing_sections(self):
+        content = "## Color\nRed: #DA291C\n"
+        result = _validate_design_tokens_sections(content)
+        assert result["complete"] is False
+        assert len(result["missing"]) == 3  # font, spacing, animation
+
+    def test_empty_content(self):
+        result = _validate_design_tokens_sections("")
+        assert result["complete"] is False
+        assert len(result["missing"]) == 4
+
+    def test_case_insensitive_matching(self):
+        content = "## color\n## FONT\n## SPACING\n## ANIMATION\n"
+        result = _validate_design_tokens_sections(content)
+        assert result["complete"] is True
+
+
+# ── Design Tokens Message ──
+
+
+class TestDesignTokensMessage:
+    """Verify _build_design_tokens_message output."""
+
+    def test_complete_message(self):
+        result = {
+            "present": [("A", "a"), ("B", "b"), ("C", "c"), ("D", "d")],
+            "missing": [],
+            "complete": True,
+        }
+        msg = _build_design_tokens_message(result)
+        assert msg is not None
+        assert "Complete" in msg
+
+    def test_incomplete_message(self):
+        result = {
+            "present": [("Color", "colors")],
+            "missing": [
+                ("Font", "fonts"),
+                ("Spacing", "spacing"),
+                ("Animation", "animation"),
+            ],
+            "complete": False,
+        }
+        msg = _build_design_tokens_message(result)
+        assert msg is not None
+        assert "Incomplete" in msg
+        assert "Color" in msg
+        assert "Font" in msg
+
+    def test_has_fix_instructions(self):
+        result = {
+            "present": [],
+            "missing": [("Color", "colors")],
+            "complete": False,
+        }
+        msg = _build_design_tokens_message(result)
+        assert msg is not None
+        assert "Fix:" in msg
+
+
+# ── Workbench Readiness Gate ──
+
+
+class TestWorkbenchReadiness:
+    """Verify _check_workbench_readiness detects missing design docs."""
+
+    def test_all_files_present(self, tmp_path):
+        # Create all required files
+        for fname, _ in _WORKBENCH_REQUIRED_FILES:
+            (tmp_path / fname).write_text("content")
+        for fname, _ in _WORKBENCH_RECOMMENDED_FILES:
+            full = tmp_path / fname
+            full.parent.mkdir(parents=True, exist_ok=True)
+            full.write_text("content")
+
+        html = tmp_path / "index.html"
+        html.write_text("<html></html>")
+
+        result = _check_workbench_readiness(str(html))
+        assert result["ready"] is True
+        assert len(result["missing_required"]) == 0
+        assert len(result["missing_recommended"]) == 0
+
+    def test_missing_all_required(self, tmp_path):
+        html = tmp_path / "index.html"
+        html.write_text("<html></html>")
+
+        result = _check_workbench_readiness(str(html))
+        assert result["ready"] is False
+        assert len(result["missing_required"]) == len(_WORKBENCH_REQUIRED_FILES)
+
+    def test_missing_some_required(self, tmp_path):
+        (tmp_path / "STORYBOARD.md").write_text("content")
+        html = tmp_path / "index.html"
+        html.write_text("<html></html>")
+
+        result = _check_workbench_readiness(str(html))
+        assert result["ready"] is False
+        assert len(result["missing_required"]) == len(_WORKBENCH_REQUIRED_FILES) - 1
+
+    def test_missing_recommended_not_blocking(self, tmp_path):
+        # All required, no recommended
+        for fname, _ in _WORKBENCH_REQUIRED_FILES:
+            (tmp_path / fname).write_text("content")
+        html = tmp_path / "index.html"
+        html.write_text("<html></html>")
+
+        result = _check_workbench_readiness(str(html))
+        assert result["ready"] is True
+        assert len(result["missing_recommended"]) > 0
+
+
+# ── Readiness Message ──
+
+
+class TestReadinessMessage:
+    """Verify _build_readiness_message output."""
+
+    def test_builds_message_for_missing_required(self):
+        result = {
+            "project_dir": "/tmp/test",
+            "missing_required": [
+                ("STORYBOARD.md", "Scene structure"),
+                ("DESIGN.md", "Visual language"),
+            ],
+            "missing_recommended": [],
+            "ready": False,
+        }
+        msg = _build_readiness_message(result)
+        assert "STOP" in msg
+        assert "STORYBOARD.md" in msg
+        assert "DESIGN.md" in msg
+        assert "/tmp/test" in msg
+
+    def test_includes_recommended_hints(self):
+        result = {
+            "project_dir": "/tmp/test",
+            "missing_required": [],
+            "missing_recommended": [("FRAMEPACK.md", "Project brief")],
+            "ready": True,
+        }
+        msg = _build_readiness_message(result)
+        assert "STOP" in msg
+        assert "FRAMEPACK.md" in msg
+        assert "recommended" in msg.lower()
+
+    def test_has_fix_instructions(self):
+        result = {
+            "project_dir": "/tmp/test",
+            "missing_required": [("STORYBOARD.md", "Scene structure")],
+            "missing_recommended": [],
+            "ready": False,
+        }
+        msg = _build_readiness_message(result)
+        assert "Fix:" in msg
+        assert "STORYBOARD.md" in msg
+
+
+# ── Required Files Configuration ──
+
+
+class TestWorkbenchConfig:
+    """Verify required/recommended file lists are well-formed."""
+
+    def test_required_files_contain_four_keys(self):
+        names = {name for name, _ in _WORKBENCH_REQUIRED_FILES}
+        assert "STORYBOARD.md" in names
+        assert "COMPOSITION.md" in names
+        assert "DESIGN.md" in names
+        assert "DESIGN_TOKENS.md" in names
+
+    def test_recommended_files_contain_arsenal(self):
+        names = {name for name, _ in _WORKBENCH_RECOMMENDED_FILES}
+        assert ".framepack/arsenal.json" in names
