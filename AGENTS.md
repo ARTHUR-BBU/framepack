@@ -1,5 +1,7 @@
 # Framepack Agent Guide
 
+> **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
+
 Framepack serves **HyperFrames programmatic commercial video ideation and composition**.
 
 It is a **Hermes Agent Plugin** — a parasitic organ that lives inside the agent loop, hooks into tool calls, and proactively injects advice.

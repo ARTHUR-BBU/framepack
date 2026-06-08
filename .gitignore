@@ -9,7 +9,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.pyc
-.hermes/
+.hermes/*
+!.hermes/CONTEXT.md
 .framepack/
 test-workbench/
 AI 技术编辑试稿.pdf
