@@ -1,11 +1,12 @@
 name: framepack
-version: "0.7.0"
+version: "0.7.10"
 description: >-
   HyperFrames programmatic commercial video ideation and composition advisor.
   Agent is the director. Framepack is the advisor, producer, arsenal manager,
   and HyperFrames quality gate.
 author: Framepack Team
 license: MIT
-homepage: https://github.com/nousresearch/framepack
+homepage: https://github.com/ARTHUR-BBU/framepack
 hooks:
+  - pre_tool_call
   - post_tool_call

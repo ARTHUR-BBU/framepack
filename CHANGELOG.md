@@ -1,5 +1,92 @@
 # Changelog
 
+## 0.7.10 — Workbench Readiness Gate + DESIGN/TOKENS Hooks (2026-06-09)
+
+### Core
+
+- **Two-layer gate in pre_tool_call** — before any `index.html` write, the Plugin now checks:
+  - **Gate 1: Workbench Readiness** — verifies STORYBOARD.md, COMPOSITION.md, DESIGN.md, DESIGN_TOKENS.md exist
+  - **Gate 2: HTML Contract Audit** — existing data-width/height/start, Math.random, ScrollTrigger regex checks
+  - Both gates are "warn, don't block" — agent can proceed but sees severity-ranked feedback
+  - Missing critical docs → 🚨 STOP injection; missing recommended docs → 💡 nudge
+
+### New Hooks
+
+- **DESIGN.md LLM analysis** (post_tool_call) — reviews typography hierarchy, color intent, visual language quality
+- **DESIGN_TOKENS.md structural validation** (post_tool_call) — checks all token categories present (color, font, spacing, animation, effects, timing, beat markers)
+
+### Engineering
+
+- 158/158 tests pass (up from 127)
+- `plugin.yaml` now declares both `pre_tool_call` and `post_tool_call` hooks
+- Homepage URL corrected to `https://github.com/ARTHUR-BBU/framepack`
+
+## 0.7.6 — Injection Safety + Skill Caching (2026-06-08)
+
+### Safety
+
+- **Prompt injection sanitization**: `_sanitize_message()` strips 6 dangerous instruction patterns from LLM output before injection
+- **`_safe_inject()` wrapper**: all 10 `inject_message` calls wrapped in try/except, failures logged not propagated
+- `max_tokens` bumped from 512 → 1024 to prevent JSON truncation from silent analysis drops
+
+### Bug Fixes
+
+- Issue count bug fixed: section headers no longer counted as real issues in message builders
+- `Math.random` detection now case-insensitive (`scrollTrigger` caught, not just `ScrollTrigger`)
+- `FLIP` detection now case-insensitive
+
+### Engineering
+
+- Skill file loading cached at module level (one disk read per session, not per trigger)
+- `core/arsenal.py` and `core/trusted_sources.py` wired into hooks via dual-path import
+- `_VALID_WEAPON_IDS` dynamically derived from `BUILT_IN_ARSENAL` (single source of truth)
+
+## 0.7.5 — VIDEO_DNA + TEMPLATE_BLUEPRINT Structural Validation (2026-06-08)
+
+### New Hooks
+
+- **VIDEO_DNA.md structural validation** — checks 7 DNA dimensions present (rhythm, scene roles, visual grammar, motion grammar, asset requirements, reusable slots, HyperFrames constraints)
+- **TEMPLATE_BLUEPRINT.md structural validation** — checks 3 blueprint sections present (template metadata, scene slots, weapon assignments)
+- Both use zero-token structural analysis (pure Python section-header checks), no LLM cost
+
+## 0.7.4 — Arsenal Validation + framepack-gsap Skill (2026-06-08)
+
+### New Hooks
+
+- **arsenal.json validation** (post_tool_call) — validates weapon IDs against known catalog, flags unknown IDs as potential injection, warns on missing mandatory weapons, nudges on missing recommended weapons
+- Zero tokens: pure JSON validation, no LLM
+- Clean arsenal → NO injection (silence is the best feedback)
+
+### New Skills
+
+- `framepack-gsap` — GSAP API reference, HyperFrames safety rules, 6 animation recipes (8.9KB)
+
+## 0.7.3 — pre_tool_call Gate (2026-06-08)
+
+### New Hooks
+
+- **pre_tool_call** — scans `write_file` args for HyperFrames violations BEFORE writing
+  - 3 P0 violations (missing data-width/height/start) → 🚨 STOP injection
+  - 3+ P1 violations (Math.random, repeat:-1, ScrollTrigger) → ⚠️ WARNING
+  - Zero token cost: 8 pure regex checks
+- Case-insensitive code matching for all checks
+
+## 0.7.2 — HTML Regex Audit (2026-06-08)
+
+### New Hooks
+
+- **index.html regex audit** (post_tool_call) — 8 deterministic checks: data-width, data-height, data-start, Math.random, repeat:-1, ScrollTrigger, FLIP, window.__timelines
+- Zero token cost: pure regex, no LLM
+- Runs every time index.html is written
+
+## 0.7.1 — COMPOSITION.md LLM Analysis (2026-06-08)
+
+### New Hooks
+
+- **COMPOSITION.md LLM analysis** (post_tool_call) — reviews template coverage, weapon assignment appropriateness, transition design, HyperFrames compatibility
+- Uses `ctx.llm.complete()` with `framepack-template-fuser` skill content injected into system prompt
+- JSON output parsed for structured feedback injection
+
 ## 0.7.0 — Hermes Agent Plugin (2026-06-08)
 
 ### Architecture Shift

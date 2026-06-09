@@ -18,3 +18,11 @@ AI技术编辑试稿.md
 HyperFrames_总结与分析.md
 Part_A_选题发现_给Gemini润色版.md
 docs/superpowers/specs/2026-04-28-ai-tech-editor-trial-article-design.md
+# Temp / dev artifacts
+.mcp.json
+CLAUDE.md
+DEVELOPMENT_HANDOFF_CLAUDE_CODE.md
+_send_msg.py
+_test_poll.py
+tmp_frame_*.jpg
+workbench/

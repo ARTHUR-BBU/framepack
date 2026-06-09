@@ -43,22 +43,67 @@ Hermes Agent Loop（agent 的神经中枢）
 
 ## 安装
 
-### v0.7 — Hermes Plugin
+### 前提
+
+- **Hermes Agent** 已安装并运行。[获取 Hermes →](https://hermes-agent.nousresearch.com)
+- **Git** 用于克隆仓库。
+- **Python 3.10+**（Plugin 是纯 Python，v0.7 不需要 Node.js）。
+
+### 第一步：克隆仓库
+
+Plugin 在 `framepack-agent-platform` 分支上。务必从这个分支部署——`master` 是旧版 v0.6 CLI。
 
 ```bash
-# 复制到 Hermes plugins 目录
-cp -r framepack-plugin ~/.hermes/plugins/framepack
-
-# 启用并重启
-hermes plugins enable framepack
-# 重启 Hermes
+git clone https://github.com/ARTHUR-BBU/framepack --branch framepack-agent-platform --depth 1
 ```
 
-### v0.6 — CLI（旧版，保留兼容）
+### 第二步：安装 Plugin
+
+把 `framepack-plugin/` 复制到你的 Hermes plugins 目录。路径因操作系统而异：
+
+```bash
+# Linux / macOS
+cp -r framepack/framepack-plugin ~/.hermes/plugins/framepack
+
+# Windows (PowerShell)
+Copy-Item -Recurse framepack\framepack-plugin $env:USERPROFILE\.hermes\plugins\framepack
+
+# Windows (CMD)
+xcopy /E /I framepack\framepack-plugin %USERPROFILE%\.hermes\plugins\framepack
+```
+
+> **提示：** 不确定 Hermes 安装在哪？运行 `hermes status`——它会打印配置路径。plugins 在 `<hermes-home>/plugins/` 下。
+
+### 第三步：启用并重启
+
+```bash
+hermes plugins enable framepack
+# 重启 Hermes（如果用 Telegram/Discord gateway，重启 gateway）
+```
+
+### 第四步：验证
+
+```bash
+hermes plugins list
+```
+
+你应该看到 `framepack` 状态为 **enabled**，版本为 **0.7.10**。
+
+### 第五步：试试看
+
+跟你的 Hermes agent 说句话，比如：
+
+> "帮我做一个 30 秒的体育集锦视频，9:16 竖屏。"
+
+Framepack 会引导 agent 走完整流程：storyboard → 编排 → 设计 → HyperFrames 构建 → 渲染，在每个关口注入反馈。
+
+### v0.6 — CLI（旧版，npm）
 
 ```bash
 npm install framepack
 ```
+
+CLI 保留向后兼容，但不再是主要接口。
 
 ## 小白类比
 
@@ -112,7 +157,7 @@ npm test
 npm run build
 ```
 
-127/127 Plugin 测试通过，221/221 CLI 测试通过。
+158/158 Plugin 测试通过，221/221 CLI 测试通过。
 
 ## License
 

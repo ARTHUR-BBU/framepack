@@ -39,22 +39,67 @@ Hermes Agent Loop
 
 ## Install
 
-### v0.7 — Hermes Plugin
+### Prerequisites
+
+- **Hermes Agent** installed and running. [Get Hermes →](https://hermes-agent.nousresearch.com)
+- **Git** for cloning the repository.
+- **Python 3.10+** (the Plugin runs pure Python — no Node.js required for v0.7).
+
+### Step 1: Clone the repo
+
+The Plugin lives on the `framepack-agent-platform` branch. Always deploy from this branch — `master` is the old v0.6 CLI.
 
 ```bash
-# Copy the plugin into your Hermes plugins directory
-cp -r framepack-plugin ~/.hermes/plugins/framepack
-
-# Enable and restart
-hermes plugins enable framepack
-# Restart Hermes
+git clone https://github.com/ARTHUR-BBU/framepack --branch framepack-agent-platform --depth 1
 ```
 
-### v0.6 — CLI (legacy)
+### Step 2: Install the Plugin
+
+Copy `framepack-plugin/` into your Hermes plugins directory. The path depends on your OS:
+
+```bash
+# Linux / macOS
+cp -r framepack/framepack-plugin ~/.hermes/plugins/framepack
+
+# Windows (PowerShell)
+Copy-Item -Recurse framepack\framepack-plugin $env:USERPROFILE\.hermes\plugins\framepack
+
+# Windows (CMD)
+xcopy /E /I framepack\framepack-plugin %USERPROFILE%\.hermes\plugins\framepack
+```
+
+> **Tip:** Not sure where your Hermes home is? Run `hermes status` — it prints the config path. Your plugins live at `<hermes-home>/plugins/`.
+
+### Step 3: Enable and restart
+
+```bash
+hermes plugins enable framepack
+# Restart Hermes (or restart the gateway if using Telegram/Discord)
+```
+
+### Step 4: Verify
+
+```bash
+hermes plugins list
+```
+
+You should see `framepack` with status **enabled** and version **0.7.10**.
+
+### Step 5: Test it
+
+Start a conversation with your Hermes agent and say something like:
+
+> "I want to make a 30-second sports highlight video in 9:16 format."
+
+Framepack will guide the agent through storyboard → composition → design → HyperFrames build → render, injecting feedback at every gate.
+
+### v0.6 — CLI (legacy, npm)
 
 ```bash
 npm install framepack
 ```
+
+The CLI is preserved for backward compatibility but is no longer the primary interface.
 
 ## What Framepack Manages
 
@@ -101,6 +146,8 @@ python -m pytest tests/ -q
 npm test
 npm run build
 ```
+
+158/158 Plugin tests pass. 221/221 CLI tests pass.
 
 ## License
 
