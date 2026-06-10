@@ -1,249 +1,199 @@
 # Framepack Agent Guide
 
-<!-- version: 0.7.12 — sync with plugin.yaml and README -->
+<!-- version: 0.8.0 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
-Framepack serves **HyperFrames programmatic commercial video ideation and composition**.
+Framepack is a **Hermes Agent Plugin** — a Prompt Factory for HyperFrames.
 
-It is a **Hermes Agent Plugin** — a parasitic organ that lives inside the agent loop, hooks into tool calls, and proactively injects advice.
+HyperFrames 是摄影棚（设备齐全）。Framepack 是导演（更懂用户）。
 
-The agent is the director. Framepack is the director's advisor, producer, arsenal manager, and HyperFrames quality gate.
-
-Do not treat Framepack as a one-click creative director. Treat it as a focused production system that helps the agent avoid starting from zero, manage reusable weapons, mine references, preserve useful remixes, and pass strict render checks.
+**导演的活是分镜和创意方向，不是操纵摄影机。**
 
 ## Product Spine
 
 ```text
-idea / assets / reference
-  -> agent-led creative direction and storyboard
-  -> Framepack Plugin hooks detect workbench file writes
-  -> hooks inject real-time feedback (LLM analysis + regex audits)
-  -> agent composes HyperFrames-safe video
-  -> Framepack validates render safety, arsenal completeness, and DNA structure
-  -> save reusable weapons, remixes, and templates
+用户模糊意图
+    ↓
+Framepack 创意引擎
+    ├── Phase 1: 意图翻译 → frame.md（视觉身份）
+    └── Phase 2: 创意细化 → expanded-prompt.md（场景级分解）
+    ↓
+HyperFrames 工具链接管
+    ├── 读 frame.md（视觉参数）
+    ├── 读 expanded-prompt.md（场景规划）
+    ├── Layout Before Animation → 写 HTML
+    ├── hyperframes lint → 验证
+    └── hyperframes render → 出片
 ```
 
-If a capability does not serve this spine, keep it out of the primary onboarding path. Legacy CLI commands can remain for compatibility, but the Plugin is the primary product.
+Framepack 的边界：到 expanded-prompt.md 为止。之后的 HTML 编写、结构验证、渲染，全部交给 HyperFrames。
 
 ## Trigger Framepack When
 
-Use Framepack for:
+- 用户说了个模糊的视频想法（"帮我做个品牌视频"、"做个活动推广"）
+- 用户需要对视频创意方向的建议（"应该什么风格？"、"什么节奏？"）
+- 用户需要把想法细化成 HyperFrames 能理解的结构
+- 用户要求改创意方向（"换个风格"、"节奏再快一点"）
 
-- activity/event promos, conference promos, summit videos, launch-event trailers, webinars, salons, livestream previews
-- polished product videos, SaaS launches, course promos, founder promos, data/news explainers
-- sports highlights, transfer announcements, player tributes
-- turning assets into a programmed video
-- HyperFrames composition planning or render-safety checks
-- reference-video mining, storyboard extraction, reusable template creation
-- requests such as "more premium", "more dynamic", "more business", "bigger text", "faster pacing", "more animation", or "like this reference"
-- motion direction such as Apple keynote, ScrollTrigger, FLIP, scrubbed walkthrough, bento reveal, kinetic captions, countdown, lineup reveal
+**不触发 Framepack：**
+- `hyperframes lint` / `hyperframes render` 等 CLI 命令
+- 小修改（"改个颜色"、"调个时间"）— 直接改 HTML
+- 用户已经明确知道要什么，不需要创意建议
 
-## Plugin Architecture
+## 创意阶段流程
 
-Framepack v0.7 is a Hermes Plugin with 6 hooks and 8 skills:
+### Phase 1: 意图翻译 → frame.md
 
-```text
-Hermes Agent Loop
-  └── Plugin hooks (pre_tool_call + post_tool_call)
-        ├── 🚨 pre_tool_call  → index.html (write scan)
-        ├── 📋 post_tool_call → STORYBOARD.md (LLM)
-        ├── 🎬 post_tool_call → COMPOSITION.md (LLM)
-        ├── 🔍 post_tool_call → index.html (regex)
-        ├── 🔫 post_tool_call → arsenal.json
-        └── 🧬 post_tool_call → VIDEO_DNA.md / TEMPLATE_BLUEPRINT.md
-      └── Skills (knowledge injected into LLM hooks)
-        ├── framepack-director          (intent → Visual Style + frame.md + storyboard)
-        ├── framepack-design-picker     (visual style selection via HyperFrames picker)
-        ├── framepack-template-fuser    (prompt expansion + template matching)
-        ├── framepack-hyperframes-builder (composition rules + render safety)
-        ├── framepack-arsenal
-        ├── framepack-gsap
-        ├── framepack-animation-library
-        └── framepack-reference-miner
+**输入**：用户的模糊意图 + 可用的品牌资料
+**输出**：`frame.md`
+
+```
+"做个珍珠品牌 30 秒视频"
+    ↓ 匹配 Visual Style → Velvet Standard
+    ↓ 生成 frame.md
+frame.md:
+  colors:
+    primary: "#1a1a2e"        # 深邃夜空
+    accent: "#c9a96e"         # 珍珠金
+    background: "#0d0d1a"     # 丝绸黑
+    surface: "#16213e"         # 月光蓝
+  typography:
+    heading: "Playfair Display"
+    body: "DM Sans"
+  motion:
+    energy: calm               # calm | medium | high
+    easing: power2.out
+    duration_range: [0.8, 1.5]
+  atmosphere: "深海珍珠，光影流动，绸缎触感"
 ```
 
-The Plugin automatically fires when the agent writes any of the watched files. No manual `framepack` commands needed — the Plugin is always watching.
+如果用户意图不明确，可以：
+1. 读 `visual-styles.md` 匹配最近的风格
+2. 提供 2-3 个风格选项让用户选
+3. 走 HyperFrames 的 Design Picker 流程
+
+**与用户共创**：生成 frame.md 后展示给用户，确认视觉方向。用户说"换一个"或"金色再暖一点"，当场改。
+
+### Phase 2: 创意细化 → expanded-prompt.md
+
+**输入**：frame.md + 用户意图 + 用户确认
+**输出**：`.hyperframes/expanded-prompt.md`
+
+expanded-prompt.md 包含：
+1. **Title + style block** — 引用 frame.md 的精确 hex 值和字体
+2. **Rhythm declaration** — "hook-PUNCH-breathe-CTA" 之类的节奏命名
+3. **Per-scene beats** — 每个场景的完整创意：
+   - Concept（视觉世界？隐喻？感觉？）
+   - Mood direction（文化/设计参考）
+   - Depth layers — BG（2-5 装饰层 + 环境动效）+ MG（内容层）+ FG（点缀层）
+   - Animation choreography — 每个元素的具体动词（SLAM、CASCADE、float、drift）
+   - Transition out — 具体类型 + 时长 + easing
+4. **Recurring motifs** — 跨场景的视觉线索
+5. **Negative prompt** — 避免什么
+
+**与用户共创**：展示场景节奏和关键创意点，让用户确认或调整。不需要展示 expanded-prompt.md 全文（几百行，用户不需要看）。
+
+## 武器库（GSAP / anime.js）
+
+武器库不是 HyperFrames 的输入——它是 **Agent 写 HTML 动画时翻的字典**。
+
+- 位置：`framepack-animation-library` skill + `framepack-gsap` skill
+- 介入时机：HyperFrames Step 3（写 HTML + Animation 阶段）
+- 用法：Agent 需要实现某个动画效果时，查武器库找代码模式
+- 不是自动注入，是主动查阅
+
+推荐武器可以在 expanded-prompt.md 的 animation choreography 里提及，但具体代码由 Agent 在写 HTML 时按需查阅。
+
+## Plugin Hooks
+
+v0.8 hooks 只做两件事：
+
+```text
+post_tool_call:
+  ├── frame.md 写入 → LLM 质量检查（配色/字体/动效参数是否完整）
+  └── expanded-prompt.md 写入 → LLM 质量检查（场景 beat 是否完整）
+
+pre_tool_call:
+  └── hyperframes 命令执行 → 检查 frame.md 是否存在（交接准备）
+```
+
+**不做的事**：
+- ❌ 不审计 HTML（那是 `hyperframes lint` 的事）
+- ❌ 不管 13 个中间文件（全部砍掉）
+- ❌ 不检查 STORYBOARD.md / COMPOSITION.md / DESIGN.md / DESIGN_TOKENS.md（这些文件不再存在）
 
 ## Required Reading In A Workbench
 
-After `framepack create`, read:
+Framepack 工作台只需要关注：
 
-1. `FRAMEPACK.md`
-2. `HUMAN.md`
-3. `ASSETS.md`
-4. `ASSET_GAPS.md`
-5. `STORYBOARD.md`
-6. `.framepack/arsenal.json`
-7. `STYLE.md`
-8. `frame.md` (preferred) or `DESIGN.md` (fallback) — design spec with motion tokens
-9. `DESIGN_TOKENS.md`
-10. `DIRECTION.md`
-11. `COMPOSITION.md`
-12. `ITERATIONS.md`
-13. `.hyperframes/expanded-prompt.md` (if exists — prompt expansion output)
-14. `.framepack/state.json` when machine-readable state is needed
+1. `frame.md` — 视觉身份（Framepack 产出，HyperFrames 消费）
+2. `.hyperframes/expanded-prompt.md` — 创意细化（Framepack 产出，HyperFrames 消费）
+3. `index.html` — HyperFrames 产出（Framepack 不管）
 
-Use `HUMAN.md` for non-technical user updates. Use `STORYBOARD.md` and `.framepack/arsenal.json` before writing code.
+## Handoff to HyperFrames
 
-## Workbench Files
-
-```text
-FRAMEPACK.md
-HUMAN.md
-ASSETS.md
-ASSET_GAPS.md
-STORYBOARD.md
-STYLE.md
-frame.md
-DESIGN.md
-DESIGN_TOKENS.md
-DIRECTION.md
-COMPOSITION.md
-ITERATIONS.md
-index.html
-meta.json
-VIDEO_DNA.md
-TEMPLATE_BLUEPRINT.md
-.framepack/arsenal.json
-.framepack/content-graph.json
-.framepack/state.json
-.hyperframes/expanded-prompt.md
-```
-
-## Legacy CLI Commands (v0.6)
-
-The CLI is preserved for backward compatibility. The Plugin is the primary interface.
-
-Create and inspect:
+当 frame.md 和 expanded-prompt.md 都就绪后：
 
 ```bash
-npx framepack create --idea "Premium founder summit event promo" --assets ./assets --output-dir ./out --project-name summit --format 9:16
-npx framepack workbench brief --project-dir ./out/summit
-npx framepack workbench graph --project-dir ./out/summit
+# 1. 初始化项目（如果还没做）
+npx hyperframes init
+
+# 2. 读官方例子学结构
+npx hyperframes init --example product-promo
+
+# 3. 写 HTML — 读 frame.md 拿视觉参数，读 expanded-prompt.md 拿场景规划
+#    遵循 Layout Before Animation 原则
+#    需要动画效果时查 framepack 武器库
+
+# 4. 验证
+npx hyperframes lint
+
+# 5. 预览
+npx hyperframes preview
+
+# 6. 渲染
+npx hyperframes render
 ```
-
-Manage the arsenal:
-
-```bash
-npx framepack arsenal list
-npx framepack arsenal recommend --idea "Premium summit event promo" --format 9:16 --type event-promo
-npx framepack arsenal add --from ./snippets/impact-pop.txt --kind motion --project-dir ./out/summit --name impact-pop
-npx framepack arsenal save --project-dir ./out/summit --name summit-remix
-npx framepack arsenal cache --project-dir ./out/summit --json
-```
-
-Mine references:
-
-```bash
-npx framepack reference mine --project-dir ./out/summit --video ./reference.mp4
-```
-
-Audit and render:
-
-```bash
-npx framepack workbench audit --phase preflight --project-dir ./out/summit
-npx framepack workbench audit --phase composition --project-dir ./out/summit
-npx framepack build --project-dir ./out/summit
-npx framepack preview --project-dir ./out/summit --open
-npx framepack workbench audit --phase preview --project-dir ./out/summit
-npx framepack render --project-dir ./out/summit --audio bgm.mp3
-npx framepack workbench audit --phase render --project-dir ./out/summit
-```
-
-Stop on unresolved P0/P1 blockers. Use `--force` only when the user explicitly accepts the risk; forced bypasses are recorded.
-
-## Arsenal Rules
-
-- Built-in weapons are references, not final creative decisions.
-- Project-local weapons belong in `.framepack/arsenal.json`.
-- Trusted downloaded resources belong in `.framepack/arsenal-cache/manifest.json`.
-- Search results are candidates first, not automatic downloads.
-- Useful new combinations should be saved with `framepack arsenal save`.
-- Finished or reference videos should become `VIDEO_DNA.md` and `TEMPLATE_BLUEPRINT.md` when they can teach future projects.
-
-## Reference Mining Rules
-
-`framepack reference mine` should produce reusable knowledge:
-
-- rhythm
-- scene roles
-- visual grammar
-- motion grammar
-- asset requirements
-- reusable slots
-- HyperFrames constraints
-
-Do not copy references blindly. Extract reusable structure.
-
-## HyperFrames Rules
-
-When building or editing HTML:
-
-- keep the first scene visible in CSS
-- preserve `data-width`, `data-height`, and `data-start`
-- root container must have `data-composition-id` and `class="clip"`
-- write `meta.json`
-- register timelines on `window.__timelines`
-- switch scenes with `tl.set()`
-- do not put timed `<video>` elements inside timed scene containers
-- avoid `Math.random()` and `repeat: -1` in render timelines
-- avoid `currentTime`, `.play()`, `.pause()` on media elements
-- convert ScrollTrigger, FLIP, and scrubbed interaction intent into deterministic timeline beats
-- avoid missing `compositions/blocks/*.html` references unless the block files exist
-- read `frame.md` (preferred) or `DESIGN.md` for brand tokens before writing CSS
-- inject frame.md motion tokens (energy, easing, duration) into GSAP timelines
-- use HyperFrames Catalog components (`npx hyperframes add`) before generating custom code
 
 ## Skills
 
-Framepack installs these project-facing skills:
+Framepack v0.8 skills:
 
-- `framepack-director`: intent → Visual Style matching + frame.md generation + storyboard language
-- `framepack-design-picker`: visual style selection via HyperFrames Design Picker
-- `framepack-template-fuser`: prompt expansion + assets + templates → `COMPOSITION.md`
-- `framepack-hyperframes-builder`: composition rules + motion principles + render safety
-- `framepack-animation-library`: GSAP + anime.js weapon catalog for motion composition
-- `framepack-reference-miner`: reference or finished video into DNA and blueprint
+| Skill | 作用 | 介入时机 |
+|---|---|---|
+| framepack-director | 意图翻译 + Visual Style + frame.md + expanded-prompt | Phase 1 + Phase 2 |
+| framepack-animation-library | 27 件 GSAP/anime.js 武器 | HyperFrames 写 HTML 时 |
+| framepack-gsap | GSAP 动画模式参考 | HyperFrames 写 HTML 时 |
+| framepack-arsenal | 武器目录管理 | 创意阶段推荐 |
+| framepack-reference-miner | 参考视频 → DNA 提取 | 需要参考时 |
+
+**已合并/删除的 skills：**
+- framepack-design-picker → 合并进 framepack-director
+- framepack-template-fuser → 合并进 framepack-director
+- framepack-hyperframes-builder → 不再需要（Framepack 不管 HTML）
 
 ## Development Verification
 
-Before claiming a product change is complete:
-
 ```bash
-# Plugin
-cd framepack-plugin && python -m pytest tests/ -q
-
-# Legacy CLI
-npm run typecheck
-npm test
-npm run build
-npm run sandbox:benchmark
-npm pack --dry-run --json
+cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 ```
-
-Keep `CHANGELOG.md` aligned with the current test count and release evidence.
 
 ## Editing Rules
 
-- Keep README, `docs/README.zh-CN.md`, AGENTS, agent templates, and package metadata aligned when changing public workflow.
-- Prefer focused, reusable arsenal structures over broad legacy workflow expansion.
-- Cut or downgrade capabilities that conflict with the agent-as-director positioning.
-- Use `apply_patch` for manual edits.
-- Do not revert user changes.
-- Keep code and docs lean in structure, even when the arsenal grows.
+- Keep README, AGENTS.md, plugin.yaml 版本号三处同步
+- Framepack 不管 HTML——所有 HTML/结构/渲染问题归 HyperFrames
+- 武器库是字典，不是自动注入
+- 创意阶段与用户共创，不需要用户看 expanded-prompt.md 全文
 
 <!-- FRAMEPACK MANAGED BLOCK START -->
 ## Framepack Agent Workflow
 
 Framepack is installed as an agent-native video creative workbench for this project.
 
-- Trigger Framepack for vague video requests, asset-to-video work, HyperFrames composition, template selection, or polish direction.
-- Prefer MCP tools over memorized shell commands; check `npx -y framepack mcp --describe` if MCP is not connected.
-- Create workbenches with `npx -y framepack create --idea "<idea>" --assets <dir> --output-dir <dir>`.
-- Start every Framepack project by reading `FRAMEPACK.md`.
-- Use `HUMAN.md`, `ASSETS.md`, `ASSET_GAPS.md`, `DESIGN.md`, `DESIGN_TOKENS.md`, `STYLE.md`, `DIRECTION.md`, `COMPOSITION.md`, and `ITERATIONS.md` as durable context. Do not rely on model memory.
-- Run `npx -y framepack workbench audit --phase preflight --project-dir <dir>` before starting, then `npx -y framepack workbench audit --phase design|composition|preview|render --project-dir <dir>` at each lifecycle gate. Stop on P0/P1 blockers.
-- Recommend animation libraries, templates, game-asset tools, HyperFrames, or Remotion only when the current project needs them.
-- Project skills are installed under `.framepack/agent/codex/skills`; each skill contains detailed references. Use the matching Framepack skill for: director work, template fusion, HyperFrames building, or reference mining.
+- Trigger Framepack for vague video requests, creative direction, or style matching.
+- Framepack produces frame.md + expanded-prompt.md, then HyperFrames takes over.
+- Start every HyperFrames project by reading an official example: `npx hyperframes init --example product-promo`.
+- Weapon library (GSAP/anime.js) is a dictionary for the HTML animation phase, not an automatic injector.
+- Framepack does NOT audit HTML. Use `npx hyperframes lint` for that.
 <!-- FRAMEPACK MANAGED BLOCK END -->
