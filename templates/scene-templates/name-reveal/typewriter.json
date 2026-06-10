@@ -1,9 +1,0 @@
-{
-  "id": "typewriter",
-  "category": "name-reveal",
-  "tags": ["typewriter", "text", "character", "synthesia", "education"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
-  "minDuration": 3,
-  "maxDuration": 8
-}

@@ -1,9 +1,0 @@
-{
-  "id": "progress-bars",
-  "category": "stats",
-  "tags": ["progress", "bar", "saas", "growth", "comparison"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary", "--accent-secondary"],
-  "minDuration": 4,
-  "maxDuration": 10
-}

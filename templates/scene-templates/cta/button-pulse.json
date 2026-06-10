@@ -1,9 +1,0 @@
-{
-  "id": "button-pulse",
-  "category": "cta",
-  "tags": ["cta", "button", "pulse", "action", "interactive"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
-  "minDuration": 3,
-  "maxDuration": 8
-}

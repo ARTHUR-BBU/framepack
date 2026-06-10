@@ -1,80 +1,55 @@
 # Framepack
 
-Framepack serves **HyperFrames programmatic commercial video ideation and composition** — as a Hermes Agent Plugin.
+> HyperFrames programmatic commercial video ideation and composition advisor.
+> **A Hermes Agent Plugin.**
 
-In Chinese: Framepack 服务的是 **面向 HyperFrames 程式化商业视频创意与编排**。
+Framepack is a Hermes Agent Plugin that hooks into the agent loop to provide
+expert creative direction for HyperFrames video production. The agent is the
+director. Framepack is the advisor, producer, arsenal manager, and HyperFrames
+quality gate.
 
-中文说明: [docs/README.zh-CN.md](docs/README.zh-CN.md)
-
-## The Shift (v0.7)
-
-Framepack v0.7 is a **Hermes Agent Plugin** — a parasitic organ that lives inside the agent loop, watches the agent's tool calls, and whispers advice at the right moment.
-
-```text
-v0.6 (legacy): CLI + MCP — the agent calls Framepack like a tool
-v0.7 (current): Hermes Plugin — Framepack calls the agent like a director's advisor
-```
-
-The agent is the director. Framepack is the director's advisor, producer, arsenal manager, and HyperFrames quality gate. It hooks into the agent loop and proactively injects feedback when the agent writes workbench files.
-
-## Architecture
+## The Idea
 
 ```
-Hermes Agent Loop
-  └── Plugin hooks (pre_tool_call + post_tool_call)
-        ├── 🚨 pre_tool_call  → index.html write scan (before write)
-        ├── 📋 post_tool_call → STORYBOARD.md analysis (LLM)
-        ├── 🎬 post_tool_call → COMPOSITION.md review (LLM)
-        ├── 🔍 post_tool_call → index.html regex audit (zero token)
-        ├── 🔫 post_tool_call → arsenal.json validation
-        └── 🧬 post_tool_call → VIDEO_DNA.md / TEMPLATE_BLUEPRINT.md check
-      └── Skills (domain knowledge injected into LLM calls)
-        ├── framepack-director (storyboard structure)
-        ├── framepack-template-fuser (template matching)
-        ├── framepack-hyperframes-builder (render safety rules)
-        ├── framepack-arsenal (weapon catalog)
-        ├── framepack-gsap (GSAP animation engine)
-        └── framepack-reference-miner (reference video DNA)
+HyperFrames is a fully-equipped film studio.
+Framepack is the director who knows when to turn on which light.
 ```
 
-## Install
+HyperFrames provides the machinery — 8 Visual Styles, Design Picker, 52+
+Catalog components, HyperShader transitions, lint/validate/render pipeline.
+Framepack provides the creative intelligence — translating fuzzy user intent
+into precise HyperFrames parameters, managing reusable weapons, and ensuring
+every composition passes render safety checks.
+
+Users don't need to know about frame.md, Visual Styles, or HyperFrames
+internals. They say "高端科技感", Framepack translates to Data Drift.
+They say "换个颜色", Framepack updates the frame.md automatically.
+
+## Quick Start
 
 ### Prerequisites
 
-- **Hermes Agent** installed and running. [Get Hermes →](https://hermes-agent.nousresearch.com)
-- **Git** for cloning the repository.
-- **Python 3.10+** (the Plugin runs pure Python — no Node.js required for v0.7).
+- [Hermes Agent](https://github.com/nousresearch/hermes-agent) installed
+- Node.js 18+ (for HyperFrames CLI)
+- Python 3.10+ (for Plugin hooks)
 
-### Step 1: Clone the repo
-
-The Plugin lives on the `framepack-agent-platform` branch. Always deploy from this branch — `master` is the old v0.6 CLI.
+### Step 1: Install HyperFrames
 
 ```bash
-git clone https://github.com/ARTHUR-BBU/framepack --branch framepack-agent-platform --depth 1
+npm install hyperframes
 ```
 
 ### Step 2: Install the Plugin
 
-Copy `framepack-plugin/` into your Hermes plugins directory. The path depends on your OS:
-
 ```bash
-# Linux / macOS
-cp -r framepack/framepack-plugin ~/.hermes/plugins/framepack
-
-# Windows (PowerShell)
-Copy-Item -Recurse framepack\framepack-plugin $env:USERPROFILE\.hermes\plugins\framepack
-
-# Windows (CMD)
-xcopy /E /I framepack\framepack-plugin %USERPROFILE%\.hermes\plugins\framepack
+cd <your-hermes-home>/plugins
+git clone -b framepack-agent-platform https://github.com/ARTHUR-BBU/framepack.git framepack
 ```
 
-> **Tip:** Not sure where your Hermes home is? Run `hermes status` — it prints the config path. Your plugins live at `<hermes-home>/plugins/`.
-
-### Step 3: Enable and restart
+### Step 3: Enable the Plugin
 
 ```bash
 hermes plugins enable framepack
-# Restart Hermes (or restart the gateway if using Telegram/Discord)
 ```
 
 ### Step 4: Verify
@@ -83,71 +58,105 @@ hermes plugins enable framepack
 hermes plugins list
 ```
 
-You should see `framepack` with status **enabled** and version **0.7.10**.
+You should see `framepack` with status **enabled** and version **0.7.12**.
 
-### Step 5: Test it
+### Step 5: Add AGENTS.md to your project
 
-Start a conversation with your Hermes agent and say something like:
-
-> "I want to make a 30-second sports highlight video in 9:16 format."
-
-Framepack will guide the agent through storyboard → composition → design → HyperFrames build → render, injecting feedback at every gate.
-
-### v0.6 — CLI (legacy, npm)
+Copy `AGENTS.md` to the root directory of any project where you want Framepack
+active:
 
 ```bash
-npm install framepack
+cp <hermes-home>/plugins/framepack/AGENTS.md <your-project>/AGENTS.md
 ```
 
-The CLI is preserved for backward compatibility but is no longer the primary interface.
+### Step 6: Test it
 
-## What Framepack Manages
+Start a Hermes conversation in your project directory and say:
 
-- **Workflow blueprints**: event promos, SaaS launches, course promos, data/news explainers, game ads, sports highlights, transfer announcements, player tributes.
-- **Storyboards**: `STORYBOARD.md` keeps the agent-led creative spine visible before code.
-- **Arsenal manifests**: `.framepack/arsenal.json` records weapons, candidates, cached downloads, and remixes used by a project.
-- **Reference mining**: `VIDEO_DNA.md` and `TEMPLATE_BLUEPRINT.md` turn a reference or finished video into reusable structure.
-- **Design references**: curated visual systems that give agents concrete color, type, spacing, and rhythm language.
-- **Motion recipes**: GSAP-safe patterns that can be remixed, not blindly pasted.
-- **Trusted resources**: registered sources may be cached; search results remain candidates until trusted.
-- **HyperFrames quality gates**: first frame visible, scene switches with `tl.set()`, no render-random timelines, `window.__timelines` registered.
+> "帮我做一个高端科技感的 AI 产品发布会视频"
 
-## Workbench Files
+The agent (with Framepack's guidance) should:
+1. Match the intent to **Data Drift** Visual Style
+2. Generate a storyboard with proper scene structure
+3. Write HyperFrames-compliant HTML
+4. Pass all 11 render safety checks
+
+## Architecture
 
 ```text
-FRAMEPACK.md              agent entrypoint
-HUMAN.md                  plain-language human summary
-ASSETS.md                 user assets
-ASSET_GAPS.md             missing or optional assets
-STORYBOARD.md             agent-led creative spine
-STYLE.md                  visual and motion style
-DESIGN.md                 matched design reference
-DESIGN_TOKENS.md          executable colors and typography
-DIRECTION.md              creative direction and options
-COMPOSITION.md            HyperFrames composition plan
-ITERATIONS.md             feedback and remix history
-index.html                HyperFrames-safe scaffold
-meta.json                 runtime metadata
-VIDEO_DNA.md              reference video structural analysis
-TEMPLATE_BLUEPRINT.md     reusable template derived from DNA
-.framepack/arsenal.json   project arsenal manifest
-.framepack/content-graph.json
-.framepack/state.json
+Hermes Agent Loop
+  └── Plugin hooks (pre_tool_call + post_tool_call)
+        ├── 🚨 pre_tool_call  → index.html (write scan)
+        ├── 📋 post_tool_call → STORYBOARD.md (LLM)
+        ├── 🎬 post_tool_call → COMPOSITION.md (LLM)
+        ├── 🔍 post_tool_call → index.html (regex + structural)
+        ├── 🔫 post_tool_call → arsenal.json
+        └── 🧬 post_tool_call → VIDEO_DNA.md / TEMPLATE_BLUEPRINT.md
+      └── Skills (domain knowledge injected into LLM calls)
+        ├── framepack-director (intent → Visual Style + frame.md + storyboard)
+        ├── framepack-design-picker (visual style selection via HyperFrames picker)
+        ├── framepack-template-fuser (prompt expansion + template matching)
+        ├── framepack-hyperframes-builder (composition rules + render safety)
+        ├── framepack-arsenal (weapon catalog)
+        ├── framepack-gsap (GSAP animation engine)
+        ├── framepack-animation-library (GSAP + anime.js weapon catalog)
+        └── framepack-reference-miner (reference video DNA)
 ```
 
-## Development
+The Plugin automatically fires when the agent writes any of the watched files.
+No manual commands needed — the Plugin is always watching.
 
-```bash
-# Plugin tests (Python)
-cd framepack-plugin
-python -m pytest tests/ -q
+## What Framepack Knows
 
-# Legacy CLI tests (TypeScript)
-npm test
-npm run build
+### 8 Visual Styles (from HyperFrames)
+
+| Style | Mood | Best For |
+|-------|------|----------|
+| Swiss Pulse | Clinical, precise | SaaS, data, dev tools |
+| Velvet Standard | Premium, timeless | Luxury, enterprise, keynotes |
+| Deconstructed | Industrial, raw | Tech launches, security |
+| Maximalist Type | Loud, kinetic | Big announcements, launches |
+| Data Drift | Futuristic, immersive | AI, ML, cutting-edge tech |
+| Soft Signal | Intimate, warm | Wellness, personal stories |
+| Folk Frequency | Cultural, vivid | Consumer apps, communities |
+| Shadow Cut | Dark, cinematic | Dramatic reveals, exposé |
+
+### 11 Render Safety Checks
+
+| Check | Severity |
+|-------|----------|
+| First scene visible in CSS | P0 |
+| data-attributes on scenes | P0 |
+| Root container attributes | P0 |
+| Video in timed container | P0 |
+| Imperative media control | P0 |
+| meta.json exists | P1 |
+| Timelines registered | P1 |
+| No Math.random | P1 |
+| No infinite repeat | P1 |
+| No ScrollTrigger | P1 |
+| No FLIP animations | P2 |
+
+## Updating
+
+When a new Framepack version is released, update **two locations**:
+
+| What | Where | How |
+|------|-------|-----|
+| Plugin code | `<hermes-home>/plugins/framepack/` | `git pull` in the plugin directory |
+| AGENTS.md | Each project root | Copy from plugin: `cp <hermes-home>/plugins/framepack/AGENTS.md <project>/AGENTS.md` |
+
+Both must be on the same version. Check the version comment at the top of AGENTS.md:
+
+```html
+<!-- version: 0.7.12 — sync with plugin.yaml and README -->
 ```
 
-158/158 Plugin tests pass. 221/221 CLI tests pass.
+## Documentation
+
+- [AGENTS.md](AGENTS.md) — Full agent guide (loaded by Hermes at runtime)
+- [CHANGELOG.md](CHANGELOG.md) — Release history
+- [docs/README.zh-CN.md](docs/README.zh-CN.md) — 中文文档
 
 ## License
 

@@ -1,9 +1,0 @@
-{
-  "id": "bold-text",
-  "category": "cta",
-  "tags": ["cta", "bold", "text", "action", "closing"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
-  "minDuration": 2,
-  "maxDuration": 6
-}

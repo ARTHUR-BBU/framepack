@@ -1,9 +1,0 @@
-{
-  "id": "impact-slam",
-  "category": "opening",
-  "tags": ["impact", "bold", "slam", "sports", "energetic", "nike"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
-  "minDuration": 2,
-  "maxDuration": 6
-}

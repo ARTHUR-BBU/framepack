@@ -1,9 +1,0 @@
-{
-  "id": "slam-down",
-  "category": "name-reveal",
-  "tags": ["slam", "heavy", "impact", "bold", "announcement"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
-  "minDuration": 2,
-  "maxDuration": 6
-}

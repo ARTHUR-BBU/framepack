@@ -1,66 +1,71 @@
-# Framepack — 工作交接台
+# hyperframes 开发工程 — 工作交接台
 
-> **这不是日志，是手台**——每次会话结束时 **替换** `## 当前状态` 区块，
-> 不是追加。换下来的旧内容不需要保留（Git 历史里有）。
+> 新对话打开后，读完本文就能接上。
 
-## 当前状态
+## 当前阶段
+v0.7.12 已通过黑盒验收 (19/19 PASS)，可发布
 
-<!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
+## 上次结束位置 (2026-06-10)
+### 做了什么
+- v0.7.12：HyperFrames 深度集成 — 4 skills 重写/新增，8 种 Visual Style，frame.md 规范，Prompt Expansion，Beat Direction，HyperShader 转场，Design Picker
+- 路线 B：DOM 结构化 HTML 检查（3 个新 P0），165 测试全通过
+- 黑盒验收 19/19 PASS，零 BLOCKER，零 CRITICAL
 
-**阶段**: v0.7.6 头脑风暴
-**分支**: framepack-agent-platform
-**测试**: 127/127 (pytest), 221/221 (legacy CLI)
-**最后提交**: b210db9 (工作交接台建立)
+### 当前版本
+- plugin.yaml: 0.7.12
+- AGENTS.md: 0.7.12
+- README.md / README.zh-CN.md: 0.7.12
+- Skills: 8 个
+- 单元测试: 165 passed
+- HTML 检查: 11 条 (8 regex + 3 structural)
 
-### 上次做了什么
+### Skills 清单
+1. framepack-director — Visual Style 匹配 + frame.md 生成 + Beat Direction
+2. framepack-design-picker — HyperFrames Design Picker 编排
+3. framepack-template-fuser — Prompt Expansion + Catalog 映射
+4. framepack-hyperframes-builder — 构图规则 + Motion Principles + HyperShader
+5. framepack-arsenal — 武器目录
+6. framepack-gsap — GSAP 动画引擎
+7. framepack-animation-library — GSAP + anime.js 武器
+8. framepack-reference-miner — 参考视频反推
 
-- ✅ v0.7.0–0.7.5 全部交付：6 触手 + 6 Skill
-- ✅ 质量打磨：5 P0 + 4 P1 全部修复
-- ✅ 三路 subagent 并行评审
-- ✅ 工作交接台 `.hermes/CONTEXT.md` 建立
-- ✅ 所有文档（README/CHANGELOG/AGENTS/中文）更新并推送
-
-### 下次要做什么
-
-- 头脑风暴 v0.7.6 方向
-- 参考视频实际提取？ComfyUI 集成？cron 定时武器更新？多 agent 协作？
-
-## 新对话启动清单
-
-1. `cd F:\hyperframes`
-2. 确认 Plugin 激活: `grep -i framepack <Hermes日志> | head -3`
-3. 确认 Git 状态: `git status --short`
-4. 如需测试: `cd framepack-plugin && python -m pytest tests/ -q`
-5. **回到本文**，读完 `## 当前状态` 就知道做到哪了
+### 新增文件 (v0.7.12)
+- core/html_parser.py — HTML 结构解析器
+- skills/framepack-design-picker/SKILL.md — Design Picker skill
+- skills/framepack-director/references/visual-styles.md — 8 种 Visual Style YAML
+- skills/framepack-director/references/design-picker-workflow.md — Picker 工作流
 
 ## 关键路径
-
-<!-- 项目结构变化时更新 -->
-
 | 用途 | 路径 |
 |------|------|
-| 项目根 | `F:\hyperframes` |
-| Plugin 开发 | `F:\hyperframes\framepack-plugin` |
-| Plugin 部署 | `F:\Hermes_windows\hermes-agent\plugins\framepack` |
-| 测试工作台 | `F:\hyperframes\test-workbench` |
-| Git 分支 | `framepack-agent-platform` |
-| 远程 | `https://github.com/ARTHUR-BBU/framepack` |
+| 开发工程 | F:\hyperframes\framepack-plugin\ |
+| Plugin 部署 | F:\Hermes_windows\hermes-agent\plugins\framepack\ |
+| 测试工作目录 | F:\Framepack-01-test\ |
+| 测试 AGENTS.md | F:\Framepack-01-test\AGENTS.md |
+| 测试指南 | F:\Framepack-01-test\TEST-GUIDE-v0.7.12.md |
+| 用户文档 | C:\Users\LENOVO\Documents\AI-Coach-Vault\ |
+
+## 部署同步检查清单
+每次发版时三方必须对齐：
+1. `plugin.yaml` version
+2. `AGENTS.md` <!-- version: X.X.XX -->
+3. `README.md` / `README.zh-CN.md` 版本号 + Skills 描述
+4. 部署 Plugin → HERMES_HOME
+5. 同步 AGENTS.md → 测试项目
+6. 跑 `python -m pytest tests/ -q -o "addopts="`
 
 ## 待办 / 想法池
-
-<!-- 新想法加进来，完成或否决时删掉 -->
-
-- [ ] 头脑风暴 v0.7.6 方向
-- [ ] 考虑拆分包：framepack-plugin 独立 repo vs mono-repo？
-- [ ] `framepack-plugin-engineering` Skill 需更新（多了参考反推 + 消毒层）
-- [ ] prompt 注入消毒升级——当前简单 pattern matching，后续考虑 LLM 判断
+- [ ] COMPOSITION.md LLM 分析偶尔无响应（easyrouter timeout）
+- [ ] Design Picker 实战验证（真的起 HTTP server 跑一遍）
+- [ ] frame.md → Prompt Expansion → 自动 lint 闭环
+- [ ] HyperFrames Catalog 集成（npx hyperframes add 自动化）
+- [ ] 考虑 HyperFrames 自身的 lint/validate/inspect 集成到 Plugin hook
+- [ ] 质量门禁自动化：写完 HTML → auto lint → 修复 → re-lint
 
 ## 笔记
-
-<!-- 用户偏好、约定、踩坑——缓慢增长，手动维护 -->
-
-- 老田喜欢"器官移植 vs 外卖电话"架构隐喻
-- 老田对"OpenAI 标准格式"敏感——说"chat messages 格式"
-- LLM 钩子偶发超时（COMPOSITION 超时过一次），正则钩子零风险
-- 部署同步到 Hermes: `cp` 四个文件（hooks×2 + `__init__` + tests）
-- 老田自称"老田"
+- 老田喜欢通俗化表达、类比比喻、务实幽默
+- "摄影棚 vs 导演"定位：Framepack 是导演，HyperFrames 是摄影棚
+- 不造灯，用摄影棚的灯。8 种 Visual Style、Design Picker、Catalog、HyperShader 全是 HyperFrames 的设备
+- Plugin 双进程共享同一 HERMES_HOME，部署一次两边生效
+- pytest 需 `-o "addopts="`
+- CDN 下载走代理: `curl -x http://127.0.0.1:59527`

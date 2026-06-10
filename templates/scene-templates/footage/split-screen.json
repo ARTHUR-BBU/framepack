@@ -1,9 +1,0 @@
-{
-  "id": "split-screen",
-  "category": "footage",
-  "tags": ["split", "comparison", "before-after", "dual"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
-  "minDuration": 4,
-  "maxDuration": 10
-}

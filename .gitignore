@@ -1,28 +1,33 @@
+# Dependencies
 node_modules/
-dist/
-coverage/
-*.log
-out/
-.worktrees/
-.claude/
+
+# Python
 __pycache__/
-.pytest_cache/
-.ruff_cache/
 *.pyc
-.hermes/*
-!.hermes/CONTEXT.md
-.framepack/
-test-workbench/
-AI 技术编辑试稿.pdf
-AI技术编辑试稿.md
-HyperFrames_总结与分析.md
-Part_A_选题发现_给Gemini润色版.md
-docs/superpowers/specs/2026-04-28-ai-tech-editor-trial-article-design.md
-# Temp / dev artifacts
-.mcp.json
-CLAUDE.md
-DEVELOPMENT_HANDOFF_CLAUDE_CODE.md
-_send_msg.py
-_test_poll.py
+*.pyo
+.pytest_cache/
+
+# Build artifacts
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test outputs
+out/
 tmp_frame_*.jpg
-workbench/
+
+# Environment
+.env
+.env.local
+
+# Worktrees
+.worktrees/
+
+# Legacy (kept for reference only, not tracked)
+.claude/

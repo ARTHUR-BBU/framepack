@@ -505,11 +505,13 @@ class TestHtmlAuditClean:
 <html>
 <head><meta charset="utf-8"></head>
 <body>
+<div id="hyperframes" data-composition-id="test-comp" class="clip">
 <div data-scene="1" data-width="1080" data-height="1920" data-start="0">
   <h1>Opening Hook</h1>
 </div>
 <div data-scene="2" data-width="1080" data-height="1920" data-start="3">
   <h2>Data Reveal</h2>
+</div>
 </div>
 <script>
   const tl = gsap.timeline({ repeat: 0 });
@@ -524,9 +526,9 @@ class TestHtmlAuditClean:
         failed = [f for f in findings if not f["passed"]]
         assert len(failed) == 0, f"Unexpected failures: {failed}"
 
-    def test_returns_8_checks(self):
+    def test_returns_11_checks(self):
         findings = _run_html_checks(self.CLEAN_HTML)
-        assert len(findings) == 8  # 3 data + 4 P1 + 1 P2
+        assert len(findings) == 11  # 3 data + 4 P1 + 1 P2 + 3 structural
 
 
 class TestHtmlAuditFailing:
@@ -585,8 +587,8 @@ class TestHtmlAuditFailing:
     def test_p0_count_correct(self):
         findings = _run_html_checks(self.BROKEN_HTML)
         p0 = [f for f in findings if not f["passed"] and "P0" in f["severity"]]
-        # data-width, data-height, data-start = 3 P0
-        assert len(p0) == 3
+        # data-width, data-height, data-start, root-container-attrs = 4 P0
+        assert len(p0) == 4
 
     def test_p1_count_correct(self):
         findings = _run_html_checks(self.BROKEN_HTML)
@@ -609,6 +611,167 @@ class TestHtmlAuditFlip:
         findings = _run_html_checks(html)
         flip = [f for f in findings if f["check_id"] == "no-flip"]
         assert len(flip) == 1 and flip[0]["passed"]
+
+
+# ── Structural HTML Checks (DOM-aware) ──
+
+
+class TestVideoInTimedContainer:
+    """Test that <video> nested inside timed scene containers is detected."""
+
+    HTML_VIDEO_IN_SCENE = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<div id="hyperframes" data-composition-id="test" class="clip">
+  <div class="scene" id="scene-1" data-width="1080" data-height="1920" data-start="0">
+    <h1>Opening</h1>
+  </div>
+  <div class="scene" id="scene-4" data-width="1080" data-height="1920" data-start="14.0">
+    <video id="clip-a" src="assets/footage.mp4" muted playsinline></video>
+    <div class="label">Lightning Reflexes</div>
+  </div>
+</div>
+<script>
+  const tl = gsap.timeline({ repeat: 0 });
+  window.__timelines.push(tl);
+</script>
+</body></html>"""
+
+    HTML_VIDEO_AT_ROOT = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<div id="hyperframes" data-composition-id="test" class="clip">
+  <video id="bg-video" src="assets/bg.mp4" muted playsinline></video>
+  <div class="scene" id="scene-1" data-width="1080" data-height="1920" data-start="0">
+    <h1>Opening</h1>
+  </div>
+</div>
+<script>
+  const tl = gsap.timeline({ repeat: 0 });
+  window.__timelines.push(tl);
+</script>
+</body></html>"""
+
+    def test_detects_video_in_timed_container(self):
+        findings = _run_html_checks(self.HTML_VIDEO_IN_SCENE)
+        v = [f for f in findings if f["check_id"] == "no-video-in-timed-container"]
+        assert len(v) == 1
+        assert not v[0]["passed"]
+        assert "scene-4" in v[0]["message"]
+        assert "P0" in v[0]["severity"]
+
+    def test_passes_when_video_at_root(self):
+        findings = _run_html_checks(self.HTML_VIDEO_AT_ROOT)
+        v = [f for f in findings if f["check_id"] == "no-video-in-timed-container"]
+        assert len(v) == 1 and v[0]["passed"]
+
+
+class TestRootContainerAttrs:
+    """Test that root container missing data-composition-id / class=clip is detected."""
+
+    HTML_MISSING_ATTRS = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<div id="hyperframes">
+  <div class="scene" id="scene-1" data-width="1080" data-height="1920" data-start="0">
+    <h1>Opening</h1>
+  </div>
+</div>
+<script>
+  const tl = gsap.timeline({ repeat: 0 });
+  window.__timelines.push(tl);
+</script>
+</body></html>"""
+
+    HTML_WITH_ATTRS = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<div id="hyperframes" data-composition-id="summit-promo" class="clip" data-start="0">
+  <div class="scene" id="scene-1" data-width="1080" data-height="1920" data-start="0">
+    <h1>Opening</h1>
+  </div>
+</div>
+<script>
+  const tl = gsap.timeline({ repeat: 0 });
+  window.__timelines.push(tl);
+</script>
+</body></html>"""
+
+    def test_detects_missing_root_attrs(self):
+        findings = _run_html_checks(self.HTML_MISSING_ATTRS)
+        r = [f for f in findings if f["check_id"] == "root-container-attrs"]
+        assert len(r) == 1
+        assert not r[0]["passed"]
+        assert "data-composition-id" in r[0]["message"]
+        assert "clip" in r[0]["message"]
+
+    def test_passes_when_root_has_attrs(self):
+        findings = _run_html_checks(self.HTML_WITH_ATTRS)
+        r = [f for f in findings if f["check_id"] == "root-container-attrs"]
+        assert len(r) == 1 and r[0]["passed"]
+
+
+class TestImperativeMediaControl:
+    """Test that imperative media control (currentTime, play, pause) is detected."""
+
+    HTML_WITH_CURRENTTIME = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<div id="hyperframes" data-composition-id="test" class="clip">
+  <div class="scene" id="scene-1" data-width="1080" data-height="1920" data-start="0">
+    <h1>Opening</h1>
+  </div>
+</div>
+<script>
+  const tl = gsap.timeline({ repeat: 0 });
+  tl.set('#clip-a', { currentTime: 5, opacity: 1 }, 0);
+  tl.to('#clip-a', { currentTime: 20, duration: 5.5, ease: 'none' }, 0);
+  window.__timelines.push(tl);
+</script>
+</body></html>"""
+
+    HTML_WITH_PLAY_PAUSE = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<div id="hyperframes" data-composition-id="test" class="clip">
+  <div class="scene" id="scene-1" data-width="1080" data-height="1920" data-start="0">
+    <h1>Opening</h1>
+  </div>
+</div>
+<script>
+  document.getElementById('vid').play();
+  document.getElementById('vid').pause();
+  window.__timelines.push(gsap.timeline());
+</script>
+</body></html>"""
+
+    HTML_CLEAN_SCRIPT = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<div id="hyperframes" data-composition-id="test" class="clip">
+  <div class="scene" id="scene-1" data-width="1080" data-height="1920" data-start="0">
+    <h1>Opening</h1>
+  </div>
+</div>
+<script>
+  const tl = gsap.timeline({ repeat: 0 });
+  tl.to('.hook', { opacity: 1, duration: 1 });
+  window.__timelines.push(tl);
+</script>
+</body></html>"""
+
+    def test_detects_currenttime_in_gsap_params(self):
+        findings = _run_html_checks(self.HTML_WITH_CURRENTTIME)
+        m = [f for f in findings if f["check_id"] == "no-imperative-media"]
+        assert len(m) == 1
+        assert not m[0]["passed"]
+        assert "currentTime" in m[0]["message"]
+
+    def test_detects_play_pause(self):
+        findings = _run_html_checks(self.HTML_WITH_PLAY_PAUSE)
+        m = [f for f in findings if f["check_id"] == "no-imperative-media"]
+        assert len(m) == 1
+        assert not m[0]["passed"]
+        assert ".play()" in m[0]["message"]
+        assert ".pause()" in m[0]["message"]
+
+    def test_passes_when_no_imperative_control(self):
+        findings = _run_html_checks(self.HTML_CLEAN_SCRIPT)
+        m = [f for f in findings if f["check_id"] == "no-imperative-media"]
+        assert len(m) == 1 and m[0]["passed"]
 
 
 # ── HTML Audit Message Formatting ──

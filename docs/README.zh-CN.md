@@ -1,84 +1,53 @@
-# Framepack 中文说明
+# Framepack
 
-Framepack 服务的是 **面向 HyperFrames 程式化商业视频创意与编排**。
+> HyperFrames 程式化商业视频创意与编排顾问。
+> **Hermes Agent 插件。**
 
-换成小白话：它是给 agent 用的商业视频创意武器库和编排工作台，主要服务 HyperFrames。现在 v0.7 是一个 **Hermes Agent Plugin**——寄生在 agent 身体里的"器官"。
+Framepack 是一个 Hermes Agent 插件，挂载到 Agent 循环中，为 HyperFrames
+视频制作提供专业创意指导。Agent 是导演，Framepack 是导演的顾问、制片人、
+武器库管理和 HyperFrames 质量门禁。
 
-一句话：
-
-> Framepack 不做导演。agent 是导演；Framepack 是导演顾问、制片、武器库管理员和 HyperFrames 质检官。
-
-它不替 agent 想创意，也不假装一键生成好视频。它更像一个懂行的制片办公室：把模板、活动宣传片节奏、设计参考、动效语汇、技术库、参考视频反推、下载缓存、二创组合、成品模板沉淀和渲染检查都管理起来。
-
-## 架构大转弯（v0.7）
-
-v0.6 时代，Framepack 是一个 CLI 工具——agent 像打电话一样主动调用它。v0.7 时代，Framepack 是一个**寄生 Plugin**——它住在 agent 的身体里，监视 agent 的每一次工具调用，在关键时刻"借脑"注入建议。
-
-```text
-v0.6（旧）：CLI + MCP — agent 主动调用 Framepack
-v0.7（新）：Hermes Plugin — Framepack 主动向 agent 注入反馈
-```
-
-类比：v0.6 是"外卖电话"——你饿了叫外卖，Framepack 给你送饭。v0.7 是"器官移植"——Framepack 直接接入你的神经，你拿起筷子的时候它已经在提醒你"这个菜太烫了先吹一下"。
-
-## Plugin 架构
+## 核心理念
 
 ```
-Hermes Agent Loop（agent 的神经中枢）
-  └── Plugin hooks（两个钩子函数）
-        ├── 🚨 pre_tool_call  → index.html 写入前拦截
-        ├── 📋 post_tool_call → STORYBOARD.md 结构分析（LLM 借脑）
-        ├── 🎬 post_tool_call → COMPOSITION.md 模板审查（LLM 借脑）
-        ├── 🔍 post_tool_call → index.html 正则审计（零 token）
-        ├── 🔫 post_tool_call → arsenal.json 武器验证
-        └── 🧬 post_tool_call → VIDEO_DNA.md / TEMPLATE_BLUEPRINT.md 结构检查
-      └── Skills（6 个知识库，注入 LLM 调用）
-        ├── framepack-director（导演指南）
-        ├── framepack-template-fuser（模板匹配引擎）
-        ├── framepack-hyperframes-builder（渲染安全规则）
-        ├── framepack-arsenal（武器目录）
-        ├── framepack-gsap（GSAP 动画引擎）
-        └── framepack-reference-miner（参考视频反推）
+HyperFrames 是设备齐全的摄影棚。
+Framepack 是那个知道什么时候开哪盏灯的导演。
 ```
 
-## 安装
+HyperFrames 提供设备——8 种视觉风格、Design Picker、52+ Catalog 预制件、
+HyperShader 转场、lint/validate/render 管线。Framepack 提供创意智能——
+把用户的模糊意图翻译成精确的 HyperFrames 参数，管理可复用武器，
+确保每个作品通过渲染安全检查。
 
-### 前提
+用户不需要知道 frame.md、Visual Styles 或 HyperFrames 内部机制。
+他们说"高端科技感"，Framepack 翻译成 Data Drift。
+他们说"换个颜色"，Framepack 自动更新 frame.md。
 
-- **Hermes Agent** 已安装并运行。[获取 Hermes →](https://hermes-agent.nousresearch.com)
-- **Git** 用于克隆仓库。
-- **Python 3.10+**（Plugin 是纯 Python，v0.7 不需要 Node.js）。
+## 快速开始
 
-### 第一步：克隆仓库
+### 前置条件
 
-Plugin 在 `framepack-agent-platform` 分支上。务必从这个分支部署——`master` 是旧版 v0.6 CLI。
+- [Hermes Agent](https://github.com/nousresearch/hermes-agent) 已安装
+- Node.js 18+（用于 HyperFrames CLI）
+- Python 3.10+（用于 Plugin hooks）
+
+### 第一步：安装 HyperFrames
 
 ```bash
-git clone https://github.com/ARTHUR-BBU/framepack --branch framepack-agent-platform --depth 1
+npm install hyperframes
 ```
 
-### 第二步：安装 Plugin
-
-把 `framepack-plugin/` 复制到你的 Hermes plugins 目录。路径因操作系统而异：
+### 第二步：安装插件
 
 ```bash
-# Linux / macOS
-cp -r framepack/framepack-plugin ~/.hermes/plugins/framepack
-
-# Windows (PowerShell)
-Copy-Item -Recurse framepack\framepack-plugin $env:USERPROFILE\.hermes\plugins\framepack
-
-# Windows (CMD)
-xcopy /E /I framepack\framepack-plugin %USERPROFILE%\.hermes\plugins\framepack
+cd <你的-hermes-home>/plugins
+git clone -b framepack-agent-platform https://github.com/ARTHUR-BBU/framepack.git framepack
 ```
 
-> **提示：** 不确定 Hermes 安装在哪？运行 `hermes status`——它会打印配置路径。plugins 在 `<hermes-home>/plugins/` 下。
-
-### 第三步：启用并重启
+### 第三步：启用插件
 
 ```bash
 hermes plugins enable framepack
-# 重启 Hermes（如果用 Telegram/Discord gateway，重启 gateway）
 ```
 
 ### 第四步：验证
@@ -87,78 +56,104 @@ hermes plugins enable framepack
 hermes plugins list
 ```
 
-你应该看到 `framepack` 状态为 **enabled**，版本为 **0.7.10**。
+你应该看到 `framepack` 状态为 **enabled**，版本为 **0.7.12**。
 
-### 第五步：试试看
+### 第五步：把 AGENTS.md 放到项目里
 
-跟你的 Hermes agent 说句话，比如：
-
-> "帮我做一个 30 秒的体育集锦视频，9:16 竖屏。"
-
-Framepack 会引导 agent 走完整流程：storyboard → 编排 → 设计 → HyperFrames 构建 → 渲染，在每个关口注入反馈。
-
-### v0.6 — CLI（旧版，npm）
+把 `AGENTS.md` 复制到任何你想让 Framepack 生效的项目根目录：
 
 ```bash
-npm install framepack
+cp <hermes-home>/plugins/framepack/AGENTS.md <你的项目>/AGENTS.md
 ```
 
-CLI 保留向后兼容，但不再是主要接口。
+### 第六步：试试看
 
-## 小白类比
+在项目目录里启动 Hermes 对话，然后说：
 
-agent 是导演，Framepack 是制片办公室加器材库。它不抢导演的椅子，但它会把分镜参考、灯光方案、器材、素材清单、历史成功案例和验收清单准备好。
+> "帮我做一个高端科技感的 AI 产品发布会视频"
 
-现在 v0.7 的比喻更准确：agent 是司机，Framepack 是副驾驶座上的导航仪——你不用低头操作，它自己会在你接近路口时说"前面左转"。
+Agent（在 Framepack 指导下）应该：
+1. 把意图匹配到 **Data Drift** 视觉风格
+2. 生成有正确场景结构的分镜
+3. 写出符合 HyperFrames 规范的 HTML
+4. 通过全部 11 条渲染安全检查
 
-## Framepack 管什么
-
-- **模板路线**：活动宣传片、SaaS 发布、课程推广、数据/新闻解释、游戏广告、体育集锦、转会官宣、球员致敬。
-- **Storyboard**：`STORYBOARD.md` 先把创意主线说清楚，再进入代码。
-- **武器库**：`.framepack/arsenal.json` 记录项目用到的武器、候选资源、二创组合。
-- **参考反推**：`VIDEO_DNA.md` 和 `TEMPLATE_BLUEPRINT.md` 把参考视频或成品视频变成可复用结构。
-- **设计参考**：精选视觉系统，给 agent 具体的颜色、字体、间距、节奏语言。
-- **动效配方**：GSAP 安全模式，可改编，不盲抄。
-- **可信资源**：注册来源可缓存，搜索结果只当候选。
-- **HyperFrames 质检**：首帧可见、场景切换用 `tl.set()`、禁止随机渲染时间线、`window.__timelines` 已注册。
-
-## 工作台文件
+## 架构
 
 ```text
-FRAMEPACK.md              agent 入口
-HUMAN.md                  人类可读摘要
-ASSETS.md                 用户素材
-ASSET_GAPS.md             缺失或可选素材
-STORYBOARD.md             agent 创意主线
-STYLE.md                  视觉和动效风格
-DESIGN.md                 匹配的设计参考
-DESIGN_TOKENS.md          可执行的颜色和字体
-DIRECTION.md              创意方向和选项
-COMPOSITION.md            HyperFrames 编排计划
-ITERATIONS.md             反馈和修改历史
-index.html                HyperFrames 安全脚手架
-meta.json                 运行时元数据
-VIDEO_DNA.md              参考视频结构分析
-TEMPLATE_BLUEPRINT.md     从 DNA 派生的可复用模板
-.framepack/arsenal.json   项目武器清单
-.framepack/content-graph.json
-.framepack/state.json
+Hermes Agent Loop
+  └── Plugin hooks（pre_tool_call + post_tool_call）
+        ├── 🚨 pre_tool_call  → index.html（写入扫描）
+        ├── 📋 post_tool_call → STORYBOARD.md（LLM 分析）
+        ├── 🎬 post_tool_call → COMPOSITION.md（LLM 审计）
+        ├── 🔍 post_tool_call → index.html（正则 + 结构化检查）
+        ├── 🔫 post_tool_call → arsenal.json
+        └── 🧬 post_tool_call → VIDEO_DNA.md / TEMPLATE_BLUEPRINT.md
+      └── Skills（8 个知识库，注入 LLM 调用）
+        ├── framepack-director（意图 → Visual Style + frame.md + 分镜）
+        ├── framepack-design-picker（HyperFrames 可视化风格选择器）
+        ├── framepack-template-fuser（Prompt Expansion + 模板匹配）
+        ├── framepack-hyperframes-builder（构图规则 + 渲染安全）
+        ├── framepack-arsenal（武器目录）
+        ├── framepack-gsap（GSAP 动画引擎）
+        ├── framepack-animation-library（GSAP + anime.js 武器目录）
+        └── framepack-reference-miner（参考视频反推）
 ```
 
-## 开发
+Plugin 在 Agent 写入被监听文件时自动触发。无需手动命令——Plugin 始终在监听。
 
-```bash
-# Plugin 测试（Python）
-cd framepack-plugin
-python -m pytest tests/ -q
+## Framepack 懂什么
 
-# 旧版 CLI 测试（TypeScript）
-npm test
-npm run build
+### 8 种视觉风格（来自 HyperFrames）
+
+| 风格 | 感觉 | 适合场景 |
+|------|------|----------|
+| Swiss Pulse | 精确、临床 | SaaS、数据、开发者工具 |
+| Velvet Standard | 高端、永恒 | 奢侈品、企业、峰会 |
+| Deconstructed | 工业、原始 | 科技发布、安全产品 |
+| Maximalist Type | 大声、动感 | 重大发布、产品上线 |
+| Data Drift | 未来感、沉浸 | AI、ML、前沿科技 |
+| Soft Signal | 亲切、温暖 | 健康、个人故事、生活方式 |
+| Folk Frequency | 文化、鲜明 | 消费品、美食、社区 |
+| Shadow Cut | 暗黑、电影感 | 戏剧性揭示、安全、调查 |
+
+### 11 条渲染安全检查
+
+| 检查 | 严重程度 |
+|------|----------|
+| 首场景 CSS 可见 | P0 |
+| 场景 data 属性 | P0 |
+| 根容器属性 | P0 |
+| video 嵌套在定时容器 | P0 |
+| 命令式媒体控制 | P0 |
+| meta.json 存在 | P1 |
+| Timeline 已注册 | P1 |
+| 无 Math.random | P1 |
+| 无无限循环 | P1 |
+| 无 ScrollTrigger | P1 |
+| 无 FLIP 动画 | P2 |
+
+## 更新
+
+Framepack 发新版本时，更新**两处**：
+
+| 内容 | 位置 | 方法 |
+|------|------|------|
+| Plugin 代码 | `<hermes-home>/plugins/framepack/` | 在插件目录里 `git pull` |
+| AGENTS.md | 每个项目根目录 | 从插件复制：`cp <hermes-home>/plugins/framepack/AGENTS.md <项目>/AGENTS.md` |
+
+两处必须版本一致。检查 AGENTS.md 顶部的版本注释：
+
+```html
+<!-- version: 0.7.12 — sync with plugin.yaml and README -->
 ```
 
-158/158 Plugin 测试通过，221/221 CLI 测试通过。
+## 文档
 
-## License
+- [AGENTS.md](../AGENTS.md) — 完整 Agent 指南（Hermes 运行时加载）
+- [CHANGELOG.md](../CHANGELOG.md) — 发布历史
+- [README.md](../README.md) — English documentation
+
+## 许可证
 
 MIT

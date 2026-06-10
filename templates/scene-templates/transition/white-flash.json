@@ -1,9 +1,0 @@
-{
-  "id": "white-flash",
-  "category": "transition",
-  "tags": ["flash", "white", "dramatic", "explosive", "bright"],
-  "format": "any",
-  "requiredTokens": [],
-  "minDuration": 0,
-  "maxDuration": 1
-}

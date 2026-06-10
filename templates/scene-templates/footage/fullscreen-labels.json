@@ -1,9 +1,0 @@
-{
-  "id": "fullscreen-labels",
-  "category": "footage",
-  "tags": ["video", "footage", "fullscreen", "label", "highlight"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
-  "minDuration": 4,
-  "maxDuration": 12
-}

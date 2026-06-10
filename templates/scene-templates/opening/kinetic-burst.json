@@ -1,9 +1,0 @@
-{
-  "id": "kinetic-burst",
-  "category": "opening",
-  "tags": ["kinetic", "burst", "energetic", "game", "arcade", "explosive"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary", "--accent-secondary"],
-  "minDuration": 2,
-  "maxDuration": 6
-}

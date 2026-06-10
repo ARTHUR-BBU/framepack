@@ -27,6 +27,21 @@ try:
 except ImportError:
     from core.trusted_sources import is_trusted_url  # type: ignore[no-redef]
 
+try:
+    from ..core.html_parser import (
+        HyperFramesHTMLParser,
+        find_videos_in_timed_containers,
+        check_root_container_attrs,
+        check_imperative_media_control,
+    )
+except ImportError:
+    from core.html_parser import (  # type: ignore[no-redef]
+        HyperFramesHTMLParser,
+        find_videos_in_timed_containers,
+        check_root_container_attrs,
+        check_imperative_media_control,
+    )
+
 
 # ── Safe message injection ──
 
@@ -1058,6 +1073,62 @@ def _run_html_checks(html: str) -> list[dict]:
         })
     else:
         findings.append({"check_id": "no-flip", "severity": "-", "passed": True, "message": ""})
+
+    # ── Structural checks (HTML parser) ──
+
+    try:
+        parser = HyperFramesHTMLParser()
+        parser.feed(html)
+
+        # P0: <video> nested inside timed scene containers
+        video_violations = find_videos_in_timed_containers(parser)
+        if video_violations:
+            scenes = ", ".join(
+                f"{v['parent_id']}(start={v['parent_start']})" for v in video_violations
+            )
+            findings.append({
+                "check_id": "no-video-in-timed-container",
+                "severity": _AUDIT_P0,
+                "passed": False,
+                "message": f"<video> nested inside timed scene containers: {scenes}. "
+                           f"HyperFrames requires videos at the composition root level, "
+                           f"not inside timed scene divs. Move <video> outside scene containers.",
+            })
+        else:
+            findings.append({"check_id": "no-video-in-timed-container", "severity": "-", "passed": True, "message": ""})
+
+        # P0: Root container missing HyperFrames attributes
+        missing_attrs = check_root_container_attrs(parser)
+        if missing_attrs:
+            findings.append({
+                "check_id": "root-container-attrs",
+                "severity": _AUDIT_P0,
+                "passed": False,
+                "message": f"Root container missing: {', '.join(missing_attrs)}. "
+                           f"HyperFrames requires data-composition-id and class=\"clip\" "
+                           f"on the root composition element.",
+            })
+        else:
+            findings.append({"check_id": "root-container-attrs", "severity": "-", "passed": True, "message": ""})
+
+        # P0: Imperative media control in <script>
+        script_violations = check_imperative_media_control(parser.script_text)
+        if script_violations:
+            violations_text = "; ".join(script_violations)
+            findings.append({
+                "check_id": "no-imperative-media",
+                "severity": _AUDIT_P0,
+                "passed": False,
+                "message": violations_text,
+            })
+        else:
+            findings.append({"check_id": "no-imperative-media", "severity": "-", "passed": True, "message": ""})
+
+    except Exception as e:
+        logger.warning("HTML structural parsing failed, skipping structural checks: %s", e)
+        findings.append({"check_id": "no-video-in-timed-container", "severity": "-", "passed": True, "message": "(skipped)"})
+        findings.append({"check_id": "root-container-attrs", "severity": "-", "passed": True, "message": "(skipped)"})
+        findings.append({"check_id": "no-imperative-media", "severity": "-", "passed": True, "message": "(skipped)"})
 
     return findings
 

@@ -1,9 +1,0 @@
-{
-  "id": "picture-in-picture",
-  "category": "footage",
-  "tags": ["pip", "overlay", "commentary", "picture-in-picture"],
-  "format": "any",
-  "requiredTokens": ["--bg-primary", "--accent-primary", "--text-primary"],
-  "minDuration": 4,
-  "maxDuration": 12
-}

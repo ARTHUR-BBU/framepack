@@ -1,5 +1,7 @@
 # Framepack Agent Guide
 
+<!-- version: 0.7.12 — sync with plugin.yaml and README -->
+
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
 Framepack serves **HyperFrames programmatic commercial video ideation and composition**.
@@ -39,7 +41,7 @@ Use Framepack for:
 
 ## Plugin Architecture
 
-Framepack v0.7 is a Hermes Plugin with 6 hooks and 6 skills:
+Framepack v0.7 is a Hermes Plugin with 6 hooks and 8 skills:
 
 ```text
 Hermes Agent Loop
@@ -51,11 +53,13 @@ Hermes Agent Loop
         ├── 🔫 post_tool_call → arsenal.json
         └── 🧬 post_tool_call → VIDEO_DNA.md / TEMPLATE_BLUEPRINT.md
       └── Skills (knowledge injected into LLM hooks)
-        ├── framepack-director
-        ├── framepack-template-fuser
-        ├── framepack-hyperframes-builder
+        ├── framepack-director          (intent → Visual Style + frame.md + storyboard)
+        ├── framepack-design-picker     (visual style selection via HyperFrames picker)
+        ├── framepack-template-fuser    (prompt expansion + template matching)
+        ├── framepack-hyperframes-builder (composition rules + render safety)
         ├── framepack-arsenal
         ├── framepack-gsap
+        ├── framepack-animation-library
         └── framepack-reference-miner
 ```
 
@@ -72,12 +76,13 @@ After `framepack create`, read:
 5. `STORYBOARD.md`
 6. `.framepack/arsenal.json`
 7. `STYLE.md`
-8. `DESIGN.md`
+8. `frame.md` (preferred) or `DESIGN.md` (fallback) — design spec with motion tokens
 9. `DESIGN_TOKENS.md`
 10. `DIRECTION.md`
 11. `COMPOSITION.md`
 12. `ITERATIONS.md`
-13. `.framepack/state.json` when machine-readable state is needed
+13. `.hyperframes/expanded-prompt.md` (if exists — prompt expansion output)
+14. `.framepack/state.json` when machine-readable state is needed
 
 Use `HUMAN.md` for non-technical user updates. Use `STORYBOARD.md` and `.framepack/arsenal.json` before writing code.
 
@@ -90,6 +95,7 @@ ASSETS.md
 ASSET_GAPS.md
 STORYBOARD.md
 STYLE.md
+frame.md
 DESIGN.md
 DESIGN_TOKENS.md
 DIRECTION.md
@@ -102,6 +108,7 @@ TEMPLATE_BLUEPRINT.md
 .framepack/arsenal.json
 .framepack/content-graph.json
 .framepack/state.json
+.hyperframes/expanded-prompt.md
 ```
 
 ## Legacy CLI Commands (v0.6)
@@ -175,21 +182,28 @@ When building or editing HTML:
 
 - keep the first scene visible in CSS
 - preserve `data-width`, `data-height`, and `data-start`
+- root container must have `data-composition-id` and `class="clip"`
 - write `meta.json`
 - register timelines on `window.__timelines`
 - switch scenes with `tl.set()`
 - do not put timed `<video>` elements inside timed scene containers
 - avoid `Math.random()` and `repeat: -1` in render timelines
+- avoid `currentTime`, `.play()`, `.pause()` on media elements
 - convert ScrollTrigger, FLIP, and scrubbed interaction intent into deterministic timeline beats
 - avoid missing `compositions/blocks/*.html` references unless the block files exist
+- read `frame.md` (preferred) or `DESIGN.md` for brand tokens before writing CSS
+- inject frame.md motion tokens (energy, easing, duration) into GSAP timelines
+- use HyperFrames Catalog components (`npx hyperframes add`) before generating custom code
 
 ## Skills
 
 Framepack installs these project-facing skills:
 
-- `framepack-director`: fuzzy intent into creative direction and storyboard language
-- `framepack-template-fuser`: assets + templates + arsenal into `COMPOSITION.md`
-- `framepack-hyperframes-builder`: HyperFrames-safe code and render checks
+- `framepack-director`: intent → Visual Style matching + frame.md generation + storyboard language
+- `framepack-design-picker`: visual style selection via HyperFrames Design Picker
+- `framepack-template-fuser`: prompt expansion + assets + templates → `COMPOSITION.md`
+- `framepack-hyperframes-builder`: composition rules + motion principles + render safety
+- `framepack-animation-library`: GSAP + anime.js weapon catalog for motion composition
 - `framepack-reference-miner`: reference or finished video into DNA and blueprint
 
 ## Development Verification
