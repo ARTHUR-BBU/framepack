@@ -134,19 +134,31 @@ Framepack 工作台只需要关注：
 ## Handoff to HyperFrames
 
 Framepack 完成 Phase 1 + 2 后，HyperFrames 的 SKILL.md 会被 Hermes 自动激活接管后续流程。
-HyperFrames 自带完整的 3 步流程（Design → Expansion → Plan），但 Framepack 已经完成了
-前两步（frame.md + expanded-prompt.md），所以 HyperFrames 直接从 Step 3（Plan）开始。
+HyperFrames 自带完整的 3 步流程（Design → Expansion → Plan）：
 
 ```text
-Framepack Phase 1 → frame.md           ← 产出
-Framepack Phase 2 → expanded-prompt.md  ← 产出
+Framepack Phase 1 → frame.md           ← 产出（HyperFrames Step 1 直接消费）
+Framepack Phase 2 → expanded-prompt.md  ← 产出（作为 seed，不是最终版）
      ↓ 交接
 HyperFrames Step 1 → 读 frame.md       ← 跳过（已有）
-HyperFrames Step 2 → 读 expanded-prompt ← 跳过（已有）
-HyperFrames Step 3 → Plan + 写 HTML     ← 从这里开始
+HyperFrames Step 2 → enrich expanded-prompt  ← 不是跳过！在 Framepack 基础上加厚
+HyperFrames Step 3 → Plan + 写 HTML     ← 从这里进入制作
      ↓
 hyperframes lint → preview → render
 ```
+
+**为什么 Step 2 不能跳过：**
+
+HyperFrames 的 prompt-expansion 文档明确说：
+> "The expansion is never pass-through. Every user prompt is a seed.
+> Expansion's job is to take what the user wrote and make it richer."
+
+Framepack 的 expanded-prompt 是"导演分镜"——创意方向、场景节奏、动画动词。
+HyperFrames 需要在上面加厚——atmosphere layers（2-5 decoratives + ambient motion）、
+micro-details（registration marks、tick indicators）、transition choreography at
+object level、pacing beats within each scene、exact hex from spec。
+
+**Framepack 提供创意灵魂，HyperFrames 补充制作细节。两者是 enrich 关系，不是 replace。**
 
 HyperFrames 自带 3 个 skills（hyperframes, hyperframes-cli, gsap），在制作阶段自动接管。
 Framepack 的武器库（animation-library, gsap skill）作为补充参考。
