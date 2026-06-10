@@ -133,28 +133,23 @@ Framepack 工作台只需要关注：
 
 ## Handoff to HyperFrames
 
-当 frame.md 和 expanded-prompt.md 都就绪后：
+Framepack 完成 Phase 1 + 2 后，HyperFrames 的 SKILL.md 会被 Hermes 自动激活接管后续流程。
+HyperFrames 自带完整的 3 步流程（Design → Expansion → Plan），但 Framepack 已经完成了
+前两步（frame.md + expanded-prompt.md），所以 HyperFrames 直接从 Step 3（Plan）开始。
 
-```bash
-# 1. 初始化项目（如果还没做）
-npx hyperframes init
-
-# 2. 读官方例子学结构
-npx hyperframes init --example product-promo
-
-# 3. 写 HTML — 读 frame.md 拿视觉参数，读 expanded-prompt.md 拿场景规划
-#    遵循 Layout Before Animation 原则
-#    需要动画效果时查 framepack 武器库
-
-# 4. 验证
-npx hyperframes lint
-
-# 5. 预览
-npx hyperframes preview
-
-# 6. 渲染
-npx hyperframes render
+```text
+Framepack Phase 1 → frame.md           ← 产出
+Framepack Phase 2 → expanded-prompt.md  ← 产出
+     ↓ 交接
+HyperFrames Step 1 → 读 frame.md       ← 跳过（已有）
+HyperFrames Step 2 → 读 expanded-prompt ← 跳过（已有）
+HyperFrames Step 3 → Plan + 写 HTML     ← 从这里开始
+     ↓
+hyperframes lint → preview → render
 ```
+
+HyperFrames 自带 3 个 skills（hyperframes, hyperframes-cli, gsap），在制作阶段自动接管。
+Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
