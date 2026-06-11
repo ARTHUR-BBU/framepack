@@ -252,15 +252,68 @@ scene_4:
 Write to `.hyperframes/expanded-prompt.md`. The Execution Manifest goes at the END.
 Do NOT dump into chat.
 
-### Step 7: User confirmation
+### Step 7: Storyboard preview — show the user the movie, not the spec
 
-Show the user a simplified view:
-- Scene rhythm: "hook → PUNCH → breathe → CTA"
-- Key visuals per scene (1 sentence each)
-- Weapon coverage summary: "5 scenes, 4 covered by builtin weapons, 1 HANDWRITE"
-- "你觉得节奏和创意方向如何？"
+Before asking for final confirmation, render a **storyboard preview** that lets the
+user *see* the creative direction emotionally. This is the most important user-facing
+touchpoint in Phase 2 — it's where the user gets excited (or course-corrects).
 
-**DO NOT show the full expanded-prompt.** Show the story, not the spec.
+#### What to show
+
+A scene-by-scene storyboard in this format:
+
+```
+🎬 Storyboard: "Éderson — The Engine Arrives" (30s)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+S1 · 0-3s · IGNITION ⚡
+   Visual: 纯黑虚空中，一个红色粒子脉冲开始凝聚
+   Feel:   2001太空漫游的星门——沉默中酝酿风暴
+   Key:    曼联logo从粒子中凝聚成形
+
+S2 · 3-7s · THE NAME 💥
+   Visual: "ÉDERSON" 从屏幕底部暴力砸入，金色光晕炸开
+   Feel:   乐队当歌——全场灯光全灭，只剩聚光灯
+   Key:    球员剪影浮现
+
+S3 · 7-14s · THE EYE 👁️
+   Visual: 一切冻结，画面只剩一个呼吸的红点
+   Feel:   DROP前的死寂——暴风雨前最后的平静
+   Key:    "HERE WE GO" 闪现
+
+S4 · 14-20s · THE DROP 💣 (BGM DROP ZONE)
+   Visual: 数据卡像扑克牌一样 CASCADE 翻出——80 saves · 2.89 GAA · 47 wins
+   Feel:   漫威电影片头——信息轰炸，肾上腺素飙升
+   Key:    每个数字都跟 BGM 节拍同步 SLAM
+
+S5 · 20-26s · THE WELCOME 🔴
+   Visual: "WELCOME HOME" 从中心爆炸扩散，红金粒子雨
+   Feel:   终场哨响——全场起立
+   Key:    球衣号码 31 显现
+
+S6 · 26-30s · THE BADGE 🏆
+   Visual: 曼联队徽定帧，呼吸光晕，一切归于庄重
+   Feel:   电影结尾字幕——尘埃落定，余韵悠长
+   Key:    "MANCHESTER UNITED" 收尾
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔁 Recurring motifs: 红色粒子脉冲 · 金色光线 · 数字节拍
+```
+
+#### Rules
+
+1. **Each scene gets 3 lines: Visual / Feel / Key** — no more, no less.
+2. **Visual** = what the eye sees (1 sentence, concrete imagery)
+3. **Feel** = what the gut feels (1 sentence, cultural reference or metaphor encouraged)
+4. **Key** = the one thing that makes this scene memorable (1 sentence)
+5. **Use emoji per scene** — not decoration, quick visual anchors for scanning
+6. **Show recurring motifs** at the bottom — the visual threads tying scenes together
+7. **Language** = match the user's language (Chinese user → Chinese storyboard)
+8. **DO NOT show the full expanded-prompt.** This storyboard IS the user-facing artifact.
+
+After showing the storyboard:
+- Weapon coverage summary: "6 scenes, 4 builtin weapons, 2 HANDWRITE"
+- "你觉得节奏和创意方向如何？想改哪个场景？"
 
 ## Weapon Arsenal — Browse & Download
 

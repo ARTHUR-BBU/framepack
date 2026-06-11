@@ -238,6 +238,15 @@ class TestSkillLoading:
         _cached_skill_load("framepack-director")
         # Second call hits cache — no error means it worked
 
+    def test_director_has_storyboard_preview(self):
+        """Step 7 must include storyboard preview (not just rhythm skeleton)."""
+        content = _cached_skill_load("framepack-director")
+        assert "Storyboard preview" in content, "Missing storyboard preview in Step 7"
+        assert "Visual:" in content, "Storyboard must have Visual lines"
+        assert "Feel:" in content, "Storyboard must have Feel lines"
+        assert "Key:" in content, "Storyboard must have Key lines"
+        assert "Recurring motifs" in content, "Storyboard must show recurring motifs"
+
 
 # ══════════════════════════════════════════════
 #  Hook Registration (integration smoke test)
