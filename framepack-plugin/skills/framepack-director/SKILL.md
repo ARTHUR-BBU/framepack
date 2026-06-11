@@ -185,6 +185,11 @@ of truth that the HTML-writing Agent uses to load weapons:
 # Load each weapon by skill_view(file_path), then copy the references/*.js code.
 # HANDWRITE is the LAST RESORT. If it's not HANDWRITE, you MUST load the weapon file.
 
+templates: none
+# ^ "none" = no scene template directory in this project. Skip Step 3 template
+#   inventory and use weapons directly. Do NOT search for framepack/templates/.
+#   "standard" = framepack/templates/ exists, check it first.
+
 scene_1:
   needs: "big text slam entrance"
   weapon: text-split-enter
