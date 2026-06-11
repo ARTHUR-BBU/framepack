@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.8.0 — sync with plugin.yaml and README -->
+<!-- version: 0.9.0 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -94,16 +94,53 @@ expanded-prompt.md 包含：
 
 **与用户共创**：展示场景节奏和关键创意点，让用户确认或调整。不需要展示 expanded-prompt.md 全文（几百行，用户不需要看）。
 
-## 武器库（GSAP / anime.js）
+## ⚔️ 铁律：武器优先，禁止裸写 GSAP
 
-武器库不是 HyperFrames 的输入——它是 **Agent 写 HTML 动画时翻的字典**。
+**这条不是建议，是铁律。违反此条 = lint 不通过。**
 
-- 位置：`framepack-animation-library` skill + `framepack-gsap` skill
-- 介入时机：HyperFrames Step 3（写 HTML + Animation 阶段）
-- 用法：Agent 需要实现某个动画效果时，查武器库找代码模式
-- 不是自动注入，是主动查阅
+### HTML 写动画前必须做的事
 
-推荐武器可以在 expanded-prompt.md 的 animation choreography 里提及，但具体代码由 Agent 在写 HTML 时按需查阅。
+```
+1. 读 expanded-prompt.md 末尾的 Execution Manifest
+2. 逐武器加载：skill_view(name, file_path=<file>)  → 读 SKILL.md → 读 references/*.js
+3. 武器有现成代码 → 复制代码 → 改参数（不改逻辑）
+4. 标注 HANDWRITE 的场景 → 可裸写 GSAP，但必须遵守 HyperFrames 铁律
+5. 裸写 GSAP 遇到标注了武器的场景 → 铁律违反 → 停止，回去加载武器
+```
+
+### 为什么这是铁律
+
+Agent 面对"写动画"任务时走最舒适路径——"我懂 GSAP，直接写"。这条路径的结果是：
+714 行手写 GSAP，零模板/零组件/零武器库，效果像后院的篝火而不是厨房的盛宴。
+
+武器库不是字典——它是**命令**。Execution Manifest 里的每个 weapon 条目不是"建议"，
+是"你必须加载这个文件"。
+
+### 武器收发室
+
+项目下的 `.framepack/` 目录管理所有武器：
+
+```text
+.framepack/
+├── arsenal.json    ← 武器注册表（builtin + 下载 + 自建）
+├── weapons/        ← 下载/自建的武器代码（.js / .css / .html）
+└── state.json      ← 项目元数据
+```
+
+**arsenal.json 生命周期规则**：
+
+| 操作 | 规则 |
+|------|------|
+| 找武器 | 先查 arsenal.json → 命中直接用 → 未命中查 MOC → 仍未命中→下载 |
+| 下载武器 | 白名单源 → 存 .framepack/weapons/ → 立即写 arsenal.json + hash |
+| 使用武器 | Execution Manifest 引用 → Agent 读 arsenal.json 拿路径 → 加载代码 |
+| 闲置武器 | manifest 里没引用但 arsenal.json 里有 → 标记 `unused` → 告警 |
+| 重复下载 | hash 去重 → 相同 hash 不重下 |
+| 项目结束 | arsenal.json 是完整清单 → 有价值武器沉淀回主库 |
+
+**白名单下载源**：`nexu.io` · `codepen.io/@gsap` · `github.com/hyperframes`
+
+**禁止下载的**：任意 GitHub repo · 非 HyperFrames 生态的 npm 包 · 未知 CDN
 
 ## Plugin Hooks
 
@@ -165,26 +202,71 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.8 skills:
+Framepack v0.9.0 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|
-| framepack-director | 意图翻译 + Visual Style + frame.md + expanded-prompt | Phase 1 + Phase 2 |
-| framepack-animation-library | 27 件 GSAP/anime.js 武器 | HyperFrames 写 HTML 时 |
-| framepack-gsap | GSAP 动画模式参考 | HyperFrames 写 HTML 时 |
-| framepack-arsenal | 武器目录管理 | 创意阶段推荐 |
-| framepack-reference-miner | 参考视频 → DNA 提取 | 需要参考时 |
+| framepack | 主入口 — Prompt Factory 总纲 + 能力感知 + Design Picker 引导 | 全程 |
+| framepack:framepack-director | 意图翻译 + Visual Style + frame.md + expanded-prompt + 音频规划 | Phase 1 + Phase 2 |
+| framepack:framepack-gsap | 武器食谱（HyperFrames-safe GSAP 模式），不是 GSAP API 参考 | HyperFrames 写 HTML 时 |
+| framepack-animation-library | 27 件 GSAP/anime.js 武器目录 | HyperFrames 写 HTML 时翻字典 |
+| framepack:framepack-arsenal | 武器目录管理 | 创意阶段推荐 |
+| framepack-reference-miner | 参考视频 DNA 提取 v0.9 — 自动化场景检测+运动分析+色彩提取+音频节拍+内容解构（5个脚本管道） | 需要参考时 |
+
+> 注：`framepack:xxx` 格式的是插件内技能，需用冒号全名；不加前缀的是独立技能，直接用短名。|
+
+HyperFrames skills（已安装到 $HERMES_HOME/skills/software-development/）：
+| Skill | 作用 |
+|---|---|
+| hyperframes | 主公全制作规范（数据属性、composition 结构、GSAP 合约、场景切换铁律） |
+| hyperframes-cli | CLI 命令：init, lint, inspect, preview, render, doctor |
+| gsap | GSAP API 标准参考（to/from/timeline/easing/stagger） |
+
+**核心原则：Framepack 的 skill 教"想什么"，HyperFrames 的 skill 教"怎么写"。两者不重复。**
 
 **已合并/删除的 skills：**
-- framepack-design-picker → 合并进 framepack-director
-- framepack-template-fuser → 合并进 framepack-director
+- framepack-design-picker → 合并进 framepack:framepack-director
+- framepack-template-fuser → 合并进 framepack:framepack-director
 - framepack-hyperframes-builder → 不再需要（Framepack 不管 HTML）
 
 ## Development Verification
 
 ```bash
+# Run plugin tests
 cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
+
+# After modifying ANY plugin file (SKILL.md, plugin.yaml, hooks/, __init__.py):
+# Sync to Hermes deployment directory:
+# F:\Hermes_windows\plugins\framepack\
 ```
+
+## 🛠 开发铁律（Superpowers — 仅开发项目）
+
+你在开发 Framepack 插件本身。以下规则修改任何代码前强制执行：
+
+### 写新功能/大改动前
+→ 加载 `brainstorming` skill — 设计先行，不直接写代码
+→ 流程：探索上下文 → 提方案 → 写设计文档到 `.hermes/designs/` → 用户确认 → 再动手
+
+### 声称完成前
+→ 加载 `verification-before-completion` skill
+→ 铁律：没有验证证据 ≠ 完成。运行 pytest，贴输出，再说话。
+→ 禁止 "should work now" / "应该没问题" / "看起来对了"
+
+### 修 bug 前
+→ 加载 `systematic-debugging` skill — 四阶段根因分析
+→ 先理解 bug，再修代码
+
+### 写/改 Python 代码前
+→ 加载 `test-driven-development` skill — 红→绿→重构
+→ 先写失败的测试 → 看它失败 → 写最小代码让它通过 → 重构
+
+### 改完 PLUGIN 文件后
+→ 必须同步到部署目录：`copy → F:\Hermes_windows\plugins\framepack\`
+→ plugin.yaml, SKILL.md, hooks/, __init__.py — 这四个必须双位置一致
+
+### 提交前
+→ 加载 `requesting-code-review` skill — 安全扫描 + 质量检查
 
 ## Editing Rules
 
@@ -192,6 +274,7 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 - Framepack 不管 HTML——所有 HTML/结构/渲染问题归 HyperFrames
 - 武器库是字典，不是自动注入
 - 创意阶段与用户共创，不需要用户看 expanded-prompt.md 全文
+- **开发项目专属**：改 PLUGIN 文件必须同步部署，改 AGENTS.md 必须确认测试目录不需要同样改动
 
 <!-- FRAMEPACK MANAGED BLOCK START -->
 ## Framepack Agent Workflow
@@ -199,8 +282,9 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 Framepack is installed as an agent-native video creative workbench for this project.
 
 - Trigger Framepack for vague video requests, creative direction, or style matching.
-- Framepack produces frame.md + expanded-prompt.md, then HyperFrames takes over.
+- Framepack produces frame.md + expanded-prompt.md (with Execution Manifest), then HyperFrames takes over.
+- **铁律：写 HTML 前先读 Execution Manifest。武器有就用，裸写 GSAP 只允许 HANDWRITE 场景。**
+- `.framepack/arsenal.json` 是武器收发室——下载、注册、去重、生命周期全在这里。
 - Start every HyperFrames project by reading an official example: `npx hyperframes init --example product-promo`.
-- Weapon library (GSAP/anime.js) is a dictionary for the HTML animation phase, not an automatic injector.
 - Framepack does NOT audit HTML. Use `npx hyperframes lint` for that.
 <!-- FRAMEPACK MANAGED BLOCK END -->

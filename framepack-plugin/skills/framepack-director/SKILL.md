@@ -2,9 +2,9 @@
 name: framepack-director
 description: >-
   Creative engine — translates user intent into frame.md (visual identity)
-  and expanded-prompt.md (scene-level creative breakdown). The core of
-  Framepack's Prompt Factory. HyperFrames consumes these two files.
-version: 0.8.0
+  and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
+  The core of Framepack's Prompt Factory. HyperFrames consumes these two files.
+version: 0.9.0
 ---
 
 # Framepack Director — Prompt Factory Core
@@ -13,7 +13,7 @@ You are the creative engine of Framepack. Your job is to translate the user's
 fuzzy video intent into two precise deliverables that HyperFrames can consume:
 
 1. **frame.md** — visual identity (colors, fonts, motion tokens, atmosphere)
-2. **expanded-prompt.md** — scene-level creative breakdown (beats, rhythm, transitions)
+2. **expanded-prompt.md** — scene-level creative breakdown + **Execution Manifest**
 
 Once these two files are written, HyperFrames takes over. You do NOT write HTML.
 You do NOT manage 13 intermediate files. You do TWO things, and you do them well.
@@ -27,7 +27,23 @@ Ask or infer:
 - **Who** — target audience? platform? (social 15s vs website hero vs keynote)
 - **Feel** — premium? playful? urgent? calm? cinematic?
 
-### Step 2: Match a Visual Style
+### Step 2: Audio & Production Capability Check (v0.8.1)
+
+Before committing to a creative direction, ask about audio needs. HyperFrames
+has built-in capabilities that Framepack should plan around:
+
+| Capability | CLI Command | Creative Question |
+|-----------|------------|-------------------|
+| TTS narration | `npx hyperframes tts` | "需要 AI 旁白吗？什么风格？（沉稳男声/温暖女声/动感播报）" |
+| Audio transcription | `npx hyperframes transcribe` | "有现成音频素材？需要词级字幕同步吗？" |
+| Audio-reactive visuals | [audio-reactive reference] | "BGM 节拍驱动视觉脉冲？波形跟随？" |
+| Captions/subtitles | [captions reference] | "卡拉 OK 字幕？弹入弹出？逐词高亮？" |
+| Background removal | `npx hyperframes remove-background` | "需要绿幕抠像或透明背景素材？" |
+
+This isn't a checklist — it's a lens. If the user says "产品发布",
+you ask: "有旁白吗？还是纯视觉+文字？BGM 什么感觉？需要字幕吗？"
+
+### Step 3: Match a Visual Style
 
 Read `references/visual-styles.md` for 8 named presets:
 
@@ -44,7 +60,7 @@ Read `references/visual-styles.md` for 8 named presets:
 
 Pick the closest match. Show the user 2-3 options if the intent is ambiguous.
 
-### Step 3: Generate frame.md
+### Step 4: Generate frame.md
 
 Use the Visual Style's YAML token block as a starting point. Customize based on:
 - User's brand colors (if they have any)
@@ -74,7 +90,7 @@ atmosphere: "One-line mood direction"
 ---
 ```
 
-### Step 4: User confirmation
+### Step 5: User confirmation
 
 Show the user a simplified summary:
 - "我为你选了 Velvet Standard 风格——深色底 + 珍珠金 + Playfair Display 字体。整体调性是深海珍珠的光影流动感。"
@@ -118,43 +134,161 @@ For each scene, specify:
   - Low: float, drift, breathe, fade, type-on
 - **Transition out** — specific: "blur crossfade, 0.4s, power2.inOut" (not just "crossfade")
 
-### Step 4: Recurring motifs
+### Step 4: Weapon Resolution — MANDATORY (skip and your output is invalid)
+
+**This step is not optional.** Before writing expanded-prompt.md, you MUST resolve
+EVERY scene's animation needs to exact weapon files or explicitly declare HANDWRITE.
+
+#### 4.1 Load the weapon catalog
+
+Read the MOC (Map of Content) to know what weapons exist:
+
+```
+skill_view('framepack:framepack-animation-library', file_path='MOC.md')
+```
+
+This gives you the complete 27-weapon catalog with WikiLinks to every weapon's
+SKILL.md and references/*.js code.
+
+#### 4.2 Scene-by-scene matching
+
+For EACH scene, list its animation needs and find matching weapons:
+
+| Scene Need | Matched Weapon | Kind | SKILL Path | Code Path |
+|---|---|---|---|---|
+| "big text SLAM entrance" | text-split-enter | part | parts/text-split-enter.md | parts/references/text-split-enter.js |
+| "CLI typewriter effect" | typewriter-cursor | part | parts/typewriter-cursor.md | parts/references/typewriter-cursor.js |
+| "card reveal" | card-cascade-reveal | block | blocks/card-cascade-reveal.md | blocks/references/card-cascade-reveal.js |
+
+If no builtin weapon matches, EITHER:
+- Mark as **HANDWRITE** with justification ("no builtin weapon for this effect")
+- OR: suggest a download source (must be white-listed: `nexu.io`, `codepen.io/@gsap`, `github.com/hyperframes`)
+
+#### 4.3 Read weapon SKILL.md for parameters
+
+For each matched weapon, load its SKILL.md to extract the parameter signature:
+
+```
+skill_view('framepack:framepack-animation-library', file_path='parts/typewriter-cursor.md')
+```
+
+Extract: required params, optional params, defaults, target CSS selector pattern.
+
+#### 4.4 Generate the Execution Manifest
+
+Write this YAML block at the END of expanded-prompt.md. It is the single source
+of truth that the HTML-writing Agent uses to load weapons:
+
+```yaml
+## Execution Manifest
+# This is the weapon loading checklist. Agent: read this FIRST before writing HTML.
+# Load each weapon by skill_view(file_path), then copy the references/*.js code.
+# HANDWRITE is the LAST RESORT. If it's not HANDWRITE, you MUST load the weapon file.
+
+scene_1:
+  needs: "big text slam entrance"
+  weapon: text-split-enter
+  kind: part
+  skill_path: "framepack:framepack-animation-library"
+  file: "parts/text-split-enter.md"
+  code: "parts/references/text-split-enter.js"
+  params:
+    target: "#s1-title"
+    split: true
+    stagger: 0.06
+    y_from: 40
+    duration: 0.7
+
+scene_2:
+  needs: "CLI typewriter"
+  weapon: typewriter-cursor
+  kind: part
+  skill_path: "framepack:framepack-animation-library"
+  file: "parts/typewriter-cursor.md"
+  code: "parts/references/typewriter-cursor.js"
+  params:
+    target: "#s2-terminal"
+    speed: 35
+    cursor_char: "▌"
+
+scene_3:
+  needs: "2 cards cascade reveal"
+  weapon: card-cascade-reveal
+  kind: block
+  skill_path: "framepack:framepack-animation-library"
+  file: "blocks/card-cascade-reveal.md"
+  code: "blocks/references/card-cascade-reveal.js"
+  params:
+    container: "#s3-cards"
+    layout: "fan"
+    stagger: 0.15
+    rotation3d: true
+
+# When NO weapon matches:
+scene_4:
+  needs: "custom data viz animation"
+  weapon: HANDWRITE
+  reason: "builtin data-chart-editorial doesn't match this chart type; no downloadable weapon found"
+  fallback_guidance: "Use GSAP stagger with fromTo, follow hyperframes gsap skill for timeline registration"
+```
+
+#### 4.5 Rules of the Manifest
+
+1. **Every scene MUST have an entry.** No scene left weaponless.
+2. **HANDWRITE is allowed but must cite a reason.**
+3. **Code path must be exact** — the weapon's `references/<name>.js` file.
+4. **Params must be filled** — not "as needed" or "default". Agent loads the weapon and plugs values in.
+5. **No bare GSAP suggestions.** "Use GSAP stagger" is NOT a weapon resolution — that's HANDWRITE.
+
+### Step 5: Recurring motifs
 
 2-3 visual threads that tie scenes together:
 - Color echoes (accent color appearing as a line, dot, or glow)
 - Shape language (circles, lines, grid patterns)
 - Motion patterns (everything drifts right, or scales up on beat)
 
-### Step 5: Write to file
+### Step 6: Write to file
 
-Write to `.hyperframes/expanded-prompt.md`. Do NOT dump into chat.
+Write to `.hyperframes/expanded-prompt.md`. The Execution Manifest goes at the END.
+Do NOT dump into chat.
 
-### Step 6: User confirmation
+### Step 7: User confirmation
 
 Show the user a simplified view:
 - Scene rhythm: "hook → PUNCH → breathe → CTA"
 - Key visuals per scene (1 sentence each)
+- Weapon coverage summary: "5 scenes, 4 covered by builtin weapons, 1 HANDWRITE"
 - "你觉得节奏和创意方向如何？"
 
 **DO NOT show the full expanded-prompt.** Show the story, not the spec.
 
-## Weapon Recommendations
+## Weapon Arsenal — Browse & Download
 
-During Phase 2, if you identify animation needs that match known weapons:
+### Built-in weapons (loaded via skill_view)
 
-| Need | Weapon | Library |
-|---|---|---|
-| Text entrance | text-split-enter, typewriter-cursor | GSAP |
-| Number counting | number-count-up | GSAP |
-| Card reveals | card-cascade-reveal | GSAP |
-| Background effects | particle-blob-bg, gradient-shift, bg-blur-mask | GSAP |
-| 3D card flip | float-3d-card | GSAP |
-| Glitch effects | glitch-flicker | GSAP |
-| Overlay transitions | light-leak-cinema, elastic-scale-enter | GSAP |
-| Anime.js text | anime-text-split | anime.js |
+All 27 Framepack built-in weapons are at `framepack:framepack-animation-library`.
+Use `skill_view(name, file_path='MOC.md')` to browse the catalog.
+Use `skill_view(name, file_path='blocks/card-cascade-reveal.md')` to load a weapon's spec.
 
-Mention these in the expanded-prompt's animation choreography as suggestions.
-The agent consults the weapon library during the HTML phase, not now.
+### Downloading new weapons
+
+When no builtin weapon matches and the project genuinely needs a new one:
+
+1. **White-listed sources only:**
+   - `nexu.io` — html-video snippets (21 templates, 12 combinable)
+   - `codepen.io/@gsap` — GSAP community pens
+   - `github.com/hyperframes` — HyperFrames official extensions
+
+2. **Download procedure:**
+   - Fetch the code (terminal `curl` or `web_extract`)
+   - Save to `.framepack/weapons/<weapon-name>.js`
+   - Register in `.framepack/arsenal.json` with source URL, hash, timestamp
+   - Reference in the Execution Manifest as `weapon: <name>`, `code: ".framepack/weapons/<name>.js"`
+
+3. **Never download from:**
+   - Random GitHub repos outside the white-list
+   - npm packages that aren't HyperFrames ecosystem
+   - CDN URLs that resolve to unknown origins
 
 ## Design Picker Integration
 
@@ -178,5 +312,6 @@ This is optional — named Visual Styles cover 80% of cases without a picker.
 - ❌ Manage STORYBOARD.md, COMPOSITION.md, DESIGN_TOKENS.md, etc. — gone
 - ❌ Check data-width, data-height, window.__timelines — gone
 - ❌ Depend on HyperFrames Catalog — Framepack's templates are creative-level, not code-level
+- ❌ Let Agent write bare GSAP when a weapon exists — Execution Manifest is the firewall
 
-Framepack stops at expanded-prompt.md. HyperFrames starts from there.
+Framepack stops at expanded-prompt.md + Execution Manifest. HyperFrames starts from there.

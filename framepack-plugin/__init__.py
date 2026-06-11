@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 def register(ctx):
     """Plugin entry point. Called once at Hermes startup."""
-    logger.info("Framepack v0.7.10 Plugin registering")
+    logger.info("Framepack v0.9.0 Plugin registering")
 
     # Register skills (knowledge layer)
     _register_skills(ctx)

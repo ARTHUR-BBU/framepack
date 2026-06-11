@@ -1,6 +1,6 @@
 """Pre-tool-call hook: verify frame.md exists before HyperFrames takes over.
 
-v0.8 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
+v0.9.0 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
 are written. HyperFrames handles HTML. This hook only checks the handoff
 readiness — does frame.md exist? If the agent tries to run `hyperframes`
 commands without frame.md, warn once.
@@ -10,6 +10,7 @@ That's it. No HTML auditing. No workbench readiness gates. No 13-file checks.
 
 import logging
 import os
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,9 @@ def register(ctx):
             return
 
         command = args.get("command", "")
-        if "hyperframes" not in command:
+        # Only match "hyperframes" as a command word, not as a path component
+        # e.g. "hyperframes lint" ✓  "npx hyperframes init" ✓  "/f/hyperframes" ✗
+        if not re.search(r'(?:^|\s)(?:npx\s+)?hyperframes(?:\s|$)', command):
             return
 
         # Skip init and help — those don't need frame.md
@@ -74,4 +77,4 @@ def register(ctx):
         logger.info("pre_tool_call: frame.md missing, handoff warning injected")
 
     ctx.register_hook("pre_tool_call", on_pre_tool_call)
-    logger.info("Framepack v0.8 pre_tool_call hook registered (handoff readiness)")
+    logger.info("Framepack v0.9.0 pre_tool_call hook registered (handoff readiness)")

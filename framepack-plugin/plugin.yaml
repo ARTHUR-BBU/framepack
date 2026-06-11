@@ -1,10 +1,10 @@
 name: framepack
-version: "0.8.0"
+version: "0.9.0"
 description: >-
   Prompt Factory for HyperFrames. Translates fuzzy user intent into frame.md
-  (visual identity) and expanded-prompt.md (scene-level creative breakdown).
-  HyperFrames takes over from there. Framepack is the director who knows which
-  lights to turn on — not the electrician who wires the studio.
+  (visual identity) and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
+  Framepack is the director who knows which lights to turn on — not the electrician who wires the studio.
+  v0.9.0 adds: mandatory Weapon Resolution step, Execution Manifest, weapon registry governance.
 author: Framepack Team
 license: MIT
 homepage: https://github.com/ARTHUR-BBU/framepack

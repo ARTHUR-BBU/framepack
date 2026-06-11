@@ -1,222 +1,294 @@
 ---
 name: framepack-reference-miner
-description: >
-  Reference video reverse-engineering — extract reusable DNA (rhythm, scene roles,
-  visual grammar, motion grammar, asset requirements, reusable slots, HyperFrames
-  constraints) and produce VIDEO_DNA.md + TEMPLATE_BLUEPRINT.md. 参考视频反推：
-  提取节奏、场景角色、视觉语法、运动语法、资产需求、可复用槽位、HyperFrames 约束，
-  产出结构化 DNA 和模板蓝图。
+description: >-
+  Reference video reverse-engineering v0.9 — automated scene detection + motion
+  analysis + color extraction + audio beat sync + vision-based content decomposition.
+  Produces quantified Creative DNA Report (VIDEO_DNA.md + TEMPLATE_BLUEPRINT.md).
+  Replaces manual "watch and guess" with script-driven pipeline.
 triggers:
-  - User mentions a reference video ("like this ad", "类似这个片子")
-  - User pastes a video URL
-  - Agent writes VIDEO_DNA.md or TEMPLATE_BLUEPRINT.md
+  - User shares a reference video ("类似这个片子", "分析这个视频的风格")
+  - User asks "can we clone this?" or "reverse-engineer this ad"
+  - User provides a video file for creative DNA extraction
+version: 0.9.0
 ---
 
-# Reference Video Miner
+# Reference Video Miner v0.9
 
-Don't copy the reference — dissect it. Extract the skeleton, not the skin.
+Don't copy — dissect. Extract the skeleton, not the skin.
 
-## Core Principle
-
-A reference video is a **structural artifact**, not a creative template. Your job is to reverse-engineer it into two documents:
-
-| Document | Purpose | Audience |
-|---|---|---|
-| `VIDEO_DNA.md` | Abstract structural analysis | Agent + future projects |
-| `TEMPLATE_BLUEPRINT.md` | Concrete, copyable implementation plan | Agent + builder |
-
-## The 7 Dimensions of Video DNA
-
-Extract ALL of these. Missing any one produces incomplete DNA:
-
-### 1. Rhythm
-
-The heartbeat of the video. Time-based structure.
+## Pipeline Overview
 
 ```
-- Total duration (seconds)
-- Scene count
-- Scene duration range (min–max)
-- Average scene duration
-- Transition tempo: fast cut (<0.5s) / standard (0.5–1.5s) / slow dissolve (>1.5s)
-- Pacing curve: linear / accelerating / decelerating / wave (speed up then slow down)
-- Beat markers: any recurring time-signature pattern (e.g., "every 2nd beat = new text")
+Phase 0: Automated Extraction (scripts, no agent LLM)
+  scene-detect.py    → scene boundaries + transition types
+  motion-analyze.py  → per-scene motion energy + direction
+  color-extract.py   → per-scene dominant palette + shifts
+  audio-analyze.py   → BPM + beat timestamps + energy envelope
+  content-decompose.py → key frame extraction + analysis guide
+    ↓
+Phase 1: Vision Analysis (agent + vision_analyze)
+  Per-scene content layout decomposition
+  Recurring element identification
+  Layout pattern classification
+    ↓
+Phase 2: DNA Report (agent synthesizes)
+  VIDEO_DNA.md       → quantitative + qualitative creative DNA
+  TEMPLATE_BLUEPRINT.md → actionable build plan
 ```
 
-### 2. Scene Roles
+## Phase 0: Automated Extraction
 
-Each scene has a JOB. Name it.
+### Step 0.1: Scene Detection
 
-```
-Scene N: [Role Name] — [duration]s
-  Purpose: what this scene does for the narrative
-  Content: what's on screen
-  Transition in: cut / fade / slide / zoom / wipe
-  Transition out: cut / fade / slide / zoom / wipe
-  Emotional beat: tension / release / curiosity / urgency / calm
+```bash
+python scripts/scene-detect.py <video_path> [threshold]
 ```
 
-Common role names: Hook, Problem Statement, Build-up, Reveal, Feature Demo, Social Proof, Countdown, CTA, Logo Lockup.
+Output: `scenes.json` with:
+- `video`: path, duration, resolution, fps
+- `scenes[]`: index, start, end, duration, transition_in, transition_out
+- Detected cuts and fades
 
-### 3. Visual Grammar
+Adjust threshold: 0.25 for subtle cuts, 0.40 for confident-only, 0.35 default.
 
-The language of the frame.
+Save the output to `.hermes/scenes.json` for subsequent steps.
 
-```
-- Aspect ratio: 16:9 / 9:16 / 1:1
-- Color palette: dominant (2-3) + accent (1-2) with hex codes
-- Typography: font family, weight hierarchy (headline/body/caption), sizes
-- Composition rule: center-framed / rule-of-thirds / split-screen / Z-pattern
-- Depth: flat 2D / layered parallax / 3D
-- Lighting: bright & clean / moody & dark / high-contrast / natural
-- Background style: solid / gradient / blurred photo / animated pattern / video
-```
+### Step 0.2: Motion Analysis
 
-### 4. Motion Grammar
-
-How things move. GSAP is our native tongue.
-
-```
-- Entrance patterns: fade-in / slide-from-left / scale-up / staggered reveal
-- Exit patterns: fade-out / slide-out / scale-down
-- Emphasis: pulse / glow / shake / color-flash / outline-draw
-- Easing personality: power2.out (smooth decel) / elastic.out (bouncy) / expo.inOut (dramatic)
-- Camera motion: static / slow zoom (Ken Burns) / pan / tracking
-- Text animation: typewriter / char-by-char / word-by-word / line-slide / kinetic (per-word motion)
-- Data/chart animation: draw-path / count-up / bar-grow
+```bash
+python scripts/motion-analyze.py <video_path> .hermes/scenes.json
 ```
 
-### 5. Asset Requirements
+Output: per-scene motion profile with:
+- `energy_score` (0-100): how much visual change
+- `motion_type`: static / subtle_drift / moderate / active / intense / chaotic
+- `direction`: steady / accelerating / decelerating / pulsing
+- `peak_energy` + `energy_variance`
 
-What raw materials the video needs.
+Save to `.hermes/motion.json`.
 
-```
-- Video clips: count, resolution, source type (stock / screen-record / custom shoot)
-- Images: count, subject type (product / people / abstract), minimum resolution
-- Text assets: headline count, CTA text, subtitle needs
-- Audio: BPM, genre keywords, duration required
-- Logo/branding: logo variants needed, color specs
-- Fonts: licensed or free, fallback
-```
+### Step 0.3: Color Extraction
 
-### 6. Reusable Slots
-
-Patterns that can be extracted and reused across projects.
-
-```
-Slot Name: [descriptive name]
-  Type: scene-template / animation-snippet / layout-pattern / timing-rule
-  Description: what this slot does, in one sentence
-  Parameters: what changes per project (text, colors, images, timing)
-  GSAP Recipe: which animation pattern from framepack-gsap Skill applies
+```bash
+python scripts/color-extract.py <video_path> .hermes/scenes.json
 ```
 
-The goal: next time someone says "make it feel like that Nike ad," you pull the Slots, not the whole video.
+Output: per-scene palette with:
+- Dominant colors (hex + percentage + role: background/accent/secondary/detail)
+- Palette shifts between consecutive scenes
 
-### 7. HyperFrames Constraints
+Save to `.hermes/colors.json`.
 
-Pre-render safety check. Every DNA must declare constraints.
+### Step 0.4: Audio Analysis
 
-```
-- P0 (WILL BREAK render): list any patterns that violate HyperFrames deterministic rules
-  → NO ScrollTrigger, NO Math.random(), NO repeat: -1, NO unregistered timelines
-- P1 (SEVERE warning): problematic but renderable
-  → unregistered window.__timelines, missing meta.json, unmanaged <video> in timed containers
-- P2 (style concern): visual inconsistency risks
-  → mixed aspect ratios, color bleeding across scenes
+```bash
+python scripts/audio-analyze.py <video_path> .hermes/scenes.json
 ```
 
-## VIDEO_DNA.md Template
+Output:
+- BPM detected
+- Beat timestamps (first 20)
+- Energy envelope over time
+- Per-scene beat density + energy curve (rising/falling/peaked/flat)
+
+If the video has no audio stream, the script reports `has_audio: false`.
+
+Save to `.hermes/audio.json`.
+
+### Step 0.5: Content Frame Extraction
+
+```bash
+python scripts/content-decompose.py <video_path> .hermes/scenes.json .hermes/miner_frames/
+```
+
+Output:
+- Per-scene key frames (start/middle/end)
+- Scene strips (3-frame horizontal composites)
+- Overview contact sheet (first frame of each scene)
+- `analysis_prompt` — structured questions for vision analysis
+
+## Phase 1: Vision Analysis
+
+### Step 1.1: Overview Analysis
+
+Load the overview contact sheet with `vision_analyze`:
+
+> "This is a contact sheet showing the first frame of each of N scenes from a reference video.
+> For each frame, describe in ONE sentence: what's the dominant visual content and mood?
+> Identify the overall structure: what pattern do you see across these frames?
+> Does it follow a classic arc (hook→build→climax→CTA) or something else?"
+
+### Step 1.2: Per-Scene Content Decomposition
+
+For each scene (or for the 3-5 most important scenes), load the scene strip and analyze:
+
+> "This is a 3-frame strip from Scene N (start→middle→end). Decompose the LAYOUT:
+>
+> **Zone analysis:**
+> - UPPER THIRD: what occupies this zone? (headline text / logo / empty / image / navigation)
+> - MIDDLE: what's the primary content? (product / person / chart / text body / video)
+> - LOWER THIRD: what's here? (CTA button / caption / timestamp / logo / social proof / empty)
+>
+> **Layer stack:**
+> - BACKGROUND: solid color / gradient / blurred photo / video / pattern / dark / light
+> - MIDGROUND: main content elements
+> - FOREGROUND: overlays (scan lines, grain, light leaks, border, vignette, UI chrome)
+>
+> **Animation at this scene?**
+> - Is anything visibly mid-animation in these frames? (text entering, element scaling, colors shifting)
+> - What's the lighting/mood: bright & clean / dark & moody / natural / high-contrast?"
+
+Save findings to `.hermes/content_decomposition.md`.
+
+### Step 1.3: Recurring Element Analysis
+
+After analyzing all scenes, identify:
+
+- **Same position elements**: text always in upper third? CTA always lower right?
+- **Persistent elements**: logo present in every scene? same background color family?
+- **Progressive elements**: does text build up? do stats accumulate?
+- **Contrast elements**: what deliberately CHANGES between scenes?
+
+## Phase 2: DNA Report Synthesis
+
+Synthesize all data (Phase 0 scripts + Phase 1 vision) into two documents.
+
+### VIDEO_DNA.md
 
 ```markdown
 # Video DNA: [Reference Name]
 
-> Source: [URL or file path]
+> Source: [path]
 > Mined: [date]
-> Duration: [total seconds]
-> Scene count: [N]
-> Format: [aspect ratio]
+> Duration: Xs | Scenes: N | Format: W×H @ Ffps
+> Audio: yes/no | BPM: N | Beats: N
 
-## Rhythm
+## Scene Map
 
-[Copy the 7 rhythm fields from the dimension guide above]
+| # | Start | End | Dur | Motion | Energy | Palette | Audio Beat | Transition |
+|---|-------|-----|-----|--------|--------|---------|------------|------------|
+| 1 | 0.0 | 2.3 | 2.3 | subtle | 12 | bg:#1a1a2e | 3 beats | → cut |
+| 2 | 2.3 | 5.1 | 2.8 | active | 45 | bg:#0d0d1a | 5 beats | → fade |
 
-## Scene Roles
+## Motion DNA
 
-[One subsection per scene, using the Role template]
+- Overall energy curve: [description from motion.json]
+- Peak energy scene: Scene N (energy: XX)
+- Motion patterns: [static open → accelerating build → chaotic climax → decelerating close]
 
-## Visual Grammar
+## Color DNA
 
-[Copy the visual grammar fields]
+- Global palette: [dominant colors across all scenes]
+- Palette shifts: [major/minor between which scenes]
+- Color role mapping: bg=always dark, accent=gold appears in scenes 1,3,5
 
-## Motion Grammar
+## Layout DNA (from content decomposition)
 
-[Copy the motion grammar fields]
+- Zone convention: upper=text, middle=product, lower=CTA
+- Layer strategy: solid bg + centered content + border vignette
+- Recurring elements: [list]
+- Layout pattern: [minimal / split-screen / magazine / terminal / phone-frame]
+
+## Audio DNA
+
+- BPM: N | Beat count: N
+- Beat-to-visual sync: [are scene transitions on beats? are visual pulses on beats?]
+- Energy curve: [description]
+
+## Animation DNA (from motion analysis + vision)
+
+- Entrance patterns: [fade-in stagger / slide-from-left / scale-up / etc.]
+- Emphasis patterns: [pulse on beat / glow on climax / shake on shock stat]
+- Easing personality: [smooth decel / bouncy elastic / dramatic expo]
+- Camera behavior: [static / slow zoom / pan / mixed]
 
 ## Asset Requirements
 
-[Copy the asset requirements fields]
+- Video clips: [count, resolution, type]
+- Text assets: [headlines, CTA, captions]
+- Audio: [BPM range, genre keywords]
+- Branding: [logo, colors, fonts]
 
 ## Reusable Slots
 
-[At least 3 slots. More is better.]
+At least 3 reusable patterns extracted:
+
+| Slot | Type | Description | Parameters |
+|------|------|-------------|------------|
+| [name] | scene-template / animation-snippet / layout-pattern | what it does | what changes |
 
 ## HyperFrames Constraints
 
-[P0 / P1 / P2 declarations]
+- P0 (WILL BREAK): [any patterns violating deterministic rules]
+- P1 (WARNING): [problematic but renderable]
+- P2 (STYLE): [visual inconsistency risks]
 ```
 
-## TEMPLATE_BLUEPRINT.md Template
+### TEMPLATE_BLUEPRINT.md
 
 ```markdown
 # Template Blueprint: [Name]
 
 > Derived from VIDEO_DNA: [link]
-> Target format: [aspect ratio]
+> Target format: W×H
 > Weapon dependencies: [arsenal weapon IDs]
 
 ## Scene Sequence
 
-| # | Role | Duration | Template File | Key Animation |
-|---|------|----------|---------------|---------------|
-| 1 | Hook | 2s | blocks/scene-01.html | fade-in stagger |
+| # | Role | Dur | Key Visual | Animation |
+|---|------|-----|------------|-----------|
+| 1 | Hook | 2.3s | Logo + tagline | fade-in stagger |
 | ... | ... | ... | ... | ... |
 
 ## GSAP Recipe Map
 
-| Scene | Weapon ID | GSAP Technique | Key Config |
-|-------|-----------|----------------|------------|
-| 1 | motion.bento-reveal | `tl.from(items, {opacity:0, y:30, stagger:0.12})` | stagger=0.12, ease:power2.out |
+| Scene | Weapon ID | Technique | Config |
+|-------|-----------|-----------|--------|
+| 1 | motion.bento-reveal | stagger.from | stagger:0.12, ease:power2.out |
 
-## Asset Checklist (per scene)
+## Asset Checklist
 
-[What each scene needs: images, text, colors, data]
+Per-scene: images, text strings, colors, fonts needed.
 
 ## Render Checklist
 
-- [ ] All scenes have data-width, data-height, data-start
-- [ ] All timelines registered on window.__timelines
-- [ ] meta.json matches scene count and format
-- [ ] No Math.random(), repeat: -1, or ScrollTrigger
-- [ ] First scene visible in CSS
+- [ ] data-width/data-height/data-start on all clips
+- [ ] window.__timelines registered with composition-id as key
+- [ ] No Math.random(), repeat:-1, ScrollTrigger
+- [ ] First scene visible, transitions handle all scene changes
 ```
 
-## Mining Process (for the Agent)
+## Script Reference
 
-When the user provides a reference video:
+All scripts are in `scripts/` relative to this skill:
 
-1. **Watch it** (or analyze frame descriptions if video isn't directly viewable)
-2. **Time-mark it**: note timestamps for every scene transition
-3. **Label scenes**: give each scene a Role name
-4. **Extract dimensions**: fill in all 7 dimensions
-5. **Write VIDEO_DNA.md**: use the template above
-6. **Derive TEMPLATE_BLUEPRINT.md**: translate DNA into actionable build plan
-7. **Save to arsenal** (optional): `framepack arsenal save --name <ref-name>-dna`
+| Script | Input | Output | Time (60s video) |
+|--------|-------|--------|------------------|
+| `scene-detect.py` | video_path, threshold | scenes.json | ~10s |
+| `motion-analyze.py` | video_path, scenes.json | motion.json | ~30s |
+| `color-extract.py` | video_path, scenes.json | colors.json | ~15s |
+| `audio-analyze.py` | video_path, scenes.json | audio.json | ~20s |
+| `content-decompose.py` | video_path, scenes.json, out_dir | key frames + strips | ~15s |
 
-## Common Pitfalls
+Total Phase 0: ~1.5 min for a 60s video.
 
-- **Copying aesthetics instead of structure** — don't reproduce colors/fonts, reproduce the WHY behind them
-- **Skipping rhythm** — pacing is 50% of the feel. Always time-mark.
-- **Vague slot names** — "Cool transition" is useless. "Scale-up-reveal-with-blur-bg" is a recipe.
-- **No HyperFrames translation** — a DNA without constraint declarations is a render time-bomb
-- **Too few slots** — if you can't find at least 3 reusable patterns, watch again
+## Pitfalls
+
+- **No audio track**: audio-analyze.py reports `has_audio: false` — skip audio DNA section
+- **Single scene video**: scene-detect.py returns 1 scene — still run other scripts, they'll analyze the whole video as one scene
+- **Very short video (<3s)**: skip motion analysis (not enough samples), reduce color samples to 1
+- **Dark/low-contrast video**: scene-detect threshold may need lowering to 0.25
+- **HEVC/H.265**: ffmpeg may need additional flags; the scripts use `-v quiet` to suppress noise
+- **Vision API 503**: if vision_analyze fails on individual scene strips, fall back to overview contact sheet only
+
+## Comparison: Before vs After
+
+| Dimension | v0.8 (manual) | v0.9 (automated) |
+|-----------|--------------|-------------------|
+| Scene detection | "Watch it, time-mark it" | ffmpeg scene filter → precise timestamps |
+| Motion analysis | "Describe how things move" | Frame-differencing → energy score + direction |
+| Color palette | "What colors?" (vision guess) | Per-frame k-means → hex values with roles |
+| Audio | Not analyzed | BPM + beats + energy envelope |
+| Content layout | Agent guesses from memory | Structured zone-by-zone decomposition |
+| Fade detection | Human eye | Brightness sampling → fade-to/from-black |
+| Transition classification | "It's a cut I think" | Auto-classified: cut / fade-to-black / fade-from-black |

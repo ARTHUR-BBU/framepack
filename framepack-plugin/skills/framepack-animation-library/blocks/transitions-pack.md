@@ -12,9 +12,9 @@ used_by: "所有 Template"
 
 # Transition Effects Pack
 
-> **一句话**：6 种 HyperFrames-safe 场景转场效果，纯 GSAP + CSS，无 shader 依赖。
->
-> **跟 HyperFrames Catalog 的区别**：官方 Catalog 的转场用 WebGL shader，需要 `npx hyperframes add`。我们这个用 GSAP + CSS filter/transform/clip-path，零外部依赖，HyperFrames 直接渲染。
+> **⚠️ DEPRECATED — 场景切换请用 HyperFrames 原生转场系统。**
+> 本 block 的 DIY 转场方式（手动 `opacity: 0` 退场 + `display: none` 切场景）违反 HyperFrames 铁律：transition IS the exit，禁止非末场景退场动画。参考文件保留了动画技术（GSAP + CSS transform/filter/clip-path），但**场景切换逻辑不应使用**。
+> 正确做法：加载 `hyperframes` skill，看 `references/transitions.md`。
 
 ## 包含的转场
 

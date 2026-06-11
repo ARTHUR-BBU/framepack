@@ -1,0 +1,16 @@
+{
+  "version": "0.1.0",
+  "project": "",
+  "created": "",
+  "updated": "",
+  "weapons": {},
+  "download_rules": {
+    "allowed_sources": [
+      "nexu.io",
+      "codepen.io/@gsap",
+      "github.com/hyperframes"
+    ],
+    "max_file_size_kb": 100,
+    "require_hash": true
+  }
+}

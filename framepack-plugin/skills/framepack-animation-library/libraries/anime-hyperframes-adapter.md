@@ -38,8 +38,10 @@ const tl = createTimeline({
 // 在 HyperFrames 帧循环中：
 // renderFrame(timestamp) { tl.seek(timestamp); }
 
-// ✅ 正确：push 到 window.__timelines
-window.__timelines.push({ name: 'anime-scene-1', seek: (t) => tl.seek(t) });
+// ✅ 正确：用 composition-id 作为 key 注册（不是 push）
+// 必须匹配 data-composition-id，HyperFrames 框架通过 key 查找
+const compId = "my-scene";  // ← 必须等于 <div data-composition-id="my-scene">
+window.__timelines[compId] = { seek: (t) => tl.seek(t) };
 
 // ❌ 错误：autoplay: true（默认值）
 // ❌ 错误：loop: true（无限循环，非确定性）
