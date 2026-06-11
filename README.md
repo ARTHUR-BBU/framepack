@@ -47,7 +47,7 @@ HyperFrames takes over:
 Video 🎬
 ```
 
-## Plugin Hooks (v0.8)
+## Plugin Hooks (v0.8+)
 
 ```text
 post_tool_call:
@@ -90,7 +90,7 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.8.0**.
+# You should see `framepack` with status **enabled** and version **0.9.1**.
 
 # 5. Add AGENTS.md to your project root (required!)
 cp framepack/AGENTS.md /path/to/your/project/AGENTS.md

@@ -11,6 +11,7 @@
  * @returns {gsap.core.Timeline}
  */
 function bgBlurMask(tl, container, opts = {}, position = '<') {
+  container = typeof container === 'string' ? document.querySelector(container) : container;
   const {
     blurAmount = '8px',
     darkenOpacity = 0.3,

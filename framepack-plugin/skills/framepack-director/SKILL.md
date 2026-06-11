@@ -4,7 +4,7 @@ description: >-
   Creative engine — translates user intent into frame.md (visual identity)
   and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
   The core of Framepack's Prompt Factory. HyperFrames consumes these two files.
-version: 0.9.0
+version: 0.9.1
 ---
 
 # Framepack Director — Prompt Factory Core
@@ -116,6 +116,41 @@ Name the rhythm pattern BEFORE detailing scenes:
 - `SLAM-SLAM-hold-PAYOFF` (sports highlight)
 
 Read `references/beat-direction.md` for rhythm templates.
+
+### Step 2.5: Allocate time windows
+
+Based on total video duration + BGM structure (if any) + scene count, assign
+precise time windows to every scene BEFORE detailing beats. This becomes the
+**HyperFrames Time Windows** section in expanded-prompt.md.
+
+Algorithm:
+1. Subtract transition overlap (typically 0.3-0.5s per transition)
+2. If BGM has a DROP zone, align climactic scenes with it
+3. First and last scenes get fixed anchors (0s start, end at total duration)
+4. Distribute remaining time proportionally based on narrative weight
+
+Output format (goes into expanded-prompt.md):
+
+```
+## HyperFrames Time Windows
+# Agent: use these EXACT values for data-start, data-duration, data-track-index.
+# DO NOT recalculate — these are the authoritative time assignments.
+
+Scene 1 (0.0s - 3.5s, 3.5s): IGNITION
+  → <div id="s1" class="clip" data-start="0" data-duration="3.5" data-track-index="1">
+Scene 2 (3.5s - 7.5s, 4.0s): THE NAME
+  → <div id="s2" class="clip" data-start="3.5" data-duration="4" data-track-index="1">
+Scene 3 (7.5s - 14.0s, 6.5s): THE EYE
+  → <div id="s3" class="clip" data-start="7.5" data-duration="6.5" data-track-index="1">
+...
+BGM track:
+  → <audio data-start="0" data-duration="30" data-track-index="20" src="assets/bgm.mp3" data-volume="1">
+```
+
+**Why this exists**: Without explicit time windows, Agent guesses scene boundaries
+when writing HTML. Wrong boundaries = overlapping clips or dead air. Framepack
+already has all the data (BGM analysis, scene rhythm, total duration) — compute
+it here so the Agent just copies values, not invents them.
 
 ### Step 3: Per-scene beats
 
@@ -254,8 +289,34 @@ scene_4:
 
 ### Step 6: Write to file
 
-Write to `.hyperframes/expanded-prompt.md`. The Execution Manifest goes at the END.
-Do NOT dump into chat.
+Write to `.hyperframes/expanded-prompt.md`. The file structure is:
+
+1. Title + Style Block + Rhythm declaration
+2. HyperFrames Time Windows (from Step 2.5)
+3. Per-scene beats (from Step 3)
+4. Recurring motifs (from Step 5)
+5. **HyperFrames Structure Checklist** (see below)
+6. Execution Manifest (from Step 4)
+
+The HyperFrames Structure Checklist goes BEFORE the Execution Manifest:
+
+```markdown
+## HyperFrames Structure Checklist (MANDATORY)
+# Agent: verify EVERY item before writing HTML. This is not optional.
+
+□ Every scene div has class="clip" + data-start + data-duration + data-track-index
+  (copy the EXACT values from HyperFrames Time Windows above)
+□ NO data-hf-id on non-media elements
+  (only <video> and <audio> may have data-hf-id — the compiler adds them)
+□ font-family uses literal font names ("Anton 900", not "var(--font-heading)")
+□ <video> elements at root level, NOT nested inside timed divs
+□ <audio> elements at root level with data-track-index
+□ window.__timelines["main"] = tl (timeline registration — mandatory)
+□ npx hyperframes lint → 0 errors before preview/render
+□ If hf-utils.js is used, include <script src="hf-utils.js"> before weapon scripts
+```
+
+Do NOT dump the expanded-prompt into chat.
 
 ### Step 7: Storyboard preview — show the user the movie, not the spec
 

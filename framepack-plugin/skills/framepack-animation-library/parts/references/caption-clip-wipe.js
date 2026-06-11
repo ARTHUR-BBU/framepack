@@ -2,6 +2,7 @@
 // GSAP 3.x — text reveal via clip-path wipe
 // HTML requires pre-split words: <span class="word" style="clip-path:inset(0 100% 0 0)">word</span>
 function captionClipWipe(tl, textEl, opts = {}, position = '>') {
+  textEl = typeof textEl === 'string' ? document.querySelector(textEl) : textEl;
   const { direction = 'left-to-right', staggerPerWord = 0.1,
           durationPerWord = 0.4 } = opts;
   const words = textEl.querySelectorAll('.word');

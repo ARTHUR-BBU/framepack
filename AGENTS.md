@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.9.0 — sync with plugin.yaml and README -->
+<!-- version: 0.9.1 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -142,6 +142,37 @@ Agent 面对"写动画"任务时走最舒适路径——"我懂 GSAP，直接写
 
 **禁止下载的**：任意 GitHub repo · 非 HyperFrames 生态的 npm 包 · 未知 CDN
 
+## ⚔️ 铁律：HyperFrames 结构优先
+
+**先搭骨架，再填动画。骨架不对，动画全废。**
+
+武器铁律管的是"用什么动画"，这条铁律管的是"HTML 骨架能不能被 HyperFrames 编译器识别"。两个铁律缺一不可。
+
+### 写 HTML 前必须做的事
+
+```
+1. 读 expanded-prompt.md 的 HyperFrames Time Windows → 复制精确的时间窗口值
+2. 每个场景 div = class="clip" + data-start + data-duration + data-track-index
+   （时间窗口已给出，直接抄，不要自己算）
+3. 禁止手动添加 data-hf-id（只有 video/audio 的由编译器处理）
+4. font-family 用字面字体名（"Anton 900"），禁止 CSS 变量（var(--font-heading)）
+5. <video> 和 <audio> 放在根级别，不嵌套在 timed div 里
+6. window.__timelines["main"] = tl（时间线注册，没有这个 = 全黑屏）
+7. npx hyperframes lint → 0 errors 才能 preview / render
+```
+
+### 为什么这是铁律
+
+武器铁律防止"714 行裸写 GSAP"。这条铁律防止"骨架对了但编译器不认识"。
+
+HyperFrames 编译器做静态解析：
+- 缺 `class="clip"` → 编译器不管理该元素 → 元素永远隐藏
+- 多了 `data-hf-id` → 编译器当独立 clip → 没 time → 默认隐藏
+- `var(--font-heading)` → 编译器不认识 → 字体回退到默认
+
+**lint 拦不住这些错误**。lint 检查的是语法和属性冲突，不是运行时行为。
+这些是"语法合法但语义错误"——就像写了没 bug 的代码，但逻辑全是错的。
+
 ## Plugin Hooks
 
 v0.8 hooks 只做两件事：
@@ -202,7 +233,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.9.0 skills:
+Framepack v0.9.1 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|

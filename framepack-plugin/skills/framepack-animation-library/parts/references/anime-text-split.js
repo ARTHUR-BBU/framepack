@@ -3,6 +3,7 @@
 import { animate, stagger } from 'animejs';
 
 function animeTextSplit(tl, textEl, opts = {}) {
+  textEl = typeof textEl === 'string' ? document.querySelector(textEl) : textEl;
   const { splitBy = 'letter', direction = 'up',
           staggerAmount = 40, duration = 800 } = opts;
 

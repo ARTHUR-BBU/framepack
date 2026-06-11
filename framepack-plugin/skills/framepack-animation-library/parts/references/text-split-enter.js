@@ -7,6 +7,7 @@
  * HTML must be pre-processed in setup phase — see SKILL.md#html-结构
  */
 function textSplitEnter(tl, textEl, opts = {}, position = '>') {
+  textEl = typeof textEl === 'string' ? document.querySelector(textEl) : textEl;
   const {
     splitMode = 'horizontal',
     direction = 'inward',

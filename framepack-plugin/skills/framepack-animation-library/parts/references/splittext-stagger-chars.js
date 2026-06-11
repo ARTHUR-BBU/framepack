@@ -2,6 +2,7 @@
 // GSAP 3.13+ with SplitText plugin — deterministic char-by-char entrance
 // Requires: GSAP SplitText (free as of GSAP 3.13+)
 function splitTextStagger(tl, textEl, opts = {}, position = '>') {
+  textEl = typeof textEl === 'string' ? document.querySelector(textEl) : textEl;
   const { splitType = 'chars', direction = 'up',
           staggerAmount = 0.03, travelDistance = 30,
           rotation = 0, duration = 0.5 } = opts;
