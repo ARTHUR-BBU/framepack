@@ -1,6 +1,6 @@
 """Pre-tool-call hook: verify frame.md exists before HyperFrames takes over.
 
-v0.9.1 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
+v0.9.2 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
 are written. HyperFrames handles HTML. This hook only checks the handoff
 readiness — does frame.md exist? If the agent tries to run `hyperframes`
 commands without frame.md, warn once.
@@ -14,7 +14,15 @@ import re
 
 logger = logging.getLogger(__name__)
 
+from .guardrails import hydrate_guardrails
 from .on_post_tool_call import _safe_inject
+
+
+def _is_hyperframes_noop_command(command: str) -> bool:
+    return bool(
+        re.search(r"(?:^|\s)(?:npx\s+)?hyperframes\s+(?:init|help|version)(?:\s|$)", command)
+        or re.search(r"(?:^|\s)(?:npx\s+)?hyperframes\s+(?:--help|-h|--version|-v)(?:\s|$)", command)
+    )
 
 
 def register(ctx):
@@ -39,13 +47,15 @@ def register(ctx):
         if not re.search(r'(?:^|\s)(?:npx\s+)?hyperframes(?:\s|$)', command):
             return
 
-        # Skip init and help — those don't need frame.md
-        if "hyperframes init" in command or "hyperframes help" in command:
-            return
-
-        # Check: does frame.md exist in the working directory?
         # Derive project dir from the command's workdir or cwd
         workdir = args.get("workdir", "") or os.getcwd()
+
+        # Skip init and help — those don't need frame.md or guardrail hydration
+        if _is_hyperframes_noop_command(command):
+            return
+
+        hydrate_guardrails(ctx, project_dir=workdir, reason="hyperframes command")
+
         frame_md_path = os.path.join(workdir, "frame.md")
 
         if os.path.isfile(frame_md_path):
@@ -77,4 +87,4 @@ def register(ctx):
         logger.info("pre_tool_call: frame.md missing, handoff warning injected")
 
     ctx.register_hook("pre_tool_call", on_pre_tool_call)
-    logger.info("Framepack v0.9.1 pre_tool_call hook registered (handoff readiness)")
+    logger.info("Framepack v0.9.2 pre_tool_call hook registered (handoff readiness + guardrail hydration)")

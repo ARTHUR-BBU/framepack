@@ -90,23 +90,22 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.9.1**.
-
-# 5. Add AGENTS.md to your project root (required!)
-cp framepack/AGENTS.md /path/to/your/project/AGENTS.md
+# You should see `framepack` with status **enabled** and version **0.9.2**.
 ```
+
+Framepack v0.9.2 includes **Guardrail Hydrator**: when Framepack is invoked in a project, it automatically syncs the latest Framepack rules into that project's `AGENTS.md` inside a `FRAMEPACK MANAGED BLOCK`, and injects the same rules into the current session. You no longer need to manually copy `AGENTS.md` for normal usage.
 
 **Tip:** Run `hermes status` to find your actual HERMES_HOME path.
 
 ## Test It
 
-In a Hermes chat, in a project directory with the AGENTS.md:
+In a Hermes chat, from any project directory:
 
 ```
 "帮我做一个 30 秒的科技品牌发布会视频"
 ```
 
-Framepack will kick in, match a Visual Style (Swiss Pulse or Neon Grid),
+Framepack will hydrate its managed guardrails block if needed, match a Visual Style (Swiss Pulse or Neon Grid),
 generate frame.md, then walk through creative expansion.
 
 ## Updating
@@ -114,9 +113,10 @@ generate frame.md, then walk through creative expansion.
 ```bash
 cd framepack && git pull
 cp -r framepack-plugin <hermes-home>/plugins/framepack
-cp AGENTS.md /path/to/your/project/AGENTS.md
 # Restart Hermes
 ```
+
+Project `AGENTS.md` files are repaired automatically on next Framepack invocation via Guardrail Hydrator. The hydrator only edits the `FRAMEPACK MANAGED BLOCK` and preserves user/project rules outside that block.
 
 ## License
 

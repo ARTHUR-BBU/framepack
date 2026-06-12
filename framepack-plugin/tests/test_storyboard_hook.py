@@ -323,6 +323,32 @@ class TestPreToolCallHandoff:
         hook_fn(tool_name="terminal", args={"command": "npm install"})
         ctx.inject_message.assert_not_called()
 
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "npx hyperframes init --example blank",
+            "hyperframes help",
+            "hyperframes --help",
+            "npx hyperframes -h",
+            "hyperframes --version",
+            "npx hyperframes version",
+        ],
+    )
+    def test_hyperframes_init_help_version_do_not_warn_or_hydrate(self, command):
+        """hyperframes init/help/version should not produce AGENTS.md side effects."""
+        ctx = MagicMock()
+        from hooks.on_pre_tool_call import register
+        register(ctx)
+        hook_fn = ctx.register_hook.call_args[0][1]
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            hook_fn(
+                tool_name="terminal",
+                args={"command": command, "workdir": tmpdir},
+            )
+            assert not os.path.exists(os.path.join(tmpdir, "AGENTS.md"))
+            ctx.inject_message.assert_not_called()
+
     def test_warns_when_frame_md_missing(self):
         """When hyperframes command runs without frame.md, warn."""
         ctx = MagicMock()
@@ -335,6 +361,7 @@ class TestPreToolCallHandoff:
                 tool_name="terminal",
                 args={"command": "npx hyperframes lint", "workdir": tmpdir},
             )
-            ctx.inject_message.assert_called_once()
-            msg = ctx.inject_message.call_args[0][0]
-            assert "frame.md" in msg
+            assert ctx.inject_message.call_count >= 1
+            messages = [call.args[0] for call in ctx.inject_message.call_args_list]
+            assert any("Framepack Guardrails" in msg for msg in messages)
+            assert any("frame.md" in msg for msg in messages)

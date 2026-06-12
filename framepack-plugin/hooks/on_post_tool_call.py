@@ -1,4 +1,4 @@
-"""Framepack v0.9.1 — Prompt Factory hooks.
+"""Framepack v0.9.2 — Prompt Factory hooks.
 
 Framepack is the director's creative engine. It produces two deliverables:
   1. frame.md — visual identity (HyperFrames Step 1 input)
@@ -16,6 +16,9 @@ import json
 import logging
 import os
 import re
+from pathlib import Path
+
+from .guardrails import hydrate_guardrails
 
 logger = logging.getLogger(__name__)
 
@@ -343,6 +346,26 @@ def _build_expanded_prompt_advice(analysis: dict) -> str:
 
 # ── Hook registration ──
 
+def _project_dir_for_framepack_file(file_path: str) -> str:
+    path = Path(file_path)
+    if not path.is_absolute():
+        path = Path(os.getcwd()) / path
+    if path.name == "expanded-prompt.md" and path.parent.name == ".hyperframes":
+        return str(path.parent.parent)
+    return str(path.parent)
+
+
+def _is_framepack_skill_name(name: str) -> bool:
+    return name in {
+        "framepack",
+        "framepack:framepack-director",
+        "framepack:framepack-gsap",
+        "framepack:framepack-arsenal",
+        "framepack-animation-library",
+        "framepack-reference-miner",
+    }
+
+
 def register(ctx):
     """Register the post_tool_call hook for frame.md and expanded-prompt detection."""
 
@@ -357,18 +380,27 @@ def register(ctx):
     ):
         if not args:
             return
+
+        if tool_name == "skill_view":
+            skill_name = args.get("name", "")
+            if _is_framepack_skill_name(skill_name):
+                hydrate_guardrails(ctx, project_dir=os.getcwd(), reason=f"skill_view:{skill_name}")
+            return
+
         if tool_name not in ("write_file",):
             return
 
         file_path = args.get("path", "")
 
         if _is_frame_md(file_path):
+            hydrate_guardrails(ctx, project_dir=_project_dir_for_framepack_file(file_path), reason="frame.md write")
             _handle_frame_md(ctx, file_path)
         elif _is_expanded_prompt(file_path):
+            hydrate_guardrails(ctx, project_dir=_project_dir_for_framepack_file(file_path), reason="expanded-prompt write")
             _handle_expanded_prompt(ctx, file_path)
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
-    logger.info("Framepack v0.9.1 post_tool_call hook registered (frame.md + expanded-prompt)")
+    logger.info("Framepack v0.9.2 post_tool_call hook registered (frame.md + expanded-prompt + guardrail hydration)")
 
 
 # ── Handlers ──

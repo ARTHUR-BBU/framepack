@@ -1,9 +1,10 @@
 name: framepack
-version: "0.9.1"
+version: "0.9.2"
 description: >-
   Prompt Factory for HyperFrames. Translates fuzzy user intent into frame.md
   (visual identity) and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
   Framepack is the director who knows which lights to turn on — not the electrician who wires the studio.
+  v0.9.2 adds: Guardrail Hydrator (plugin-owned guardrails.md, project AGENTS.md managed block, hash-based drift repair, current-session injection).
   v0.9.1 adds: HyperFrames Structure Bridge (time windows, structure checklist, resolveElement compat, AGENTS.md iron rule).
 author: Framepack Team
 license: MIT

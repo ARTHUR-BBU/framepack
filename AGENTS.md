@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.9.1 — sync with plugin.yaml and README -->
+<!-- version: 0.9.2 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -175,15 +175,36 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.8 hooks 只做两件事：
+v0.9.2 hooks do three things:
 
 ```text
 post_tool_call:
-  ├── frame.md 写入 → LLM 质量检查（配色/字体/动效参数是否完整）
-  └── expanded-prompt.md 写入 → LLM 质量检查（场景 beat 是否完整）
+  ├── Framepack skill_view → Guardrail Hydrator sync + current-session injection
+  ├── frame.md 写入 → Guardrail Hydrator + LLM 质量检查（配色/字体/动效参数是否完整）
+  └── expanded-prompt.md 写入 → Guardrail Hydrator + LLM 质量检查（场景 beat 是否完整）
 
 pre_tool_call:
-  └── hyperframes 命令执行 → 检查 frame.md 是否存在（交接准备）
+  └── hyperframes 命令执行 → Guardrail Hydrator + 检查 frame.md 是否存在（交接准备）
+```
+
+### Guardrail Hydrator
+
+Framepack 的产品铁律不再依赖用户手动复制 AGENTS.md。插件目录的 `guardrails.md` 是规则源头。
+当 Framepack 在任意项目中被召唤时，Hydrator 会：
+
+1. 读取插件目录 `guardrails.md` + `plugin.yaml` version
+2. 计算 guardrails hash
+3. 在当前项目 `AGENTS.md` 中创建/更新 `FRAMEPACK MANAGED BLOCK`
+4. 只替换托管块，不改用户自己的规则
+5. 同时把 guardrails 注入当前会话，避免“文件更新了但本轮 Agent 还不知道”
+
+这条链路解决的是产品规则分发问题：
+
+```text
+插件 guardrails.md = 规则源头
+项目 AGENTS.md managed block = 持久落地
+ctx.inject_message = 当前会话即时生效
+version/hash = 防漂移
 ```
 
 **不做的事**：
@@ -233,7 +254,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.9.1 skills:
+Framepack v0.9.2 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|
@@ -266,7 +287,7 @@ HyperFrames skills（已安装到 $HERMES_HOME/skills/software-development/）�
 # Run plugin tests
 cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 
-# After modifying ANY plugin file (SKILL.md, plugin.yaml, hooks/, __init__.py):
+# After modifying ANY plugin file (SKILL.md, plugin.yaml, hooks/, __init__.py, guardrails.md):
 # Sync to Hermes deployment directory:
 # F:\Hermes_windows\plugins\framepack\
 ```
@@ -294,7 +315,7 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 
 ### 改完 PLUGIN 文件后
 → 必须同步到部署目录：`copy → F:\Hermes_windows\plugins\framepack\`
-→ plugin.yaml, SKILL.md, hooks/, __init__.py — 这四个必须双位置一致
+→ plugin.yaml, SKILL.md, hooks/, __init__.py, guardrails.md — 这五类必须双位置一致
 
 ### 提交前
 → 加载 `requesting-code-review` skill — 安全扫描 + 质量检查
