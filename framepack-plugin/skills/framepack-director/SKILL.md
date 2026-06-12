@@ -4,7 +4,7 @@ description: >-
   Creative engine — translates user intent into frame.md (visual identity)
   and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
   The core of Framepack's Prompt Factory. HyperFrames consumes these two files.
-version: 0.9.3
+version: 0.9.4
 ---
 
 # Framepack Director — Prompt Factory Core
@@ -304,6 +304,8 @@ The HyperFrames Structure Checklist goes BEFORE the Execution Manifest:
 ## HyperFrames Structure Checklist (MANDATORY)
 # Agent: verify EVERY item before writing HTML. This is not optional.
 
+□ root composition declares explicit `data-duration="TOTAL_SECONDS"`
+  (do NOT rely on GSAP timeline inference; final hold / 片尾黑场 / outro can be trimmed)
 □ Every scene div has class="clip" + data-start + data-duration + data-track-index
   (copy the EXACT values from HyperFrames Time Windows above)
 □ NO data-hf-id on non-media elements

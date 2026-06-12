@@ -9,14 +9,40 @@ triggers:
   - User shares a reference video ("类似这个片子", "分析这个视频的风格")
   - User asks "can we clone this?" or "reverse-engineer this ad"
   - User provides a video file for creative DNA extraction
-version: 0.9.3
+version: 0.9.4
 ---
 
-# Reference Video Miner v0.9
+# Reference Video Miner v0.9.4
 
 Don't copy — dissect. Extract the skeleton, not the skin.
 
 ## Pipeline Overview
+
+### Two operating modes
+
+**Inspiration Mode** — use the reference video for style DNA. Output `VIDEO_DNA.md`, then feed Framepack's normal `frame.md` + `.hyperframes/expanded-prompt.md` creative path.
+
+**Replica Mode** — reverse-engineer the reference as a code-replication target. Before writing HTML, produce all three deliverables:
+
+1. `VIDEO_DNA.md` — overall rhythm, motion, color, layout, audio, and transition DNA.
+2. `.hermes/content_decomposition.md` — per-scene visual decomposition with BG/MG/FG, zones, text, UI, and layout notes.
+3. `TEMPLATE_BLUEPRINT.md` — the source of truth for HyperFrames code replication: scene count, exact timing, root `data-duration`, DOM structure, visual layers, animation targets, and known exceptions.
+
+In Replica Mode, HTML must be implemented from `TEMPLATE_BLUEPRINT.md`, not from freeform imagination. Treat the blueprint like a construction drawing, not a mood board.
+
+**Replica ambiguity ban:** do not leave conditional implementation language in handoff docs. Banned unless rewritten as an explicit decision or approved exception:
+
+- `if strict`
+- `maybe`
+- `optionally`
+- `merge if needed`
+- `no outgoing transition`
+
+Allowed forms:
+
+- `Density approved exception: intentional two-frame percussion insert, not a normal 8–10 element scene.`
+- `Transition: final black hold to end, 0.000s, power2.in; end state pure #000000.`
+- `Locked elements: total 10.`
 
 ```
 Phase 0: Automated Extraction (scripts, no agent LLM)

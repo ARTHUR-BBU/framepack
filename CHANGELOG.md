@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.9.4 — Replica Mode Render Integrity (2026-06-12)
+
+### Replica Mode
+
+- **Replica Mode deliverables formalized** — reverse-copy work must produce `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML implementation.
+- **Blueprint as source of truth** — HyperFrames HTML must implement from `TEMPLATE_BLUEPRINT.md`, not freeform imagination.
+- **Ambiguity ban** — Replica handoff docs must not leave `if strict`, `maybe`, `optionally`, `merge if needed`, or `no outgoing transition`; convert them into locked decisions or explicit approved exceptions.
+
+### HyperFrames Render Integrity
+
+- **Root composition duration guardrail** — root composition must declare explicit `data-duration="TOTAL_SECONDS"`; do not rely on GSAP timeline inference, because final holds/outros can be trimmed while render still exits successfully.
+
+### Engineering
+
+- Regression tests added for root `data-duration`, Replica Mode deliverables, and Replica ambiguity ban.
+
 ## 0.9.3 — Ederson Test-Team Hardening (2026-06-12)
 
 ### HyperFrames Safety

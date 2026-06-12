@@ -125,16 +125,18 @@ Agent 面对"写动画"任务时走最舒适路径——"我懂 GSAP，直接写
 
 ```text
 1. 读 expanded-prompt.md 的 HyperFrames Time Windows → 复制精确的时间窗口值
-2. 每个场景 div = class="clip" + data-start + data-duration + data-track-index
+2. root composition 必须显式写 `data-duration="总时长"`
+   （不要依赖 GSAP timeline inference/推断；final hold / 片尾黑场 / outro 会被合法剪掉）
+3. 每个场景 div = class="clip" + data-start + data-duration + data-track-index
    （时间窗口已给出，直接抄，不要自己算）
-3. 禁止手动添加 data-hf-id（只有 video/audio 的由编译器处理）
-4. 每个 clip 内必须有视觉内层 wrapper：`.scene-inner` 或 `#sN-inner`
-5. 禁止对 clip 根元素 / clip root 做 opacity/filter/transform 动画
+4. 禁止手动添加 data-hf-id（只有 video/audio 的由编译器处理）
+5. 每个 clip 内必须有视觉内层 wrapper：`.scene-inner` 或 `#sN-inner`
+6. 禁止对 clip 根元素 / clip root 做 opacity/filter/transform 动画
    （clip 是 HyperFrames 时间调度壳；blur crossfade/scale/fade 只能动 inner wrapper）
-6. font-family 用字面字体名（"Anton 900"），禁止 CSS 变量（var(--font-heading)）
-7. <video> 和 <audio> 放在根级别，不嵌套在 timed div 里
-8. window.__timelines["main"] = tl（时间线注册，没有这个 = 全黑屏）
-9. npx hyperframes lint → 0 errors 才能 preview / render
+7. font-family 用字面字体名（"Anton 900"），禁止 CSS 变量（var(--font-heading)）
+8. <video> 和 <audio> 放在根级别，不嵌套在 timed div 里
+9. window.__timelines["main"] = tl（时间线注册，没有这个 = 全黑屏）
+10. npx hyperframes lint → 0 errors 才能 preview / render
 ```
 
 ### 为什么这是铁律

@@ -275,6 +275,42 @@ class TestSkillLoading:
         assert "opacity/filter/transform" in content
         assert "scene-inner" in content or "#sN-inner" in content
 
+    def test_guardrails_require_root_composition_data_duration(self):
+        """Regression: render may trim final hold if root composition lacks explicit data-duration."""
+        path = os.path.join(os.path.dirname(__file__), "..", "guardrails.md")
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+        assert "root composition" in content
+        assert "data-duration" in content
+        assert "GSAP" in content and ("推断" in content or "inference" in content)
+        assert "片尾" in content or "final hold" in content or "outro" in content
+
+    def test_director_requires_root_composition_data_duration(self):
+        """Director checklist must require root data-duration before HyperFrames render."""
+        content = _cached_skill_load("framepack-director")
+        assert "root composition" in content
+        assert "data-duration" in content
+        assert "final hold" in content or "片尾" in content or "outro" in content
+
+    def test_reference_miner_documents_replica_mode_deliverables(self):
+        """Replica Mode must produce analysis artifacts before code replication."""
+        content = _cached_skill_load("framepack-reference-miner")
+        assert "Replica Mode" in content
+        assert "VIDEO_DNA.md" in content
+        assert ".hermes/content_decomposition.md" in content
+        assert "TEMPLATE_BLUEPRINT.md" in content
+        assert "TEMPLATE_BLUEPRINT" in content and ("source of truth" in content or "源" in content)
+
+    def test_reference_miner_documents_replica_ambiguity_ban(self):
+        """Replica Mode must ban vague implementation language unless converted to explicit exceptions."""
+        content = _cached_skill_load("framepack-reference-miner")
+        assert "if strict" in content
+        assert "maybe" in content
+        assert "optionally" in content
+        assert "merge if needed" in content
+        assert "no outgoing transition" in content
+        assert "approved exception" in content
+
 
 # ══════════════════════════════════════════════
 #  Hook Registration (integration smoke test)
