@@ -311,6 +311,30 @@ class TestSkillLoading:
         assert "no outgoing transition" in content
         assert "approved exception" in content
 
+    def test_reference_miner_documents_adaptive_and_scripted_modes(self):
+        """Reference Miner scripts are standard instruments, not hard blockers."""
+        content = _cached_skill_load("framepack-reference-miner")
+        assert "Adaptive Mode" in content
+        assert "Scripted Mode" in content
+        assert "not a hard blocker" in content or "not hard blockers" in content
+        assert "reproducibility" in content
+        assert "ffmpeg commands" in content
+        assert "scene threshold" in content
+        assert "frame sampling rate" in content
+        assert "audio analysis method" in content
+        assert "skill_view" in content and "scripts/scene-detect.py" in content
+
+    def test_reference_miner_documents_snapshot_qa_loop(self):
+        """Replica Mode must require visual QA before final render."""
+        content = _cached_skill_load("framepack-reference-miner")
+        assert "snapshot contact sheet" in content
+        assert "visual issue list" in content
+        assert "second snapshot" in content
+        assert "data-hf-id count = 0" in content
+        assert "timeline_track_too_dense" in content
+        assert "overlapping_gsap_tweens" in content
+        assert "contrast" in content
+
 
 # ══════════════════════════════════════════════
 #  Hook Registration (integration smoke test)

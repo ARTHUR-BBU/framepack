@@ -17,7 +17,7 @@ class FakeCtx:
         self.messages.append((role, message))
 
 
-def make_plugin(tmp_path: Path, version: str = "0.9.4", guardrails: str = "# Framepack Guardrails\n\n最新铁律") -> Path:
+def make_plugin(tmp_path: Path, version: str = "0.10.0", guardrails: str = "# Framepack Guardrails\n\n最新铁律") -> Path:
     plugin_dir = tmp_path / "plugin"
     plugin_dir.mkdir()
     (plugin_dir / "plugin.yaml").write_text(f'name: framepack\nversion: "{version}"\n', encoding="utf-8")
@@ -40,7 +40,7 @@ def test_sync_creates_agents_md_with_managed_block(tmp_path):
     assert agents.exists()
     content = agents.read_text(encoding="utf-8")
     assert "FRAMEPACK MANAGED BLOCK START" in content
-    assert "version=0.9.4" in content
+    assert "version=0.10.0" in content
     assert "# Framepack Guardrails" in content
     assert "最新铁律" in content
 
@@ -123,7 +123,7 @@ def test_sync_replaces_legacy_framepack_block_without_version_hash(tmp_path):
     assert "旧 legacy block" not in content
     assert "新 Hydrator 规矩" in content
     assert content.count("FRAMEPACK MANAGED BLOCK START") == 1
-    assert "version=0.9.4" in content
+    assert "version=0.10.0" in content
     assert "hash=sha256:" in content
 
 
@@ -154,7 +154,7 @@ def test_sync_appends_to_full_legacy_framepack_agents_doc_without_deleting_conte
     assert "用户后加的项目规则也要保留" in content
     assert "新 managed block" in content
     assert content.count("FRAMEPACK MANAGED BLOCK START") == 1
-    assert "version=0.9.4" in content
+    assert "version=0.10.0" in content
 
 
 def test_sync_updates_managed_block_in_legacy_doc_without_deleting_content(tmp_path):
@@ -191,7 +191,7 @@ def test_sync_updates_managed_block_in_legacy_doc_without_deleting_content(tmp_p
     assert "半新 block" not in content
     assert "最终单块" in content
     assert content.count("FRAMEPACK MANAGED BLOCK START") == 1
-    assert "version=0.9.4" in content
+    assert "version=0.10.0" in content
 
 
 def test_sync_repairs_body_drift_even_if_header_hash_matches(tmp_path):
@@ -202,7 +202,7 @@ def test_sync_repairs_body_drift_even_if_header_hash_matches(tmp_path):
     project_dir = tmp_path / "project"
     project_dir.mkdir()
     tampered = (
-        f"<!-- FRAMEPACK MANAGED BLOCK START version=0.9.4 hash={payload.digest} source=plugin -->\n"
+        f"<!-- FRAMEPACK MANAGED BLOCK START version=0.10.0 hash={payload.digest} source=plugin -->\n"
         "# Framepack Guardrails\n\n被手改坏的规则\n"
         "<!-- FRAMEPACK MANAGED BLOCK END -->\n"
     )
@@ -220,11 +220,11 @@ def test_sync_repairs_body_drift_even_if_header_hash_matches(tmp_path):
 def test_sync_repairs_stale_version_even_if_hash_matches(tmp_path):
     from hooks.guardrails import build_guardrails_payload, sync_project_agents
 
-    plugin_dir = make_plugin(tmp_path, version="0.9.4", guardrails="# Framepack Guardrails\n\n同一份规则")
+    plugin_dir = make_plugin(tmp_path, version="0.10.0", guardrails="# Framepack Guardrails\n\n同一份规则")
     payload = build_guardrails_payload(plugin_dir)
     project_dir = tmp_path / "project"
     project_dir.mkdir()
-    stale_version_block = payload.block.replace("version=0.9.4", "version=0.9.3")
+    stale_version_block = payload.block.replace("version=0.10.0", "version=0.9.4")
     (project_dir / "AGENTS.md").write_text(stale_version_block, encoding="utf-8")
 
     result = sync_project_agents(project_dir, plugin_dir)
@@ -232,7 +232,7 @@ def test_sync_repairs_stale_version_even_if_hash_matches(tmp_path):
     content = (project_dir / "AGENTS.md").read_text(encoding="utf-8")
     assert result.changed is True
     assert result.action == "updated"
-    assert "version=0.9.4" in content
+    assert "version=0.10.0" in content
     assert "version=0.9.1" not in content
 
 

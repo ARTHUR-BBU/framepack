@@ -19,14 +19,29 @@ class TrustedSource:
 
 TRUSTED_SOURCES: list[TrustedSource] = [
     TrustedSource(
-        pattern=re.compile(r"^https://registry\.npmjs\.org/"),
-        label="npm registry",
-        license_note="external package; verify license before redistribution",
+        pattern=re.compile(r"^framepack://"),
+        label="Framepack built-in",
+        license_note="included in Framepack distribution",
     ),
     TrustedSource(
-        pattern=re.compile(r"^https://github\.com/greensock/"),
-        label="GSAP (GreenSock) GitHub",
-        license_note="external library; verify GSAP license before redistribution",
+        pattern=re.compile(r"^https://nexu\.io/"),
+        label="Nexu animation snippets",
+        license_note="Framepack-approved reference source; verify snippet license before redistribution",
+    ),
+    TrustedSource(
+        pattern=re.compile(r"^https://codepen\.io/@gsap/"),
+        label="GSAP CodePen examples",
+        license_note="official GSAP examples; verify license before redistribution",
+    ),
+    TrustedSource(
+        pattern=re.compile(r"^https://github\.com/hyperframes/"),
+        label="HyperFrames GitHub",
+        license_note="HyperFrames ecosystem source; verify repository license before redistribution",
+    ),
+    TrustedSource(
+        pattern=re.compile(r"^https://registry\.npmjs\.org/gsap(?:/|$)"),
+        label="GSAP npm registry",
+        license_note="external package; verify GSAP license before redistribution",
     ),
     TrustedSource(
         pattern=re.compile(r"^https://cdn\.jsdelivr\.net/npm/gsap/"),
@@ -37,11 +52,6 @@ TRUSTED_SOURCES: list[TrustedSource] = [
         pattern=re.compile(r"^https://unpkg\.com/gsap/"),
         label="GSAP via unpkg CDN",
         license_note="external CDN; verify GSAP license before redistribution",
-    ),
-    TrustedSource(
-        pattern=re.compile(r"^framepack://"),
-        label="Framepack built-in",
-        license_note="included in Framepack distribution",
     ),
 ]
 

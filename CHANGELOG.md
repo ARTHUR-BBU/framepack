@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.10.0 — Arsenal Registry Runtime (2026-06-12)
+
+### Arsenal Registry
+
+- **Project-local registry runtime** — creates and preserves `.framepack/arsenal.json` plus `.framepack/weapons/` without creating placeholder `state.json`.
+- **Execution Manifest reconciliation** — parses manifest weapon references, registers known builtin weapons, marks unreferenced active weapons as `unused`, and reports unknown/HANDWRITE entries as non-blocking warnings.
+- **Builtin weapon catalog** — adds a concrete runtime catalog for canonical weapons such as `text-split-enter`, `caption-clip-wipe`, `bg-blur-mask`, and `rules.hyperframes-render-safe`.
+- **Trusted-source whitelist** — aligns download governance around `framepack://`, `nexu.io`, `codepen.io/@gsap`, and `github.com/hyperframes`, while rejecting random GitHub/CDN sources.
+- **Hook integration** — expanded-prompt writes now create/reconcile Arsenal automatically; HyperFrames commands run a non-blocking Arsenal preflight before lint/preview/render.
+
+### Reference Miner / Replica Mode
+
+- **Scripted + Adaptive modes documented** — five scripts are standard measuring instruments, not a hard blocker; Adaptive Mode must record ffmpeg commands, scene threshold, frame sampling rate, audio method, assumptions, and weak spots.
+- **Replica visual QA loop** — snapshot contact sheet → visual issue list → targeted fixes → second snapshot → `data-hf-id count = 0` before final render.
+- **P2 warning classification** — `timeline_track_too_dense`, `overlapping_gsap_tweens`, and `gsap_studio_edit_blocked` are tracked as engineering hygiene warnings, not draft-render blockers.
+
+### Tests
+
+- Added Arsenal Registry, builtin catalog, Execution Manifest parser, trusted-source, hook integration, and Reference Miner contract tests.
+
 ## 0.9.4 — Replica Mode Render Integrity (2026-06-12)
 
 ### Replica Mode

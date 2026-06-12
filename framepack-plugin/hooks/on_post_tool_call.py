@@ -1,4 +1,4 @@
-"""Framepack v0.9.4 — Prompt Factory hooks.
+"""Framepack v0.10.0 — Prompt Factory hooks.
 
 Framepack is the director's creative engine. It produces two deliverables:
   1. frame.md — visual identity (HyperFrames Step 1 input)
@@ -19,6 +19,8 @@ import re
 from pathlib import Path
 
 from .guardrails import hydrate_guardrails
+from core.arsenal_registry import ensure_arsenal, load_arsenal, reconcile_manifest, save_arsenal
+from core.execution_manifest import parse_execution_manifest
 
 logger = logging.getLogger(__name__)
 
@@ -346,6 +348,40 @@ def _build_expanded_prompt_advice(analysis: dict) -> str:
 
 # ── Hook registration ──
 
+def _build_arsenal_warning_message(warnings) -> str:
+    visible = [w for w in warnings if getattr(w, "code", "") not in {"unused_weapon"} or getattr(w, "severity", "") != "info"]
+    if not visible:
+        return ""
+    lines = ["⚔️ **Framepack Arsenal Warning**"]
+    for warning in visible[:8]:
+        weapon = f" ({warning.weapon_id})" if warning.weapon_id else ""
+        lines.append(f"- {warning.code}{weapon}: {warning.message}")
+    if len(visible) > 8:
+        lines.append(f"- ... {len(visible) - 8} more warnings")
+    return "\n".join(lines)
+
+
+def _sync_arsenal_for_expanded_prompt(ctx, file_path: str, content: str) -> None:
+    project_dir = Path(_project_dir_for_framepack_file(file_path))
+    result = ensure_arsenal(project_dir, Path(__file__).resolve().parent.parent)
+    warnings = list(result.warnings)
+    if result.error:
+        warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": result.error, "severity": "warn", "weapon_id": None})())
+    try:
+        data = load_arsenal(result.path)
+        manifest = parse_execution_manifest(content)
+        data, reconcile_warnings = reconcile_manifest(data, manifest, Path(__file__).resolve().parent.parent)
+        warnings.extend(reconcile_warnings)
+        save_arsenal(result.path, data)
+    except Exception as exc:
+        logger.warning("Arsenal reconciliation failed: %s", exc)
+        warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": str(exc), "severity": "warn", "weapon_id": None})())
+
+    message = _build_arsenal_warning_message(warnings)
+    if message:
+        _safe_inject(ctx, message, role="user")
+
+
 def _project_dir_for_framepack_file(file_path: str) -> str:
     path = Path(file_path)
     if not path.is_absolute():
@@ -400,7 +436,7 @@ def register(ctx):
             _handle_expanded_prompt(ctx, file_path)
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
-    logger.info("Framepack v0.9.4 post_tool_call hook registered (frame.md + expanded-prompt + guardrail hydration)")
+    logger.info("Framepack v0.10.0 post_tool_call hook registered (frame.md + expanded-prompt + guardrail hydration)")
 
 
 # ── Handlers ──
@@ -434,6 +470,8 @@ def _handle_expanded_prompt(ctx, file_path: str) -> None:
         return
     if not content.strip():
         return
+
+    _sync_arsenal_for_expanded_prompt(ctx, file_path, content)
 
     analysis = _analyze_expanded_prompt(ctx, content)
     if analysis is None:

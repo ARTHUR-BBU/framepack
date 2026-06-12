@@ -1,7 +1,7 @@
 ---
 name: framepack-reference-miner
 description: >-
-  Reference video reverse-engineering v0.9 — automated scene detection + motion
+  Reference video reverse-engineering v0.10 — Scripted/Adaptive scene detection + motion
   analysis + color extraction + audio beat sync + vision-based content decomposition.
   Produces quantified Creative DNA Report (VIDEO_DNA.md + TEMPLATE_BLUEPRINT.md).
   Replaces manual "watch and guess" with script-driven pipeline.
@@ -9,10 +9,10 @@ triggers:
   - User shares a reference video ("类似这个片子", "分析这个视频的风格")
   - User asks "can we clone this?" or "reverse-engineer this ad"
   - User provides a video file for creative DNA extraction
-version: 0.9.4
+version: 0.10.0
 ---
 
-# Reference Video Miner v0.9.4
+# Reference Video Miner v0.10.0
 
 Don't copy — dissect. Extract the skeleton, not the skin.
 
@@ -21,6 +21,17 @@ Don't copy — dissect. Extract the skeleton, not the skin.
 ### Two operating modes
 
 **Inspiration Mode** — use the reference video for style DNA. Output `VIDEO_DNA.md`, then feed Framepack's normal `frame.md` + `.hyperframes/expanded-prompt.md` creative path.
+
+**Scripted Mode** — preferred when the packaged five-script pack is available. The scripts are standard measuring instruments: they produce reproducible JSON for benchmark runs, formal copy tasks, and multi-agent handoff. Load them via linked files, e.g. `skill_view(name='framepack:framepack-reference-miner', file_path='scripts/scene-detect.py')`; do not search `$HOME/.hermes` or hard-code profile paths.
+
+**Adaptive Mode** — allowed when scripts are missing or unavailable. Missing scripts are not a hard blocker. A strong model may build an inline `ffmpeg + Python` pipeline, but it MUST write a reproducibility block into `reference-analysis.md` / `VIDEO_DNA.md` with:
+
+- ffmpeg commands used
+- Python snippets or generated script paths
+- scene threshold
+- frame sampling rate
+- audio analysis method
+- assumptions and known weak spots
 
 **Replica Mode** — reverse-engineer the reference as a code-replication target. Before writing HTML, produce all three deliverables:
 
@@ -43,6 +54,16 @@ Allowed forms:
 - `Density approved exception: intentional two-frame percussion insert, not a normal 8–10 element scene.`
 - `Transition: final black hold to end, 0.000s, power2.in; end state pure #000000.`
 - `Locked elements: total 10.`
+
+**Replica visual QA loop (mandatory before final render):**
+
+1. Create a snapshot contact sheet across all scenes.
+2. Write a visual issue list with scene IDs and exact layout/contrast/overlap problems.
+3. Apply targeted CSS/layout fixes only.
+4. Capture a second snapshot for risky scenes before render.
+5. After any snapshot workflow, clean source `index.html` and verify `data-hf-id count = 0`.
+6. Treat `timeline_track_too_dense`, `overlapping_gsap_tweens`, and `gsap_studio_edit_blocked` as P2 engineering warnings: non-blocking for draft render, but required cleanup before Studio-editable/final distribution work.
+7. Treat contrast warnings as P3 polish unless readability is visibly broken.
 
 ```
 Phase 0: Automated Extraction (scripts, no agent LLM)

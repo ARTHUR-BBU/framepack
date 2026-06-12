@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.9.4 — sync with plugin.yaml and README -->
+<!-- version: 0.10.0 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -126,7 +126,7 @@ Agent 面对"写动画"任务时走最舒适路径——"我懂 GSAP，直接写
 └── weapons/        ← 当前可选：下载/自建的武器代码（.js / .css / .html）
 ```
 
-`state.json` 是未来项目元数据设计，v0.9.x 尚未启用；不要为了“看起来完整”创建空壳文件。
+`state.json` 是未来项目元数据设计，当前版本仍未启用；不要为了“看起来完整”创建空壳文件。
 
 **arsenal.json 生命周期规则**：
 
@@ -181,16 +181,16 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.9.4 hooks do three things:
+v0.10.0 hooks do four things:
 
 ```text
 post_tool_call:
   ├── Framepack skill_view → Guardrail Hydrator sync + current-session injection
   ├── frame.md 写入 → Guardrail Hydrator + LLM 质量检查（配色/字体/动效参数是否完整）
-  └── expanded-prompt.md 写入 → Guardrail Hydrator + LLM 质量检查（场景 beat 是否完整）
+  └── expanded-prompt.md 写入 → Guardrail Hydrator + Arsenal Registry reconcile + LLM 质量检查（场景 beat 是否完整）
 
 pre_tool_call:
-  └── hyperframes 命令执行 → Guardrail Hydrator + 检查 frame.md 是否存在（交接准备）
+  └── hyperframes 命令执行 → Guardrail Hydrator + Arsenal preflight + 检查 frame.md 是否存在（交接准备）
 ```
 
 ### Guardrail Hydrator
@@ -260,7 +260,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.9.4 skills:
+Framepack v0.10.0 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|
@@ -269,7 +269,7 @@ Framepack v0.9.4 skills:
 | framepack:framepack-gsap | 武器食谱（HyperFrames-safe GSAP 模式），不是 GSAP API 参考 | HyperFrames 写 HTML 时 |
 | framepack-animation-library | 27 件 GSAP/anime.js 武器目录 | HyperFrames 写 HTML 时翻字典 |
 | framepack:framepack-arsenal | 武器目录管理 | 创意阶段推荐 |
-| framepack-reference-miner | 参考视频 DNA 提取 v0.9 — 自动化场景检测+运动分析+色彩提取+音频节拍+内容解构（5个脚本管道） | 需要参考时 |
+| framepack-reference-miner | 参考视频 DNA 提取 v0.10 — Scripted/Adaptive 双模式 + Replica QA loop + 5 脚本测量管线 | 需要参考时 |
 
 > 注：`framepack:xxx` 格式的是插件内技能，需用冒号全名；不加前缀的是独立技能，直接用短名。|
 

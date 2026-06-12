@@ -90,10 +90,10 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.9.4**.
+# You should see `framepack` with status **enabled** and version **0.10.0**.
 ```
 
-Framepack v0.9.4 includes **Guardrail Hydrator** plus Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration` so final holds/outros are not trimmed by GSAP timeline inference; reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML; and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. v0.9.3 also includes the Ederson test-team hardening pass: clip roots are timing shells, `text-split-enter` documents the overlapping-half CSS contract, and `.framepack/state.json` is future-only metadata. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
+Framepack v0.10.0 includes **Arsenal Registry runtime**: Framepack now creates `.framepack/arsenal.json`, registers builtin weapons from the Execution Manifest, reconciles unused/unknown weapons, applies a trusted-source whitelist for downloads, and runs a non-blocking Arsenal preflight before HyperFrames commands. It also includes the v0.9.4 Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration`, reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML, and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. v0.9.3 also includes the Ederson test-team hardening pass: clip roots are timing shells, `text-split-enter` documents the overlapping-half CSS contract, and `.framepack/state.json` is future-only metadata. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
 
 **Tip:** Run `hermes status` to find your actual HERMES_HOME path.
 
