@@ -1,6 +1,6 @@
 """Pre-tool-call hook: verify frame.md exists before HyperFrames takes over.
 
-v0.9.2 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
+v0.9.3 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
 are written. HyperFrames handles HTML. This hook only checks the handoff
 readiness — does frame.md exist? If the agent tries to run `hyperframes`
 commands without frame.md, warn once.
@@ -87,4 +87,4 @@ def register(ctx):
         logger.info("pre_tool_call: frame.md missing, handoff warning injected")
 
     ctx.register_hook("pre_tool_call", on_pre_tool_call)
-    logger.info("Framepack v0.9.2 pre_tool_call hook registered (handoff readiness + guardrail hydration)")
+    logger.info("Framepack v0.9.3 pre_tool_call hook registered (handoff readiness + guardrail hydration)")

@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.9.3 — Ederson Test-Team Hardening (2026-06-12)
+
+### HyperFrames Safety
+
+- **Clip root animation ban clarified** — `class="clip"` elements are HyperFrames timing shells; opacity/filter/transform transitions must target `.scene-inner` / `#sN-inner` wrappers.
+- **Director checklist hardened** — expanded-prompt now requires an inner visual wrapper per clip before the Execution Manifest.
+- **Guardrails updated** — project AGENTS.md managed block now carries the inner-wrapper rule via Guardrail Hydrator.
+
+### Weapon Library
+
+- **text-split-enter CSS contract fixed** — `.split-left` and `.split-right` must contain identical text; `.split-right` is absolutely positioned over `.split-left` and both halves are clipped with complementary `clip-path` rules.
+
+### Workbench Docs
+
+- **`.framepack/state.json` de-ghosted** — clarified as future project metadata, not a v0.9.x required file. Do not create empty placeholder state files.
+
+### Engineering
+
+- Regression tests added for clip-root guardrails and text-split CSS contract.
+- 54/54 plugin tests pass.
+
 ## 0.7.10 — Workbench Readiness Gate + DESIGN/TOKENS Hooks (2026-06-09)
 
 ### Core

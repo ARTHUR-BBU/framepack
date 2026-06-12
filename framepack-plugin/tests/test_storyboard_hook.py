@@ -247,6 +247,34 @@ class TestSkillLoading:
         assert "Key:" in content, "Storyboard must have Key lines"
         assert "Recurring motifs" in content, "Storyboard must show recurring motifs"
 
+    def test_director_requires_scene_inner_wrapper(self):
+        """Regression: clip roots are HyperFrames timing shells; animate inner wrappers only."""
+        content = _cached_skill_load("framepack-director")
+        assert "scene-inner" in content or "#sN-inner" in content
+        assert "clip 根元素" in content or "clip root" in content
+        assert "opacity/filter/transform" in content
+
+    def test_animation_library_text_split_css_contract(self):
+        """Regression: text-split halves must overlap; right half cannot be inline-block."""
+        base = os.path.join(os.path.dirname(__file__), "..", "skills", "framepack-animation-library")
+        path = os.path.join(base, "parts", "text-split-enter.md")
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+        assert "split-right" in content
+        assert "position: absolute" in content
+        assert "left: 0" in content
+        assert "top: 0" in content
+        assert "完全相同文字" in content or "same text" in content
+
+    def test_guardrails_ban_animating_clip_root(self):
+        """Regression: project guardrails must ban opacity/filter/transform on .clip roots."""
+        path = os.path.join(os.path.dirname(__file__), "..", "guardrails.md")
+        with open(path, "r", encoding="utf-8") as f:
+            content = f.read()
+        assert "clip 根元素" in content or "clip root" in content
+        assert "opacity/filter/transform" in content
+        assert "scene-inner" in content or "#sN-inner" in content
+
 
 # ══════════════════════════════════════════════
 #  Hook Registration (integration smoke test)

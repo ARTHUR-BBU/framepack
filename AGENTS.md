@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.9.2 — sync with plugin.yaml and README -->
+<!-- version: 0.9.3 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -122,10 +122,11 @@ Agent 面对"写动画"任务时走最舒适路径——"我懂 GSAP，直接写
 
 ```text
 .framepack/
-├── arsenal.json    ← 武器注册表（builtin + 下载 + 自建）
-├── weapons/        ← 下载/自建的武器代码（.js / .css / .html）
-└── state.json      ← 项目元数据
+├── arsenal.json    ← 当前必需：武器注册表（builtin + 下载 + 自建）
+└── weapons/        ← 当前可选：下载/自建的武器代码（.js / .css / .html）
 ```
+
+`state.json` 是未来项目元数据设计，v0.9.x 尚未启用；不要为了“看起来完整”创建空壳文件。
 
 **arsenal.json 生命周期规则**：
 
@@ -155,10 +156,13 @@ Agent 面对"写动画"任务时走最舒适路径——"我懂 GSAP，直接写
 2. 每个场景 div = class="clip" + data-start + data-duration + data-track-index
    （时间窗口已给出，直接抄，不要自己算）
 3. 禁止手动添加 data-hf-id（只有 video/audio 的由编译器处理）
-4. font-family 用字面字体名（"Anton 900"），禁止 CSS 变量（var(--font-heading)）
-5. <video> 和 <audio> 放在根级别，不嵌套在 timed div 里
-6. window.__timelines["main"] = tl（时间线注册，没有这个 = 全黑屏）
-7. npx hyperframes lint → 0 errors 才能 preview / render
+4. 每个 clip 内必须有视觉内层 wrapper：`.scene-inner` 或 `#sN-inner`
+5. 禁止对 clip 根元素 / clip root 做 opacity/filter/transform 动画
+   （clip 是 HyperFrames 时间调度壳；blur crossfade/scale/fade 只能动 inner wrapper）
+6. font-family 用字面字体名（"Anton 900"），禁止 CSS 变量（var(--font-heading)）
+7. <video> 和 <audio> 放在根级别，不嵌套在 timed div 里
+8. window.__timelines["main"] = tl（时间线注册，没有这个 = 全黑屏）
+9. npx hyperframes lint → 0 errors 才能 preview / render
 ```
 
 ### 为什么这是铁律
@@ -175,7 +179,7 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.9.2 hooks do three things:
+v0.9.3 hooks do three things:
 
 ```text
 post_tool_call:
@@ -254,7 +258,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.9.2 skills:
+Framepack v0.9.3 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|

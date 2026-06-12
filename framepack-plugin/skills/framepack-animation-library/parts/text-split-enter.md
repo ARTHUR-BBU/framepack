@@ -55,14 +55,37 @@ function textSplitEnter(tl, textEl, opts = {}, position = '>') {
 
 ## HTML 结构
 
-文字需在 setup 阶段预处理（不在渲染时做）：
+文字需在 setup 阶段预处理（不在渲染时做）。左右两半必须是**完全相同文字**，用 `clip-path` 各裁一半；`.split-right` 必须绝对定位叠在 `.split-left` 上，不能 inline-block 并排。
 
 ```html
 <div class="text-split" data-split="horizontal">
-  <span class="split-left" style="clip-path:inset(0 50% 0 0)">Framepack</span>
-  <span class="split-right" style="clip-path:inset(0 0 0 50%)">Framepack</span>
+  <span class="split-left">Framepack</span>
+  <span class="split-right">Framepack</span>
 </div>
 ```
+
+```css
+.text-split {
+  position: relative;
+  display: inline-block;
+}
+.text-split .split-left,
+.text-split .split-right {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+.text-split .split-left {
+  clip-path: inset(0 50% 0 0);
+}
+.text-split .split-right {
+  position: absolute;
+  left: 0;
+  top: 0;
+  clip-path: inset(0 0 0 50%);
+}
+```
+
+> 反例：不要把文字拆成 "Frame" + "pack" 两个 span；两个 span 都要写完整 "Framepack"，靠 clip-path 互补拼合。
 
 ## 注意
 

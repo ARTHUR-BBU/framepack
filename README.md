@@ -90,10 +90,10 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.9.2**.
+# You should see `framepack` with status **enabled** and version **0.9.3**.
 ```
 
-Framepack v0.9.2 includes **Guardrail Hydrator**: when Framepack is invoked in a project, it automatically syncs the latest Framepack rules into that project's `AGENTS.md` inside a `FRAMEPACK MANAGED BLOCK`, and injects the same rules into the current session. You no longer need to manually copy `AGENTS.md` for normal usage.
+Framepack v0.9.3 includes **Guardrail Hydrator** plus the Ederson test-team hardening pass: clip roots are treated as HyperFrames timing shells (visual fades/blur/scale must target `.scene-inner` / `#sN-inner`), `text-split-enter` documents the overlapping-half CSS contract, and `.framepack/state.json` is clarified as future-only metadata. When Framepack is invoked in a project, it automatically syncs the latest Framepack rules into that project's `AGENTS.md` inside a `FRAMEPACK MANAGED BLOCK`, and injects the same rules into the current session. You no longer need to manually copy `AGENTS.md` for normal usage.
 
 **Tip:** Run `hermes status` to find your actual HERMES_HOME path.
 

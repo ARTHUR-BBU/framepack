@@ -5,7 +5,7 @@ description: >-
   libraries, HyperFrames rules, AND the weapon registry governance system.
   Use this skill to find weapons by path, register downloaded weapons,
   and manage the project's .framepack/arsenal.json.
-version: 0.9.2
+version: 0.9.3
 platforms: ["linux", "macos", "windows"]
 metadata:
   hermes:

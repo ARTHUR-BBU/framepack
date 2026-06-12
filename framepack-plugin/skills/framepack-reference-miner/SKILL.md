@@ -9,7 +9,7 @@ triggers:
   - User shares a reference video ("类似这个片子", "分析这个视频的风格")
   - User asks "can we clone this?" or "reverse-engineer this ad"
   - User provides a video file for creative DNA extraction
-version: 0.9.2
+version: 0.9.3
 ---
 
 # Reference Video Miner v0.9

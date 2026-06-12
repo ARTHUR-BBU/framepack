@@ -4,7 +4,7 @@ description: >-
   Creative engine — translates user intent into frame.md (visual identity)
   and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
   The core of Framepack's Prompt Factory. HyperFrames consumes these two files.
-version: 0.9.2
+version: 0.9.3
 ---
 
 # Framepack Director — Prompt Factory Core
@@ -311,6 +311,9 @@ The HyperFrames Structure Checklist goes BEFORE the Execution Manifest:
 □ font-family uses literal font names ("Anton 900", not "var(--font-heading)")
 □ <video> elements at root level, NOT nested inside timed divs
 □ <audio> elements at root level with data-track-index
+□ Every clip contains an inner visual wrapper (`.scene-inner` or `#sN-inner`)
+□ NEVER animate the clip 根元素 / clip root with opacity/filter/transform
+  (clip is HyperFrames' timing shell; visual crossfades/blur/scale go on `#sN-inner`)
 □ window.__timelines["main"] = tl (timeline registration — mandatory)
 □ npx hyperframes lint → 0 errors before preview/render
 □ If hf-utils.js is used, include <script src="hf-utils.js"> before weapon scripts
