@@ -1,6 +1,6 @@
 """Pre-tool-call hook: verify frame.md exists before HyperFrames takes over.
 
-v0.10.0 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
+v0.10.1 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
 are written. HyperFrames handles HTML. This hook only checks the handoff
 readiness — does frame.md exist? If the agent tries to run `hyperframes`
 commands without frame.md, warn once.
@@ -10,7 +10,6 @@ That's it. No HTML auditing. No workbench readiness gates. No 13-file checks.
 
 import logging
 import os
-import re
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -19,33 +18,25 @@ from .guardrails import hydrate_guardrails
 from .on_post_tool_call import _build_arsenal_warning_message, _safe_inject
 from core.arsenal_registry import ensure_arsenal, load_arsenal, reconcile_manifest, save_arsenal
 from core.execution_manifest import parse_execution_manifest
+from core.hyperframes_adapter import (
+    CommandCategory,
+    classify_hyperframes_command,
+    strip_heredoc_bodies as _strip_heredoc_bodies,
+)
+
+
+def _invokes_hyperframes_command(command: str) -> bool:
+    return classify_hyperframes_command(command).category is not CommandCategory.NOT_HYPERFRAMES
 
 
 def _is_hyperframes_noop_command(command: str) -> bool:
-    command = _strip_heredoc_bodies(command)
-    return bool(
-        re.search(r"(?:^|\s)(?:npx\s+)?hyperframes\s+(?:init|help|version)(?:\s|$)", command)
-        or re.search(r"(?:^|\s)(?:npx\s+)?hyperframes\s+(?:--help|-h|--version|-v)(?:\s|$)", command)
-    )
-
-
-def _strip_heredoc_bodies(command: str) -> str:
-    """Return the executable shell header, excluding heredoc/script bodies.
-
-    `terminal` pre_tool_call receives the whole shell command string. If the user
-    runs `python - <<'PY'` and the script body contains the text
-    `npx hyperframes lint`, that string is not an executed shell command and must
-    not trigger HyperFrames guardrails.
-    """
-    lines = command.splitlines()
-    if not lines:
-        return command
-    kept: list[str] = []
-    for line in lines:
-        kept.append(line)
-        if re.search(r"<<\s*['\"]?[A-Za-z_][A-Za-z0-9_]*['\"]?", line):
-            break
-    return "\n".join(kept)
+    classification = classify_hyperframes_command(command)
+    return classification.category in {
+        CommandCategory.DISCOVERY,
+        CommandCategory.PROJECT_SCAFFOLD,
+        CommandCategory.REGISTRY,
+        CommandCategory.MEDIA_PREPROCESS,
+    }
 
 
 def _audit_arsenal_for_hyperframes(ctx, workdir: str) -> None:
@@ -90,7 +81,7 @@ def register(ctx):
         # Only match "hyperframes" as a command word, not as a path component
         # e.g. "hyperframes lint" ✓  "npx hyperframes init" ✓  "/f/hyperframes" ✗
         # Ignore heredoc/script bodies that merely contain the text "npx hyperframes".
-        if not re.search(r'(?:^|\s)(?:npx\s+)?hyperframes(?:\s|$)', command_for_detection):
+        if not _invokes_hyperframes_command(command_for_detection):
             return
 
         # Derive project dir from the command's workdir or cwd
@@ -134,4 +125,4 @@ def register(ctx):
         logger.info("pre_tool_call: frame.md missing, handoff warning injected")
 
     ctx.register_hook("pre_tool_call", on_pre_tool_call)
-    logger.info("Framepack v0.10.0 pre_tool_call hook registered (handoff readiness + guardrail hydration)")
+    logger.info("Framepack v0.10.1 pre_tool_call hook registered (handoff readiness + guardrail hydration)")

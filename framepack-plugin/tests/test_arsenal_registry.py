@@ -61,11 +61,100 @@ def test_migrates_legacy_version_to_schema_version(tmp_path):
     path = framepack / "arsenal.json"
     path.write_text(json.dumps({"version": "0.7.10", "weapons": {}}), encoding="utf-8")
 
-    data = load_arsenal(path)
+    result = ensure_arsenal(tmp_path, plugin_version="0.10.0")
+    data = json.loads(path.read_text(encoding="utf-8"))
 
+    assert result.action == "migrated"
     assert data["schema_version"] == "1.0.0"
     assert data["migrated_from_version"] == "0.7.10"
     assert "version" not in data
+    assert data["plugin_version_updated"] == "0.10.0"
+
+
+def test_migrates_legacy_required_recommended_weapon_lists(tmp_path):
+    framepack = tmp_path / ".framepack"
+    framepack.mkdir()
+    path = framepack / "arsenal.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": "0.7.10",
+                "weapons": {
+                    "required": ["text-split-enter"],
+                    "recommended": ["caption-clip-wipe"],
+                },
+                "templates": {"keep": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = ensure_arsenal(tmp_path, plugin_version="0.10.0")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    warnings = validate_arsenal(data, tmp_path)
+
+    assert result.action == "migrated"
+    assert data["schema_version"] == "1.0.0"
+    assert data["migrated_from_version"] == "0.7.10"
+    assert data["legacy_weapon_groups"] == {
+        "required": ["text-split-enter"],
+        "recommended": ["caption-clip-wipe"],
+    }
+    assert data["templates"] == {"keep": True}
+    assert data["weapons"]["text-split-enter"]["status"] == "active"
+    assert data["weapons"]["caption-clip-wipe"]["status"] == "active"
+    assert all(w.code != "invalid_weapon" for w in warnings)
+
+
+def test_migrates_legacy_weapon_group_dict_items_without_stringifying_dicts(tmp_path):
+    framepack = tmp_path / ".framepack"
+    framepack.mkdir()
+    path = framepack / "arsenal.json"
+    path.write_text(
+        json.dumps(
+            {
+                "version": "0.7.10",
+                "weapons": {
+                    "required": [
+                        {
+                            "id": "rules.hyperframes-render-safe",
+                            "kind": "rules",
+                            "source": "builtin",
+                            "description": "render safety rules",
+                        }
+                    ],
+                    "recommended": [
+                        {
+                            "id": "motion.impact-reveal",
+                            "kind": "motion",
+                            "source": "animation-weapon-library",
+                            "description": "impact reveal",
+                        }
+                    ],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = ensure_arsenal(tmp_path, plugin_version="0.10.0")
+    data = json.loads(path.read_text(encoding="utf-8"))
+    warnings = validate_arsenal(data, tmp_path)
+
+    assert result.action == "migrated"
+    assert data["legacy_weapon_groups"] == {
+        "required": ["rules.hyperframes-render-safe"],
+        "recommended": ["motion.impact-reveal"],
+    }
+    assert "{'id':" not in "\n".join(data["weapons"].keys())
+    assert data["weapons"]["rules.hyperframes-render-safe"]["status"] == "active"
+    assert data["weapons"]["motion.impact-reveal"]["source"] == "library"
+    assert data["weapons"]["motion.impact-reveal"]["legacy"] == {
+        "kind": "motion",
+        "source": "animation-weapon-library",
+        "description": "impact reveal",
+    }
+    assert all(w.code != "invalid_weapon" for w in warnings)
 
 
 def test_validate_warns_on_missing_weapons_object(tmp_path):

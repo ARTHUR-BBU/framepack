@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased — Environment & Upgrade Manager groundwork
+
+### Compatibility Lifecycle
+
+- **HyperFrames support window policy** — adds pure support-window classification for supported, too-old, hard-too-old, newer-same-band, and unknown-newer HyperFrames versions.
+- **Guarded newer-version mode** — newer HyperFrames versions outside the tested window require capability probes and isolated `blank` smoke before Framepack handoff.
+- **Skill overlay manager** — adds provenance-marked Framepack hardening blocks that can be inserted/updated idempotently while preserving user-local hardening notes.
+- **Machine-readable support matrix** — adds `compat/hyperframes-support.json` as the first support-window metadata file.
+
+### Tests
+
+- Added support-window and skill-overlay tests plus security regressions for tar extraction, proxy credential redaction, quoted-shell command detection, and prerelease version handling. Full plugin suite: 148 passed.
+
+## 0.10.1 — HyperFrames Compatibility Adapter (2026-06-13)
+
+### Upstream Adaptation
+
+- **HyperFrames Compatibility Adapter** — centralizes CLI command classification so Framepack distinguishes handoff-consuming commands from discovery, registry, media, and cloud commands.
+- **Capability snapshots** — adds `.framepack/hyperframes-capabilities.json` support with version, command, flag, registry, and offline-baseline metadata.
+- **Registry fallback policy** — treats official `catalog/add` as opportunistic and keeps `blank` as the verified offline-safe baseline instead of hardcoding richer examples that may timeout or be unavailable.
+- **China/VPN-aware proxy retry** — when official registry calls fail or return empty, Framepack probes env/npm/git/Windows proxy settings, retries once with proxy environment variables, redacts credentials in reports, then degrades gracefully to `blank` + local arsenal if still unavailable.
+- **Official skill diff reports** — compares npm-packaged HyperFrames skills against local patched skills and reports merge candidates without blindly overwriting local hardening rules.
+- **Upstream watcher script** — adds `framepack-plugin/scripts/hyperframes_upstream_report.py` to generate capability + skill-diff reports for cron/manual review.
+
+### Hook Hardening
+
+- `npm view hyperframes ...` no longer triggers HyperFrames handoff warnings.
+- `info/doctor/upgrade/browser/docs/compositions/benchmark/help/version/init/catalog/add/capture/tts/transcribe/remove-background` no longer require `frame.md`.
+- Unknown new HyperFrames commands default conservative (`requires_handoff`) until the adapter classification table is updated.
+
+### Tests
+
+- Added adapter tests for command-position parsing, command categories, help/flag parsing, capability snapshots, registry failure/proxy-retry fallback, proxy credential redaction, and skill diff reporting.
+
 ## 0.10.0 — Arsenal Registry Runtime (2026-06-12)
 
 ### Arsenal Registry

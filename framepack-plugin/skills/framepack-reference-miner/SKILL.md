@@ -9,10 +9,10 @@ triggers:
   - User shares a reference video ("类似这个片子", "分析这个视频的风格")
   - User asks "can we clone this?" or "reverse-engineer this ad"
   - User provides a video file for creative DNA extraction
-version: 0.10.0
+version: 0.10.1
 ---
 
-# Reference Video Miner v0.10.0
+# Reference Video Miner v0.10.1
 
 Don't copy — dissect. Extract the skeleton, not the skin.
 

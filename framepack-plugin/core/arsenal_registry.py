@@ -16,7 +16,7 @@ from .execution_manifest import ManifestWeapon
 from .trusted_sources import is_trusted_url
 
 SCHEMA_VERSION = "1.0.0"
-DEFAULT_PLUGIN_VERSION = "0.10.0"
+DEFAULT_PLUGIN_VERSION = "0.10.1"
 VALID_STATUSES = {"active", "unused", "archived"}
 VALID_SOURCES = {"builtin", "web", "local", "library"}
 
@@ -78,11 +78,73 @@ def _atomic_write_json(path: Path, data: dict) -> None:
     tmp_path.replace(path)
 
 
+def _legacy_weapon_id(item: object) -> str | None:
+    if isinstance(item, str):
+        return item
+    if isinstance(item, dict) and item.get("id"):
+        return str(item["id"])
+    return None
+
+
+def _legacy_weapon_entry(weapon_id: str, item: object, group_name: str) -> dict:
+    builtin = resolve_builtin_weapon(weapon_id)
+    if builtin:
+        entry = builtin
+        entry["status"] = "active"
+        entry.setdefault("used_by", [])
+        return entry
+    legacy_payload = {}
+    if isinstance(item, dict):
+        legacy_payload = {key: value for key, value in item.items() if key != "id"}
+    return {
+        "id": weapon_id,
+        "source": "library",
+        "status": "active",
+        "legacy_group": group_name,
+        "legacy": legacy_payload,
+    }
+
+
+def _migrate_legacy_weapon_groups(data: dict) -> bool:
+    """Convert v0.7-style required/recommended lists into v1 weapon entries."""
+    weapons = data.get("weapons")
+    if not isinstance(weapons, dict):
+        return False
+    legacy_groups: dict[str, list[str]] = {}
+    migrated_weapons: dict[str, dict] = {}
+    changed = False
+    for group_name in ("required", "recommended"):
+        values = weapons.get(group_name)
+        if isinstance(values, list):
+            legacy_groups[group_name] = []
+            for item in values:
+                weapon_id = _legacy_weapon_id(item)
+                if not weapon_id:
+                    continue
+                legacy_groups[group_name].append(weapon_id)
+                if weapon_id in migrated_weapons:
+                    continue
+                migrated_weapons[weapon_id] = _legacy_weapon_entry(weapon_id, item, group_name)
+            changed = True
+    if not changed:
+        return False
+    for weapon_id, weapon in weapons.items():
+        if weapon_id in {"required", "recommended"}:
+            continue
+        if isinstance(weapon, dict):
+            migrated_weapons[weapon_id] = weapon
+    data["legacy_weapon_groups"] = legacy_groups
+    data["weapons"] = migrated_weapons
+    return True
+
+
 def _migrate(data: dict) -> tuple[dict, bool]:
     changed = False
     if "version" in data and "schema_version" not in data:
         data["migrated_from_version"] = data.pop("version")
         data["schema_version"] = SCHEMA_VERSION
+        changed = True
+    if _migrate_legacy_weapon_groups(data):
         changed = True
     if data.get("schema_version") != SCHEMA_VERSION:
         data["schema_version"] = SCHEMA_VERSION

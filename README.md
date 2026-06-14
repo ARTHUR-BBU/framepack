@@ -38,7 +38,8 @@ Framepack Phase 2: Creative → expanded-prompt.md
   │
   ▼
 HyperFrames takes over:
-  hyperframes init --example product-promo
+  hyperframes init --example blank
+  → optionally pulls richer registry components when available
   → reads frame.md + expanded-prompt.md
   → writes HTML + GSAP timeline
   → hyperframes lint && render
@@ -90,10 +91,10 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.10.0**.
+# You should see `framepack` with status **enabled** and version **0.10.1**.
 ```
 
-Framepack v0.10.0 includes **Arsenal Registry runtime**: Framepack now creates `.framepack/arsenal.json`, registers builtin weapons from the Execution Manifest, reconciles unused/unknown weapons, applies a trusted-source whitelist for downloads, and runs a non-blocking Arsenal preflight before HyperFrames commands. It also includes the v0.9.4 Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration`, reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML, and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. v0.9.3 also includes the Ederson test-team hardening pass: clip roots are timing shells, `text-split-enter` documents the overlapping-half CSS contract, and `.framepack/state.json` is future-only metadata. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
+Framepack v0.10.1 includes **HyperFrames Compatibility Adapter**: Framepack now classifies HyperFrames commands by intent, stores `.framepack/hyperframes-capabilities.json`, treats official catalog/add as opportunistic rather than mandatory, falls back to the offline-safe `blank` baseline, and generates upstream skill-diff reports without blindly overwriting local hardening rules. v0.10.0 added Arsenal Registry runtime: `.framepack/arsenal.json` creation, Execution Manifest reconciliation, builtin weapon catalog, trusted-source whitelist, and non-blocking Arsenal preflight before handoff-consuming HyperFrames commands. v0.9.4 includes Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration`, reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML, and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
 
 **Tip:** Run `hermes status` to find your actual HERMES_HOME path.
 

@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.10.0 — sync with plugin.yaml and README -->
+<!-- version: 0.10.1 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -181,16 +181,18 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.10.0 hooks do four things:
+v0.10.1 hooks do five things:
 
 ```text
+pre_tool_call:
+  ├── HyperFrames Compatibility Adapter → classify command intent (handoff vs discovery vs registry/cloud/media)
+  ├── HyperFrames handoff commands → Guardrail Hydrator + Arsenal preflight + frame.md readiness warning
+  └── discovery/registry/media commands → no handoff warning; official registry is opportunistic
+
 post_tool_call:
   ├── Framepack skill_view → Guardrail Hydrator sync + current-session injection
   ├── frame.md 写入 → Guardrail Hydrator + LLM 质量检查（配色/字体/动效参数是否完整）
   └── expanded-prompt.md 写入 → Guardrail Hydrator + Arsenal Registry reconcile + LLM 质量检查（场景 beat 是否完整）
-
-pre_tool_call:
-  └── hyperframes 命令执行 → Guardrail Hydrator + Arsenal preflight + 检查 frame.md 是否存在（交接准备）
 ```
 
 ### Guardrail Hydrator
@@ -260,7 +262,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.10.0 skills:
+Framepack v0.10.1 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|
@@ -343,6 +345,6 @@ Framepack is installed as an agent-native video creative workbench for this proj
 - Framepack produces frame.md + expanded-prompt.md (with Execution Manifest), then HyperFrames takes over.
 - **铁律：写 HTML 前先读 Execution Manifest。武器有就用，裸写 GSAP 只允许 HANDWRITE 场景。**
 - `.framepack/arsenal.json` 是武器收发室——下载、注册、去重、生命周期全在这里。
-- Start every HyperFrames project by reading an official example: `npx hyperframes init --example product-promo`.
+- Start every HyperFrames project from the offline-safe baseline: `npx hyperframes init --example blank`; richer official registry examples/components are opportunistic, not guaranteed.
 - Framepack does NOT audit HTML. Use `npx hyperframes lint` for that.
 <!-- FRAMEPACK MANAGED BLOCK END -->

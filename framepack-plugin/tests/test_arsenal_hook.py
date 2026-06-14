@@ -5,6 +5,8 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from hooks.on_post_tool_call import register as register_post
@@ -94,14 +96,31 @@ def test_hyperframes_command_warns_when_manifest_weapon_missing_from_registry(tm
     assert "ghost-fx" in injected
 
 
-def test_hyperframes_init_help_version_skip_arsenal_audit(tmp_path):
+@pytest.mark.parametrize(
+    "command",
+    [
+        "npx hyperframes init --example blank",
+        "npx hyperframes help",
+        "npx hyperframes version",
+        "npx hyperframes --help",
+        "npx hyperframes --version",
+        "npx hyperframes info",
+        "npx hyperframes doctor",
+        "npx hyperframes upgrade",
+        "npx hyperframes browser",
+        "npx hyperframes docs",
+        "npx hyperframes compositions",
+        "npx hyperframes benchmark .",
+    ],
+)
+def test_hyperframes_discovery_commands_skip_arsenal_audit(command, tmp_path):
     expanded = tmp_path / ".hyperframes" / "expanded-prompt.md"
     expanded.parent.mkdir()
     expanded.write_text("## Execution Manifest\n- weapon: ghost-fx\n  scene: scene_1\n", encoding="utf-8")
     ctx = MagicMock()
 
     hook = _pre_hook(ctx)
-    hook(tool_name="terminal", args={"command": "npx hyperframes init --example blank", "workdir": str(tmp_path)})
+    hook(tool_name="terminal", args={"command": command, "workdir": str(tmp_path)})
 
     ctx.inject_message.assert_not_called()
     assert not (tmp_path / ".framepack" / "arsenal.json").exists()
@@ -114,6 +133,17 @@ def test_hyperframes_command_noops_when_no_expanded_prompt(tmp_path):
     hook = _pre_hook(ctx)
     hook(tool_name="terminal", args={"command": "npx hyperframes lint", "workdir": str(tmp_path)})
 
+    assert not (tmp_path / ".framepack" / "arsenal.json").exists()
+
+
+def test_terminal_command_with_hyperframes_as_argument_does_not_trigger(tmp_path):
+    """Regression: `npm view hyperframes` queries a package; it does not run HyperFrames."""
+    ctx = MagicMock()
+
+    hook = _pre_hook(ctx)
+    hook(tool_name="terminal", args={"command": "npm view hyperframes dist-tags --json", "workdir": str(tmp_path)})
+
+    ctx.inject_message.assert_not_called()
     assert not (tmp_path / ".framepack" / "arsenal.json").exists()
 
 

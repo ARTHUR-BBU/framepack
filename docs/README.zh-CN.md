@@ -34,7 +34,8 @@ Framepack Phase 2：创意 → expanded-prompt.md
   │
   ▼
 HyperFrames 接管：
-  hyperframes init --example product-promo
+  hyperframes init --example blank
+  → 官方 registry 可用时再拉更丰富组件
   → 读 frame.md + expanded-prompt.md
   → 写 HTML + GSAP timeline
   → hyperframes lint && render
@@ -60,10 +61,9 @@ hermes plugins enable framepack
 
 # 4. 验证
 hermes plugins list
-# 你应该看到 `framepack` 状态为 **enabled**，版本为 **0.8.0**。
+# 你应该看到 `framepack` 状态为 **enabled**，版本为 **0.10.1**。
 
-# 5. 将 AGENTS.md 复制到项目根目录（必需！）
-cp framepack/AGENTS.md /path/to/your/project/AGENTS.md
+# 5. 项目 AGENTS.md 由 Guardrail Hydrator 自动维护 managed block；不要手工覆盖项目自有规则。
 ```
 
 ## 许可
