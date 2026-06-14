@@ -49,6 +49,15 @@ def test_classifies_commands_by_handoff_and_side_effect_policy():
     assert classify_hyperframes_command("npx hyperframes info").category is CommandCategory.DISCOVERY
     assert classify_hyperframes_command("npx hyperframes doctor").category is CommandCategory.DISCOVERY
     assert classify_hyperframes_command("npx hyperframes upgrade --check --json").category is CommandCategory.DISCOVERY
+    for command in [
+        "npx --no-install hyperframes --version",
+        "npx --yes hyperframes@latest --version",
+        "npx --package hyperframes hyperframes --version",
+    ]:
+        classification = classify_hyperframes_command(command)
+        assert classification.category is CommandCategory.DISCOVERY
+        assert classification.requires_handoff is False
+        assert classification.is_side_effectful is False
 
     assert classify_hyperframes_command("npx hyperframes init demo --example blank").category is CommandCategory.PROJECT_SCAFFOLD
     assert classify_hyperframes_command("npx hyperframes catalog --json").category is CommandCategory.REGISTRY

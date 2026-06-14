@@ -4,14 +4,15 @@
 
 ### Compatibility Lifecycle
 
-- **HyperFrames support window policy** — adds pure support-window classification for supported, too-old, hard-too-old, newer-same-band, and unknown-newer HyperFrames versions.
+- **Environment Doctor** — adds report-only first-run checks for Node/npm/npx, installed/project-local HyperFrames CLI presence, required local HyperFrames skills, and support-window status. The `scripts/framepack_doctor.py` wrapper emits JSON for Agent-managed install/upgrade decisions without mutating the user environment; it uses installed `hyperframes --version` plus `npx --no-install` fallback, never `npx --yes hyperframes@latest` during doctor checks.
+- **HyperFrames support window policy** — adds pure support-window classification for supported, too-old, hard-too-old, newer-same-band, unknown-newer, and prerelease HyperFrames versions.
 - **Guarded newer-version mode** — newer HyperFrames versions outside the tested window require capability probes and isolated `blank` smoke before Framepack handoff.
 - **Skill overlay manager** — adds provenance-marked Framepack hardening blocks that can be inserted/updated idempotently while preserving user-local hardening notes.
 - **Machine-readable support matrix** — adds `compat/hyperframes-support.json` as the first support-window metadata file.
 
 ### Tests
 
-- Added support-window and skill-overlay tests plus security regressions for tar extraction, proxy credential redaction, quoted-shell command detection, and prerelease version handling. Full plugin suite: 148 passed.
+- Added Environment Doctor, support-window, and skill-overlay tests plus security regressions for tar extraction, proxy credential redaction, quoted-shell command detection, and prerelease version handling. Full plugin suite: 156 passed.
 
 ## 0.10.1 — HyperFrames Compatibility Adapter (2026-06-13)
 

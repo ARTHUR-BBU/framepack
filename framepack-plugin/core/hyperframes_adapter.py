@@ -136,10 +136,14 @@ def _strip_shell_quoted_segments(command: str) -> str:
 
 def _command_position_pattern() -> re.Pattern[str]:
     # Match HyperFrames only when it appears where a shell command can start:
-    # line start, ;, &, | operators, optionally after `npx` / `npx --yes`.
+    # line start, ;, &, | operators, optionally after `npx` with common
+    # package-resolution flags (`--yes`, `--no-install`, `--package ...`).
+    # Version/help probes with these flags are discovery; they must not trip
+    # Framepack handoff preflight.
+    npx_prefix = r"(?:npx(?:\s+(?:--yes|--no-install|--package(?:=\S+|\s+\S+)))*\s+)?"
     return re.compile(
         r"(?:^|[;&|]|&&|\|\|)\s*"
-        r"(?:npx(?:\s+--yes)?\s+)?"
+        + npx_prefix +
         r"hyperframes(?:@[\w.\-]+)?"
         r"(?:\s+(?P<cmd>[A-Za-z][\w-]*|--help|-h|--version|-v))?",
         re.MULTILINE,
