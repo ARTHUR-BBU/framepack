@@ -4,6 +4,9 @@
 
 ### Compatibility Lifecycle
 
+- **Skill Install Manager** — adds source-driven official skill install planning with backup support, SHA-256 install manifests, atomic missing-source preflight, and post-install Framepack overlay application. It never fetches packages; callers must provide approved official skill sources.
+- **Skill Upgrade Manager** — adds three-way upgrade decisions for official-old / official-new / local-current skills: replace, auto-merge user-local blocks, upstream-absorbed overlays, or manual-review on unproven edits/malformed markers.
+- **Framepack Upgrade Report** — adds `scripts/framepack_upgrade_report.py` to combine doctor, install, skill-upgrade, and smoke JSON evidence into one report for Agent-managed upgrades.
 - **Skill Overlay Apply Planner** — adds a report-first planner and dry-run-by-default CLI for applying Framepack hardening overlays to existing local HyperFrames skills. It never downloads skills, never calls package managers, preserves user-local hardening blocks, and blocks malformed managed markers for manual review.
 - **Environment Doctor** — adds report-only first-run checks for Node/npm/npx, installed/project-local HyperFrames CLI presence, required local HyperFrames skills, and support-window status. The `scripts/framepack_doctor.py` wrapper emits JSON for Agent-managed install/upgrade decisions without mutating the user environment; it uses installed `hyperframes --version` plus `npx --no-install` fallback, never `npx --yes hyperframes@latest` during doctor checks.
 - **HyperFrames support window policy** — adds pure support-window classification for supported, too-old, hard-too-old, newer-same-band, unknown-newer, and prerelease HyperFrames versions.
@@ -13,7 +16,7 @@
 
 ### Tests
 
-- Added Environment Doctor, Skill Overlay Planner, support-window, and skill-overlay tests plus security regressions for tar extraction, proxy credential redaction, quoted-shell command detection, malformed managed marker blocking, and prerelease version handling. Full plugin suite: 166 passed.
+- Added Environment Doctor, Skill Overlay Planner, Skill Install Manager, Skill Upgrade Manager, upgrade report, support-window, and skill-overlay tests plus security regressions for tar extraction, proxy credential redaction, quoted-shell command detection, malformed managed marker blocking, atomic missing-source install preflight, and prerelease version handling. Full plugin suite: 181 passed.
 
 ## 0.10.1 — HyperFrames Compatibility Adapter (2026-06-13)
 
