@@ -65,3 +65,47 @@ def test_parse_handwrite_entry():
 
 def test_empty_manifest_returns_empty_list():
     assert parse_execution_manifest("# No manifest here") == []
+
+
+def test_parse_scene_keyed_manifest_blocks_with_params_and_handwrite():
+    text = """
+## Execution Manifest
+
+```yaml
+scene_2:
+  needs: "text coalescing from split halves"
+  weapon: text-split-enter
+  kind: part
+  skill_path: "framepack:framepack-animation-library"
+  file: "parts/text-split-enter.md"
+  code: "parts/references/text-split-enter.js"
+  params:
+    splitMode: "horizontal"
+    direction: "inward"
+    travelDistance: "60px"
+    duration: 0.7
+
+scene_6_extra2:
+  needs: "final 2s hold"
+  weapon: HANDWRITE
+  reason: "timeline management, not an animation weapon"
+```
+
+## Weapon Coverage Summary
+ignore this
+"""
+
+    weapons = parse_execution_manifest(text)
+
+    assert [w.id for w in weapons] == ["text-split-enter", "HANDWRITE"]
+    assert weapons[0].used_by == ["scene_2"]
+    assert weapons[0].code == "parts/references/text-split-enter.js"
+    assert weapons[0].params == {
+        "splitMode": "horizontal",
+        "direction": "inward",
+        "travelDistance": "60px",
+        "duration": 0.7,
+    }
+    assert weapons[1].used_by == ["scene_6_extra2"]
+    assert weapons[1].handwrite is True
+    assert weapons[1].reason == "timeline management, not an animation weapon"

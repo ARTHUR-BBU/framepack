@@ -1,11 +1,10 @@
-"""Pre-tool-call hook: verify frame.md exists before HyperFrames takes over.
+"""Pre-tool-call hook: verify Framepack handoff readiness before HyperFrames takes over.
 
 v0.10.2 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
-are written. HyperFrames handles HTML. This hook only checks the handoff
-readiness — does frame.md exist? If the agent tries to run `hyperframes`
-commands without frame.md, warn once.
-
-That's it. No HTML auditing. No workbench readiness gates. No 13-file checks.
+are written. HyperFrames handles HTML authoring, structural validation, and
+rendering. This hook remains report-first: it hydrates guardrails, reconciles
+the arsenal, and surfaces quality-beyond-lint warnings. It does not block
+HyperFrames commands or replace HyperFrames lint/render/validate.
 """
 
 import logging
@@ -23,6 +22,7 @@ from core.hyperframes_adapter import (
     classify_hyperframes_command,
     strip_heredoc_bodies as _strip_heredoc_bodies,
 )
+from core.quality_audit import audit_project
 
 
 def _invokes_hyperframes_command(command: str) -> bool:
@@ -60,6 +60,42 @@ def _audit_arsenal_for_hyperframes(ctx, workdir: str) -> None:
         _safe_inject(ctx, f"⚔️ **Framepack Arsenal Warning**\n- arsenal_error: {exc}", role="user")
 
 
+def _build_quality_audit_message(report) -> str:
+    if not report.issues:
+        return ""
+    summary = report.summary
+    lines = [
+        "🧪 **Framepack Quality Audit — report-first / non-blocking**",
+        "",
+        f"P0: {summary.get('P0', 0)} · P1: {summary.get('P1', 0)} · P2: {summary.get('P2', 0)} · P3: {summary.get('P3', 0)}",
+        "",
+        "Top findings:",
+    ]
+    for issue in report.issues[:5]:
+        target = f" `{issue.weapon_id}`" if issue.weapon_id else ""
+        scene = f" ({issue.scene})" if issue.scene else ""
+        lines.append(f"- {issue.severity} {issue.code}{target}{scene}: {issue.message}")
+    if len(report.issues) > 5:
+        lines.append(f"- … {len(report.issues) - 5} more issue(s). Run `python scripts/framepack_quality_audit.py <project>` for JSON/Markdown details.")
+    lines.append("")
+    lines.append("_这不是阻断门；它是 render 前的安检票，提醒你哪些问题 lint 看不见。_")
+    return "\n".join(lines)
+
+
+def _audit_quality_for_hyperframes(ctx, workdir: str) -> None:
+    project_dir = Path(workdir)
+    if not (project_dir / "index.html").is_file():
+        return
+    try:
+        report = audit_project(project_dir)
+        message = _build_quality_audit_message(report)
+        if message:
+            _safe_inject(ctx, message, role="user")
+    except Exception as exc:
+        logger.warning("pre_tool_call quality audit failed: %s", exc)
+        _safe_inject(ctx, f"🧪 **Framepack Quality Audit Warning**\n- quality_audit_error: {exc}", role="user")
+
+
 def register(ctx):
     """Register the pre_tool_call hook for handoff readiness."""
 
@@ -70,7 +106,6 @@ def register(ctx):
         session_id: str = "",
         **kwargs,
     ):
-        # Only watch for terminal commands that invoke hyperframes
         if tool_name != "terminal":
             return
         if not args:
@@ -78,28 +113,22 @@ def register(ctx):
 
         command = args.get("command", "")
         command_for_detection = _strip_heredoc_bodies(command)
-        # Only match "hyperframes" as a command word, not as a path component
-        # e.g. "hyperframes lint" ✓  "npx hyperframes init" ✓  "/f/hyperframes" ✗
-        # Ignore heredoc/script bodies that merely contain the text "npx hyperframes".
         if not _invokes_hyperframes_command(command_for_detection):
             return
 
-        # Derive project dir from the command's workdir or cwd
         workdir = args.get("workdir", "") or os.getcwd()
 
-        # Skip init and help — those don't need frame.md or guardrail hydration
         if _is_hyperframes_noop_command(command):
             return
 
         hydrate_guardrails(ctx, project_dir=workdir, reason="hyperframes command")
         _audit_arsenal_for_hyperframes(ctx, workdir)
+        _audit_quality_for_hyperframes(ctx, workdir)
 
         frame_md_path = os.path.join(workdir, "frame.md")
-
         if os.path.isfile(frame_md_path):
-            return  # frame.md exists, clean handoff
+            return
 
-        # Warn — but don't block
         expanded_path = os.path.join(workdir, ".hyperframes", "expanded-prompt.md")
         has_expanded = os.path.isfile(expanded_path)
 
@@ -125,4 +154,4 @@ def register(ctx):
         logger.info("pre_tool_call: frame.md missing, handoff warning injected")
 
     ctx.register_hook("pre_tool_call", on_pre_tool_call)
-    logger.info("Framepack v0.10.2 pre_tool_call hook registered (handoff readiness + guardrail hydration)")
+    logger.info("Framepack v0.10.2 pre_tool_call hook registered (handoff readiness + guardrail hydration + quality audit)")

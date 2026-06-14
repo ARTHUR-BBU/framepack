@@ -27,7 +27,7 @@ HyperFrames 工具链接管
     └── hyperframes render → 出片
 ```
 
-Framepack 的边界：到 expanded-prompt.md 为止。之后的 HTML 编写、结构验证、渲染，全部交给 HyperFrames。
+Framepack 的边界：到 expanded-prompt.md 为止。之后的 HTML 编写、结构验证、渲染，全部交给 HyperFrames。Framepack 可以在 HyperFrames 命令前吐出非阻断 Quality Audit 小票（arsenal/Manifest/参数漂移/data-hf-id/card-cascade 这类 lint 看不见的问题），但不负责改 HTML，也不替代 HyperFrames lint/validate/snapshot/render。
 
 ## Trigger Framepack When
 
@@ -186,7 +186,7 @@ v0.10.2 hooks do six things:
 ```text
 pre_tool_call:
   ├── HyperFrames Compatibility Adapter → classify command intent (handoff vs discovery vs registry/cloud/media)
-  ├── HyperFrames handoff commands → Guardrail Hydrator + Arsenal preflight + frame.md readiness warning
+  ├── HyperFrames handoff commands → Guardrail Hydrator + Arsenal preflight + Quality Audit summary + frame.md readiness warning
   └── discovery/registry/media commands → no handoff warning; official registry is opportunistic
 
 post_tool_call:
@@ -216,7 +216,8 @@ version/hash = 防漂移
 ```
 
 **不做的事**：
-- ❌ 不审计 HTML（那是 `hyperframes lint` 的事）
+- ❌ 不写/修/渲染/结构审计 HTML（那是 HyperFrames `lint/validate/snapshot/render` 的事）
+- ✅ 可以做 report-first 语义审计：stale arsenal、Manifest/HTML 参数漂移、手动 `data-hf-id`、card-cascade 未声明等 lint 看不见的问题
 - ❌ 不管 13 个中间文件（全部砍掉）
 - ❌ 不检查 STORYBOARD.md / COMPOSITION.md / DESIGN.md / DESIGN_TOKENS.md（这些文件不再存在）
 

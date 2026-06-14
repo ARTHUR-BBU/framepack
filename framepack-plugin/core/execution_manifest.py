@@ -14,6 +14,7 @@ class ManifestWeapon:
     code: str | None = None
     handwrite: bool = False
     reason: str | None = None
+    params: dict[str, object] | None = None
 
 
 def _manifest_section(text: str) -> str:
@@ -32,24 +33,48 @@ def _split_values(value: str) -> list[str]:
     return [item.strip().strip("'\"") for item in re.split(r"[,\s]+", value) if item.strip().strip("'\"")]
 
 
-def _parse_kv_block(block: dict[str, str]) -> ManifestWeapon | None:
+def _clean(value: object) -> str:
+    return str(value).strip().strip("'\"")
+
+
+def _coerce_scalar(value: str) -> object:
+    value = _clean(value)
+    if re.fullmatch(r"-?\d+", value):
+        return int(value)
+    if re.fullmatch(r"-?\d+\.\d+", value):
+        return float(value)
+    return value
+
+
+def _parse_kv_block(block: dict[str, object]) -> ManifestWeapon | None:
     weapon_id = block.get("id") or block.get("weapon")
     if not weapon_id:
         return None
+    weapon_id = _clean(weapon_id)
     source = block.get("source")
-    used_raw = block.get("used_by") or block.get("scene") or block.get("scenes") or ""
-    used_by = _split_values(used_raw)
+    used_raw = block.get("used_by") or block.get("scene") or block.get("scenes") or block.get("_scene_key") or ""
+    used_by = _split_values(_clean(used_raw))
     reason = block.get("reason")
     handwrite = weapon_id.upper() == "HANDWRITE"
-    return ManifestWeapon(id="HANDWRITE" if handwrite else weapon_id, source=source, used_by=used_by, code=block.get("code"), handwrite=handwrite, reason=reason)
+    params = block.get("params") if isinstance(block.get("params"), dict) else None
+    return ManifestWeapon(
+        id="HANDWRITE" if handwrite else weapon_id,
+        source=_clean(source) if source is not None else None,
+        used_by=used_by,
+        code=_clean(block.get("code")) if block.get("code") is not None else None,
+        handwrite=handwrite,
+        reason=_clean(reason) if reason is not None else None,
+        params=params,
+    )
 
 
 def parse_execution_manifest(text: str) -> list[ManifestWeapon]:
     """Parse a lenient markdown/YAML-ish Execution Manifest.
 
-    Supports both:
+    Supports:
     - `weapons:` list with `id/source/used_by`
     - markdown bullets like `- weapon: text-split-enter` + indented `scene:`
+    - scene-keyed blocks like `scene_1: ... weapon: text-split-enter ... params:`
     - `- HANDWRITE: scene_4, reason: custom timeline`
     """
     section = _manifest_section(text)
@@ -57,20 +82,31 @@ def parse_execution_manifest(text: str) -> list[ManifestWeapon]:
         return []
 
     weapons: list[ManifestWeapon] = []
-    current: dict[str, str] | None = None
+    current: dict[str, object] | None = None
+    in_params = False
+    scene_key = re.compile(r"^([A-Za-z][\w-]*)\s*:\s*$")
 
     def flush():
-        nonlocal current
+        nonlocal current, in_params
         if current:
             parsed = _parse_kv_block(current)
             if parsed:
                 weapons.append(parsed)
         current = None
+        in_params = False
 
     for raw_line in section.splitlines():
         line = raw_line.rstrip()
         stripped = line.strip()
-        if not stripped or stripped == "weapons:":
+        if not stripped or stripped in {"```", "```yaml", "```yml", "weapons:"}:
+            if not stripped:
+                in_params = False
+            continue
+
+        keyed_scene = scene_key.match(stripped)
+        if keyed_scene and not raw_line.startswith((" ", "\t")):
+            flush()
+            current = {"_scene_key": keyed_scene.group(1)}
             continue
 
         handwrite = re.match(r"^-\s*HANDWRITE\s*:\s*(.+)$", stripped, re.IGNORECASE)
@@ -89,9 +125,20 @@ def parse_execution_manifest(text: str) -> list[ManifestWeapon]:
             current = {bullet_kv.group(1): bullet_kv.group(2).strip()}
             continue
 
+        if stripped == "params:" and current is not None:
+            current.setdefault("params", {})
+            in_params = True
+            continue
+
+        param_kv = re.match(r"^([A-Za-z_][\w-]*)\s*:\s*(.+)$", stripped)
+        if param_kv and current is not None and in_params and isinstance(current.get("params"), dict):
+            current["params"][param_kv.group(1)] = _coerce_scalar(param_kv.group(2))
+            continue
+
         kv = re.match(r"^(id|weapon|source|used_by|scene|scenes|code|reason)\s*:\s*(.+)$", stripped)
         if kv and current is not None:
-            current[kv.group(1)] = kv.group(2).strip()
+            current[kv.group(1)] = _clean(kv.group(2))
+            in_params = False
             continue
 
     flush()

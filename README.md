@@ -53,7 +53,7 @@ Video 🎬
 ```text
 pre_tool_call:
   ├── classify HyperFrames command intent (handoff vs discovery/registry/media/cloud)
-  ├── handoff commands → Guardrail Hydrator + Arsenal preflight + frame.md readiness warning
+  ├── handoff commands → Guardrail Hydrator + Arsenal preflight + Quality Audit summary + frame.md readiness warning
   └── discovery/version/help/catalog commands → no handoff warning
 
 post_tool_call:
@@ -62,10 +62,11 @@ post_tool_call:
   └── expanded-prompt.md write → Arsenal reconcile + LLM quality check (beats/rhythm complete?)
 ```
 
-v0.10.2 also adds report-only Environment & Upgrade Manager utilities for doctor/install/overlay/upgrade/report flows.
+v0.10.2 also adds report-only Environment & Upgrade Manager utilities for doctor/install/overlay/upgrade/report flows. Unreleased adds `scripts/framepack_quality_audit.py`, a report-first semantic audit for stale arsenal registries, Manifest/HTML weapon drift, manual `data-hf-id`, and card-cascade gaps.
 
 **What Framepack does NOT do:**
-- ❌ Write or audit HTML — that's `hyperframes lint`
+- ❌ Write, fix, render, or structurally validate HTML — that's HyperFrames (`lint` / `validate` / `snapshot` / `render`)
+- ✅ It may emit a non-blocking semantic Quality Audit report for issues lint cannot see
 - ❌ Manage 13 intermediate files — gone
 - ❌ Check data-width, data-height, window.__timelines — gone
 

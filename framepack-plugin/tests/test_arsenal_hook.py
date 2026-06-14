@@ -136,6 +136,43 @@ def test_hyperframes_command_noops_when_no_expanded_prompt(tmp_path):
     assert not (tmp_path / ".framepack" / "arsenal.json").exists()
 
 
+def test_hyperframes_command_injects_quality_audit_summary_when_index_exists(tmp_path):
+    (tmp_path / "frame.md").write_text("ok", encoding="utf-8")
+    expanded = tmp_path / ".hyperframes" / "expanded-prompt.md"
+    expanded.parent.mkdir()
+    expanded.write_text(
+        """
+## HyperFrames Time Windows
+TOTAL DURATION: 55 seconds
+## Execution Manifest
+scene_2:
+  weapon: text-split-enter
+  params:
+    travelDistance: "60px"
+""",
+        encoding="utf-8",
+    )
+    framepack = tmp_path / ".framepack"
+    framepack.mkdir()
+    (framepack / "arsenal.json").write_text(
+        json.dumps({"schema_version": "1.0.0", "project": "stale-project", "hyperframes_config": {"duration": 30}, "weapons": {}}),
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        "<div data-hf-id='x'></div><script>textSplitEnter(tl,el,{travelDistance:'120px'});</script>",
+        encoding="utf-8",
+    )
+    ctx = MagicMock()
+
+    hook = _pre_hook(ctx)
+    hook(tool_name="terminal", args={"command": "npx hyperframes render", "workdir": str(tmp_path)})
+
+    injected = "\n".join(call.args[0] for call in ctx.inject_message.call_args_list)
+    assert "Framepack Quality Audit" in injected
+    assert "P0" in injected
+    assert "weapon_parameter_drift" in injected
+
+
 def test_terminal_command_with_hyperframes_as_argument_does_not_trigger(tmp_path):
     """Regression: `npm view hyperframes` queries a package; it does not run HyperFrames."""
     ctx = MagicMock()

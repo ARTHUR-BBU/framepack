@@ -1,6 +1,6 @@
 ---
 name: framepack
-description: "Framepack v0.10.2 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Replica Mode render-integrity rules, and test-team hardening."
+description: "Framepack v0.10.2 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Quality Beyond Lint semantic audit, Replica Mode render-integrity rules, and test-team hardening."
 version: 0.10.2
 author: 老田 + Hermes
 license: MIT
@@ -82,6 +82,16 @@ Framepack 现在不只会“发现环境不对”，还会把安装/升级拆成
 - `core/framepack_upgrade_report.py` + `scripts/framepack_upgrade_report.py` — 汇总 doctor/install/upgrade/smoke JSON 证据，生成升级报告。
 
 铁律：doctor/report/dry-run 路径不允许下载、安装、升级、降级或调用 `npx --yes package@latest` 粉饰太平；安装器必须先预检全部 required sources，缺一个就一个都不写。
+
+### Unreleased Quality Beyond Lint Audit
+
+Framepack 现在多了一张“安检小票”，不是新的 HTML 审判官：
+
+- `core/quality_audit.py` — 纯 Python 语义审计，检查 stale `.framepack/arsenal.json`、Execution Manifest 武器缺登记、手动 `data-hf-id`、Manifest 参数与 HTML 函数实参漂移、card-cascade 未声明等问题。
+- `scripts/framepack_quality_audit.py <project> --format json|markdown` — 机器/人工可读报告。
+- pre_tool_call 在 handoff-consuming HyperFrames 命令前，如果项目已有 `index.html`，会注入非阻断 Quality Audit summary。
+
+边界铁律：Quality Audit 只报告 lint 看不见的语义风险；不写、不修、不渲染 HTML，不替代 `npx hyperframes lint/validate/snapshot/render`。
 
 ### v0.10.1 HyperFrames Compatibility Adapter
 

@@ -30,10 +30,31 @@ def test_resolve_unknown_builtin_returns_none():
     assert resolve_builtin_weapon("missing-weapon") is None
 
 
-def test_list_builtin_weapon_ids_includes_canonical_weapons():
+def test_builtin_weapon_catalog_has_expected_core_entries():
     ids = list_builtin_weapon_ids()
 
     assert "text-split-enter" in ids
     assert "caption-clip-wipe" in ids
     assert "bg-blur-mask" in ids
+
+
+def test_builtin_weapon_catalog_covers_v0102_digital_soliloquy_weapons():
+    expected = {
+        "typewriter-cursor",
+        "text-split-enter",
+        "glitch-flicker",
+        "bg-blur-mask",
+        "light-leak-cinema",
+        "elastic-scale-enter",
+        "gradient-shift",
+        "splittext-stagger-chars",
+        "caption-clip-wipe",
+        "float-3d-card",
+        "card-cascade-reveal",
+    }
+
+    ids = list_builtin_weapon_ids()
+    missing = expected.difference(ids)
+
+    assert missing == set()
     assert "rules.hyperframes-render-safe" in ids

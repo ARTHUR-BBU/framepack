@@ -9,34 +9,30 @@ from __future__ import annotations
 import copy
 
 
+def _part(weapon_id: str, engine: str = "GSAP+CSS") -> dict:
+    return {
+        "id": weapon_id,
+        "source": "builtin",
+        "kind": "part",
+        "skill": "framepack:framepack-animation-library",
+        "file": f"parts/{weapon_id}.md",
+        "code": f"parts/references/{weapon_id}.js",
+        "engine": engine,
+    }
+
+
 BUILTIN_WEAPONS: dict[str, dict] = {
-    "text-split-enter": {
-        "id": "text-split-enter",
-        "source": "builtin",
-        "kind": "part",
-        "skill": "framepack:framepack-animation-library",
-        "file": "parts/text-split-enter.md",
-        "code": "parts/references/text-split-enter.js",
-        "engine": "GSAP+CSS",
-    },
-    "caption-clip-wipe": {
-        "id": "caption-clip-wipe",
-        "source": "builtin",
-        "kind": "part",
-        "skill": "framepack:framepack-animation-library",
-        "file": "parts/caption-clip-wipe.md",
-        "code": "parts/references/caption-clip-wipe.js",
-        "engine": "GSAP+CSS",
-    },
-    "bg-blur-mask": {
-        "id": "bg-blur-mask",
-        "source": "builtin",
-        "kind": "part",
-        "skill": "framepack:framepack-animation-library",
-        "file": "parts/bg-blur-mask.md",
-        "code": "parts/references/bg-blur-mask.js",
-        "engine": "GSAP+CSS",
-    },
+    "text-split-enter": _part("text-split-enter"),
+    "caption-clip-wipe": _part("caption-clip-wipe"),
+    "bg-blur-mask": _part("bg-blur-mask"),
+    "typewriter-cursor": _part("typewriter-cursor"),
+    "glitch-flicker": _part("glitch-flicker"),
+    "light-leak-cinema": _part("light-leak-cinema"),
+    "elastic-scale-enter": _part("elastic-scale-enter"),
+    "gradient-shift": _part("gradient-shift"),
+    "splittext-stagger-chars": _part("splittext-stagger-chars", engine="GSAP SplitText"),
+    "float-3d-card": _part("float-3d-card"),
+    "card-cascade-reveal": _part("card-cascade-reveal"),
     "rules.hyperframes-render-safe": {
         "id": "rules.hyperframes-render-safe",
         "source": "builtin",
