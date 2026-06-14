@@ -73,6 +73,25 @@ def _has_malformed_marker(text: str, overlay_id: str) -> bool:
     return starts != ends or (starts > 0 and full != starts)
 
 
+def has_any_malformed_framepack_marker(text: str) -> bool:
+    """Return True if any Framepack managed hardening marker is unbalanced.
+
+    This is stricter than per-overlay validation. A broken managed block with an
+    unknown id still means the file is not safe for automated writes; otherwise
+    we could append new overlays below a half-open old recall sticker.
+    """
+    start_re = re.compile(r"<!--\s*FRAMEPACK HARDENING START\s+[^>]*\bid=([^\s>]+)[^>]*-->")
+    end_re = re.compile(r"<!--\s*FRAMEPACK HARDENING END\s+id=([^\s>]+)\s*-->")
+    starts = start_re.findall(text)
+    ends = end_re.findall(text)
+    if starts != ends:
+        return True
+    for overlay_id in set(starts + ends):
+        if _has_malformed_marker(text, overlay_id):
+            return True
+    return False
+
+
 def _find_user_blocks(text: str) -> list[str]:
     ids: list[str] = []
     for match in re.finditer(r"<!--\s*USER LOCAL HARDENING START\s+[^>]*\bid=([^\s>]+)", text):
