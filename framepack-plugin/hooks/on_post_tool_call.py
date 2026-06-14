@@ -1,4 +1,4 @@
-"""Framepack v0.10.1 — Prompt Factory hooks.
+"""Framepack v0.10.2 — Prompt Factory hooks.
 
 Framepack is the director's creative engine. It produces two deliverables:
   1. frame.md — visual identity (HyperFrames Step 1 input)
@@ -436,7 +436,7 @@ def register(ctx):
             _handle_expanded_prompt(ctx, file_path)
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
-    logger.info("Framepack v0.10.1 post_tool_call hook registered (frame.md + expanded-prompt + guardrail hydration)")
+    logger.info("Framepack v0.10.2 post_tool_call hook registered (frame.md + expanded-prompt + guardrail hydration)")
 
 
 # ── Handlers ──

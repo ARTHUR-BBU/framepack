@@ -48,16 +48,21 @@ HyperFrames takes over:
 Video 🎬
 ```
 
-## Plugin Hooks (v0.8+)
+## Plugin Hooks (v0.10.2)
 
 ```text
-post_tool_call:
-  ├── frame.md write → LLM quality check (palette/typography/motion complete?)
-  └── expanded-prompt.md write → LLM quality check (beats/rhythm complete?)
-
 pre_tool_call:
-  └── hyperframes command → check frame.md exists (handoff readiness)
+  ├── classify HyperFrames command intent (handoff vs discovery/registry/media/cloud)
+  ├── handoff commands → Guardrail Hydrator + Arsenal preflight + frame.md readiness warning
+  └── discovery/version/help/catalog commands → no handoff warning
+
+post_tool_call:
+  ├── Framepack skill_view → Guardrail Hydrator sync + current-session injection
+  ├── frame.md write → LLM quality check (palette/typography/motion complete?)
+  └── expanded-prompt.md write → Arsenal reconcile + LLM quality check (beats/rhythm complete?)
 ```
+
+v0.10.2 also adds report-only Environment & Upgrade Manager utilities for doctor/install/overlay/upgrade/report flows.
 
 **What Framepack does NOT do:**
 - ❌ Write or audit HTML — that's `hyperframes lint`
@@ -91,10 +96,10 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.10.1**.
+# You should see `framepack` with status **enabled** and version **0.10.2**.
 ```
 
-Framepack v0.10.1 includes **HyperFrames Compatibility Adapter**: Framepack now classifies HyperFrames commands by intent, stores `.framepack/hyperframes-capabilities.json`, treats official catalog/add as opportunistic rather than mandatory, falls back to the offline-safe `blank` baseline, and generates upstream skill-diff reports without blindly overwriting local hardening rules. v0.10.0 added Arsenal Registry runtime: `.framepack/arsenal.json` creation, Execution Manifest reconciliation, builtin weapon catalog, trusted-source whitelist, and non-blocking Arsenal preflight before handoff-consuming HyperFrames commands. v0.9.4 includes Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration`, reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML, and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
+Framepack v0.10.2 adds **Environment & Upgrade Manager**: report-only environment doctor, safe skill install manager, hardening overlay planner, three-way skill upgrade manager, and upgrade report generation. v0.10.1 includes **HyperFrames Compatibility Adapter**: Framepack now classifies HyperFrames commands by intent, stores `.framepack/hyperframes-capabilities.json`, treats official catalog/add as opportunistic rather than mandatory, falls back to the offline-safe `blank` baseline, and generates upstream skill-diff reports without blindly overwriting local hardening rules. v0.10.0 added Arsenal Registry runtime: `.framepack/arsenal.json` creation, Execution Manifest reconciliation, builtin weapon catalog, trusted-source whitelist, and non-blocking Arsenal preflight before handoff-consuming HyperFrames commands. v0.9.4 includes Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration`, reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML, and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
 
 **Tip:** Run `hermes status` to find your actual HERMES_HOME path.
 

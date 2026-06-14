@@ -1,7 +1,7 @@
 ---
 name: framepack
-description: "Framepack v0.10.1 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Replica Mode render-integrity rules, and test-team hardening."
-version: 0.10.1
+description: "Framepack v0.10.2 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Replica Mode render-integrity rules, and test-team hardening."
+version: 0.10.2
 author: 老田 + Hermes
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,7 +11,7 @@ metadata:
     related_skills: [hyperframes, hyperframes-cli, gsap]
 ---
 
-# Framepack v0.10.1 — HyperFrames Prompt Factory
+# Framepack v0.10.2 — HyperFrames Prompt Factory
 
 Framepack is a Hermes Agent Plugin that translates fuzzy video intent into
 precise creative briefs HyperFrames can render. It does two things and hands off.
@@ -70,6 +70,18 @@ Framepack 不替代 HyperFrames 的技能，只做补充：
 ## HyperFrames 能力感知
 
 HyperFrames 不只是渲染引擎。Framepack 在创意阶段就应该考虑这些能力。
+
+### v0.10.2 Environment & Upgrade Manager
+
+Framepack 现在不只会“发现环境不对”，还会把安装/升级拆成可审计的 report-first 生命周期：
+
+- `core/environment_doctor.py` + `scripts/framepack_doctor.py` — 体检 Node/npm/npx、installed/project-local HyperFrames CLI、local skills、support window；只报告，不安装。
+- `core/skill_install_manager.py` — 接收已批准的 official skill source，先做 missing-source 原子预检，再安装/备份/写 manifest。
+- `core/skill_overlay_planner.py` + `scripts/apply_skill_overlays.py` — dry-run 默认，把 Framepack hardening overlays 贴到本地 HyperFrames skills，保留 user-local blocks。
+- `core/skill_upgrade_manager.py` — 三方决策：official_old / official_new / local_current → replace / auto_merge / manual_review。
+- `core/framepack_upgrade_report.py` + `scripts/framepack_upgrade_report.py` — 汇总 doctor/install/upgrade/smoke JSON 证据，生成升级报告。
+
+铁律：doctor/report/dry-run 路径不允许下载、安装、升级、降级或调用 `npx --yes package@latest` 粉饰太平；安装器必须先预检全部 required sources，缺一个就一个都不写。
 
 ### v0.10.1 HyperFrames Compatibility Adapter
 
@@ -423,16 +435,19 @@ including paths like `/f/hyperframes/project/`. Fix: use regex:
 `re.search(r'(?:^|\s)(?:npx\s+)?hyperframes(?:\s|$)', command)`.
 This matches `hyperframes lint` or `npx hyperframes init` but NOT path components.
 Also needs `import re` at the top of the hook file.
-When bumping the Framepack version, **all five** must align:
-- `plugin.yaml` → `version: "X.Y.Z"`
+When bumping the Framepack version, **all release surfaces** must align:
+- `plugin.yaml` → `version: "X.Y.Z"` + changelog description line
 - `__init__.py` → `logger.info("Framepack vX.Y.Z Plugin registering")`
 - `hooks/on_post_tool_call.py` → docstring + logger string
 - `hooks/on_pre_tool_call.py` → docstring + logger string
-- `AGENTS.md` → `<!-- version: X.Y.Z -->` comment
+- `AGENTS.md` → `<!-- version: X.Y.Z -->` comment + hook/skill headings
+- `README.md` + `docs/README.zh-CN.md` → install verification version
+- `compat/hyperframes-support.json`, `core/arsenal_registry.py`, `scripts/apply_skill_overlays.py`
+- every plugin skill frontmatter in `framepack-plugin/skills/*/SKILL.md`
 
-A partial bump (e.g. updating plugin.yaml but forgetting __init__.py) creates
+A partial bump (e.g. updating plugin.yaml but forgetting __init__.py or a plugin skill) creates
 confusion when the logger reports a different version than the plugin spec.
-Always grep for the old version string across all five files after bumping.
+Always run `tests/test_deploy_manifest.py` and grep for the old version string after bumping.
 
 ### Don't dump the entire weapon library into context (v0.9.1)
 

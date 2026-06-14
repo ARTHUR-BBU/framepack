@@ -1,5 +1,5 @@
 {
-  "framepack_version": "0.10.1",
+  "framepack_version": "0.10.2",
   "hyperframes": {
     "supported_min": "0.6.90",
     "supported_max_tested": "0.6.97",

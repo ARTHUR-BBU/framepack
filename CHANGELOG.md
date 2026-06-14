@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — Environment & Upgrade Manager groundwork
+## 0.10.2 — Environment & Upgrade Manager groundwork (2026-06-14)
 
 ### Compatibility Lifecycle
 
@@ -16,7 +16,7 @@
 
 ### Tests
 
-- Added Environment Doctor, Skill Overlay Planner, Skill Install Manager, Skill Upgrade Manager, upgrade report, support-window, and skill-overlay tests plus security regressions for tar extraction, proxy credential redaction, quoted-shell command detection, malformed managed marker blocking, atomic missing-source install preflight, and prerelease version handling. Full plugin suite: 181 passed.
+- Added Environment Doctor, Skill Overlay Planner, Skill Install Manager, Skill Upgrade Manager, upgrade report, support-window, and skill-overlay tests plus security regressions for tar extraction, proxy credential redaction, quoted-shell command detection, malformed managed marker blocking, atomic missing-source install preflight, and prerelease version handling. Full plugin suite: 182 passed.
 
 ## 0.10.1 — HyperFrames Compatibility Adapter (2026-06-13)
 

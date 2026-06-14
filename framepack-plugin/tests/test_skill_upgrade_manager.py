@@ -8,7 +8,7 @@ def overlay() -> SkillOverlay:
     return SkillOverlay(
         id="hf-root-duration",
         target_skill="hyperframes",
-        framepack_version="0.10.1",
+        framepack_version="0.10.2",
         body="Root composition must explicitly set data-duration.",
         equivalent_phrases=("root composition", "data-duration"),
     )
