@@ -1,10 +1,10 @@
 name: framepack
-version: "0.10.3"
+version: "0.10.5"
 description: >-
   Prompt Factory for HyperFrames. Translates fuzzy user intent into frame.md
   (visual identity) and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
   Framepack is the director who knows which lights to turn on — not the electrician who wires the studio.
-  v0.10.3 adds: Quality Beyond Lint semantic audit (report-first quality gate, CLI reports, hook summaries, parser hardening).
+  v0.10.5 adds: Production Quality Layer (timeline manifest, proof frames/contact sheets, scene specs, fail-on severity gates) plus Arsenal Binding Contract.
   v0.10.2 adds: Environment & Upgrade Manager (report-only doctor, safe skill install/overlay/upgrade managers, upgrade report).
   v0.10.1 adds: HyperFrames Compatibility Adapter (command classification, capability snapshots, registry fallback, official-skill diff reports, upstream watcher script).
   v0.10.0 adds: Arsenal Registry runtime (.framepack/arsenal.json creation, Execution Manifest reconciliation, builtin weapon catalog, trusted-source whitelist, HyperFrames preflight audit).

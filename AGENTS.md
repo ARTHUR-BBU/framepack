@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.10.3 — sync with plugin.yaml and README -->
+<!-- version: 0.10.5 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -181,12 +181,13 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.10.3 hooks do six things:
+v0.10.5 hooks do seven things:
 
 ```text
 pre_tool_call:
   ├── HyperFrames Compatibility Adapter → classify command intent (handoff vs discovery vs registry/cloud/media)
-  ├── HyperFrames handoff commands → Guardrail Hydrator + Arsenal preflight + Quality Audit summary + frame.md readiness warning
+  ├── HyperFrames handoff commands → Guardrail Hydrator + Arsenal preflight + Production Quality Audit summary + frame.md readiness warning
+  ├── production commands → lightweight timeline ledger sync when safe
   └── discovery/registry/media commands → no handoff warning; official registry is opportunistic
 
 post_tool_call:
@@ -217,7 +218,7 @@ version/hash = 防漂移
 
 **不做的事**：
 - ❌ 不写/修/渲染/结构审计 HTML（那是 HyperFrames `lint/validate/snapshot/render` 的事）
-- ✅ 可以做 report-first 语义审计：stale arsenal、Manifest/HTML 参数漂移、手动 `data-hf-id`、card-cascade 未声明等 lint 看不见的问题
+- ✅ 可以做 report-first 语义审计：timeline/proof ledger、stale arsenal、Manifest/HTML 参数漂移、手动 `data-hf-id`、card-cascade 未声明等 lint 看不见的问题
 - ❌ 不管 13 个中间文件（全部砍掉）
 - ❌ 不检查 STORYBOARD.md / COMPOSITION.md / DESIGN.md / DESIGN_TOKENS.md（这些文件不再存在）
 
@@ -263,7 +264,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.10.3 skills:
+Framepack v0.10.5 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|

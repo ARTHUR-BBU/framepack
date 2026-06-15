@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Framepack v0.10.3 test-team automatic acceptance script.
+"""Framepack v0.10.5 test-team automatic acceptance script.
 
 Runs source tests, release/version synchronization checks, optional real-case
 Quality Audit, and deployed-plugin smoke checks. It is intentionally report-first:
@@ -17,9 +17,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-FRAMEPACK_VERSION = "0.10.3"
-REPORT_JSON = "framepack-v0103-auto-test-report.json"
-REPORT_MD = "framepack-v0103-auto-test-report.md"
+FRAMEPACK_VERSION = "0.10.5"
+REPORT_JSON = "framepack-v0105-auto-test-report.json"
+REPORT_MD = "framepack-v0105-auto-test-report.md"
 PLANNED_CHECKS = [
     "source_pytest",
     "release_version_sync",
@@ -86,7 +86,7 @@ def _write_reports(payload: dict[str, Any], output_dir: Path) -> None:
 
 def _render_markdown(payload: dict[str, Any]) -> str:
     lines = [
-        "# Framepack v0.10.3 Auto Test Report",
+        "# Framepack v0.10.5 Auto Test Report",
         "",
         f"- Repo: `{payload['repo']}`",
         f"- Version: `{payload['framepack_version']}`",
@@ -215,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]), help="Framepack repository root")
     parser.add_argument("--case-project", default="", help="Optional real HyperFrames/Framepack case project to quality-audit")
     parser.add_argument("--deployed-plugin", default="F:/Hermes_windows/plugins/framepack", help="Optional deployed Framepack plugin path")
-    parser.add_argument("--output-dir", default="test-team-reports/v0.10.3", help="Directory for JSON/Markdown reports")
+    parser.add_argument("--output-dir", default="test-team-reports/v0.10.5", help="Directory for JSON/Markdown reports")
     parser.add_argument("--timeout", type=int, default=300, help="Per-command timeout in seconds")
     parser.add_argument("--dry-run", action="store_true", help="Print planned checks and write a dry-run report without running commands")
     args = parser.parse_args(argv)

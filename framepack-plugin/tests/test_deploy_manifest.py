@@ -36,22 +36,27 @@ def test_main_framepack_skill_version_matches_plugin_version():
     assert _frontmatter_version(PLUGIN_ROOT / "skills" / "framepack" / "SKILL.md") == plugin_version
 
 
-def test_0103_release_version_is_synchronized_across_release_surfaces():
+def test_0105_release_version_is_synchronized_across_release_surfaces():
     plugin_version = _plugin_version(PLUGIN_ROOT)
-    assert plugin_version == "0.10.3"
+    assert plugin_version == "0.10.5"
 
     release_files = {
-        REPO_ROOT / "README.md": ["version **0.10.3**", "Framepack v0.10.3"],
-        REPO_ROOT / "docs" / "README.zh-CN.md": ["版本为 **0.10.3**"],
-        REPO_ROOT / "AGENTS.md": ["version: 0.10.3", "v0.10.3 hooks", "Framepack v0.10.3 skills"],
-        PLUGIN_ROOT / "plugin.yaml": ["version: \"0.10.3\"", "v0.10.3 adds: Quality Beyond Lint semantic audit"],
-        PLUGIN_ROOT / "skills" / "framepack" / "SKILL.md": ["# Framepack v0.10.3 — HyperFrames Prompt Factory", "Environment & Upgrade Manager"],
-        PLUGIN_ROOT / "__init__.py": ["Framepack v0.10.3 Plugin registering"],
-        PLUGIN_ROOT / "hooks" / "on_pre_tool_call.py": ["v0.10.3 philosophy", "Framepack v0.10.3 pre_tool_call hook registered"],
-        PLUGIN_ROOT / "hooks" / "on_post_tool_call.py": ["Framepack v0.10.3", "Framepack v0.10.3 post_tool_call hook registered"],
-        PLUGIN_ROOT / "compat" / "hyperframes-support.json": ['"framepack_version": "0.10.3"'],
-        PLUGIN_ROOT / "core" / "arsenal_registry.py": ['DEFAULT_PLUGIN_VERSION = "0.10.3"'],
-        PLUGIN_ROOT / "scripts" / "apply_skill_overlays.py": ['FRAMEPACK_VERSION = "0.10.3"'],
+        REPO_ROOT / "README.md": ["version **0.10.5**", "Framepack v0.10.5"],
+        REPO_ROOT / "docs" / "README.zh-CN.md": ["版本为 **0.10.5**"],
+        REPO_ROOT / "AGENTS.md": ["version: 0.10.5", "v0.10.5 hooks", "Framepack v0.10.5 skills"],
+        PLUGIN_ROOT / "plugin.yaml": ["version: \"0.10.5\"", "v0.10.5 adds: Production Quality Layer"],
+        PLUGIN_ROOT / "skills" / "framepack" / "SKILL.md": ["# Framepack v0.10.5 — HyperFrames Prompt Factory", "Environment & Upgrade Manager"],
+        PLUGIN_ROOT / "__init__.py": ["Framepack v0.10.5 Plugin registering"],
+        PLUGIN_ROOT / "hooks" / "on_pre_tool_call.py": ["v0.10.5 philosophy", "Framepack v0.10.5 pre_tool_call hook registered"],
+        PLUGIN_ROOT / "hooks" / "on_post_tool_call.py": ["Framepack v0.10.5", "Framepack v0.10.5 post_tool_call hook registered"],
+        PLUGIN_ROOT / "compat" / "hyperframes-support.json": ['"framepack_version": "0.10.5"'],
+        PLUGIN_ROOT / "core" / "arsenal_registry.py": ['DEFAULT_PLUGIN_VERSION = "0.10.5"'],
+        PLUGIN_ROOT / "core" / "timeline_manifest.py": ['DEFAULT_PLUGIN_VERSION = "0.10.5"'],
+        PLUGIN_ROOT / "scripts" / "apply_skill_overlays.py": ['FRAMEPACK_VERSION = "0.10.5"'],
+        PLUGIN_ROOT / "templates" / "timeline-manifest.example.json": [
+            '"plugin_version_created": "0.10.5"',
+            '"plugin_version_updated": "0.10.5"',
+        ],
     }
     for path, needles in release_files.items():
         text = _read(path)
@@ -65,6 +70,7 @@ def test_0103_release_version_is_synchronized_across_release_surfaces():
         "framepack-gsap",
         "framepack-reference-miner",
         "framepack-animation-library",
+        "framepack-production-quality",
     ]:
         assert _frontmatter_version(PLUGIN_ROOT / "skills" / skill_name / "SKILL.md") == plugin_version
 

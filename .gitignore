@@ -21,6 +21,7 @@ Thumbs.db
 # Test outputs
 out/
 tmp_frame_*.jpg
+test-team-reports/
 
 # Environment
 .env

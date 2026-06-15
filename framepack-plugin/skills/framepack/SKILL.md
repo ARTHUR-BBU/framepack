@@ -1,7 +1,7 @@
 ---
 name: framepack
-description: "Framepack v0.10.3 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Quality Beyond Lint semantic audit, Replica Mode render-integrity rules, and test-team hardening."
-version: 0.10.3
+description: "Framepack v0.10.5 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
+version: 0.10.5
 author: 老田 + Hermes
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,7 +11,7 @@ metadata:
     related_skills: [hyperframes, hyperframes-cli, gsap]
 ---
 
-# Framepack v0.10.3 — HyperFrames Prompt Factory
+# Framepack v0.10.5 — HyperFrames Prompt Factory
 
 Framepack is a Hermes Agent Plugin that translates fuzzy video intent into
 precise creative briefs HyperFrames can render. It does two things and hands off.
@@ -83,7 +83,7 @@ Framepack 现在不只会“发现环境不对”，还会把安装/升级拆成
 
 铁律：doctor/report/dry-run 路径不允许下载、安装、升级、降级或调用 `npx --yes package@latest` 粉饰太平；安装器必须先预检全部 required sources，缺一个就一个都不写。
 
-### v0.10.3 Quality Beyond Lint Audit
+### v0.10.5 Production Quality Audit
 
 Framepack 现在多了一张“安检小票”，不是新的 HTML 审判官：
 

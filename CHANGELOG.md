@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.10.5 — Production Quality Layer (2026-06-15)
+
+### Production QA
+
+- **Timeline Manifest** — adds `core/timeline_manifest.py`, `scripts/framepack_timeline_manifest.py`, and `.framepack/timeline-manifest.json` sync/validation from HyperFrames Time Windows or `index.html` clip metadata, preserving locked scenes.
+- **Production Quality Audit** — extends Quality Audit with timeline/proof issues such as `timeline_manifest_missing`, `timeline_duration_mismatch`, `timeline_scene_overlap`, `proof_missing`, `boundary_proof_missing`, and `contact_sheet_missing`, plus `--sync-timeline` and `--fail-on P0|P1|P2|P3`.
+- **Proof workflow** — adds media probing, proof-frame extraction, contact-sheet generation, scene spec and timeline manifest templates, and the `framepack-production-quality` skill.
+- **Hook sync** — HyperFrames production commands can trigger lightweight, non-blocking timeline ledger sync; discovery/init/help/version commands stay side-effect free.
+
+### Tests
+
+- Added timeline manifest, proof audit, production quality audit, hook no-op/sync, malformed numeric, and test-team auto-script regressions.
+
+## 0.10.4 — Arsenal Binding Contract (2026-06-15)
+
+### Arsenal Binding
+
+- **Auto-created arsenal ledger** — `.framepack/arsenal.json` can be created/synced for projects that have not yet initialized the weapon registry.
+- **Canonical weapon functions** — builtin weapon metadata now carries the callable function name, removing the drifting `WEAPON_TO_FUNCTION` map.
+- **Actionable audit hints** — `manifest_weapon_not_called` includes canonical function and inline GSAP guidance so declared weapons are bound instead of silently hand-written.
+
+### Tests
+
+- Added arsenal creation, builtin function metadata, and manifest weapon binding regressions.
+
 ## 0.10.3 — Quality Beyond Lint (2026-06-15)
 
 ### Semantic Quality Audit
