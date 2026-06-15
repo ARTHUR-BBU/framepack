@@ -7,47 +7,51 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.10.5 已完成 release-prep bump、部署同步、验证、测试组自动测试报告生成，并已 push 到 `origin/framepack-agent-platform`；测试组已开始准备/手动项目测试。尚未创建 v0.10.5 tag/GitHub Release。  
+**阶段**: Framepack v0.10.5 已完成 release-prep bump、部署同步、验证、测试组自动测试报告生成；测试组进入手动项目测试后发现 `F:/Framepack-01-test` 未生成项目级 `AGENTS.md`（用户口头称 agent.md）。已定位为 pre_tool_call 只看 terminal tool `workdir`、不会解析 shell `cd project && npx hyperframes ...` 的项目目录问题；已修复、验证、部署同步并 push。尚未创建 v0.10.5 tag/GitHub Release。  
 **分支**: `framepack-agent-platform`  
 **正式源码版本**: v0.10.5（`framepack-plugin/plugin.yaml` = `0.10.5`；部署目录和独立 skills 已同步到 0.10.5）  
-**最新远端提交**: `1cd4827` (`docs: clarify v0.10.5 test-team case modes`)；功能基准仍为 `fdf6102` (`[verified] release prep framepack v0.10.5`)  
+**最新远端提交**: `be318b5` (`fix: hydrate framepack project after shell cd`)；release-prep 功能基准为 `fdf6102` (`[verified] release prep framepack v0.10.5`)  
 **GitHub Release**: 当前公开 release 仍是 v0.10.3：https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.3
 
 ### 本轮做了什么
 
-- ✅ 先 push 了上一轮已验证功能提交和 handoff：`6a63be4` / `17a9455` / `14c5dd9` → `origin/framepack-agent-platform`。
-- ✅ 全面 bump 到 v0.10.5：`plugin.yaml`、compat matrix、runtime constants、hooks logger/docstring、README、docs、AGENTS、skill frontmatter、timeline manifest template、test-team script/report 名称、deploy manifest tests。
-- ✅ 将测试组脚本/说明从 v0103/v0.10.3 升级为 v0105/v0.10.5：`scripts/test_team_v0105_auto_test.py`、`TEST_TEAM_AUTOTEST_v0.10.5.md`。
-- ✅ 增加 `test-team-reports/` 到 `.gitignore`，避免测试报告产物误入仓库。
-- ✅ 同步部署目录：`F:\hyperframes\framepack-plugin` → `F:\Hermes_windows\plugins\framepack`；同步独立 skills 到 `F:\Hermes_windows\skills\software-development\framepack*`（含 `framepack-production-quality`）。
-- ✅ Independent pre-commit review 通过；reviewer 无 security/logic blocker，建议补 timeline/template version drift 测试，已补进 `test_deploy_manifest.py`。
-- ✅ 提交并 push：`fdf6102 [verified] release prep framepack v0.10.5`。
-- ✅ 根据测试组二道关回传，修正文档口径错位：`TEST_TEAM_AUTOTEST_v0.10.5.md` 默认推荐命令改为不带 `--case-project` 的 A 档插件基准验收，并新增 B/C 档完整 case 项目审计说明；明确 `F:/Framepack-01-test` 当前不是完整命题视频 case，只适合缺件输入测试。提交并 push：`1cd4827 docs: clarify v0.10.5 test-team case modes`。
+- ✅ 继续 v0.10.5 测试组准备：确认测试组反馈的“agent.md”实际应为项目级 `AGENTS.md`，由 Framepack Guardrail Hydrator 创建/更新 managed block。
+- ✅ 复现并定位根因：测试组/Agent 常用 `cd F:/Framepack-01-test && npx hyperframes lint`，但 hook 在 shell 执行前运行，旧逻辑只使用 `args["workdir"]` 或 `os.getcwd()`，导致 hydrate/audit 写到调用 cwd，而不是 `cd` 后的测试项目。
+- ✅ 按 TDD 修复：新增回归测试 `TestPreToolCallHandoff::test_hydrates_project_from_cd_prefix_before_hyperframes_command`，先看到失败，再实现 `_resolve_effective_workdir()` 解析 `cd <project> &&` / `cd <project>;` 前缀。
+- ✅ 修复 `hooks/on_pre_tool_call.py`：HyperFrames handoff 前统一解析 effective workdir，再 hydrate guardrails、sync arsenal、sync timeline、quality audit。
+- ✅ 更新 `framepack` skill pitfalls，记录 shell `cd project && npx hyperframes ...` 目录解析坑位。
+- ✅ 同步部署目录：`framepack-plugin/hooks/on_pre_tool_call.py` → `F:/Hermes_windows/plugins/framepack/hooks/on_pre_tool_call.py`；`framepack-plugin/skills/framepack/SKILL.md` → plugin skill + 独立 skill。
+- ✅ 手动修复测试项目账本：`F:/Framepack-01-test/AGENTS.md` 已创建；`.framepack/arsenal.json` 和 `.framepack/timeline-manifest.json` 已同步。
+- ✅ 提交并 push：`be318b5 fix: hydrate framepack project after shell cd`。
 
 ### 验证证据
 
-- `cd framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `239 passed in 14.54s`（另一次 full suite：`239 passed in 11.94s`）。
-- `python /f/Hermes_windows/skills/software-development/requesting-code-review/scripts/scan_worktree_added_lines.py` → `No added-line security red flags found.`
-- `python scripts/test_team_v0105_auto_test.py --output-dir test-team-reports/v0.10.5` → summary `passed=4, failed=0, skipped=1`（case project 未提供所以跳过）。
-- `python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.5` → summary `passed=4, failed=0, skipped=1`；full suite `239 passed in 13.65s`，deploy smoke `deployed import/version ok`。
-- Deployed smoke（由 auto-test 执行）→ `deployed import/version ok`，并断言部署目录 `plugin.yaml` 含 `0.10.5`。
-- Read-back：`F:\Hermes_windows\plugins\framepack\plugin.yaml` = `version: "0.10.5"`；`timeline-manifest.example.json` 的 `plugin_version_created/updated` 均为 `0.10.5`。
+- RED：新增测试首次运行失败，断言 `case-project/AGENTS.md` 不存在，证明旧 hook 会把 hydration 写错位置。
+- GREEN targeted：`cd framepack-plugin && python -m pytest tests/test_storyboard_hook.py::TestPreToolCallHandoff::test_hydrates_project_from_cd_prefix_before_hyperframes_command -q -o "addopts="` → `1 passed in 0.26s`。
+- Hook/Guardrails targeted：`python -m pytest tests/test_storyboard_hook.py tests/test_guardrails_hydrator.py -q -o "addopts="` → `61 passed in 0.95s`。
+- Full suite：`cd framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `240 passed in 12.03s`。
+- Deploy manifest：`python -m pytest tests/test_deploy_manifest.py -q -o "addopts="` → `5 passed in 0.06s`。
+- Security scan：`python /f/Hermes_windows/skills/software-development/requesting-code-review/scripts/scan_worktree_added_lines.py` → `No added-line security red flags found.`
+- Deploy sync read-back：`cmp -s` source/deployed `on_pre_tool_call.py` + source/deployed/independent `framepack/SKILL.md` → `deploy sync ok`。
+- Test project repair：`sync_project_agents(F:/Framepack-01-test)` → `{'changed': True, 'action': 'created', 'path': 'F:\\Framepack-01-test\\AGENTS.md', 'version': '0.10.5', 'error': None}`。
+- Test project ledger sync：arsenal → `action='synced'`, path `F:\Framepack-01-test\.framepack\arsenal.json`, warning `handwrite_weapon`；timeline → `action='synced'`, path `F:\Framepack-01-test\.framepack\timeline-manifest.json`。
 
 ### 给测试组的入口
 
 - 分支：`framepack-agent-platform`
+- 当前远端 HEAD：`be318b5`（包含 v0.10.5 release-prep + 测试说明修正 + shell cd hydration 修复）
 - 功能基准提交：`fdf6102`
-- 当前远端 HEAD：`1cd4827`（只修测试说明文档，不改插件功能）
 - 自动测试脚本：`scripts/test_team_v0105_auto_test.py`
 - 测试说明：`TEST_TEAM_AUTOTEST_v0.10.5.md`
 - A 档插件基准命令（不带 case）：`python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.5`
 - A 档预期：`passed=4, failed=0, skipped=1`
 - B/C 档完整 case 审计：只有测试组准备好包含 `frame.md`、`.hyperframes/expanded-prompt.md`、`.framepack/arsenal.json`、`index.html` 的真实项目后，才添加 `--case-project <完整case路径>`；此时通常是 `passed=5, failed=0, skipped=0`，但 Quality Audit 内部 P0/P1 代表案例风险，不等同于脚本失败。
-- 本地已生成报告（未提交，产物被 gitignore）：`test-team-reports/v0.10.5/framepack-v0105-auto-test-report.{json,md}`
+- 当前 `F:/Framepack-01-test` 已补齐 `AGENTS.md` + `.framepack` 账本，但它仍不是完整命题视频 case；若没有合格 `index.html`，仍只适合缺件/半成品输入测试。
 
 ### 下次要做什么
 
-- 等测试组基于 `fdf6102`/当前 HEAD 回传手动命题视频测试报告；若有 P0/P1，先复现再修。
+- 把测试组口径说清：文件名是 `AGENTS.md`，不是 `agent.md`；它是项目级铁律托管块，不是创意产物。
+- 等测试组基于当前 HEAD `be318b5` 回传手动命题视频测试报告；若有 P0/P1，先复现再修。
 - 若老田决定发布正式版：创建 `v0.10.5` tag + GitHub Release，并把 release URL 写回交接台。
 - 继续 hardening backlog：NaN/Infinity 数值拒绝、proof path project-local 限定/审计 warning。
 
@@ -56,7 +60,7 @@
 - 项目根：`F:\hyperframes\`
 - 开发目录：`F:\hyperframes\framepack-plugin\`
 - 部署目录：`F:\Hermes_windows\plugins\framepack\`
-- 测试项目：`F:\Framepack-01-test\`（当前不是完整命题视频 case；只适合缺件输入测试）
+- 测试项目：`F:\Framepack-01-test\`（已补 `AGENTS.md` + `.framepack` ledger；仍不是完整命题视频 case）
 - Git 分支：`framepack-agent-platform`
 - 远程：https://github.com/ARTHUR-BBU/framepack
 
@@ -72,11 +76,11 @@
 - v0.10.2：Environment & Upgrade Manager groundwork；doctor/install/overlay/upgrade/report/support-window 生命周期托管。
 - v0.10.3：Quality Beyond Lint；语义审计小票、JSON/Markdown audit CLI、handoff 前非阻断 summary、scene-keyed Manifest parser、测试组自动测试脚本。
 - v0.10.4：Arsenal Binding Contract；arsenal 自动创建/同步、canonical weapon function、inline GSAP hint、sync opt-in。本地 commit: `6a63be4`。
-- v0.10.5：Production Quality Layer；timeline manifest、proof frames/contact sheet、scene spec、production quality audit、lightweight hook sync。本地 commit: `17a9455`。
+- v0.10.5：Production Quality Layer；timeline manifest、proof frames/contact sheet、scene spec、production quality audit、lightweight hook sync。本地 commit: `17a9455`；后续 hardening commit `be318b5` 修复 shell cd 后项目目录 hydration。
 
 ## 待办 / 想法池
 
-- [ ] 等测试组基于 `fdf6102`/当前 HEAD 回传 v0.10.5 手动项目测试报告。
+- [ ] 等测试组基于当前 HEAD `be318b5` 回传 v0.10.5 手动项目测试报告。
 - [ ] 视老田决定：创建 v0.10.5 tag/GitHub Release，或仅交测试组先测。
 - [ ] Hardening：数值解析拒绝 NaN/Infinity。
 - [ ] Hardening：proof path 限定在 project-local 或至少 audit warning。
