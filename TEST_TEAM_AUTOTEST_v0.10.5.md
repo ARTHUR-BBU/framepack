@@ -10,23 +10,56 @@ v0.10.5 的新增能力是 Production Quality Layer：
 - Framepack Quality Audit 负责语义风险小票；
 - 它只报告，不写、不修、不渲染 HTML。
 
-## 推荐测试命令
+## 推荐测试命令：A 档，插件基准验收
 
-在仓库根目录运行：
+在仓库根目录运行。这个命令不带 `--case-project`，只验证 v0.10.5 插件基准是否可信：
 
 ```bash
 python scripts/test_team_v0105_auto_test.py \
   --repo F:/hyperframes \
-  --case-project F:/Framepack-01-test \
   --deployed-plugin F:/Hermes_windows/plugins/framepack \
-  --output-dir F:/Framepack-01-test/test-team-v0105-report
+  --output-dir test-team-reports/v0.10.5
 ```
 
 Windows Git Bash 可直接用上面的 POSIX 换行；如果复制到单行：
 
 ```bash
-python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --case-project F:/Framepack-01-test --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir F:/Framepack-01-test/test-team-v0105-report
+python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.5
 ```
+
+预期摘要：
+
+```text
+passed=4
+failed=0
+skipped=1
+```
+
+这里的 `skipped=1` 是正常的：没有提供 `--case-project` 时，`case_quality_audit` 会跳过。
+
+## 可选测试命令：B/C 档，案例项目审计
+
+只有当测试组已经准备好“完整 case project”时，才加 `--case-project`：
+
+```bash
+python scripts/test_team_v0105_auto_test.py \
+  --repo F:/hyperframes \
+  --case-project <完整case项目路径> \
+  --deployed-plugin F:/Hermes_windows/plugins/framepack \
+  --output-dir <报告输出目录>
+```
+
+此时预期脚本摘要通常是：
+
+```text
+passed=5
+failed=0
+skipped=0
+```
+
+注意：`passed=5` 只代表自动脚本和审计 CLI 成功运行；如果 case 的 Quality Audit 报 P0/P1，那是“安检小票发现了案例风险”，需要再判断是案例缺件、HTML 语义问题、还是 Framepack 需要修。
+
+`F:/Framepack-01-test` 当前不能作为完整命题视频 case。它可以用于“缺件输入测试”（例如验证 audit 能报 `arsenal_missing`），但不能代表真实视频项目质量。
 
 ## Dry run
 
