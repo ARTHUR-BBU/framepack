@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.10.6 — Production Hardening Patch (2026-06-16)
+
+### Hardening
+
+- **Font locality audit** — Quality Audit now reports live Google Fonts runtime dependencies and missing project-local `@font-face` assets. Proxy/VPN remains the acquisition water pipe; `assets/fonts/` is the production warehouse.
+- **Visibility risk audit** — detects dark-background + brightness/veil combinations that can pass lint while rendering too dim for viewers.
+- **Finite-number guards** — rejects NaN/Infinity in arsenal durations, timeline scenes, proof times, and audited numeric fields.
+- **Proof path locality** — proof directories/contact sheets must remain project-local; out-of-project paths now report `proof_path_outside_project`.
+- **Release-prep test-team runner** — bumps the acceptance runner and instructions to v0.10.6.
+
+### Tests
+
+- Added regressions for external fonts, local font assets, low visibility, finite numeric validation, project-local proof paths, and v0.10.6 release-surface synchronization.
+
 ## 0.10.5 — Production Quality Layer (2026-06-15)
 
 ### Production QA

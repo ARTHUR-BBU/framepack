@@ -17,7 +17,7 @@ from typing import Any
 
 TIMELINE_SCHEMA_VERSION = "1.0.0"
 TIMELINE_KIND = "framepack_timeline_manifest"
-DEFAULT_PLUGIN_VERSION = "0.10.5"
+DEFAULT_PLUGIN_VERSION = "0.10.6"
 VALID_SCENE_STATUSES = {"draft", "review", "locked", "superseded"}
 
 

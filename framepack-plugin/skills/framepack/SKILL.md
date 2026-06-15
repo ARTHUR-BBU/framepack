@@ -1,7 +1,7 @@
 ---
 name: framepack
-description: "Framepack v0.10.5 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
-version: 0.10.5
+description: "Framepack v0.10.6 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
+version: 0.10.6
 author: 老田 + Hermes
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,7 +11,7 @@ metadata:
     related_skills: [hyperframes, hyperframes-cli, gsap]
 ---
 
-# Framepack v0.10.5 — HyperFrames Prompt Factory
+# Framepack v0.10.6 — HyperFrames Prompt Factory
 
 Framepack is a Hermes Agent Plugin that translates fuzzy video intent into
 precise creative briefs HyperFrames can render. It does two things and hands off.
@@ -83,12 +83,12 @@ Framepack 现在不只会“发现环境不对”，还会把安装/升级拆成
 
 铁律：doctor/report/dry-run 路径不允许下载、安装、升级、降级或调用 `npx --yes package@latest` 粉饰太平；安装器必须先预检全部 required sources，缺一个就一个都不写。
 
-### v0.10.5 Production Quality Audit
+### v0.10.6 Production Hardening + Quality Audit
 
 Framepack 现在多了一张“安检小票”，不是新的 HTML 审判官：
 
 - `core/quality_audit.py` — 纯 Python 语义审计，检查 stale `.framepack/arsenal.json`、Execution Manifest 武器缺登记、手动 `data-hf-id`、Manifest 参数与 HTML 函数实参漂移、card-cascade 未声明、外部 Google Fonts 运行时依赖、缺失本地字体资产、暗底低可见性风险等问题。
-- v0.10.6 hardening 口径：国内用户常开本地 VPN/代理，外部资源获取（catalog/registry/fonts）要先检测代理并带代理访问；但最终生产 HTML 应尽量 vendor 到项目本地（如 `assets/fonts/`），不要让 render/playback 依赖 live Google Fonts。
+- v0.10.6 hardening：国内用户常开本地 VPN/代理，外部资源获取（catalog/registry/fonts）要先检测代理并带代理访问；但最终生产 HTML 应尽量 vendor 到项目本地（如 `assets/fonts/`），不要让 render/playback 依赖 live Google Fonts。
 - `scripts/framepack_quality_audit.py <project> --format json|markdown` — 机器/人工可读报告。
 - pre_tool_call 在 handoff-consuming HyperFrames 命令前，如果项目已有 `index.html`，会注入非阻断 Quality Audit summary。
 

@@ -7,7 +7,7 @@ description: >-
   production workflow and non-negotiable rules, load the `hyperframes` skill.
   This skill provides ONLY Framepack-specific weapon recipes that comply
   with HyperFrames' contract.
-version: 0.10.5
+version: 0.10.6
 platforms: ["linux", "macos", "windows"]
 metadata:
   hermes:

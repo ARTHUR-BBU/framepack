@@ -1,4 +1,4 @@
-"""Test-team v0.10.5 auto-test script tests."""
+"""Test-team v0.10.6 auto-test script tests."""
 
 import importlib.util
 import json
@@ -6,11 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "test_team_v0105_auto_test.py"
+SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "test_team_v0106_auto_test.py"
 
 
 def _load_script_module():
-    spec = importlib.util.spec_from_file_location("test_team_v0105_auto_test", SCRIPT)
+    spec = importlib.util.spec_from_file_location("test_team_v0106_auto_test", SCRIPT)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     sys.modules[spec.name] = module
@@ -30,7 +30,7 @@ def test_test_team_auto_script_dry_run_emits_plan(tmp_path):
 
     payload = json.loads(result.stdout)
     assert payload["kind"] == "framepack_test_team_auto_test"
-    assert payload["framepack_version"] == "0.10.5"
+    assert payload["framepack_version"] == "0.10.6"
     assert payload["dry_run"] is True
     assert "source_pytest" in payload["planned_checks"]
     assert "deployed_smoke" in payload["planned_checks"]
@@ -47,8 +47,8 @@ def test_test_team_auto_script_writes_json_report_for_dry_run(tmp_path):
         check=True,
     )
 
-    report = json.loads((output_dir / "framepack-v0105-auto-test-report.json").read_text(encoding="utf-8"))
-    assert report["framepack_version"] == "0.10.5"
+    report = json.loads((output_dir / "framepack-v0106-auto-test-report.json").read_text(encoding="utf-8"))
+    assert report["framepack_version"] == "0.10.6"
     assert report["summary"]["failed"] == 0
 
 
@@ -68,4 +68,4 @@ def test_deployed_smoke_code_checks_plugin_yaml_version():
     code = module._deployed_smoke_code(Path("F:/Hermes_windows/plugins/framepack"))
 
     assert "plugin.yaml" in code
-    assert "0.10.5" in code
+    assert "0.10.6" in code
