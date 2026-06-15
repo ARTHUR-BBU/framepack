@@ -311,6 +311,7 @@ The HyperFrames Structure Checklist goes BEFORE the Execution Manifest:
 □ NO data-hf-id on non-media elements
   (only <video> and <audio> may have data-hf-id — the compiler adds them)
 □ font-family uses literal font names ("Anton 900", not "var(--font-heading)")
+□ External fonts may be acquired through local VPN/proxy, but final HTML should use project-local `assets/fonts/` + `@font-face`, not live Google Fonts URLs
 □ <video> elements at root level, NOT nested inside timed divs
 □ <audio> elements at root level with data-track-index
 □ Every clip contains an inner visual wrapper (`.scene-inner` or `#sN-inner`)

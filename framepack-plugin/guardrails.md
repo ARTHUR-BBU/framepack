@@ -134,6 +134,7 @@ Agent 面对"写动画"任务时走最舒适路径——"我懂 GSAP，直接写
 6. 禁止对 clip 根元素 / clip root 做 opacity/filter/transform 动画
    （clip 是 HyperFrames 时间调度壳；blur crossfade/scale/fade 只能动 inner wrapper）
 7. font-family 用字面字体名（"Anton 900"），禁止 CSS 变量（var(--font-heading)）
+   字体生产口径：可用本地 VPN/代理获取外部字体，但最终 HTML 应 vendor 到 `assets/fonts/` + `@font-face`；不要让 render/playback 依赖 live Google Fonts。
 8. <video> 和 <audio> 放在根级别，不嵌套在 timed div 里
 9. window.__timelines["main"] = tl（时间线注册，没有这个 = 全黑屏）
 10. npx hyperframes lint → 0 errors 才能 preview / render

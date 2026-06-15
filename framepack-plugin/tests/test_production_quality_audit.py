@@ -298,3 +298,79 @@ def test_quality_audit_existing_proofs_clear_missing_and_report_contact_sheet(tm
     assert "proof_missing" not in issue_codes(report)
     issue = next(issue for issue in report.issues if issue.code == "contact_sheet_missing")
     assert issue.severity == "P3"
+
+
+def test_quality_audit_rejects_nan_and_infinity_numeric_fields(tmp_path):
+    write_minimal_project(tmp_path)
+    timeline_path = tmp_path / ".framepack" / "timeline-manifest.json"
+    timeline_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "kind": "framepack_timeline_manifest",
+                "project": {"name": tmp_path.name, "duration": float("nan")},
+                "scenes": [
+                    {"id": "scene_01", "start": "Infinity", "duration": "-Infinity", "track_index": 0, "status": "draft"}
+                ],
+                "proofs": {"directory": ".framepack/proofs", "contact_sheet": ".framepack/proofs/contact-sheet.jpg", "required": [{"time": "NaN", "label": "global", "required": True}]},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / ".framepack" / "arsenal.json").write_text(
+        json.dumps({"schema_version": "1.0.0", "project": tmp_path.name, "hyperframes_config": {"duration": "Infinity"}, "weapons": {}}),
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    codes = issue_codes(report)
+
+    assert "arsenal_duration_invalid" in codes
+    assert "timeline_duration_invalid" in codes
+    assert "timeline_scene_invalid" in codes
+    assert "proof_invalid" in codes
+
+
+def test_quality_audit_reports_proof_paths_outside_project(tmp_path):
+    write_minimal_project(tmp_path)
+    timeline_path = tmp_path / ".framepack" / "timeline-manifest.json"
+    outside = tmp_path.parent / "outside-proofs"
+    timeline_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "kind": "framepack_timeline_manifest",
+                "project": {"name": tmp_path.name, "duration": 4.0},
+                "scenes": [],
+                "proofs": {"directory": "../outside-proofs", "contact_sheet": str(outside / "contact-sheet.jpg"), "required": []},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    issues = [issue for issue in report.issues if issue.code == "proof_path_outside_project"]
+
+    assert len(issues) == 2
+    assert {issue.details["field"] for issue in issues} == {"proofs.directory", "proofs.contact_sheet"}
+
+
+def test_quality_audit_allows_project_local_proof_paths(tmp_path):
+    write_minimal_project(tmp_path)
+    timeline_path = tmp_path / ".framepack" / "timeline-manifest.json"
+    timeline_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "kind": "framepack_timeline_manifest",
+                "project": {"name": tmp_path.name, "duration": 4.0},
+                "scenes": [],
+                "proofs": {"directory": ".framepack/proofs", "contact_sheet": ".framepack/proofs/contact-sheet.jpg", "required": []},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+
+    assert "proof_path_outside_project" not in issue_codes(report)

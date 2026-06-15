@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from pathlib import Path
 import re
 from typing import Any
@@ -38,21 +39,60 @@ def _coerce_time(value: Any) -> float | None:
     if isinstance(value, bool):
         return None
     try:
-        return float(value)
+        number = float(value)
     except (TypeError, ValueError):
         return None
+    return number if math.isfinite(number) else None
+
+
+def _resolve_project_path(project_dir: Path, value: Any) -> Path:
+    path = Path(str(value))
+    if path.is_absolute():
+        return path.resolve()
+    return (project_dir / path).resolve()
+
+
+def _is_within_project(project_dir: Path, path: Path) -> bool:
+    root = project_dir.resolve()
+    resolved = path.resolve()
+    try:
+        return resolved.is_relative_to(root)
+    except AttributeError:  # pragma: no cover - py<3.9 defensive
+        return str(resolved).startswith(str(root))
 
 
 def _proofs_dir(project_dir: Path, timeline: dict[str, Any]) -> Path:
     proofs = timeline.get("proofs") if isinstance(timeline.get("proofs"), dict) else {}
     directory = proofs.get("directory") or ".framepack/proofs"
-    return project_dir / directory
+    return _resolve_project_path(project_dir, directory)
 
 
 def _contact_sheet_path(project_dir: Path, timeline: dict[str, Any]) -> Path:
     proofs = timeline.get("proofs") if isinstance(timeline.get("proofs"), dict) else {}
     contact_sheet = proofs.get("contact_sheet") or ".framepack/proofs/contact-sheet.jpg"
-    return project_dir / contact_sheet
+    return _resolve_project_path(project_dir, contact_sheet)
+
+
+def _path_scope_issues(project_dir: Path, timeline: dict[str, Any]) -> list[ProofIssue]:
+    issues: list[ProofIssue] = []
+    proofs = timeline.get("proofs") if isinstance(timeline.get("proofs"), dict) else {}
+    checks = {
+        "proofs.directory": proofs.get("directory") or ".framepack/proofs",
+        "proofs.contact_sheet": proofs.get("contact_sheet") or ".framepack/proofs/contact-sheet.jpg",
+    }
+    for field, value in checks.items():
+        resolved = _resolve_project_path(project_dir, value)
+        if not _is_within_project(project_dir, resolved):
+            issues.append(
+                ProofIssue(
+                    "proof_path_outside_project",
+                    "P1",
+                    f"{field} resolves outside the project directory; proof evidence must stay project-local",
+                    str(resolved),
+                    details={"field": field, "configured": value, "project_dir": str(project_dir.resolve())},
+                )
+            )
+    return issues
 
 
 def _missing_issue(code: str, severity: str, proofs_dir: Path, scene_id: str | None, item: dict[str, Any]) -> ProofIssue:
@@ -84,6 +124,7 @@ def _invalid_proof_issue(proofs_dir: Path, scene_id: str | None, item: dict[str,
 def audit_proofs(project_dir: Path, timeline: dict[str, Any]) -> list[ProofIssue]:
     project_dir = Path(project_dir)
     issues: list[ProofIssue] = []
+    issues.extend(_path_scope_issues(project_dir, timeline))
     proofs_dir = _proofs_dir(project_dir, timeline)
     checked_any = False
     existing_any = proofs_dir.exists() and any(proofs_dir.glob("proof-*.png"))

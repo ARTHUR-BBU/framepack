@@ -304,3 +304,93 @@ elasticScaleEnter(tl, el, {fromScale: 0.85, ease: 'elastic.out(1, 0.3)'});
 
     assert not [i for i in report.issues if i.code == "weapon_parameter_drift"]
     assert not [i for i in report.issues if i.code == "manifest_weapon_not_called"]
+
+
+def test_quality_audit_reports_external_google_font_dependency(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text("", encoding="utf-8")
+    (tmp_path / "index.html").write_text(
+        """
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+<style>body { font-family: 'Noto Sans SC', sans-serif; }</style>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    issue = next(issue for issue in report.issues if issue.code == "external_font_dependency")
+
+    assert issue.severity == "P1"
+    assert "local font asset" in issue.message
+    assert issue.details["proxy_note"] == "Proxy/VPN may be used for acquisition, but production HTML should not depend on live Google Fonts."
+
+
+def test_quality_audit_allows_existing_local_font_face_asset(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text("", encoding="utf-8")
+    fonts_dir = tmp_path / "assets" / "fonts"
+    fonts_dir.mkdir(parents=True)
+    (fonts_dir / "NotoSansSC-VF.ttf").write_bytes(b"fake-font")
+    (tmp_path / "index.html").write_text(
+        """
+<style>
+@font-face { font-family: 'Noto Sans SC'; src: url('assets/fonts/NotoSansSC-VF.ttf') format('truetype'); }
+body { font-family: 'Noto Sans SC', sans-serif; }
+</style>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+
+    assert not [issue for issue in report.issues if issue.code in {"external_font_dependency", "font_face_missing_local_asset"}]
+
+
+def test_quality_audit_reports_missing_local_font_face_asset(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text("", encoding="utf-8")
+    (tmp_path / "index.html").write_text(
+        """
+<style>
+@font-face { font-family: 'Noto Sans SC'; src: url('assets/fonts/Missing.ttf') format('truetype'); }
+body { font-family: 'Noto Sans SC', sans-serif; }
+</style>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    issue = next(issue for issue in report.issues if issue.code == "font_face_missing_local_asset")
+
+    assert issue.severity == "P2"
+    assert issue.details["asset"] == "assets/fonts/Missing.ttf"
+
+
+def test_quality_audit_reports_low_visibility_risk_from_dark_background_and_brightness_filter(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text("", encoding="utf-8")
+    (tmp_path / "frame.md").write_text(
+        """
+colors:
+  background: "#0a0a0c"
+  primary: "#101014"
+  accent: "#17171a"
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<style>
+.scene-inner { background: #0a0a0c; color: #101014; filter: brightness(0.3); }
+.veil { background: rgba(0, 0, 0, 0.82); }
+</style>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    issue = next(issue for issue in report.issues if issue.code == "low_visibility_risk")
+
+    assert issue.severity == "P2"
+    assert "brightness" in issue.details["signals"]

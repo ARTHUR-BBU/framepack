@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
+import math
 import re
 from pathlib import Path
 from typing import Any
@@ -73,9 +74,10 @@ def _coerce_float(value: Any) -> float | None:
     if isinstance(value, bool):
         return None
     try:
-        return float(value)
+        number = float(value)
     except (TypeError, ValueError):
         return None
+    return number if math.isfinite(number) else None
 
 
 def _target_duration(expanded_prompt: str, html: str) -> float | None:
@@ -95,7 +97,108 @@ def _norm(value: object) -> str:
         number = float(text)
     except ValueError:
         return text
+    if not math.isfinite(number):
+        return text
     return str(int(number)) if number.is_integer() else str(number)
+
+
+def _is_remote_url(value: str) -> bool:
+    return bool(re.match(r"^(?:https?:)?//", value.strip(), re.I))
+
+
+def _font_src_urls(html: str) -> list[str]:
+    urls: list[str] = []
+    for block in re.findall(r"@font-face\s*\{(?P<body>.*?)\}", html, re.I | re.S):
+        for url in re.findall(r"url\(\s*['\"]?(?P<url>[^)'\"\s]+)['\"]?\s*\)", block, re.I):
+            urls.append(url.strip())
+    return urls
+
+
+def _audit_font_dependencies(project_dir: Path, html: str) -> list[QualityIssue]:
+    issues: list[QualityIssue] = []
+    html_path = project_dir / "index.html"
+    external_matches = sorted(set(re.findall(r"https?://fonts\.(?:googleapis|gstatic)\.com/[^\s'\"<>]+", html, re.I)))
+    if external_matches:
+        issues.append(
+            QualityIssue(
+                "external_font_dependency",
+                "P1",
+                "index.html depends on live Google Fonts; use proxy/VPN for acquisition if needed, then vendor a local font asset under assets/fonts for production portability",
+                str(html_path),
+                details={
+                    "urls": external_matches,
+                    "proxy_note": "Proxy/VPN may be used for acquisition, but production HTML should not depend on live Google Fonts.",
+                },
+            )
+        )
+
+    for url in _font_src_urls(html):
+        if _is_remote_url(url) or url.startswith("data:"):
+            continue
+        asset_path = (project_dir / url).resolve()
+        try:
+            inside_project = asset_path.is_relative_to(project_dir.resolve())
+        except AttributeError:  # pragma: no cover - py<3.9 defensive
+            inside_project = str(asset_path).startswith(str(project_dir.resolve()))
+        if not inside_project or not asset_path.is_file():
+            issues.append(
+                QualityIssue(
+                    "font_face_missing_local_asset",
+                    "P2",
+                    f"@font-face references missing or out-of-project local font asset: {url}",
+                    str(html_path),
+                    details={"asset": url, "resolved": str(asset_path)},
+                )
+            )
+    return issues
+
+
+def _hex_luminance(hex_color: str) -> float | None:
+    text = hex_color.strip().lstrip("#")
+    if len(text) == 3:
+        text = "".join(char * 2 for char in text)
+    if len(text) not in {6, 8} or not re.fullmatch(r"[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?", text):
+        return None
+    r = int(text[0:2], 16) / 255
+    g = int(text[2:4], 16) / 255
+    b = int(text[4:6], 16) / 255
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def _extract_hex_colors(text: str) -> list[str]:
+    return re.findall(r"#[0-9a-fA-F]{3,8}\b", text)
+
+
+def _audit_visibility(project_dir: Path, frame_md: str, html: str) -> list[QualityIssue]:
+    signals: list[str] = []
+    dark_colors = []
+    for color in _extract_hex_colors(frame_md + "\n" + html):
+        luminance = _hex_luminance(color)
+        if luminance is not None and luminance < 0.10:
+            dark_colors.append(color)
+    if len(set(dark_colors)) >= 2:
+        signals.append("dark_palette_low_contrast")
+
+    for value in re.findall(r"brightness\(\s*([0-9.]+)\s*\)", html, re.I):
+        amount = _coerce_float(value)
+        if amount is not None and amount < 0.5:
+            signals.append("brightness")
+            break
+
+    if re.search(r"rgba\(\s*0\s*,\s*0\s*,\s*0\s*,\s*(?:0\.[7-9]\d*|1(?:\.0+)?)\s*\)", html, re.I):
+        signals.append("heavy_black_overlay")
+
+    if len(signals) >= 2:
+        return [
+            QualityIssue(
+                "low_visibility_risk",
+                "P2",
+                "Static visibility heuristic found a dark palette combined with dimming/black overlay; run proof-frame review before handing to test group",
+                str(project_dir / "index.html"),
+                details={"signals": sorted(set(signals)), "dark_colors": sorted(set(dark_colors))},
+            )
+        ]
+    return []
 
 
 def _split_js_object_entries(raw: str) -> list[str]:
@@ -430,6 +533,7 @@ def _summarize(issues: list[QualityIssue]) -> dict[str, int]:
 def audit_project(project_dir: str | Path) -> QualityAuditReport:
     project_dir = Path(project_dir)
     expanded_prompt = _read(project_dir / ".hyperframes" / "expanded-prompt.md")
+    frame_md = _read(project_dir / "frame.md")
     html = _read(project_dir / "index.html")
     arsenal = _load_json(project_dir / ".framepack" / "arsenal.json")
     manifest = parse_execution_manifest(expanded_prompt)
@@ -439,6 +543,8 @@ def audit_project(project_dir: str | Path) -> QualityAuditReport:
     issues.extend(_audit_arsenal(project_dir, arsenal, manifest, duration))
     issues.extend(_audit_html_guardrails(project_dir, html, manifest))
     issues.extend(_audit_parameter_drift(project_dir, html, manifest))
+    issues.extend(_audit_font_dependencies(project_dir, html))
+    issues.extend(_audit_visibility(project_dir, frame_md, html))
     issues.extend(_audit_timeline(project_dir, html, expanded_prompt, duration))
 
     return QualityAuditReport(str(project_dir), issues, _summarize(issues))

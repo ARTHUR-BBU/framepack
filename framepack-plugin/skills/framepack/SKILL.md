@@ -87,7 +87,8 @@ Framepack 现在不只会“发现环境不对”，还会把安装/升级拆成
 
 Framepack 现在多了一张“安检小票”，不是新的 HTML 审判官：
 
-- `core/quality_audit.py` — 纯 Python 语义审计，检查 stale `.framepack/arsenal.json`、Execution Manifest 武器缺登记、手动 `data-hf-id`、Manifest 参数与 HTML 函数实参漂移、card-cascade 未声明等问题。
+- `core/quality_audit.py` — 纯 Python 语义审计，检查 stale `.framepack/arsenal.json`、Execution Manifest 武器缺登记、手动 `data-hf-id`、Manifest 参数与 HTML 函数实参漂移、card-cascade 未声明、外部 Google Fonts 运行时依赖、缺失本地字体资产、暗底低可见性风险等问题。
+- v0.10.6 hardening 口径：国内用户常开本地 VPN/代理，外部资源获取（catalog/registry/fonts）要先检测代理并带代理访问；但最终生产 HTML 应尽量 vendor 到项目本地（如 `assets/fonts/`），不要让 render/playback 依赖 live Google Fonts。
 - `scripts/framepack_quality_audit.py <project> --format json|markdown` — 机器/人工可读报告。
 - pre_tool_call 在 handoff-consuming HyperFrames 命令前，如果项目已有 `index.html`，会注入非阻断 Quality Audit summary。
 

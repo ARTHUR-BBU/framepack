@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import json
+import math
 from pathlib import Path
 import re
 import tempfile
@@ -160,9 +161,10 @@ def _scene_dict(scene_id: str, start: float, duration: float, track_index: int |
 
 def _parse_float(value: str) -> float | None:
     try:
-        return float(value.strip().rstrip("s"))
+        number = float(value.strip().rstrip("s"))
     except ValueError:
         return None
+    return number if math.isfinite(number) else None
 
 
 def _parse_int(value: str) -> int | None:
@@ -176,9 +178,10 @@ def _coerce_float(value: Any) -> float | None:
     if isinstance(value, bool):
         return None
     try:
-        return float(value)
+        number = float(value)
     except (TypeError, ValueError):
         return None
+    return number if math.isfinite(number) else None
 
 
 def _coerce_int(value: Any) -> int | None:
