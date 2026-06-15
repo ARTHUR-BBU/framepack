@@ -7,10 +7,10 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.10.5 已完成 release-prep bump、部署同步、验证、测试组自动测试报告生成；测试组进入手动项目测试后发现 `F:/Framepack-01-test` 未生成项目级 `AGENTS.md`（用户口头称 agent.md）。已定位为 pre_tool_call 只看 terminal tool `workdir`、不会解析 shell `cd project && npx hyperframes ...` 的项目目录问题；已修复、验证、部署同步并 push。尚未创建 v0.10.5 tag/GitHub Release。  
+**阶段**: Framepack v0.10.5 测试组报告已收到并复核。自动测试与实测 render 全链路通过；报告中的 P0 主要是基于旧基准 `fdf6102` 暴露的 arsenal 自动同步缺口，当前 HEAD `070e94f` 已通过 shell `cd project && npx hyperframes ...` hydration 修复并补齐 `F:/Framepack-01-test` 的 `AGENTS.md` + `.framepack` 账本。尚未创建 v0.10.5 tag/GitHub Release。  
 **分支**: `framepack-agent-platform`  
 **正式源码版本**: v0.10.5（`framepack-plugin/plugin.yaml` = `0.10.5`；部署目录和独立 skills 已同步到 0.10.5）  
-**最新远端提交**: `be318b5` (`fix: hydrate framepack project after shell cd`)；release-prep 功能基准为 `fdf6102` (`[verified] release prep framepack v0.10.5`)  
+**最新远端提交**: `070e94f` (`handoff: note v0.10.5 shell cd hydration fix`)；插件修复提交为 `be318b5`，release-prep 功能基准为 `fdf6102` (`[verified] release prep framepack v0.10.5`)  
 **GitHub Release**: 当前公开 release 仍是 v0.10.3：https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.3
 
 ### 本轮做了什么
@@ -23,6 +23,8 @@
 - ✅ 同步部署目录：`framepack-plugin/hooks/on_pre_tool_call.py` → `F:/Hermes_windows/plugins/framepack/hooks/on_pre_tool_call.py`；`framepack-plugin/skills/framepack/SKILL.md` → plugin skill + 独立 skill。
 - ✅ 手动修复测试项目账本：`F:/Framepack-01-test/AGENTS.md` 已创建；`.framepack/arsenal.json` 和 `.framepack/timeline-manifest.json` 已同步。
 - ✅ 提交并 push：`be318b5 fix: hydrate framepack project after shell cd`。
+- ✅ 读取测试组 Obsidian 报告：`C:/Users/LENOVO/Documents/AI-Coach-Vault/Windows/2026-06-15-Framepack-v0.10.5-测试报告.md`。结论：自动测试全部通过，实测 `Framepack Director → HyperFrames HTML → render` 产出 `video.mp4` 39s/1170 frames；报告列出 P0/P1/P2 hardening 项。
+- ✅ 用当前 HEAD + 已部署插件复跑带 case 自动测试：`passed=5, failed=0, skipped=0`，`case_quality_audit` summary 为 `P0=0/P1=0/P2=0/P3=0`。
 
 ### 验证证据
 
@@ -35,11 +37,12 @@
 - Deploy sync read-back：`cmp -s` source/deployed `on_pre_tool_call.py` + source/deployed/independent `framepack/SKILL.md` → `deploy sync ok`。
 - Test project repair：`sync_project_agents(F:/Framepack-01-test)` → `{'changed': True, 'action': 'created', 'path': 'F:\\Framepack-01-test\\AGENTS.md', 'version': '0.10.5', 'error': None}`。
 - Test project ledger sync：arsenal → `action='synced'`, path `F:\Framepack-01-test\.framepack\arsenal.json`, warning `handwrite_weapon`；timeline → `action='synced'`, path `F:\Framepack-01-test\.framepack\timeline-manifest.json`。
+- Post-report current HEAD verification：`python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.5-postreport --case-project F:/Framepack-01-test` → `passed=5, failed=0, skipped=0`; `case_quality_audit` → `P0=0/P1=0/P2=0/P3=0`。
 
 ### 给测试组的入口
 
 - 分支：`framepack-agent-platform`
-- 当前远端 HEAD：`be318b5`（包含 v0.10.5 release-prep + 测试说明修正 + shell cd hydration 修复）
+- 当前远端 HEAD：`070e94f`（包含 v0.10.5 release-prep + 测试说明修正 + shell cd hydration 修复 + handoff）
 - 功能基准提交：`fdf6102`
 - 自动测试脚本：`scripts/test_team_v0105_auto_test.py`
 - 测试说明：`TEST_TEAM_AUTOTEST_v0.10.5.md`
@@ -50,9 +53,8 @@
 
 ### 下次要做什么
 
-- 把测试组口径说清：文件名是 `AGENTS.md`，不是 `agent.md`；它是项目级铁律托管块，不是创意产物。
-- 等测试组基于当前 HEAD `be318b5` 回传手动命题视频测试报告；若有 P0/P1，先复现再修。
-- 若老田决定发布正式版：创建 `v0.10.5` tag + GitHub Release，并把 release URL 写回交接台。
+- 测试报告已读：A/B 自动测试 + render 全链路可作为 v0.10.5 放行依据；报告中的 P1/P2 多数应进 v0.10.6/v0.11 hardening backlog，而不是阻塞 v0.10.5 tag。
+- 若老田认可当前风险分级：创建 `v0.10.5` tag + GitHub Release，并把 release URL 写回交接台。
 - 继续 hardening backlog：NaN/Infinity 数值拒绝、proof path project-local 限定/审计 warning。
 
 ## 关键路径
@@ -80,8 +82,9 @@
 
 ## 待办 / 想法池
 
-- [ ] 等测试组基于当前 HEAD `be318b5` 回传 v0.10.5 手动项目测试报告。
+- [x] 测试组 v0.10.5 手动项目测试报告已收到并复核。
 - [ ] 视老田决定：创建 v0.10.5 tag/GitHub Release，或仅交测试组先测。
+- [ ] v0.10.6/v0.11 hardening：Manifest → HTML weapon binding 强制/审计、Google Fonts 本地化提示、暗底可见性审计、timeline 在 frame.md/expanded-prompt.md 中结构化表达口径。
 - [ ] Hardening：数值解析拒绝 NaN/Infinity。
 - [ ] Hardening：proof path 限定在 project-local 或至少 audit warning。
 - [ ] 文档：hook 会非阻断创建/同步 `.framepack` ledger；CLI 默认 report-first，只在显式 sync/output flags 下写文件。
