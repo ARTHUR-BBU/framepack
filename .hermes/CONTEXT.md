@@ -7,42 +7,44 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.10.3 — Quality Beyond Lint 已发布，进入测试组自动测试 + 真实案例测试阶段  
+**阶段**: Framepack v0.10.3 — 测试组自动测试 + whop 真实案例测试已完成，全链路绿灯；进入 v0.10.4 产品 gap 设计准备阶段  
 **分支**: framepack-agent-platform  
 **正式版本**: v0.10.3  
 **GitHub Release**: https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.3  
 **发布提交**: 915623e ([verified] release framepack v0.10.3)  
+**最新 handoff 提交**: 00fc76f (handoff: update framepack v0.10.3 release status)  
 **Tag**: v0.10.3  
-**测试**: 发布前全量 pytest `198 passed in 8.59s`；测试组自动脚本 `5 passed / 0 failed / 0 skipped`；真实测试项目 Quality Audit 检出 P0=15 / P1=13 / total=28（这是检测能力验证，不是脚本失败）。  
-**部署**: 源码 `F:\hyperframes\framepack-plugin` 已同步到活跃部署目录 `F:\Hermes_windows\plugins\framepack`；部署版 `plugin.yaml` 为 `version: "0.10.3"`。  
-**工作区**: v0.10.3 发布后干净；本交接台更新需单独提交。
+**测试**: 发布前全量 pytest `198 passed`；测试组自动测试 `passed=5, failed=0, skipped=0`；whop 新案例 HyperFrames lint `0 errors, 7 warnings`、validate `0 errors`、snapshot `6/6`、render `1280x720, 35s, 30fps, 1050 frames, 1.3 MB MP4, exit_code=0`；Quality Audit `P0=1, P1=9, P2=0, P3=0, total=10`。  
+**部署**: 源码 `F:\hyperframes\framepack-plugin` 已同步到活跃部署目录 `F:\Hermes_windows\plugins\framepack`；源码/部署版 `plugin.yaml` 均为 `version: "0.10.3"`。  
+**工作区**: 测试报告已接收；本交接台更新需单独提交。
 
 ### 上次做了什么
 
-- ✅ 完成 Framepack v0.10.3 全面版本升级：plugin.yaml、README/docs、AGENTS、CHANGELOG、hooks logger/docstring、compat matrix、core 默认版本、apply_skill_overlays、plugin skills frontmatter 全部同步到 0.10.3。
-- ✅ 正式发布 Quality Beyond Lint：`core/quality_audit.py`、`scripts/framepack_quality_audit.py`、pre_tool_call 非阻断 Quality Audit summary、scene-keyed Execution Manifest parser、builtin weapon catalog coverage。
-- ✅ 修复 Quality Audit CLI：`--output` 指向嵌套路径时会自动创建父目录，避免测试组脚本写报告失败。
-- ✅ 新增测试组自动测试脚本 `scripts/test_team_v0103_auto_test.py`，覆盖 source_pytest、release_version_sync、quality_audit_cli、deployed_smoke、case_quality_audit。
-- ✅ 新增测试组说明 `TEST_TEAM_AUTOTEST_v0.10.3.md`，给出自动测试命令、输出文件、真实案例测试接收标准。
-- ✅ 根据独立 reviewer 建议加固：测试组脚本从生成的 `case-quality-audit.json` 读取 summary，不从可能截断的 stdout 解析；deployed_smoke 检查部署版 plugin.yaml 版本为 0.10.3。
-- ✅ 跑完发布前验证：`python -m pytest tests/ -q -o "addopts="` → 198 passed；测试组自动脚本 → 5/5 passed；真实项目 audit → P0=15/P1=13/28 issues；安全扫描无 secrets/private keys/shell=True/eval/pickle/yaml.load；独立 pre-commit review 放行。
-- ✅ Git 操作完成：commit `915623e`，annotated tag `v0.10.3`，push 分支和 tag 到 GitHub，并创建正式 GitHub Release。
-- ✅ 已把“阶段切换/发布后必须更新交接台并提交 handoff”写入用户长期偏好。
+- ✅ 接收并核验测试组 v0.10.3 完整报告：`F:/Framepack-01-test/TEST-REPORT-v0.10.3.md` 与 Obsidian 归档报告内容一致。
+- ✅ 自动测试全绿：`source_pytest`、`release_version_sync`、`quality_audit_cli`、`deployed_smoke`、`case_quality_audit` 共 5/5 PASS；部署版版本号确认 0.10.3。
+- ✅ whop “Get a Bag” 全新复刻案例跑通完整链路：参考 DNA → frame.md → expanded-prompt.md（12 场景）→ index.html（336 行）→ lint/validate/snapshot/render。
+- ✅ 出片成功：`F:/Framepack-whop-case/renders/Framepack-whop-case_2026-06-15_11-54-42.mp4`，35s / 1280x720 / 30fps / 1050 frames / 1.3 MB。
+- ✅ Quality Audit 在新案例检出 10 个产品 gap：P0 `arsenal_missing` ×1，P1 `manifest_weapon_not_called` ×9；这是安检门生效，不是工具链失败。
+- ✅ 相比旧案例 28 issues 明显改善：手动 `data-hf-id` 从 85 降到 0，武器参数漂移从 10 降到 0，P0 从 15 降到 1。
+- ✅ 明确 v0.10.4 候选方向：arsenal 自动初始化、武器函数名到 HTML 调用绑定、审计器对 HANDWRITE/可接受偏离的语义处理。
 
-### 测试组下一步
+### 测试组结论
 
-- 让测试组按 `TEST_TEAM_AUTOTEST_v0.10.3.md` 跑自动测试：
-  `python scripts/test_team_v0103_auto_test.py --repo F:/hyperframes --case-project F:/Framepack-01-test --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir F:/Framepack-01-test/test-team-v0103-report`
-- 收集并回传：`framepack-v0103-auto-test-report.json`、`framepack-v0103-auto-test-report.md`、`case-quality-audit.json`。
-- 继续安排真实案例测试：新案例或反向复刻案例，跑 `npx hyperframes lint/validate/snapshot/render`，再跑 `framepack_quality_audit.py` 输出 markdown/json。
-- 注意：case Quality Audit 出现 P0/P1 不代表自动脚本失败；它是为了验证 v0.10.3 能识别 lint 看不见的语义风险。
+- v0.10.3 自动测试通过：5/5 PASS，0 failed。
+- v0.10.3 实际案例测试通过：Framepack 创意流程 + HyperFrames 制作流水线端到端绿灯。
+- 10 个 Quality Audit 问题均为产品层 gap，不阻塞 v0.10.3；应转入 v0.10.4 设计。
+- 报告文件：
+  - `F:/Framepack-01-test/TEST-REPORT-v0.10.3.md`
+  - `C:/Users/LENOVO/Documents/AI-Coach-Vault/Windows/2026-06-15 Framepack v0.10.3 完整测试报告.md`
+  - `F:/Framepack-whop-case/framepack-quality-audit.md`
 
 ### 下次要做什么
 
-- 新 session 第一件事：读本交接台 + `AGENTS.md` + `TEST_TEAM_AUTOTEST_v0.10.3.md`，确认 release/tag 状态，不要回到 v0.10.2 旧任务。
-- 等测试组回传自动测试和真实案例测试结果；按实际反馈决定 v0.10.4 或 hotfix。
-- 若测试组发现新 bug：bug → `systematic-debugging`；改 Python → `test-driven-development`；完成声明 → `verification-before-completion`；提交前 → `requesting-code-review`。
-- 后续如果进入 v0.10.4，先做 brainstorming，明确 Quality Beyond Lint 第二层：Timing / Asset / Render Integrity / docs ergonomics。
+- 如果继续开发，先加载 `brainstorming`，设计 v0.10.4：arsenal 自动初始化 + weapon binding runtime/adapter + Quality Audit 语义降噪。
+- 进入修复前不要直接写代码；先决定产品边界：Framepack 负责生成/绑定武器函数到什么程度，HyperFrames 仍只负责 HTML/lint/render。
+- 若改 Python：加载 `test-driven-development`，先为 arsenal 初始化和 weapon call detection/binding 写失败测试。
+- 完成声明前加载 `verification-before-completion`；提交前按老田偏好先做 simplify + 审核，再加载 `requesting-code-review`。
+
 
 ## 新对话打开后
 
@@ -76,11 +78,12 @@
 
 ## 待办 / 想法池
 
-- [ ] 等测试组 v0.10.3 自动测试报告；先看 `summary.failed`，再看 case_quality_audit 的 P0/P1 详情。
-- [ ] 等测试组真实案例测试报告；重点确认 lint 通过但 Quality Audit 抓到的问题是否符合预期，是否有误报/漏报。
-- [ ] 如果进入 v0.10.4，优先评估 Quality Beyond Lint 第二层：Timing Gate、Asset Gate、Render Integrity、docs/test ergonomics。
+- [ ] v0.10.4 头脑风暴：arsenal 自动初始化机制（新项目何时创建 `.framepack/arsenal.json`、默认 schema、空 registry 是否算 P0）。
+- [ ] v0.10.4 头脑风暴：武器函数名绑定机制（Manifest weapon → registered function → HTML 调用），避免 Agent 继续内联 GSAP。
+- [ ] v0.10.4 头脑风暴：Quality Audit 对 `HANDWRITE`、可接受偏离、pattern-equivalent inline GSAP 的判定策略，降低误报但不放松铁律。
 - [ ] 评估 Guardrail Hydrator：hash 相同但插件版本更新时，是否也应刷新 managed block metadata version，降低测试组误读。
 - [ ] 更新/补齐 framepack-plugin-engineering skill，使其覆盖 v0.10.x 的插件开发、部署、版本同步、Environment & Upgrade Manager、Quality Audit 发布流程。
+
 
 ## 笔记
 
