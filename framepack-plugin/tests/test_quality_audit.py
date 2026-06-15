@@ -7,6 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core.quality_audit import audit_project
+import core.quality_audit as quality_audit
 
 
 def _write_project(tmp_path: Path) -> None:
@@ -208,6 +209,73 @@ textSplitEnter(tl, el, {distance: '60px'});
     report = audit_project(tmp_path)
 
     assert any(i.code == "manifest_weapon_not_called" for i in report.issues)
+
+
+def test_not_called_issue_hints_when_inline_gsap_pattern_is_present(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: text-split-enter
+  params:
+    travelDistance: "60px"
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+gsap.from(chars, { y: 60, opacity: 0, stagger: 0.03, duration: 0.7 });
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    not_called = [i for i in report.issues if i.code == "manifest_weapon_not_called"]
+
+    assert len(not_called) == 1
+    assert not_called[0].severity == "P1"
+    assert not_called[0].details["function"] == "textSplitEnter"
+    assert not_called[0].details["inline_hint"]["suspected"] is True
+    assert "canonical function" in not_called[0].details["inline_hint"]["recommendation"]
+
+
+def test_parameter_drift_uses_builtin_catalog_function_mapping(tmp_path, monkeypatch):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: catalog-only-fx
+  params:
+    travelDistance: "60px"
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+catalogOnlyFx(tl, el, {travelDistance: '120px'});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    def fake_resolve(weapon_id):
+        if weapon_id == "catalog-only-fx":
+            return {"id": weapon_id, "function": "catalogOnlyFx"}
+        return None
+
+    monkeypatch.setattr(quality_audit, "resolve_builtin_weapon", fake_resolve)
+
+    report = audit_project(tmp_path)
+    drift = [i for i in report.issues if i.code == "weapon_parameter_drift"]
+
+    assert len(drift) == 1
+    assert drift[0].details["function"] == "catalogOnlyFx"
+    assert drift[0].details["drift"]["travelDistance"] == {"expected": "60px", "actual": "120px"}
 
 
 def test_parameter_drift_accepts_quoted_values_that_contain_commas(tmp_path):

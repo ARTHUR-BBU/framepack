@@ -11,6 +11,7 @@ from core.arsenal_registry import (
     load_arsenal,
     register_builtin_weapon,
     reconcile_manifest,
+    sync_arsenal_from_project,
     validate_arsenal,
 )
 from core.execution_manifest import ManifestWeapon
@@ -53,6 +54,45 @@ def test_ensure_arsenal_creates_weapons_dir_and_no_state_json(tmp_path):
 
     assert (tmp_path / ".framepack" / "weapons").is_dir()
     assert not (tmp_path / ".framepack" / "state.json").exists()
+
+
+def test_sync_arsenal_from_project_creates_and_reconciles_manifest(tmp_path):
+    hyperframes = tmp_path / ".hyperframes"
+    hyperframes.mkdir()
+    (hyperframes / "expanded-prompt.md").write_text(
+        """# Promo
+
+## Execution Manifest
+
+weapons:
+  - id: text-split-enter
+    source: builtin
+    used_by: scene_1
+  - weapon: caption-clip-wipe
+    scene: scene_2
+""",
+        encoding="utf-8",
+    )
+
+    result = sync_arsenal_from_project(tmp_path, tmp_path)
+
+    arsenal_path = tmp_path / ".framepack" / "arsenal.json"
+    data = json.loads(arsenal_path.read_text(encoding="utf-8"))
+    assert result.changed is True
+    assert result.action == "synced"
+    assert data["weapons"]["text-split-enter"]["used_by"] == ["scene_1"]
+    assert data["weapons"]["text-split-enter"]["function"] == "textSplitEnter"
+    assert data["weapons"]["caption-clip-wipe"]["used_by"] == ["scene_2"]
+    assert data["weapons"]["caption-clip-wipe"]["function"] == "captionClipWipe"
+
+
+def test_sync_arsenal_from_project_creates_registry_without_manifest(tmp_path):
+    result = sync_arsenal_from_project(tmp_path, tmp_path)
+
+    data = json.loads((tmp_path / ".framepack" / "arsenal.json").read_text(encoding="utf-8"))
+    assert result.changed is True
+    assert result.action == "created"
+    assert data["weapons"] == {}
 
 
 def test_migrates_legacy_version_to_schema_version(tmp_path):
@@ -193,6 +233,23 @@ def test_register_builtin_weapon_adds_entry(tmp_path):
     assert weapon["file"] == "parts/text-split-enter.md"
     assert weapon["used_by"] == ["scene_1"]
     assert weapon["status"] == "active"
+
+
+def test_register_builtin_weapon_includes_canonical_function_name(tmp_path):
+    data = {"schema_version": "1.0.0", "weapons": {}}
+
+    changed, warnings = register_builtin_weapon(data, "text-split-enter", ["scene_1"], tmp_path)
+
+    assert changed is True
+    assert warnings == []
+    assert data["weapons"]["text-split-enter"]["function"] == "textSplitEnter"
+
+
+def test_builtin_weapon_catalog_exposes_function_names():
+    from core.builtin_weapons import resolve_builtin_weapon
+
+    assert resolve_builtin_weapon("caption-clip-wipe")["function"] == "captionClipWipe"
+    assert resolve_builtin_weapon("float-3d-card")["function"] == "float3DCard"
 
 
 def test_register_builtin_weapon_merges_used_by_without_duplicates(tmp_path):

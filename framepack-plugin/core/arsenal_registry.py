@@ -12,7 +12,7 @@ from pathlib import Path
 import tempfile
 
 from .builtin_weapons import resolve_builtin_weapon
-from .execution_manifest import ManifestWeapon
+from .execution_manifest import ManifestWeapon, parse_execution_manifest
 from .trusted_sources import is_trusted_url
 
 SCHEMA_VERSION = "1.0.0"
@@ -188,6 +188,46 @@ def ensure_arsenal(project_dir: Path, plugin_dir: Path | None = None, plugin_ver
         return ArsenalSyncResult(False, "exists", path, validate_arsenal(data, project_dir))
     except Exception as exc:  # defensive hook boundary
         return ArsenalSyncResult(False, "error", path, [], error=str(exc))
+
+
+def sync_arsenal_from_project(
+    project_dir: Path,
+    plugin_dir: Path | None = None,
+    plugin_version: str = DEFAULT_PLUGIN_VERSION,
+) -> ArsenalSyncResult:
+    """Ensure arsenal registry and reconcile it from `.hyperframes/expanded-prompt.md` when present."""
+    project_dir = Path(project_dir)
+    ensure_result = ensure_arsenal(project_dir, plugin_dir, plugin_version)
+    path = ensure_result.path
+    if ensure_result.error:
+        return ensure_result
+
+    manifest_path = project_dir / ".hyperframes" / "expanded-prompt.md"
+    if not manifest_path.exists():
+        return ensure_result
+
+    try:
+        manifest_weapons = parse_execution_manifest(manifest_path.read_text(encoding="utf-8"))
+        if not manifest_weapons:
+            return ensure_result
+
+        before = path.read_text(encoding="utf-8")
+        data = load_arsenal(path)
+        data, reconcile_warnings = reconcile_manifest(data, manifest_weapons, plugin_dir)
+        after = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+        changed = before != after
+        if changed:
+            data["plugin_version_updated"] = plugin_version
+            after = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+            _atomic_write_json(path, data)
+        return ArsenalSyncResult(
+            ensure_result.changed or changed,
+            "synced" if ensure_result.changed or changed else "exists",
+            path,
+            [*ensure_result.warnings, *reconcile_warnings],
+        )
+    except Exception as exc:  # defensive hook boundary
+        return ArsenalSyncResult(False, "error", path, ensure_result.warnings, error=str(exc))
 
 
 def validate_arsenal(data: dict, project_dir: Path) -> list[ArsenalWarning]:

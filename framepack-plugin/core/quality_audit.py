@@ -14,7 +14,10 @@ import re
 from pathlib import Path
 from typing import Any
 
+from .builtin_weapons import resolve_builtin_weapon
 from .execution_manifest import ManifestWeapon, parse_execution_manifest
+from .proof_audit import audit_proofs
+from .timeline_manifest import load_timeline, validate_timeline
 
 
 @dataclass
@@ -43,21 +46,6 @@ class QualityAuditReport:
         }
 
 
-WEAPON_TO_FUNCTION = {
-    "text-split-enter": "textSplitEnter",
-    "elastic-scale-enter": "elasticScaleEnter",
-    "glitch-flicker": "glitchFlicker",
-    "bg-blur-mask": "bgBlurMask",
-    "typewriter-cursor": "typewriterCursor",
-    "caption-clip-wipe": "captionClipWipe",
-    "light-leak-cinema": "lightLeakCinema",
-    "gradient-shift": "gradientShift",
-    "splittext-stagger-chars": "splitTextStagger",
-    "float-3d-card": "float3DCard",
-    "card-cascade-reveal": "cardCascadeReveal",
-}
-
-
 SEVERITIES = ("P0", "P1", "P2", "P3")
 
 PARAM_ALIASES = {
@@ -79,6 +67,15 @@ def _load_json(path: Path) -> dict[str, Any]:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError:
         return {}
+
+
+def _coerce_float(value: Any) -> float | None:
+    if isinstance(value, bool):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _target_duration(expanded_prompt: str, html: str) -> float | None:
@@ -151,6 +148,34 @@ def _normalize_params(weapon_id: str, params: dict[str, object]) -> dict[str, ob
     return {aliases.get(key, key): value for key, value in params.items()}
 
 
+def _canonical_function_name(weapon_id: str) -> str | None:
+    weapon = resolve_builtin_weapon(weapon_id)
+    if not weapon:
+        return None
+    function_name = weapon.get("function")
+    return str(function_name) if function_name else None
+
+
+def _inline_gsap_hint(html: str, weapon_id: str, params: dict[str, object]) -> dict[str, object]:
+    """Best-effort hint for inline GSAP that resembles a weapon but bypasses its function."""
+    gsap_call = bool(re.search(r"\bgsap\.(?:to|from|fromTo|timeline)\s*\(", html))
+    signals: list[str] = []
+    if gsap_call:
+        signals.append("gsap_call")
+    if weapon_id == "text-split-enter" and re.search(r"\bstagger\s*:", html) and re.search(r"\b(?:y|x)\s*:\s*-?\d+", html):
+        signals.append("text_split_like_stagger_travel")
+    for key, value in params.items():
+        normalized = _norm(value)
+        if normalized and normalized in html:
+            signals.append(f"param_value:{key}")
+    suspected = gsap_call and len(signals) >= 2
+    return {
+        "suspected": suspected,
+        "signals": signals,
+        "recommendation": "Replace the inline GSAP lookalike with the canonical function call from arsenal.json; pattern-equivalent inline code does not satisfy the weapon binding contract.",
+    }
+
+
 def _find_matching_call(calls: list[dict[str, str]], params: dict[str, object]) -> dict[str, str] | None:
     if not calls:
         return None
@@ -191,14 +216,25 @@ def _audit_arsenal(project_dir: Path, arsenal: dict[str, Any], manifest: list[Ma
         )
 
     arsenal_duration = arsenal.get("hyperframes_config", {}).get("duration")
-    if duration is not None and arsenal_duration is not None and float(arsenal_duration) != float(duration):
+    arsenal_duration_value = _coerce_float(arsenal_duration)
+    if duration is not None and arsenal_duration is not None and arsenal_duration_value is None:
+        issues.append(
+            QualityIssue(
+                "arsenal_duration_invalid",
+                "P0",
+                f"arsenal duration is non-numeric: {arsenal_duration!r}",
+                str(arsenal_path),
+                details={"actual": arsenal_duration, "expected": float(duration)},
+            )
+        )
+    elif duration is not None and arsenal_duration_value is not None and arsenal_duration_value != float(duration):
         issues.append(
             QualityIssue(
                 "arsenal_duration_mismatch",
                 "P0",
                 f"arsenal duration is {arsenal_duration}, expected {duration:g}",
                 str(arsenal_path),
-                details={"actual": arsenal_duration, "expected": duration},
+                details={"actual": arsenal_duration_value, "expected": float(duration)},
             )
         )
 
@@ -267,7 +303,7 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
     for ref in manifest:
         if ref.handwrite or not ref.params:
             continue
-        fn = WEAPON_TO_FUNCTION.get(ref.id)
+        fn = _canonical_function_name(ref.id)
         if not fn:
             continue
         calls = _extract_function_option_objects(html, fn)
@@ -282,6 +318,7 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
                     str(html_path),
                     scene=ref.used_by[0] if ref.used_by else None,
                     weapon_id=ref.id,
+                    details={"function": fn, "inline_hint": _inline_gsap_hint(html, ref.id, params)},
                 )
             )
             continue
@@ -307,6 +344,82 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
     return issues
 
 
+def _audit_timeline(project_dir: Path, html: str, expanded_prompt: str, duration: float | None) -> list[QualityIssue]:
+    issues: list[QualityIssue] = []
+    timeline_path = project_dir / ".framepack" / "timeline-manifest.json"
+    has_production_context = bool(expanded_prompt.strip() or html.strip())
+    if not timeline_path.exists():
+        if has_production_context:
+            issues.append(
+                QualityIssue(
+                    "timeline_manifest_missing",
+                    "P1",
+                    ".framepack/timeline-manifest.json is missing; production timings, locks, proofs, and carryover dependencies have no ledger",
+                    str(timeline_path),
+                )
+            )
+        return issues
+
+    try:
+        timeline = load_timeline(timeline_path)
+    except ValueError as exc:
+        return [
+            QualityIssue(
+                "timeline_manifest_invalid",
+                "P0",
+                str(exc),
+                str(timeline_path),
+            )
+        ]
+
+    manifest_duration = timeline.get("project", {}).get("duration")
+    manifest_duration_value = _coerce_float(manifest_duration)
+    if duration is not None and manifest_duration is not None and manifest_duration_value is None:
+        issues.append(
+            QualityIssue(
+                "timeline_duration_invalid",
+                "P1",
+                f"timeline manifest duration is non-numeric: {manifest_duration!r}",
+                str(timeline_path),
+                details={"actual": manifest_duration, "expected": float(duration)},
+            )
+        )
+    elif duration is not None and manifest_duration_value is not None and manifest_duration_value != float(duration):
+        issues.append(
+            QualityIssue(
+                "timeline_duration_mismatch",
+                "P1",
+                f"timeline manifest duration is {manifest_duration}, expected {duration:g}",
+                str(timeline_path),
+                details={"actual": manifest_duration_value, "expected": float(duration)},
+            )
+        )
+
+    for warning in validate_timeline(timeline, project_dir):
+        issues.append(
+            QualityIssue(
+                warning.code,
+                warning.severity,
+                warning.message,
+                str(timeline_path),
+                scene=warning.scene,
+                details=warning.details,
+            )
+        )
+    for proof_issue in audit_proofs(project_dir, timeline):
+        issues.append(
+            QualityIssue(
+                proof_issue.code,
+                proof_issue.severity,
+                proof_issue.message,
+                proof_issue.path,
+                scene=proof_issue.scene,
+                details=proof_issue.details,
+            )
+        )
+    return issues
+
+
 def _summarize(issues: list[QualityIssue]) -> dict[str, int]:
     summary = {severity: 0 for severity in SEVERITIES}
     for issue in issues:
@@ -326,5 +439,6 @@ def audit_project(project_dir: str | Path) -> QualityAuditReport:
     issues.extend(_audit_arsenal(project_dir, arsenal, manifest, duration))
     issues.extend(_audit_html_guardrails(project_dir, html, manifest))
     issues.extend(_audit_parameter_drift(project_dir, html, manifest))
+    issues.extend(_audit_timeline(project_dir, html, expanded_prompt, duration))
 
     return QualityAuditReport(str(project_dir), issues, _summarize(issues))
