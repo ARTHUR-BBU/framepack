@@ -10,7 +10,7 @@
 **阶段**: Framepack v0.10.5 已正式发布。测试组报告已收到并复核；自动测试与实测 render 全链路通过。已创建并推送 `v0.10.5` annotated tag，GitHub Release 已发布。  
 **分支**: `framepack-agent-platform`  
 **正式源码版本**: v0.10.5（`framepack-plugin/plugin.yaml` = `0.10.5`；部署目录和独立 skills 已同步到 0.10.5）  
-**最新远端提交**: `dca6ba1` (`handoff: record v0.10.5 test report triage`)；release tag `v0.10.5` 指向该发布状态；插件修复提交为 `be318b5`，release-prep 功能基准为 `fdf6102` (`[verified] release prep framepack v0.10.5`)  
+**最新远端提交**: `1e2a2bf` (`handoff: record v0.10.5 release`)；release tag `v0.10.5` 指向 `dca6ba1` 发布状态；插件修复提交为 `be318b5`，release-prep 功能基准为 `fdf6102` (`[verified] release prep framepack v0.10.5`)  
 **GitHub Release**: v0.10.5 已发布：https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.5
 
 ### 本轮做了什么
