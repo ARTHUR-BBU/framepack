@@ -7,57 +7,47 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.10.5 已正式发布。测试组报告已收到并复核；自动测试与实测 render 全链路通过。已创建并推送 `v0.10.5` annotated tag，GitHub Release 已发布。  
+**阶段**: Framepack v0.10.6 hardening 开发已完成首批实现；正式源码版本仍是 v0.10.5，尚未 bump/tag/release。  
 **分支**: `framepack-agent-platform`  
-**正式源码版本**: v0.10.5（`framepack-plugin/plugin.yaml` = `0.10.5`；部署目录和独立 skills 已同步到 0.10.5）  
-**最新远端状态**: `origin/framepack-agent-platform` 已包含 v0.10.5 release 后交接台更新；release tag `v0.10.5` 指向 `dca6ba1` 发布状态；插件修复提交为 `be318b5`，release-prep 功能基准为 `fdf6102` (`[verified] release prep framepack v0.10.5`)  
-**GitHub Release**: v0.10.5 已发布：https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.5
+**正式源码版本**: v0.10.5（`framepack-plugin/plugin.yaml` = `0.10.5`；v0.10.6 hardening 是 HEAD 上的 unreleased 变更）  
+**最新提交**: `e928a42 feat: harden framepack quality audit`  
+**部署状态**: 已同步到 `F:/Hermes_windows/plugins/framepack/`；`framepack` 独立 skill 也已同步。  
+**测试**: full pytest `247 passed`; 带 case 自动测试 `passed=5 failed=0 skipped=0`; case audit `P0=0/P1=0/P2=0/P3=0`。
 
 ### 本轮做了什么
 
-- ✅ 继续 v0.10.5 测试组准备：确认测试组反馈的“agent.md”实际应为项目级 `AGENTS.md`，由 Framepack Guardrail Hydrator 创建/更新 managed block。
-- ✅ 复现并定位根因：测试组/Agent 常用 `cd F:/Framepack-01-test && npx hyperframes lint`，但 hook 在 shell 执行前运行，旧逻辑只使用 `args["workdir"]` 或 `os.getcwd()`，导致 hydrate/audit 写到调用 cwd，而不是 `cd` 后的测试项目。
-- ✅ 按 TDD 修复：新增回归测试 `TestPreToolCallHandoff::test_hydrates_project_from_cd_prefix_before_hyperframes_command`，先看到失败，再实现 `_resolve_effective_workdir()` 解析 `cd <project> &&` / `cd <project>;` 前缀。
-- ✅ 修复 `hooks/on_pre_tool_call.py`：HyperFrames handoff 前统一解析 effective workdir，再 hydrate guardrails、sync arsenal、sync timeline、quality audit。
-- ✅ 更新 `framepack` skill pitfalls，记录 shell `cd project && npx hyperframes ...` 目录解析坑位。
-- ✅ 同步部署目录：`framepack-plugin/hooks/on_pre_tool_call.py` → `F:/Hermes_windows/plugins/framepack/hooks/on_pre_tool_call.py`；`framepack-plugin/skills/framepack/SKILL.md` → plugin skill + 独立 skill。
-- ✅ 手动修复测试项目账本：`F:/Framepack-01-test/AGENTS.md` 已创建；`.framepack/arsenal.json` 和 `.framepack/timeline-manifest.json` 已同步。
-- ✅ 提交并 push：`be318b5 fix: hydrate framepack project after shell cd`。
-- ✅ 读取测试组 Obsidian 报告：`C:/Users/LENOVO/Documents/AI-Coach-Vault/Windows/2026-06-15-Framepack-v0.10.5-测试报告.md`。结论：自动测试全部通过，实测 `Framepack Director → HyperFrames HTML → render` 产出 `video.mp4` 39s/1170 frames；报告列出 P0/P1/P2 hardening 项。
-- ✅ 用当前 HEAD + 已部署插件复跑带 case 自动测试：`passed=5, failed=0, skipped=0`，`case_quality_audit` summary 为 `P0=0/P1=0/P2=0/P3=0`。
-- ✅ 发布 v0.10.5：创建 annotated tag `v0.10.5`，推送到 origin，并创建 GitHub Release：`https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.5`。
+- ✅ 读取并延续 v0.10.5 release 后交接台，按用户确认的 v0.10.6 “补短板硬化版”方案开工。
+- ✅ 建立设计文档：`.hermes/designs/2026-06-15--framepack-v0106-hardening.md`；明确先在 unreleased HEAD 做 hardening，release-prep 时再 bump v0.10.6。
+- ✅ 按 TDD 增加并先看到 RED：Google Fonts 外部依赖、本地字体资产缺失/存在、暗底低可见性风险、NaN/Infinity 数值拒绝、proof path 越界。
+- ✅ 实现 Quality Audit hardening：`external_font_dependency`、`font_face_missing_local_asset`、`low_visibility_risk`、NaN/Infinity finite-number 拒绝。
+- ✅ 实现 Proof Audit hardening：proof directory/contact-sheet 必须 project-local，越界报 `proof_path_outside_project` P1。
+- ✅ 更新字体/VPN 口径：国内用户可用本地 VPN/代理获取 catalog/registry/fonts，但最终生产 HTML 应 vendor 到 `assets/fonts/` + `@font-face`，不依赖 live Google Fonts。
+- ✅ 同步部署目录：core 三文件、guardrails、plugin skills、独立 `framepack` skill。
+- ✅ 提交：`e928a42 feat: harden framepack quality audit`。
 
 ### 验证证据
 
-- RED：新增测试首次运行失败，断言 `case-project/AGENTS.md` 不存在，证明旧 hook 会把 hydration 写错位置。
-- GREEN targeted：`cd framepack-plugin && python -m pytest tests/test_storyboard_hook.py::TestPreToolCallHandoff::test_hydrates_project_from_cd_prefix_before_hyperframes_command -q -o "addopts="` → `1 passed in 0.26s`。
-- Hook/Guardrails targeted：`python -m pytest tests/test_storyboard_hook.py tests/test_guardrails_hydrator.py -q -o "addopts="` → `61 passed in 0.95s`。
-- Full suite：`cd framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `240 passed in 12.03s`。
-- Deploy manifest：`python -m pytest tests/test_deploy_manifest.py -q -o "addopts="` → `5 passed in 0.06s`。
+- RED targeted：新增 4 个关键测试首次运行失败（缺 external font、visibility、finite numeric、proof path 审计）。
+- GREEN targeted：`python -m pytest tests/test_quality_audit.py::test_quality_audit_reports_external_google_font_dependency tests/test_quality_audit.py::test_quality_audit_allows_existing_local_font_face_asset tests/test_quality_audit.py::test_quality_audit_reports_missing_local_font_face_asset tests/test_quality_audit.py::test_quality_audit_reports_low_visibility_risk_from_dark_background_and_brightness_filter tests/test_production_quality_audit.py::test_quality_audit_rejects_nan_and_infinity_numeric_fields tests/test_production_quality_audit.py::test_quality_audit_reports_proof_paths_outside_project tests/test_production_quality_audit.py::test_quality_audit_allows_project_local_proof_paths -q -o "addopts="` → `7 passed in 0.43s`。
+- Quality/production targeted：`python -m pytest tests/test_quality_audit.py tests/test_production_quality_audit.py -q -o "addopts="` → `26 passed in 0.92s`。
+- Full suite：`cd framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `247 passed in 20.62s`。
+- Deploy manifest：`python -m pytest tests/test_deploy_manifest.py -q -o "addopts="` → `5 passed in 0.11s`。
 - Security scan：`python /f/Hermes_windows/skills/software-development/requesting-code-review/scripts/scan_worktree_added_lines.py` → `No added-line security red flags found.`
-- Deploy sync read-back：`cmp -s` source/deployed `on_pre_tool_call.py` + source/deployed/independent `framepack/SKILL.md` → `deploy sync ok`。
-- Test project repair：`sync_project_agents(F:/Framepack-01-test)` → `{'changed': True, 'action': 'created', 'path': 'F:\\Framepack-01-test\\AGENTS.md', 'version': '0.10.5', 'error': None}`。
-- Test project ledger sync：arsenal → `action='synced'`, path `F:\Framepack-01-test\.framepack\arsenal.json`, warning `handwrite_weapon`；timeline → `action='synced'`, path `F:\Framepack-01-test\.framepack\timeline-manifest.json`。
-- Release verification full suite：`cd framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `240 passed in 16.74s`。
-- Release auto-test：`python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.5-release --case-project F:/Framepack-01-test` → `passed=5, failed=0, skipped=0`; `case_quality_audit` → `P0=0/P1=0/P2=0/P3=0`。
-- GitHub Release verify：`gh release view v0.10.5 --json tagName,name,url,isDraft,isPrerelease,targetCommitish,publishedAt` → `isDraft=false`, `isPrerelease=false`, URL `https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.5`。
+- Deploy sync read-back：source/deployed `quality_audit.py`、`proof_audit.py`、`timeline_manifest.py`、`guardrails.md`、`framepack/SKILL.md`、`framepack-director/SKILL.md` 全部 `cmp -s` 通过 → `deploy sync ok`。
+- Test-team auto smoke：`python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6-hardening-dev --case-project F:/Framepack-01-test` → `passed=5 failed=0 skipped=0`; `case_quality_audit` → `P0=0/P1=0/P2=0/P3=0`。
 
 ### 给测试组的入口
 
-- 分支：`framepack-agent-platform`
-- 当前远端 HEAD：`dca6ba1`（发布前交接台 triage；release tag `v0.10.5` 已创建）
-- 功能基准提交：`fdf6102`
-- 自动测试脚本：`scripts/test_team_v0105_auto_test.py`
-- 测试说明：`TEST_TEAM_AUTOTEST_v0.10.5.md`
-- A 档插件基准命令（不带 case）：`python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.5`
-- A 档预期：`passed=4, failed=0, skipped=1`
-- B/C 档完整 case 审计：只有测试组准备好包含 `frame.md`、`.hyperframes/expanded-prompt.md`、`.framepack/arsenal.json`、`index.html` 的真实项目后，才添加 `--case-project <完整case路径>`；此时通常是 `passed=5, failed=0, skipped=0`，但 Quality Audit 内部 P0/P1 代表案例风险，不等同于脚本失败。
-- 当前 `F:/Framepack-01-test` 已补齐 `AGENTS.md` + `.framepack` 账本，但它仍不是完整命题视频 case；若没有合格 `index.html`，仍只适合缺件/半成品输入测试。
+- 当前可给测试组的是 v0.10.6 hardening 开发版 HEAD：`e928a42`。
+- 注意：`plugin.yaml` 仍是 `0.10.5`，这是按计划“功能绿后再 release-prep bump”；测试组若要求正式版本号，需要先做 v0.10.6 bump/tag/release。
+- 自动测试脚本仍是：`scripts/test_team_v0105_auto_test.py`（版本口径还没 bump；可在 release-prep 时复制/改名为 v0106）。
+- 当前 deployed plugin 已包含 hardening 变更，可直接做开发版 smoke。
 
 ### 下次要做什么
 
-- v0.10.5 已发布；下一步进入 v0.10.6/v0.11 hardening。
-- 优先 hardening backlog：Manifest → HTML weapon binding 强制/审计、Google Fonts 本地化提示、暗底可见性审计、NaN/Infinity 数值拒绝、proof path project-local 限定/审计 warning。
+- 如要交正式测试组：执行 v0.10.6 release-prep（全面 bump 版本号/文档/测试脚本口径），再跑 full pytest + auto-test + deploy sync。
+- push 当前分支到 origin（若本轮尚未 push）并根据老田决定是否立即创建 v0.10.6 tag/release。
+- 可选补强：把代理检测/字体 acquisition 做成显式 helper 或 CLI doctor 项，目前本轮只完成审计与文档口径。
 
 ## 关键路径
 
@@ -86,9 +76,10 @@
 
 - [x] 测试组 v0.10.5 手动项目测试报告已收到并复核。
 - [x] v0.10.5 tag + GitHub Release 已发布。
-- [ ] v0.10.6/v0.11 hardening：Manifest → HTML weapon binding 强制/审计、Google Fonts 本地化提示、暗底可见性审计、timeline 在 frame.md/expanded-prompt.md 中结构化表达口径。
-- [ ] Hardening：数值解析拒绝 NaN/Infinity。
-- [ ] Hardening：proof path 限定在 project-local 或至少 audit warning。
+- [x] v0.10.6 hardening 首批：Google Fonts 本地化提示、暗底可见性审计、NaN/Infinity 数值拒绝、proof path project-local 审计已实现；weapon binding 强制已有 P1 `manifest_weapon_not_called` 基础，后续可继续升级。
+- [x] Hardening：数值解析拒绝 NaN/Infinity。
+- [x] Hardening：proof path 限定在 project-local 并报 `proof_path_outside_project` P1。
+- [ ] v0.10.6 release-prep：全面 bump 版本号/测试脚本/文档口径，确认正式测试组入口。
 - [ ] 文档：hook 会非阻断创建/同步 `.framepack` ledger；CLI 默认 report-first，只在显式 sync/output flags 下写文件。
 - [ ] v0.11 方向：Aesthetic Benchmark / Director Taste System，对表 nexu-io/html-video 21 templates 与 html-anything 10 frame。
 
