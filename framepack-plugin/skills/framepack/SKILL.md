@@ -445,7 +445,21 @@ including paths like `/f/hyperframes/project/`. Fix: use regex:
 `re.search(r'(?:^|\s)(?:npx\s+)?hyperframes(?:\s|$)', command)`.
 This matches `hyperframes lint` or `npx hyperframes init` but NOT path components.
 Also needs `import re` at the top of the hook file.
+
+### pre_tool_call must resolve shell `cd project && npx hyperframes ...`
+
+Test-team agents often run terminal commands as `cd F:/Framepack-01-test && npx hyperframes lint`
+without passing the terminal tool's `workdir` argument. Hooks run before the shell executes,
+so `args["workdir"]` still points at the Hermes/session cwd. If the hook hydrates that cwd,
+`AGENTS.md`, `.framepack/arsenal.json`, and timeline ledger appear in the wrong project or not
+in the test project at all.
+
+Fix: before hydration/audit, parse a leading shell `cd <project> &&` / `cd <project>;` prefix
+that appears before the HyperFrames command and resolve it against the base workdir. Regression:
+`tests/test_storyboard_hook.py::TestPreToolCallHandoff::test_hydrates_project_from_cd_prefix_before_hyperframes_command`.
+
 When bumping the Framepack version, **all release surfaces** must align:
+
 - `plugin.yaml` → `version: "X.Y.Z"` + changelog description line
 - `__init__.py` → `logger.info("Framepack vX.Y.Z Plugin registering")`
 - `hooks/on_post_tool_call.py` → docstring + logger string

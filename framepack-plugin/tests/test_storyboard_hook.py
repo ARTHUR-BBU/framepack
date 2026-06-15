@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -453,3 +454,23 @@ class TestPreToolCallHandoff:
             messages = [call.args[0] for call in ctx.inject_message.call_args_list]
             assert any("Framepack Guardrails" in msg for msg in messages)
             assert any("frame.md" in msg for msg in messages)
+
+    def test_hydrates_project_from_cd_prefix_before_hyperframes_command(self):
+        """Regression: shell `cd project && npx hyperframes ...` must hydrate that project, not Hermes cwd."""
+        ctx = MagicMock()
+        from hooks.on_pre_tool_call import register
+        register(ctx)
+        hook_fn = ctx.register_hook.call_args[0][1]
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base = Path(tmpdir)
+            project = base / "case-project"
+            project.mkdir()
+
+            hook_fn(
+                tool_name="terminal",
+                args={"command": "cd case-project && npx hyperframes lint", "workdir": str(base)},
+            )
+
+            assert (project / "AGENTS.md").exists()
+            assert not (base / "AGENTS.md").exists()

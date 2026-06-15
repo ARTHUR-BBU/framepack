@@ -9,6 +9,8 @@ HyperFrames commands or replace HyperFrames lint/render/validate.
 
 import logging
 import os
+import re
+import shlex
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -39,13 +41,56 @@ def _is_hyperframes_noop_command(command: str) -> bool:
     }
 
 
+_CD_BEFORE_COMMAND_RE = re.compile(
+    r"(?:^|[;&|]\s*)cd\s+(?P<path>\"[^\"]+\"|'[^']+'|[^\s;&|]+)\s*(?:&&|;)",
+    re.IGNORECASE,
+)
+
+
+def _shell_unquote_path(raw_path: str) -> str:
+    try:
+        parts = shlex.split(raw_path, posix=True)
+    except ValueError:
+        return raw_path.strip().strip('"\'')
+    return parts[0] if parts else raw_path.strip().strip('"\'')
+
+
+def _resolve_effective_workdir(command: str, base_workdir: str) -> str:
+    """Resolve shell `cd project && hyperframes ...` prefixes to the real project dir.
+
+    Hermes terminal commands often use shell-level `cd <project> && npx hyperframes ...`
+    instead of the tool's `workdir` argument. Hooks run before the shell executes,
+    so relying only on args["workdir"] hydrates the caller cwd, not the project.
+    """
+    base = Path(base_workdir or os.getcwd())
+    hyperframes_at = command.find("hyperframes")
+    for match in _CD_BEFORE_COMMAND_RE.finditer(command):
+        if hyperframes_at != -1 and match.start() > hyperframes_at:
+            continue
+        cd_path = Path(_shell_unquote_path(match.group("path")))
+        if not cd_path.is_absolute():
+            cd_path = base / cd_path
+        return str(cd_path.resolve())
+    return str(base.resolve())
+
+
 def _audit_arsenal_for_hyperframes(ctx, workdir: str) -> None:
     project_dir = Path(workdir)
     try:
         result = sync_arsenal_from_project(project_dir, Path(__file__).resolve().parent.parent)
         warnings = list(result.warnings)
         if result.error:
-            warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": result.error, "severity": "warn", "weapon_id": None})())
+            warning_like = type(
+                "WarningLike",
+                (),
+                {
+                    "code": "arsenal_error",
+                    "message": result.error,
+                    "severity": "warn",
+                    "weapon_id": None,
+                },
+            )
+            warnings.append(warning_like())
         message = _build_arsenal_warning_message(warnings)
         if message:
             _safe_inject(ctx, message, role="user")
@@ -138,9 +183,10 @@ def register(ctx):
         if not _invokes_hyperframes_command(command_for_detection):
             return
 
-        workdir = args.get("workdir", "") or os.getcwd()
+        base_workdir = args.get("workdir", "") or os.getcwd()
+        workdir = _resolve_effective_workdir(command_for_detection, base_workdir)
 
-        if _is_hyperframes_noop_command(command):
+        if _is_hyperframes_noop_command(command_for_detection):
             return
 
         hydrate_guardrails(ctx, project_dir=workdir, reason="hyperframes command")
