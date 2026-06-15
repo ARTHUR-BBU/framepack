@@ -16,7 +16,7 @@ from .execution_manifest import ManifestWeapon
 from .trusted_sources import is_trusted_url
 
 SCHEMA_VERSION = "1.0.0"
-DEFAULT_PLUGIN_VERSION = "0.10.2"
+DEFAULT_PLUGIN_VERSION = "0.10.3"
 VALID_STATUSES = {"active", "unused", "archived"}
 VALID_SOURCES = {"builtin", "web", "local", "library"}
 

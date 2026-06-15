@@ -4,7 +4,7 @@ description: >-
   Creative engine — translates user intent into frame.md (visual identity)
   and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
   The core of Framepack's Prompt Factory. HyperFrames consumes these two files.
-version: 0.10.2
+version: 0.10.3
 ---
 
 # Framepack Director — Prompt Factory Core

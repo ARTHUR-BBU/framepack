@@ -1,13 +1,13 @@
 # Changelog
 
-## Unreleased — Quality Beyond Lint
+## 0.10.3 — Quality Beyond Lint (2026-06-15)
 
 ### Semantic Quality Audit
 
 - **Framepack Quality Audit** — adds `core/quality_audit.py` plus `scripts/framepack_quality_audit.py` to emit JSON/Markdown reports for quality-beyond-lint failures: stale `.framepack/arsenal.json`, Manifest weapon registration gaps, manual `data-hf-id`, weapon parameter drift, and undeclared card-cascade implementations.
 - **Report-first hook integration** — handoff-consuming HyperFrames commands now surface a non-blocking Quality Audit summary when `index.html` exists. This does not replace `npx hyperframes lint`, validate, snapshot, or render; it is the semantic 安检票 for issues lint cannot see.
 - **Execution Manifest parser hardening** — scene-keyed YAML blocks with `params:` are now parsed, so real v0.10.x manifests reconcile correctly instead of silently producing an empty weapon list.
-- **Builtin weapon catalog coverage** — registers the v0.10.2 Digital Soliloquy weapon set, including `typewriter-cursor`, `glitch-flicker`, `light-leak-cinema`, `elastic-scale-enter`, `gradient-shift`, `splittext-stagger-chars`, `float-3d-card`, and `card-cascade-reveal`.
+- **Builtin weapon catalog coverage** — registers the v0.10.3 Digital Soliloquy weapon set, including `typewriter-cursor`, `glitch-flicker`, `light-leak-cinema`, `elastic-scale-enter`, `gradient-shift`, `splittext-stagger-chars`, `float-3d-card`, and `card-cascade-reveal`.
 
 ### Tests
 

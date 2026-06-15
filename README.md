@@ -48,7 +48,7 @@ HyperFrames takes over:
 Video 🎬
 ```
 
-## Plugin Hooks (v0.10.2)
+## Plugin Hooks (v0.10.3)
 
 ```text
 pre_tool_call:
@@ -62,7 +62,7 @@ post_tool_call:
   └── expanded-prompt.md write → Arsenal reconcile + LLM quality check (beats/rhythm complete?)
 ```
 
-v0.10.2 also adds report-only Environment & Upgrade Manager utilities for doctor/install/overlay/upgrade/report flows. Unreleased adds `scripts/framepack_quality_audit.py`, a report-first semantic audit for stale arsenal registries, Manifest/HTML weapon drift, manual `data-hf-id`, and card-cascade gaps.
+v0.10.3 adds `scripts/framepack_quality_audit.py`, a report-first semantic audit for stale arsenal registries, Manifest/HTML weapon drift, manual `data-hf-id`, and card-cascade gaps. v0.10.2 adds report-only Environment & Upgrade Manager utilities for doctor/install/overlay/upgrade/report flows.
 
 **What Framepack does NOT do:**
 - ❌ Write, fix, render, or structurally validate HTML — that's HyperFrames (`lint` / `validate` / `snapshot` / `render`)
@@ -97,10 +97,10 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.10.2**.
+# You should see `framepack` with status **enabled** and version **0.10.3**.
 ```
 
-Framepack v0.10.2 adds **Environment & Upgrade Manager**: report-only environment doctor, safe skill install manager, hardening overlay planner, three-way skill upgrade manager, and upgrade report generation. v0.10.1 includes **HyperFrames Compatibility Adapter**: Framepack now classifies HyperFrames commands by intent, stores `.framepack/hyperframes-capabilities.json`, treats official catalog/add as opportunistic rather than mandatory, falls back to the offline-safe `blank` baseline, and generates upstream skill-diff reports without blindly overwriting local hardening rules. v0.10.0 added Arsenal Registry runtime: `.framepack/arsenal.json` creation, Execution Manifest reconciliation, builtin weapon catalog, trusted-source whitelist, and non-blocking Arsenal preflight before handoff-consuming HyperFrames commands. v0.9.4 includes Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration`, reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML, and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
+Framepack v0.10.3 adds **Quality Beyond Lint** semantic audit: JSON/Markdown quality reports, non-blocking hook summaries before handoff-consuming HyperFrames commands, scene-keyed Execution Manifest parser hardening, and builtin weapon catalog coverage for real v0.10.x manifests. v0.10.2 adds **Environment & Upgrade Manager**: report-only environment doctor, safe skill install manager, hardening overlay planner, three-way skill upgrade manager, and upgrade report generation. v0.10.1 includes **HyperFrames Compatibility Adapter**: Framepack now classifies HyperFrames commands by intent, stores `.framepack/hyperframes-capabilities.json`, treats official catalog/add as opportunistic rather than mandatory, falls back to the offline-safe `blank` baseline, and generates upstream skill-diff reports without blindly overwriting local hardening rules. v0.10.0 added Arsenal Registry runtime: `.framepack/arsenal.json` creation, Execution Manifest reconciliation, builtin weapon catalog, trusted-source whitelist, and non-blocking Arsenal preflight before handoff-consuming HyperFrames commands. v0.9.4 includes Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration`, reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML, and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
 
 **Tip:** Run `hermes status` to find your actual HERMES_HOME path.
 

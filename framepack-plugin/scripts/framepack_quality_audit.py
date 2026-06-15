@@ -66,7 +66,9 @@ def main(argv: list[str] | None = None) -> int:
         rendered = render_markdown(report)
 
     if args.output:
-        Path(args.output).write_text(rendered, encoding="utf-8")
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(rendered, encoding="utf-8")
     sys.stdout.write(rendered)
     return 0
 

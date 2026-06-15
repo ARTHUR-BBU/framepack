@@ -68,3 +68,18 @@ def test_quality_audit_cli_writes_markdown_report(tmp_path):
     assert "# Framepack Quality Audit" in text
     assert "weapon_parameter_drift" in text
     assert "P0" in text
+
+
+def test_quality_audit_cli_creates_output_parent_directories(tmp_path):
+    _write_project(tmp_path)
+    output = tmp_path / "nested" / "reports" / "quality-report.json"
+
+    subprocess.run(
+        [sys.executable, str(SCRIPT), str(tmp_path), "--format", "json", "--output", str(output)],
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+
+    assert output.is_file()
+    assert json.loads(output.read_text(encoding="utf-8"))["kind"] == "framepack_quality_audit"
