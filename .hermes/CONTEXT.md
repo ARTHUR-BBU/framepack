@@ -7,10 +7,10 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.10.5 已完成 release-prep bump、部署同步、验证、测试组自动测试报告生成，并已 push 到 `origin/framepack-agent-platform`；尚未创建 v0.10.5 tag/GitHub Release（当前目标是准备测试组测试）。  
+**阶段**: Framepack v0.10.5 已完成 release-prep bump、部署同步、验证、测试组自动测试报告生成，并已 push 到 `origin/framepack-agent-platform`；测试组已开始准备/手动项目测试。尚未创建 v0.10.5 tag/GitHub Release。  
 **分支**: `framepack-agent-platform`  
 **正式源码版本**: v0.10.5（`framepack-plugin/plugin.yaml` = `0.10.5`；部署目录和独立 skills 已同步到 0.10.5）  
-**最新远端提交**: `fdf6102` (`[verified] release prep framepack v0.10.5`)  
+**最新远端提交**: `1cd4827` (`docs: clarify v0.10.5 test-team case modes`)；功能基准仍为 `fdf6102` (`[verified] release prep framepack v0.10.5`)  
 **GitHub Release**: 当前公开 release 仍是 v0.10.3：https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.3
 
 ### 本轮做了什么
@@ -22,26 +22,32 @@
 - ✅ 同步部署目录：`F:\hyperframes\framepack-plugin` → `F:\Hermes_windows\plugins\framepack`；同步独立 skills 到 `F:\Hermes_windows\skills\software-development\framepack*`（含 `framepack-production-quality`）。
 - ✅ Independent pre-commit review 通过；reviewer 无 security/logic blocker，建议补 timeline/template version drift 测试，已补进 `test_deploy_manifest.py`。
 - ✅ 提交并 push：`fdf6102 [verified] release prep framepack v0.10.5`。
+- ✅ 根据测试组二道关回传，修正文档口径错位：`TEST_TEAM_AUTOTEST_v0.10.5.md` 默认推荐命令改为不带 `--case-project` 的 A 档插件基准验收，并新增 B/C 档完整 case 项目审计说明；明确 `F:/Framepack-01-test` 当前不是完整命题视频 case，只适合缺件输入测试。提交并 push：`1cd4827 docs: clarify v0.10.5 test-team case modes`。
 
 ### 验证证据
 
 - `cd framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `239 passed in 14.54s`（另一次 full suite：`239 passed in 11.94s`）。
 - `python /f/Hermes_windows/skills/software-development/requesting-code-review/scripts/scan_worktree_added_lines.py` → `No added-line security red flags found.`
 - `python scripts/test_team_v0105_auto_test.py --output-dir test-team-reports/v0.10.5` → summary `passed=4, failed=0, skipped=1`（case project 未提供所以跳过）。
+- `python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.5` → summary `passed=4, failed=0, skipped=1`；full suite `239 passed in 13.65s`，deploy smoke `deployed import/version ok`。
 - Deployed smoke（由 auto-test 执行）→ `deployed import/version ok`，并断言部署目录 `plugin.yaml` 含 `0.10.5`。
 - Read-back：`F:\Hermes_windows\plugins\framepack\plugin.yaml` = `version: "0.10.5"`；`timeline-manifest.example.json` 的 `plugin_version_created/updated` 均为 `0.10.5`。
 
 ### 给测试组的入口
 
 - 分支：`framepack-agent-platform`
-- 最新提交：`fdf6102`
+- 功能基准提交：`fdf6102`
+- 当前远端 HEAD：`1cd4827`（只修测试说明文档，不改插件功能）
 - 自动测试脚本：`scripts/test_team_v0105_auto_test.py`
 - 测试说明：`TEST_TEAM_AUTOTEST_v0.10.5.md`
+- A 档插件基准命令（不带 case）：`python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.5`
+- A 档预期：`passed=4, failed=0, skipped=1`
+- B/C 档完整 case 审计：只有测试组准备好包含 `frame.md`、`.hyperframes/expanded-prompt.md`、`.framepack/arsenal.json`、`index.html` 的真实项目后，才添加 `--case-project <完整case路径>`；此时通常是 `passed=5, failed=0, skipped=0`，但 Quality Audit 内部 P0/P1 代表案例风险，不等同于脚本失败。
 - 本地已生成报告（未提交，产物被 gitignore）：`test-team-reports/v0.10.5/framepack-v0105-auto-test-report.{json,md}`
 
 ### 下次要做什么
 
-- 等测试组基于 `fdf6102` 回传报告；若有 P0/P1，先复现再修。
+- 等测试组基于 `fdf6102`/当前 HEAD 回传手动命题视频测试报告；若有 P0/P1，先复现再修。
 - 若老田决定发布正式版：创建 `v0.10.5` tag + GitHub Release，并把 release URL 写回交接台。
 - 继续 hardening backlog：NaN/Infinity 数值拒绝、proof path project-local 限定/审计 warning。
 
@@ -50,7 +56,7 @@
 - 项目根：`F:\hyperframes\`
 - 开发目录：`F:\hyperframes\framepack-plugin\`
 - 部署目录：`F:\Hermes_windows\plugins\framepack\`
-- 测试项目：`F:\Framepack-01-test\`
+- 测试项目：`F:\Framepack-01-test\`（当前不是完整命题视频 case；只适合缺件输入测试）
 - Git 分支：`framepack-agent-platform`
 - 远程：https://github.com/ARTHUR-BBU/framepack
 
@@ -70,7 +76,7 @@
 
 ## 待办 / 想法池
 
-- [ ] 等测试组基于 `fdf6102` 回传 v0.10.5 报告。
+- [ ] 等测试组基于 `fdf6102`/当前 HEAD 回传 v0.10.5 手动项目测试报告。
 - [ ] 视老田决定：创建 v0.10.5 tag/GitHub Release，或仅交测试组先测。
 - [ ] Hardening：数值解析拒绝 NaN/Infinity。
 - [ ] Hardening：proof path 限定在 project-local 或至少 audit warning。
