@@ -15,14 +15,14 @@ logger = logging.getLogger(__name__)
 
 from .guardrails import hydrate_guardrails
 from .on_post_tool_call import _build_arsenal_warning_message, _safe_inject
-from core.arsenal_registry import ensure_arsenal, load_arsenal, reconcile_manifest, save_arsenal
-from core.execution_manifest import parse_execution_manifest
+from core.arsenal_registry import sync_arsenal_from_project
 from core.hyperframes_adapter import (
     CommandCategory,
     classify_hyperframes_command,
     strip_heredoc_bodies as _strip_heredoc_bodies,
 )
 from core.quality_audit import audit_project
+from core.timeline_manifest import parse_hyperframes_time_windows, sync_timeline_from_project
 
 
 def _invokes_hyperframes_command(command: str) -> bool:
@@ -41,23 +41,45 @@ def _is_hyperframes_noop_command(command: str) -> bool:
 
 def _audit_arsenal_for_hyperframes(ctx, workdir: str) -> None:
     project_dir = Path(workdir)
-    expanded_path = project_dir / ".hyperframes" / "expanded-prompt.md"
-    if not expanded_path.is_file():
-        return
     try:
-        content = expanded_path.read_text(encoding="utf-8")
-        result = ensure_arsenal(project_dir, Path(__file__).resolve().parent.parent)
+        result = sync_arsenal_from_project(project_dir, Path(__file__).resolve().parent.parent)
         warnings = list(result.warnings)
-        data = load_arsenal(result.path)
-        data, reconcile_warnings = reconcile_manifest(data, parse_execution_manifest(content), Path(__file__).resolve().parent.parent)
-        warnings.extend(reconcile_warnings)
-        save_arsenal(result.path, data)
+        if result.error:
+            warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": result.error, "severity": "warn", "weapon_id": None})())
         message = _build_arsenal_warning_message(warnings)
         if message:
             _safe_inject(ctx, message, role="user")
     except Exception as exc:
         logger.warning("pre_tool_call arsenal audit failed: %s", exc)
         _safe_inject(ctx, f"⚔️ **Framepack Arsenal Warning**\n- arsenal_error: {exc}", role="user")
+
+
+def _sync_timeline_for_hyperframes(ctx, workdir: str) -> None:
+    project_dir = Path(workdir)
+    expanded_path = project_dir / ".hyperframes" / "expanded-prompt.md"
+    html_path = project_dir / "index.html"
+    has_windows = False
+    try:
+        if expanded_path.is_file():
+            has_windows = bool(parse_hyperframes_time_windows(expanded_path.read_text(encoding="utf-8")))
+        if not has_windows and not html_path.is_file():
+            return
+        result = sync_timeline_from_project(project_dir)
+        if result.error:
+            _safe_inject(ctx, f"🎬 **Framepack Timeline Manifest Warning**\n- timeline_error: {result.error}", role="user")
+            return
+        if result.action in {"created", "synced", "migrated"}:
+            _safe_inject(
+                ctx,
+                "🎬 **Framepack Timeline Manifest — non-blocking sync**\n"
+                f"- action: `{result.action}`\n"
+                f"- path: `{result.path}`\n"
+                "- 这是场记账本：时间窗、proof frame、锁定状态和连续性证据会写在这里。",
+                role="user",
+            )
+    except Exception as exc:
+        logger.warning("pre_tool_call timeline sync failed: %s", exc)
+        _safe_inject(ctx, f"🎬 **Framepack Timeline Manifest Warning**\n- timeline_error: {exc}", role="user")
 
 
 def _build_quality_audit_message(report) -> str:
@@ -78,7 +100,7 @@ def _build_quality_audit_message(report) -> str:
     if len(report.issues) > 5:
         lines.append(f"- … {len(report.issues) - 5} more issue(s). Run `python scripts/framepack_quality_audit.py <project>` for JSON/Markdown details.")
     lines.append("")
-    lines.append("_这不是阻断门；它是 render 前的安检票，提醒你哪些问题 lint 看不见。_")
+
     return "\n".join(lines)
 
 
@@ -123,6 +145,7 @@ def register(ctx):
 
         hydrate_guardrails(ctx, project_dir=workdir, reason="hyperframes command")
         _audit_arsenal_for_hyperframes(ctx, workdir)
+        _sync_timeline_for_hyperframes(ctx, workdir)
         _audit_quality_for_hyperframes(ctx, workdir)
 
         frame_md_path = os.path.join(workdir, "frame.md")

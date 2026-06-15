@@ -126,14 +126,50 @@ def test_hyperframes_discovery_commands_skip_arsenal_audit(command, tmp_path):
     assert not (tmp_path / ".framepack" / "arsenal.json").exists()
 
 
-def test_hyperframes_command_noops_when_no_expanded_prompt(tmp_path):
+def test_hyperframes_command_creates_registry_even_when_no_expanded_prompt(tmp_path):
     (tmp_path / "frame.md").write_text("ok", encoding="utf-8")
     ctx = MagicMock()
 
     hook = _pre_hook(ctx)
     hook(tool_name="terminal", args={"command": "npx hyperframes lint", "workdir": str(tmp_path)})
 
-    assert not (tmp_path / ".framepack" / "arsenal.json").exists()
+    assert (tmp_path / ".framepack" / "arsenal.json").exists()
+
+
+def test_hyperframes_command_creates_timeline_manifest_when_time_windows_exist(tmp_path):
+    (tmp_path / "frame.md").write_text("ok", encoding="utf-8")
+    expanded = tmp_path / ".hyperframes" / "expanded-prompt.md"
+    expanded.parent.mkdir()
+    expanded.write_text(
+        """## HyperFrames Time Windows
+| Scene | Start | Duration | Track |
+|---|---:|---:|---:|
+| scene_01 | 0 | 4 | 0 |
+""",
+        encoding="utf-8",
+    )
+    ctx = MagicMock()
+
+    hook = _pre_hook(ctx)
+    hook(tool_name="terminal", args={"command": "npx hyperframes render", "workdir": str(tmp_path)})
+
+    timeline_path = tmp_path / ".framepack" / "timeline-manifest.json"
+    assert timeline_path.exists()
+    timeline = json.loads(timeline_path.read_text(encoding="utf-8"))
+    assert timeline["scenes"][0]["id"] == "scene_01"
+    injected = "\n".join(call.args[0] for call in ctx.inject_message.call_args_list)
+    assert "Timeline Manifest" in injected
+    assert "synced" in injected
+
+
+def test_hyperframes_command_does_not_create_timeline_manifest_without_time_windows(tmp_path):
+    (tmp_path / "frame.md").write_text("ok", encoding="utf-8")
+    ctx = MagicMock()
+
+    hook = _pre_hook(ctx)
+    hook(tool_name="terminal", args={"command": "npx hyperframes lint", "workdir": str(tmp_path)})
+
+    assert not (tmp_path / ".framepack" / "timeline-manifest.json").exists()
 
 
 def test_hyperframes_command_injects_quality_audit_summary_when_index_exists(tmp_path):

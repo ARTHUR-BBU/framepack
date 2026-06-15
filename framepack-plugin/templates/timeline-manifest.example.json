@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0.0",
+  "kind": "framepack_timeline_manifest",
+  "project": {
+    "name": "example-video",
+    "duration": 8.0,
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "output": "renders/final.mp4"
+  },
+  "source_files": {
+    "frame_md": "frame.md",
+    "expanded_prompt": ".hyperframes/expanded-prompt.md",
+    "html": "index.html",
+    "arsenal": ".framepack/arsenal.json"
+  },
+  "scenes": [
+    {
+      "id": "scene_01",
+      "start": 0.0,
+      "duration": 4.0,
+      "track_index": 0,
+      "status": "draft",
+      "locks": {
+        "status": "unlocked",
+        "locked_at": null,
+        "reason": null
+      },
+      "proofs": [
+        {"label": "scene_01_first", "time": 0.05, "required": true},
+        {"label": "scene_01_final", "time": 3.95, "required": true}
+      ],
+      "continuity": {
+        "first_frame_depends_on": null,
+        "carryover_elements": [],
+        "boundary_proofs": []
+      },
+      "weapons": ["text-split-enter"]
+    },
+    {
+      "id": "scene_02",
+      "start": 4.0,
+      "duration": 4.0,
+      "track_index": 0,
+      "status": "draft",
+      "locks": {
+        "status": "unlocked",
+        "locked_at": null,
+        "reason": null
+      },
+      "proofs": [
+        {"label": "scene_02_first", "time": 4.05, "required": true},
+        {"label": "scene_02_final", "time": 7.95, "required": true}
+      ],
+      "continuity": {
+        "first_frame_depends_on": "scene_01.final_frame",
+        "carryover_elements": [],
+        "boundary_proofs": [
+          {"label": "scene_02_boundary_after_scene_01", "time": 4.05, "required": true}
+        ]
+      },
+      "weapons": ["blur-crossfade"]
+    }
+  ],
+  "audio": {
+    "narration": [],
+    "music": null
+  },
+  "captions": {
+    "script": null,
+    "style": null,
+    "output": null,
+    "proofs": []
+  },
+  "proofs": {
+    "directory": ".framepack/proofs",
+    "contact_sheet": ".framepack/proofs/contact-sheet.jpg",
+    "required": [
+      {"label": "global_cta", "time": 7.5, "required": false}
+    ]
+  },
+  "change_requests": [
+    {
+      "id": "CR-001",
+      "status": "open",
+      "locked_scope": ["scene_01"],
+      "request": "Adjust copy only; preserve timing and approved proof frames.",
+      "allowed_files": ["index.html"],
+      "created_at": "2026-06-15T00:00:00Z"
+    }
+  ],
+  "created_at": "2026-06-15T00:00:00Z",
+  "updated_at": "2026-06-15T00:00:00Z",
+  "plugin_version_created": "0.10.5-draft",
+  "plugin_version_updated": "0.10.5-draft"
+}

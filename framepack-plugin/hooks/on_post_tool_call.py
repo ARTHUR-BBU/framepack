@@ -19,8 +19,7 @@ import re
 from pathlib import Path
 
 from .guardrails import hydrate_guardrails
-from core.arsenal_registry import ensure_arsenal, load_arsenal, reconcile_manifest, save_arsenal
-from core.execution_manifest import parse_execution_manifest
+from core.arsenal_registry import sync_arsenal_from_project
 
 logger = logging.getLogger(__name__)
 
@@ -363,19 +362,14 @@ def _build_arsenal_warning_message(warnings) -> str:
 
 def _sync_arsenal_for_expanded_prompt(ctx, file_path: str, content: str) -> None:
     project_dir = Path(_project_dir_for_framepack_file(file_path))
-    result = ensure_arsenal(project_dir, Path(__file__).resolve().parent.parent)
-    warnings = list(result.warnings)
-    if result.error:
-        warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": result.error, "severity": "warn", "weapon_id": None})())
     try:
-        data = load_arsenal(result.path)
-        manifest = parse_execution_manifest(content)
-        data, reconcile_warnings = reconcile_manifest(data, manifest, Path(__file__).resolve().parent.parent)
-        warnings.extend(reconcile_warnings)
-        save_arsenal(result.path, data)
+        result = sync_arsenal_from_project(project_dir, Path(__file__).resolve().parent.parent)
+        warnings = list(result.warnings)
+        if result.error:
+            warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": result.error, "severity": "warn", "weapon_id": None})())
     except Exception as exc:
         logger.warning("Arsenal reconciliation failed: %s", exc)
-        warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": str(exc), "severity": "warn", "weapon_id": None})())
+        warnings = [type("WarningLike", (), {"code": "arsenal_error", "message": str(exc), "severity": "warn", "weapon_id": None})()]
 
     message = _build_arsenal_warning_message(warnings)
     if message:
