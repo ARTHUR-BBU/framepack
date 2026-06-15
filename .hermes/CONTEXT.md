@@ -7,47 +7,55 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.10.6 hardening 开发已完成首批实现；正式源码版本仍是 v0.10.5，尚未 bump/tag/release。  
+**阶段**: Framepack v0.10.6 release-prep 已完成：源码版本已 bump 到 `0.10.6`，测试组脚本/说明已改为 v0106，部署目录和独立 skill 已同步；尚未创建 git tag / GitHub Release。  
 **分支**: `framepack-agent-platform`  
-**正式源码版本**: v0.10.5（`framepack-plugin/plugin.yaml` = `0.10.5`；v0.10.6 hardening 是 HEAD 上的 unreleased 变更）  
-**最新提交**: `e928a42 feat: harden framepack quality audit`  
-**部署状态**: 已同步到 `F:/Hermes_windows/plugins/framepack/`；`framepack` 独立 skill 也已同步。  
-**测试**: full pytest `247 passed`; 带 case 自动测试 `passed=5 failed=0 skipped=0`; case audit `P0=0/P1=0/P2=0/P3=0`。
+**正式源码版本**: v0.10.6（`framepack-plugin/plugin.yaml` = `0.10.6`；deployed plugin 与 active independent `framepack` skill 已同步）  
+**最新提交**: `1c803dc chore: prep framepack v0.10.6 release`  
+**部署状态**: 已同步到 `F:/Hermes_windows/plugins/framepack/`；`F:/Hermes_windows/skills/software-development/framepack/` 独立 skill 已同步；测试项目 `F:/Framepack-01-test/AGENTS.md` 已刷新。  
+**测试**: full pytest `247 passed`; deploy manifest `5 passed`; 测试组 auto smoke `passed=5 failed=0 skipped=0`; case audit `P0=0/P1=0/P2=0/P3=0`; security scan clean；previous-version scan clean（当前 release surface 无 v0.10.5 漂移）。
 
 ### 本轮做了什么
 
-- ✅ 读取并延续 v0.10.5 release 后交接台，按用户确认的 v0.10.6 “补短板硬化版”方案开工。
-- ✅ 建立设计文档：`.hermes/designs/2026-06-15--framepack-v0106-hardening.md`；明确先在 unreleased HEAD 做 hardening，release-prep 时再 bump v0.10.6。
-- ✅ 按 TDD 增加并先看到 RED：Google Fonts 外部依赖、本地字体资产缺失/存在、暗底低可见性风险、NaN/Infinity 数值拒绝、proof path 越界。
-- ✅ 实现 Quality Audit hardening：`external_font_dependency`、`font_face_missing_local_asset`、`low_visibility_risk`、NaN/Infinity finite-number 拒绝。
-- ✅ 实现 Proof Audit hardening：proof directory/contact-sheet 必须 project-local，越界报 `proof_path_outside_project` P1。
-- ✅ 更新字体/VPN 口径：国内用户可用本地 VPN/代理获取 catalog/registry/fonts，但最终生产 HTML 应 vendor 到 `assets/fonts/` + `@font-face`，不依赖 live Google Fonts。
-- ✅ 同步部署目录：core 三文件、guardrails、plugin skills、独立 `framepack` skill。
-- ✅ 提交：`e928a42 feat: harden framepack quality audit`。
+- ✅ 执行 v0.10.6 release-prep：把 plugin/version surfaces 从 v0.10.5 全面 bump 到 v0.10.6。
+- ✅ 新增 `CHANGELOG.md` 的 `0.10.6 — Production Hardening Patch` 条目。
+- ✅ README / docs / AGENTS / plugin.yaml / hook logger / compat matrix / DEFAULT_PLUGIN_VERSION / timeline template / skill frontmatter 全部更新到 0.10.6。
+- ✅ 测试组入口从 `scripts/test_team_v0105_auto_test.py` / `TEST_TEAM_AUTOTEST_v0.10.5.md` rename 到 `scripts/test_team_v0106_auto_test.py` / `TEST_TEAM_AUTOTEST_v0.10.6.md`。
+- ✅ 部署同步：`framepack-plugin/.` → `F:/Hermes_windows/plugins/framepack/`；主 `framepack` skill → `F:/Hermes_windows/skills/software-development/framepack/`。
+- ✅ 独立 reviewer 已审核 staged diff：无 security/logic blocker；唯一文案建议已修正。
+- ✅ 提交：`1c803dc chore: prep framepack v0.10.6 release`。
 
 ### 验证证据
 
-- RED targeted：新增 4 个关键测试首次运行失败（缺 external font、visibility、finite numeric、proof path 审计）。
-- GREEN targeted：`python -m pytest tests/test_quality_audit.py::test_quality_audit_reports_external_google_font_dependency tests/test_quality_audit.py::test_quality_audit_allows_existing_local_font_face_asset tests/test_quality_audit.py::test_quality_audit_reports_missing_local_font_face_asset tests/test_quality_audit.py::test_quality_audit_reports_low_visibility_risk_from_dark_background_and_brightness_filter tests/test_production_quality_audit.py::test_quality_audit_rejects_nan_and_infinity_numeric_fields tests/test_production_quality_audit.py::test_quality_audit_reports_proof_paths_outside_project tests/test_production_quality_audit.py::test_quality_audit_allows_project_local_proof_paths -q -o "addopts="` → `7 passed in 0.43s`。
-- Quality/production targeted：`python -m pytest tests/test_quality_audit.py tests/test_production_quality_audit.py -q -o "addopts="` → `26 passed in 0.92s`。
-- Full suite：`cd framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `247 passed in 20.62s`。
-- Deploy manifest：`python -m pytest tests/test_deploy_manifest.py -q -o "addopts="` → `5 passed in 0.11s`。
+- Full suite：`cd framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `247 passed in 9.86s`。
+- Deploy manifest：`python -m pytest tests/test_deploy_manifest.py -q -o "addopts="` → `5 passed in 0.05s`。
+- Test-team auto smoke：`python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6 --case-project F:/Framepack-01-test` → `passed=5 failed=0 skipped=0`。
+- Case Quality Audit：同上 `case_quality_audit` → `P0=0/P1=0/P2=0/P3=0`, `issues=0`。
+- Deployed smoke：auto script 内部从 `F:/Hermes_windows/plugins/framepack/plugin.yaml` 读回 `0.10.6` 并 import `core.quality_audit` 成功。
+- Deploy sync read-back：source/deployed `plugin.yaml`、`__init__.py`、hooks、`quality_audit.py`、`proof_audit.py`、`timeline_manifest.py`、主 skill 全部 `read_bytes()` 比对通过 → `deploy sync ok`。
+- Previous-version scan：排除 changelog/history/design/dev-fixture 后，当前 release surface 无 `0.10.5` / `v0.10.5` / `v0105` 漂移。
 - Security scan：`python /f/Hermes_windows/skills/software-development/requesting-code-review/scripts/scan_worktree_added_lines.py` → `No added-line security red flags found.`
-- Deploy sync read-back：source/deployed `quality_audit.py`、`proof_audit.py`、`timeline_manifest.py`、`guardrails.md`、`framepack/SKILL.md`、`framepack-director/SKILL.md` 全部 `cmp -s` 通过 → `deploy sync ok`。
-- Test-team auto smoke：`python scripts/test_team_v0105_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6-hardening-dev --case-project F:/Framepack-01-test` → `passed=5 failed=0 skipped=0`; `case_quality_audit` → `P0=0/P1=0/P2=0/P3=0`。
+- Diff hygiene：`git diff --cached --check` → exit 0。
 
 ### 给测试组的入口
 
-- 当前可给测试组的是 v0.10.6 hardening 开发版 HEAD：`e928a42`。
-- 注意：`plugin.yaml` 仍是 `0.10.5`，这是按计划“功能绿后再 release-prep bump”；测试组若要求正式版本号，需要先做 v0.10.6 bump/tag/release。
-- 自动测试脚本仍是：`scripts/test_team_v0105_auto_test.py`（版本口径还没 bump；可在 release-prep 时复制/改名为 v0106）。
-- 当前 deployed plugin 已包含 hardening 变更，可直接做开发版 smoke。
+- 当前正式测试组入口：v0.10.6 release-prep HEAD `1c803dc`。
+- 推荐命令：
+
+```bash
+python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6
+```
+
+- 带案例项目：
+
+```bash
+python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6 --case-project F:/Framepack-01-test
+```
 
 ### 下次要做什么
 
-- 如要交正式测试组：执行 v0.10.6 release-prep（全面 bump 版本号/文档/测试脚本口径），再跑 full pytest + auto-test + deploy sync。
-- push 当前分支到 origin（若本轮尚未 push）并根据老田决定是否立即创建 v0.10.6 tag/release。
-- 可选补强：把代理检测/字体 acquisition 做成显式 helper 或 CLI doctor 项，目前本轮只完成审计与文档口径。
+- push 当前分支到 origin（如本轮尚未 push）。
+- 若老田确认“正式发布”，再创建 annotated tag `v0.10.6` + GitHub Release，并发布后再次更新交接台。
+- 可选补强：把代理检测/字体 acquisition 做成显式 helper 或 CLI doctor 项；当前 v0.10.6 已完成审计与文档口径。
 
 ## 关键路径
 
@@ -71,6 +79,7 @@
 - v0.10.3：Quality Beyond Lint；语义审计小票、JSON/Markdown audit CLI、handoff 前非阻断 summary、scene-keyed Manifest parser、测试组自动测试脚本。
 - v0.10.4：Arsenal Binding Contract；arsenal 自动创建/同步、canonical weapon function、inline GSAP hint、sync opt-in。本地 commit: `6a63be4`。
 - v0.10.5：Production Quality Layer；timeline manifest、proof frames/contact sheet、scene spec、production quality audit、lightweight hook sync。本地 commit: `17a9455`；后续 hardening commit `be318b5` 修复 shell cd 后项目目录 hydration。
+- v0.10.6：Production Hardening Patch；external font dependency、本地字体资产缺失、低可见性风险、NaN/Infinity、proof path project-local 审计；release-prep commit `1c803dc`。
 
 ## 待办 / 想法池
 
@@ -79,7 +88,7 @@
 - [x] v0.10.6 hardening 首批：Google Fonts 本地化提示、暗底可见性审计、NaN/Infinity 数值拒绝、proof path project-local 审计已实现；weapon binding 强制已有 P1 `manifest_weapon_not_called` 基础，后续可继续升级。
 - [x] Hardening：数值解析拒绝 NaN/Infinity。
 - [x] Hardening：proof path 限定在 project-local 并报 `proof_path_outside_project` P1。
-- [ ] v0.10.6 release-prep：全面 bump 版本号/测试脚本/文档口径，确认正式测试组入口。
+- [x] v0.10.6 release-prep：全面 bump 版本号/测试脚本/文档口径，确认正式测试组入口。
 - [ ] 文档：hook 会非阻断创建/同步 `.framepack` ledger；CLI 默认 report-first，只在显式 sync/output flags 下写文件。
 - [ ] v0.11 方向：Aesthetic Benchmark / Director Taste System，对表 nexu-io/html-video 21 templates 与 html-anything 10 frame。
 
