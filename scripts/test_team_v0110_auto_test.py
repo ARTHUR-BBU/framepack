@@ -19,7 +19,7 @@ from typing import Any
 
 FRAMEPACK_VERSION = "0.11.0"
 REPORT_JSON = "framepack-v0110-auto-test-report.json"
-REPORT_MD = "framepack-v0106-auto-test-report.md"
+REPORT_MD = "framepack-v0110-auto-test-report.md"
 PLANNED_CHECKS = [
     "source_pytest",
     "release_version_sync",

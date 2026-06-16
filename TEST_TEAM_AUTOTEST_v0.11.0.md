@@ -4,7 +4,7 @@
 
 ## 一句话结论
 
-v0.11.0 的新增能力是 Production Hardening Patch：在 Production Quality Layer 上补强字体本地化、暗场可见性、NaN/Infinity、proof 路径等机器可抓的合同。
+v0.11.0 的新增能力是 Kinetic Taste Engine：语义品味审计（fade-stack 单调性、surprise 操作符密度、kinetic grammar 连贯性），配以 taste specimens 参考校准和 Director 品味参考文档。同时验证了 HyperFrames 0.6.104 兼容性，修复了 environment doctor 的 cwd 探测问题。
 
 - HyperFrames lint 负责结构/编译层；
 - Framepack Quality Audit 负责语义风险小票；
