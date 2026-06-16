@@ -7,94 +7,46 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.11 Kinetic Taste Engine MVP 已完成源码实现与本地部署同步；尚未 commit，尚未 bump 正式版本，仍属于 Unreleased 开发成果。
+**阶段**: Framepack v0.11-dev Kinetic Taste Engine 已完成 feature commit、部署同步与测试组真人实例测试；尚未 bump/tag/release，正式 manifest 版本仍是 v0.10.6。
 **分支**: `framepack-agent-platform`
-**正式源码版本**: v0.10.6（`framepack-plugin/plugin.yaml` 仍为 `0.10.6`；本轮没有做 release bump）
-**当前 HEAD**: `f19bfd3`
-**部署状态**: 已同步 `framepack-plugin/.` → `F:/Hermes_windows/plugins/framepack/`，并读回确认 `core/taste_audit.py` 与 `scripts/framepack_taste_audit.py` 存在。
-**测试**: Focused suite `43 passed`; full plugin suite `280 passed`; root-level focused smoke `38 passed`; final targeted check `23 passed`; deploy manifest `5 passed`; manual Taste Audit smoke 输出 markdown/json 均成功；security scan clean；diff check clean；independent reviewer passed。
+**正式源码版本**: v0.10.6（`framepack-plugin/plugin.yaml` 仍为 `0.10.6`；Kinetic Taste Engine 属于 Unreleased / v0.11-dev 成果）
+**最后提交**: `234fb11` (`feat: add framepack kinetic taste engine`)
+**部署状态**: 已同步关键 Framepack plugin 文件到 `F:/Hermes_windows/plugins/framepack/`；source/deployed key files 在测试组 Case C 中 cmp 全 OK。
+**测试**: 源码 full suite `282 passed`; deployed Taste Audit smoke 通过；自动实例三线通过；测试组 live instance case PASS；环境仍为 GUARDED（HyperFrames package script 0.6.99，direct npx 解析到 0.6.104）。
 
 ### 本轮做了什么
 
-- ✅ 基于已批准设计 `F:/hyperframes/.hermes/designs/2026-06-16--framepack-v0.11-kinetic-taste-engine.md` 写入实施计划：`F:/hyperframes/.hermes/plans/2026-06-16_121719-framepack-v011-kinetic-taste-engine.md`。
-- ✅ 按 TDD 红→绿新增 Kinetic Taste 词汇表：`framepack-plugin/core/taste_grammar.py`。
-  - `KINETIC_GRAMMAR`: 7 个稳定 ID。
-  - `TASTE_MOVES`: 12 个稳定 ID。
-  - `SURPRISE_OPERATORS`: 10 个稳定 ID。
-- ✅ 按 TDD 新增 Reference Specimens：`framepack-plugin/core/taste_specimens.py`，内置 6 个 MVP specimens。
-- ✅ 按 TDD 新增 Taste Audit：`framepack-plugin/core/taste_audit.py`。
-  - 报告形态：`framepack_taste_audit`。
-  - severity: `risk | suggestion | note`，不输出假精确美学总分。
-  - 检查：missing taste block、missing kinetic continuity、generic fade stack、static mockup risk、no controlled surprise、too many surprises、surprise without intent、motif not transformed。
-- ✅ 新增 CLI：`framepack-plugin/scripts/framepack_taste_audit.py`，支持 `--format json|markdown` 与 `--output`。
-- ✅ 扩展 Execution Manifest parser，向后兼容新增可选字段：`motion_role`、`grammar`、`taste_move`、`surprise`。
-- ✅ 更新 Director skill：`framepack-plugin/skills/framepack-director/SKILL.md`。
-  - `frame.md` 示例加入 compact `taste:` block。
-  - `expanded-prompt.md` per-scene beats 加入 `Kinetic Continuity` contract。
-  - Execution Manifest 示例加入 motion semantics。
-- ✅ 新增 Director 参考文档：
-  - `references/kinetic-taste-engine.md`
-  - `references/reference-specimens.md`
-  - `references/kinetic-grammar.md`
-  - `references/taste-moves.md`
-  - `references/surprise-operators.md`
-- ✅ 新增/更新测试：taste grammar、specimens、audit、CLI、execution manifest、director prompt contract。
-- ✅ 部署同步到 active plugin：`F:/Hermes_windows/plugins/framepack/`。
-- ✅ simplify + 审核补强：
-  - 新增 `framepack-plugin/tests/conftest.py`，支持从 repo 根目录直接跑 focused tests。
-  - 调整 `taste_audit.py` 的 surprise intent 判断：只有 `frame.md` 的 `surprise_operator` 需要 `intent`，Execution Manifest 的场景级 `surprise:` 不再误报缺 intent。
-  - 新增回归测试 `test_manifest_surprise_semantics_do_not_require_scene_intent`。
-  - 新增 `test_surprise_operator_intent_must_be_inside_operator_block`，避免别处 `intent:` 误洗白 `surprise_operator`。
-  - 新增 bullet-style manifest motion semantics 覆盖测试。
-  - `surprise-operators.md` 明确：frame.md 的 `surprise_operator` 需要 intent，Execution Manifest 的场景级 `surprise:` 只是语义标签。
-  - `.gitignore` 增加 `tmp/`，保留 smoke 现场但避免误提交。
+- ✅ 提交 Kinetic Taste Engine feature commit：`234fb11 feat: add framepack kinetic taste engine`。
+- ✅ `.hermes/designs/2026-06-16--framepack-v0.11-kinetic-taste-engine.md` 与 `.hermes/plans/2026-06-16_121719-framepack-v011-kinetic-taste-engine.md` 已随 feature commit 入库。
+- ✅ 提交前门禁完成：security scan clean；independent reviewer 最终 `passed=true`；parser edge cases 已按 TDD 修复。
+- ✅ 源码测试：`cd F:/hyperframes/framepack-plugin && python -m pytest tests/ -q -o "addopts="` → `282 passed in 12.27s`。
+- ✅ 部署同步：`F:/hyperframes/framepack-plugin` 关键文件同步到 `F:/Hermes_windows/plugins/framepack`；deployed CLI smoke 输出 `risk=0/suggestion=0/note=0`。
+- ✅ 自动实例三线保留在 `F:/hyperframes/test-team-runs/kinetic-taste-engine/`（保留现场，不提交）：
+  - Case A positive：`risk=0/suggestion=0/note=0`。
+  - Case B negative：命中 `generic_fade_stack`、`static_mockup_risk`、`surprise_without_intent`、`motif_not_transformed`。
+  - Case C CLI/deploy：help/json/markdown/cmp 全通过。
+- ✅ 测试组真人实例测试完成，case：`F:/Framepack-01-test/cases/pearl-celestial-memory-20s`。
+  - `npm run check` 成功：lint `0 errors, 3 warnings`；validate 通过；inspect `0 layout issues`。
+  - `npm run render` 成功。
+  - Framepack semantic quality audit：`P0=0, P1=0, P2=0, P3=0`。
+  - `ffprobe`：`1920x1080`, `30fps`, `20.000000s`, `600` frames。
+  - Taste Generation / HyperFrames Handoff Fidelity / Rendered Deliverable 均 PASS。
+  - Environment 判定为 GUARDED：package script 0.6.99，direct npx 0.6.104。
+- ✅ 测试组补正 canonical weapon calls：`textSplitEnter(...)`、`cardCascadeReveal(...)`，避免“内联复刻但审计不认武器”的老毛病。
 
+### 注意点 / 风险
 
-### 验证证据
-
-- RED evidence：
-  - `python -m pytest tests/test_taste_grammar.py -q -o "addopts="` → 初次 `ModuleNotFoundError: No module named 'core.taste_grammar'`。
-  - `python -m pytest tests/test_taste_specimens.py -q -o "addopts="` → 初次 `ModuleNotFoundError: No module named 'core.taste_specimens'`。
-  - `python -m pytest tests/test_taste_audit.py -q -o "addopts="` → 初次 `ModuleNotFoundError: No module named 'core.taste_audit'`。
-  - `python -m pytest tests/test_taste_audit_cli.py -q -o "addopts="` → 初次 `ModuleNotFoundError: No module named 'scripts.framepack_taste_audit'`。
-  - `python -m pytest tests/test_execution_manifest.py::test_parse_scene_keyed_manifest_with_motion_semantics -q -o "addopts="` → 初次 `AttributeError: 'ManifestWeapon' object has no attribute 'motion_role'`。
-  - `python -m pytest tests/test_director_taste_prompt_contract.py -q -o "addopts="` → 初次 `4 failed`，缺 taste block / Kinetic Continuity / motion semantics / reference docs。
-- GREEN evidence：
-  - `python -m pytest tests/test_taste_grammar.py tests/test_taste_specimens.py -q -o "addopts="` → `12 passed in 0.07s`。
-  - `python -m pytest tests/test_taste_audit.py tests/test_execution_manifest.py -q -o "addopts="` → `19 passed in 0.14s`。
-  - `python -m pytest tests/test_taste_audit_cli.py -q -o "addopts="` → `3 passed in 0.11s`。
-  - `python -m pytest tests/test_director_taste_prompt_contract.py -q -o "addopts="` → `4 passed in 0.08s`。
-- Focused suite：`python -m pytest tests/test_taste_grammar.py tests/test_taste_specimens.py tests/test_taste_audit.py tests/test_taste_audit_cli.py tests/test_execution_manifest.py tests/test_director_taste_prompt_contract.py tests/test_deploy_manifest.py -q -o "addopts="` → `43 passed in 0.32s`。
-- Full suite：`python -m pytest tests/ -q -o "addopts="` → `280 passed in 11.09s`。
-- Root-level focused smoke：`python -m pytest framepack-plugin/tests/test_taste_grammar.py framepack-plugin/tests/test_taste_specimens.py framepack-plugin/tests/test_taste_audit.py framepack-plugin/tests/test_taste_audit_cli.py framepack-plugin/tests/test_execution_manifest.py framepack-plugin/tests/test_director_taste_prompt_contract.py -q -o "addopts="` → `38 passed in 0.36s`。
-- Final targeted check：`python -m pytest tests/test_director_taste_prompt_contract.py tests/test_taste_audit.py tests/test_execution_manifest.py -q -o "addopts="` → `23 passed in 0.19s`。
-- Deploy sync：`cp -r framepack-plugin/. /f/Hermes_windows/plugins/framepack/ && test -f /f/Hermes_windows/plugins/framepack/core/taste_audit.py && test -f /f/Hermes_windows/plugins/framepack/tests/conftest.py` → `deployment sync ok`。
-- Deploy manifest after sync：`python -m pytest tests/test_deploy_manifest.py -q -o "addopts="` → `5 passed in 0.06s`。
-
-- Diff hygiene/security：`git diff --check && python /f/Hermes_windows/skills/software-development/requesting-code-review/scripts/scan_worktree_added_lines.py` → exit 0，`No added-line security red flags found.`。
-- Independent reviewer：passed=true；无 security concerns；无 logic errors；最后一条文档澄清建议已补到 `surprise-operators.md`。
-
-### 给测试组的入口
-
-当前仍是开发分支未提交状态，不要当正式 release 测试入口。
-
-开发侧推荐验证命令：
-
-```bash
-cd F:/hyperframes/framepack-plugin
-python -m pytest tests/ -q -o "addopts="
-python scripts/framepack_taste_audit.py F:/hyperframes/tmp/taste-audit-smoke --format markdown
-```
-
-正式测试组入口仍以 v0.10.6 release 命令为准，直到 v0.11 release-prep/bump 完成。
+- ⚠️ HyperFrames 版本口径漂移仍在：case package script 使用 `hyperframes@0.6.99`，direct `npx hyperframes` 当前解析到 `0.6.104`。
+- ⚠️ Framepack doctor 对高于 tested max 的 HyperFrames 仍会进入 guarded；测试组已证明 0.6.104 环境可完成 live case，但尚未把 tested max 正式上调。
+- ⚠️ Golden case 仍有 3 个非阻塞 warnings：`overlapping_gsap_tweens`、`gsap_studio_edit_blocked`、`caption_exit_missing_hard_kill`。若要作为基准样片，应单独清洁。
+- ⚠️ `F:/Framepack-01-test` 不是 git repo；case 产物属于测试工作台现场，不要误以为已入主仓。
+- ⚠️ `F:/hyperframes/test-team-runs/` 是自动实例测试现场，目前未跟踪；保留现场但不要混入 release commit，除非用户明确要求归档。
 
 ### 下次要做什么
 
-- 按老田习惯，commit 前最后清点提交范围。
-- 不要提交 `tmp/` smoke 目录；`.gitignore` 已加入 `tmp/`。
-- 设计文档、计划文档是否随本次 feature 一起提交由老田决定。
-- 如准备提交，建议 message：`feat: add framepack kinetic taste engine`。
-- 后续 release-prep 才 bump 版本到 v0.11；现在不要写“v0.11 released”。
+1. 清理 `F:/Framepack-01-test/cases/pearl-celestial-memory-20s` 的 3 个 HyperFrames warnings，目标是让它成为 golden baseline；边界：不改创意方向、不改总时长、不换武器。
+2. 专门验证 HyperFrames `0.6.104` 兼容性：blank smoke + live case check/render + 与 0.6.99 口径对照；确认后再决定是否更新 doctor tested max。
+3. 准备 v0.11.0 release-prep：全面同步版本面（plugin.yaml、README、AGENTS/guardrails、CHANGELOG、skill frontmatter、logger/文案、测试组入口等），不要只改版本号。
 
 ## 关键路径
 
@@ -127,9 +79,11 @@ python scripts/framepack_taste_audit.py F:/hyperframes/tmp/taste-audit-smoke --f
 - [x] v0.11 Kinetic Taste Engine 设计文档落盘并获确认。
 - [x] v0.11 Kinetic Taste Engine 实施计划落盘。
 - [x] Kinetic Taste Engine MVP 源码实现 + 测试 + 部署同步。
-- [ ] commit 前 simplify + 审核。
-- [ ] 决定是否补 root-level pytest import convention / surprise edge-case tests。
-- [ ] commit 本轮 feature。
+- [x] commit 前 simplify + 审核。
+- [x] commit 本轮 feature：`234fb11 feat: add framepack kinetic taste engine`。
+- [x] 测试组 live instance case 通过：`F:/Framepack-01-test/cases/pearl-celestial-memory-20s`。
+- [ ] 清理 pearl-celestial-memory-20s 的 3 个 HyperFrames warnings，沉淀为 golden baseline。
+- [ ] 验证 HyperFrames 0.6.104 兼容性并决定是否上调 doctor tested max。
 - [ ] 后续 release-prep 时再 bump v0.11 版本与 release surfaces。
 
 ## 笔记
