@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.11.0 — Kinetic Taste Engine (2026-06-17)
+
+### Taste Engine
+
+- **Kinetic Taste Engine** — semantic taste audit (`core/taste_audit.py`) that checks fade-stack monotony, surprise operator density, kinetic grammar coherence, and manifest surprise semantics. Curated taste specimens (`core/taste_specimens.py`) provide reference calibration for luxury/emerging/editorial styles.
+- **Director taste references** — `kinetic-taste-engine.md`, `surprise-operators.md`, `taste-moves.md`, `kinetic-grammar.md` give the Director a taste vocabulary for scene design.
+- **Empty surprise marker fix** — Execution Manifest entries `surprise: none` no longer count as controlled surprises in the audit.
+
+### Compatibility
+
+- **HyperFrames 0.6.104** — validated compatible (blank smoke + golden case lint/validate/inspect/render/ffprobe). Support window raised from 0.6.97 to 0.6.104.
+- **Environment doctor cwd fix** — project-local HyperFrames detection now runs in `project_dir` cwd, preventing false version readings from caller-cwd node_modules.
+
+### Tests
+
+- Added taste audit regression tests (surprise counting, fade-stack detection, manifest semantics).
+- Bumped release-surface synchronization tests to 0.11.0.
+- Full suite: 284+ passed.
+
 ## 0.10.6 — Production Hardening Patch (2026-06-16)
 
 ### Hardening

@@ -1,10 +1,10 @@
-# Framepack v0.10.6 测试组自动测试说明
+# Framepack v0.11.0 测试组自动测试说明
 
-目标：让测试组不用理解内部实现，也能稳定复测 v0.10.6 的“安检门”能力。
+目标：让测试组不用理解内部实现，也能稳定复测 v0.11.0 的“安检门”能力。
 
 ## 一句话结论
 
-v0.10.6 的新增能力是 Production Hardening Patch：在 Production Quality Layer 上补强字体本地化、暗场可见性、NaN/Infinity、proof 路径等机器可抓的合同。
+v0.11.0 的新增能力是 Production Hardening Patch：在 Production Quality Layer 上补强字体本地化、暗场可见性、NaN/Infinity、proof 路径等机器可抓的合同。
 
 - HyperFrames lint 负责结构/编译层；
 - Framepack Quality Audit 负责语义风险小票；
@@ -12,19 +12,19 @@ v0.10.6 的新增能力是 Production Hardening Patch：在 Production Quality L
 
 ## 推荐测试命令：A 档，插件基准验收
 
-在仓库根目录运行。这个命令不带 `--case-project`，只验证 v0.10.6 插件基准是否可信：
+在仓库根目录运行。这个命令不带 `--case-project`，只验证 v0.11.0 插件基准是否可信：
 
 ```bash
-python scripts/test_team_v0106_auto_test.py \
+python scripts/test_team_v0110_auto_test.py \
   --repo F:/hyperframes \
   --deployed-plugin F:/Hermes_windows/plugins/framepack \
-  --output-dir test-team-reports/v0.10.6
+  --output-dir test-team-reports/v0.11.0
 ```
 
 Windows Git Bash 可直接用上面的 POSIX 换行；如果复制到单行：
 
 ```bash
-python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6
+python scripts/test_team_v0110_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.11.0
 ```
 
 预期摘要：
@@ -42,7 +42,7 @@ skipped=1
 只有当测试组已经准备好“完整 case project”时，才加 `--case-project`：
 
 ```bash
-python scripts/test_team_v0106_auto_test.py \
+python scripts/test_team_v0110_auto_test.py \
   --repo F:/hyperframes \
   --case-project <完整case项目路径> \
   --deployed-plugin F:/Hermes_windows/plugins/framepack \
@@ -66,7 +66,7 @@ skipped=0
 先看脚本会跑什么，不执行测试：
 
 ```bash
-python scripts/test_team_v0106_auto_test.py --dry-run --output-dir F:/Framepack-01-test/test-team-v0106-dry-run
+python scripts/test_team_v0110_auto_test.py --dry-run --output-dir F:/Framepack-01-test/test-team-v0110-dry-run
 ```
 
 ## 输出文件
@@ -74,8 +74,8 @@ python scripts/test_team_v0106_auto_test.py --dry-run --output-dir F:/Framepack-
 脚本会生成：
 
 ```text
-<output-dir>/framepack-v0106-auto-test-report.json   # 机器可读
-<output-dir>/framepack-v0106-auto-test-report.md     # 人类可读
+<output-dir>/framepack-v0110-auto-test-report.json   # 机器可读
+<output-dir>/framepack-v0110-auto-test-report.md     # 人类可读
 <output-dir>/case-quality-audit.json                 # 案例项目 Quality Audit 明细（提供 --case-project 时）
 ```
 
@@ -87,7 +87,7 @@ python scripts/test_team_v0106_auto_test.py --dry-run --output-dir F:/Framepack-
 
 2. `release_version_sync`
    - 专门跑版本同步测试。
-   - 检查 plugin.yaml、README、AGENTS、skill frontmatter、hook logger、compat matrix 等门牌是否都显示 0.10.6。
+   - 检查 plugin.yaml、README、AGENTS、skill frontmatter、hook logger、compat matrix 等门牌是否都显示 0.11.0。
 
 3. `quality_audit_cli`
    - 检查 `scripts/framepack_quality_audit.py` CLI 可用。
@@ -147,7 +147,7 @@ npx hyperframes render
 请测试组报告这几项：
 
 ```text
-Framepack version: 0.10.6
+Framepack version: 0.11.0
 Repo commit:
 Auto-test command:
 Auto-test summary: passed=?, failed=?, skipped=?
@@ -163,5 +163,5 @@ Manual findings:
 
 - Quality Audit 是“安检小票”，不是替代 lint。
 - 如果 Quality Audit 报 P0/P1，不等于脚本失败；它是在发现真实风险。
-- 如果自动脚本 `failed > 0`，才表示 v0.10.6 本身或环境有问题。
+- 如果自动脚本 `failed > 0`，才表示 v0.11.0 本身或环境有问题。
 - BGM 许可、字体离线回退、最终视觉情绪是否对，是实际案例测试继续观察的内容，不是自动脚本能完全裁决的内容。
