@@ -18,6 +18,18 @@ fuzzy video intent into two precise deliverables that HyperFrames can consume:
 Once these two files are written, HyperFrames takes over. You do NOT write HTML.
 You do NOT manage 13 intermediate files. You do TWO things, and you do them well.
 
+## v0.11 Kinetic Taste Engine
+
+Before Phase 1/2 output, read the compact taste references when the user wants a video with personality, energy, or memorability:
+
+- `references/kinetic-taste-engine.md` — overview + output contracts
+- `references/reference-specimens.md` — Reference DNA specimens
+- `references/kinetic-grammar.md` — action relay grammar
+- `references/taste-moves.md` — Director Taste Moves
+- `references/surprise-operators.md` — Controlled Surprise operators
+
+Core rule: **合格不等于惊艳。** Do not merely choose colors and entrance animations. Give the film an internal Visual Physics, scene-to-scene Kinetic Continuity, 1-3 Director Taste Moves, and at most 1-2 Controlled Surprise operators with intent.
+
 ## Phase 1: Intent → frame.md
 
 ### Step 1: Understand the user's intent
@@ -87,8 +99,36 @@ motion:
   duration_range: [0.8, 1.5]
   transition_default: crossfade
 atmosphere: "One-line mood direction"
+taste:
+  reference_dna:
+    - luxury_object_emergence
+  visual_physics:
+    gravity: low
+    materials: [pearl, silk, shadow]
+    motion_law: [slow drift, orbital reveal]
+    transformation_rule:
+      - circles become halos
+      - halos become portals
+    forbidden_motion:
+      - generic slide-in
+      - random bounce
+  energy_arc: slow_burn_to_punch
+  motif: pearl_as_moon
+  taste_moves:
+    - object_worship
+    - silence_before_drop
+  surprise_operator:
+    type: scale_violation
+    intent: "Make the pearl feel celestial, not decorative."
 ---
 ```
+
+Taste block rules:
+- Keep it compact. This is Director taste DNA, not a second expanded-prompt.
+- Choose 1-2 `reference_dna` IDs from `references/reference-specimens.md`.
+- Choose 1-3 `taste_moves` IDs from `references/taste-moves.md`.
+- `surprise_operator` is recommended, not mandatory. If used, it MUST include `intent`.
+- Use stable English IDs in files; explain the feeling in natural language when talking to the user.
 
 ### Step 5: User confirmation
 
@@ -167,7 +207,24 @@ For each scene, specify:
   - High energy: SLAM, CRASH, SHATTER, BURST
   - Medium: CASCADE, SLIDE, REVEAL, BUILD
   - Low: float, drift, breathe, fade, type-on
+- **Kinetic Continuity** — scene-to-scene action relay:
+  - Incoming energy: what this scene inherits from the previous beat
+  - Action relay: what action causes/reveals/transforms the next action
+  - Outgoing transition seed: what element becomes the transition
+  - Motif state: how the motif evolves here
 - **Transition out** — specific: "blur crossfade, 0.4s, power2.inOut" (not just "crossfade")
+
+Example Kinetic Continuity block:
+
+```markdown
+#### Kinetic Continuity
+- Incoming energy: inherits the previous scene's pearl orbit.
+- Action relay: orbit line becomes title underline.
+- Outgoing transition seed: underline expands into a gold wipe.
+- Motif state: pearl → halo → portal.
+```
+
+If every scene is an independent entrance animation, the creative output is not ready. At least two scene boundaries should use kinetic grammar other than generic fade/crossfade.
 
 ### Step 4: Weapon Resolution — MANDATORY (skip and your output is invalid)
 
@@ -227,6 +284,10 @@ templates: none
 
 scene_1:
   needs: "big text slam entrance"
+  motion_role: hook_mystery
+  grammar: tension_release
+  taste_move: editorial_punch
+  surprise: tempo_break
   weapon: text-split-enter
   kind: part
   skill_path: "framepack:framepack-animation-library"

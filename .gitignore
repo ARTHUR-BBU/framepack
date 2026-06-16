@@ -20,6 +20,7 @@ Thumbs.db
 
 # Test outputs
 out/
+tmp/
 tmp_frame_*.jpg
 test-team-reports/
 

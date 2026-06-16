@@ -7,72 +7,102 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.10.6 已正式发布：annotated tag `v0.10.6` 已推送，GitHub Release 已创建；测试组真实 case `F:/Framepack-01-test/pearl-luxe-30s` 已从 2 个 P1 + 1 个 P2 修整到 semantic audit 全绿。  
-**分支**: `framepack-agent-platform`  
-**正式源码版本**: v0.10.6（`framepack-plugin/plugin.yaml` = `0.10.6`；deployed plugin 与 active independent `framepack` skill 已同步）  
-**最新提交**: `7fea6c3 handoff: record v0.10.6 case audit cleanup`（tag `v0.10.6` deref commit = `7fea6c3`；源码 release-prep 为 `1c803dc`）  
-**发布状态**: GitHub Release `Framepack v0.10.6 — Production Hardening Patch` 已发布，URL: `https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.6`；非 draft，非 prerelease。  
-**部署状态**: 已同步到 `F:/Hermes_windows/plugins/framepack/`；`F:/Hermes_windows/skills/software-development/framepack/` 独立 skill 已同步；case 项目 `F:/Framepack-01-test/pearl-luxe-30s` 已补 timeline ledger 并修正 scene_3 canonical weapon binding。  
-**测试**: 测试组原命令复跑 `passed=5 failed=0 skipped=0`; source pytest `247 passed`; deploy manifest `5 passed`; deployed smoke ok；case audit `P0=0/P1=0/P2=0/P3=0`, `issues=0`; HyperFrames lint `0 errors / 3 warnings`; validate contrast pass；inspect `0 issues`；security scan clean；previous-version scan clean。
+**阶段**: Framepack v0.11 Kinetic Taste Engine MVP 已完成源码实现与本地部署同步；尚未 commit，尚未 bump 正式版本，仍属于 Unreleased 开发成果。
+**分支**: `framepack-agent-platform`
+**正式源码版本**: v0.10.6（`framepack-plugin/plugin.yaml` 仍为 `0.10.6`；本轮没有做 release bump）
+**当前 HEAD**: `f19bfd3`
+**部署状态**: 已同步 `framepack-plugin/.` → `F:/Hermes_windows/plugins/framepack/`，并读回确认 `core/taste_audit.py` 与 `scripts/framepack_taste_audit.py` 存在。
+**测试**: Focused suite `43 passed`; full plugin suite `280 passed`; root-level focused smoke `38 passed`; final targeted check `23 passed`; deploy manifest `5 passed`; manual Taste Audit smoke 输出 markdown/json 均成功；security scan clean；diff check clean；independent reviewer passed。
 
 ### 本轮做了什么
 
-- ✅ 执行 v0.10.6 release-prep：把 plugin/version surfaces 从 v0.10.5 全面 bump 到 v0.10.6。
-- ✅ 新增 `CHANGELOG.md` 的 `0.10.6 — Production Hardening Patch` 条目。
-- ✅ README / docs / AGENTS / plugin.yaml / hook logger / compat matrix / DEFAULT_PLUGIN_VERSION / timeline template / skill frontmatter 全部更新到 0.10.6。
-- ✅ 测试组入口从 `scripts/test_team_v0105_auto_test.py` / `TEST_TEAM_AUTOTEST_v0.10.5.md` rename 到 `scripts/test_team_v0106_auto_test.py` / `TEST_TEAM_AUTOTEST_v0.10.6.md`。
-- ✅ 部署同步：`framepack-plugin/.` → `F:/Hermes_windows/plugins/framepack/`；主 `framepack` skill → `F:/Hermes_windows/skills/software-development/framepack/`。
-- ✅ 独立 reviewer 已审核 staged diff：无 security/logic blocker；唯一文案建议已修正。
-- ✅ 提交：`1c803dc chore: prep framepack v0.10.6 release`。
-- ✅ 复核测试组真实 case 报告：初测为 `passed=5 failed=0 skipped=0`，但 `pearl-luxe-30s` semantic audit 有 `manifest_weapon_not_called` P1、`timeline_manifest_missing` P1、`low_visibility_risk` P2。
-- ✅ 修整 case 项目（非插件源码）：scene_3 改为 canonical `cardCascadeReveal()` 调用；生成 `.framepack/timeline-manifest.json`；降低过重黑遮罩/首帧欠曝阈值以消除误伤式低可见性黄灯。
-- ✅ 用测试组原命令复跑：`passed=5 failed=0 skipped=0`，case audit `P0=0/P1=0/P2=0/P3=0`, `issues=0`。
-- ✅ 创建并推送 annotated tag：`v0.10.6` → deref commit `7fea6c3`。
-- ✅ 创建 GitHub Release：`Framepack v0.10.6 — Production Hardening Patch` → `https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.6`。
+- ✅ 基于已批准设计 `F:/hyperframes/.hermes/designs/2026-06-16--framepack-v0.11-kinetic-taste-engine.md` 写入实施计划：`F:/hyperframes/.hermes/plans/2026-06-16_121719-framepack-v011-kinetic-taste-engine.md`。
+- ✅ 按 TDD 红→绿新增 Kinetic Taste 词汇表：`framepack-plugin/core/taste_grammar.py`。
+  - `KINETIC_GRAMMAR`: 7 个稳定 ID。
+  - `TASTE_MOVES`: 12 个稳定 ID。
+  - `SURPRISE_OPERATORS`: 10 个稳定 ID。
+- ✅ 按 TDD 新增 Reference Specimens：`framepack-plugin/core/taste_specimens.py`，内置 6 个 MVP specimens。
+- ✅ 按 TDD 新增 Taste Audit：`framepack-plugin/core/taste_audit.py`。
+  - 报告形态：`framepack_taste_audit`。
+  - severity: `risk | suggestion | note`，不输出假精确美学总分。
+  - 检查：missing taste block、missing kinetic continuity、generic fade stack、static mockup risk、no controlled surprise、too many surprises、surprise without intent、motif not transformed。
+- ✅ 新增 CLI：`framepack-plugin/scripts/framepack_taste_audit.py`，支持 `--format json|markdown` 与 `--output`。
+- ✅ 扩展 Execution Manifest parser，向后兼容新增可选字段：`motion_role`、`grammar`、`taste_move`、`surprise`。
+- ✅ 更新 Director skill：`framepack-plugin/skills/framepack-director/SKILL.md`。
+  - `frame.md` 示例加入 compact `taste:` block。
+  - `expanded-prompt.md` per-scene beats 加入 `Kinetic Continuity` contract。
+  - Execution Manifest 示例加入 motion semantics。
+- ✅ 新增 Director 参考文档：
+  - `references/kinetic-taste-engine.md`
+  - `references/reference-specimens.md`
+  - `references/kinetic-grammar.md`
+  - `references/taste-moves.md`
+  - `references/surprise-operators.md`
+- ✅ 新增/更新测试：taste grammar、specimens、audit、CLI、execution manifest、director prompt contract。
+- ✅ 部署同步到 active plugin：`F:/Hermes_windows/plugins/framepack/`。
+- ✅ simplify + 审核补强：
+  - 新增 `framepack-plugin/tests/conftest.py`，支持从 repo 根目录直接跑 focused tests。
+  - 调整 `taste_audit.py` 的 surprise intent 判断：只有 `frame.md` 的 `surprise_operator` 需要 `intent`，Execution Manifest 的场景级 `surprise:` 不再误报缺 intent。
+  - 新增回归测试 `test_manifest_surprise_semantics_do_not_require_scene_intent`。
+  - 新增 `test_surprise_operator_intent_must_be_inside_operator_block`，避免别处 `intent:` 误洗白 `surprise_operator`。
+  - 新增 bullet-style manifest motion semantics 覆盖测试。
+  - `surprise-operators.md` 明确：frame.md 的 `surprise_operator` 需要 intent，Execution Manifest 的场景级 `surprise:` 只是语义标签。
+  - `.gitignore` 增加 `tmp/`，保留 smoke 现场但避免误提交。
+
 
 ### 验证证据
 
-- Release verification：`gh release view v0.10.6 --json tagName,name,url,isDraft,isPrerelease,publishedAt` → tag `v0.10.6`, name `Framepack v0.10.6 — Production Hardening Patch`, `isDraft=false`, `isPrerelease=false`, URL `https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.6`。
-- Tag verification：`git rev-parse v0.10.6^{}` → `7fea6c336e089aed74fa5730c5f769d7ea6b3e2c`。
-- Full suite：测试组原命令内部运行 `C:\Python314\python.exe -m pytest tests/ -q -o addopts=` → `247 passed in 6.15s`。
-- Deploy manifest：测试组原命令内部运行 `C:\Python314\python.exe -m pytest tests/test_deploy_manifest.py -q -o addopts=` → `5 passed in 0.04s`。
-- Test-team full command：`python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6 --case-project F:/Framepack-01-test/pearl-luxe-30s` → `passed=5 failed=0 skipped=0`。
-- Case Quality Audit：`F:/Framepack-01-test/pearl-luxe-30s` → `P0=0/P1=0/P2=0/P3=0`, `issues=0`，报告写入 `F:/hyperframes/test-team-reports/v0.10.6/case-quality-audit.json`。
-- HyperFrames lint/validate：`npx hyperframes lint && npx hyperframes validate`（在 case 项目下）→ lint `0 error(s), 3 warning(s)`；validate `No console errors · 5 text elements pass WCAG AA`。
-- HyperFrames inspect：`npx hyperframes inspect --samples 10 --json` → `ok: true`, `issueCount: 0`, `totalIssueCount: 0`。
-- Deployed smoke：auto script 内部从 `F:/Hermes_windows/plugins/framepack/plugin.yaml` 读回 `0.10.6` 并 import `core.quality_audit` 成功。
-- Deploy sync read-back：source/deployed `plugin.yaml`、`__init__.py`、hooks、`quality_audit.py`、`proof_audit.py`、`timeline_manifest.py`、主 skill 全部 `read_bytes()` 比对通过 → `deploy sync ok`。
-- Previous-version scan：排除 changelog/history/design/dev-fixture 后，当前 release surface 无 `0.10.5` / `v0.10.5` / `v0105` 漂移。
-- Security scan：`python /f/Hermes_windows/skills/software-development/requesting-code-review/scripts/scan_worktree_added_lines.py` → `No added-line security red flags found.`
-- Diff hygiene：`git diff --cached --check` → exit 0。
+- RED evidence：
+  - `python -m pytest tests/test_taste_grammar.py -q -o "addopts="` → 初次 `ModuleNotFoundError: No module named 'core.taste_grammar'`。
+  - `python -m pytest tests/test_taste_specimens.py -q -o "addopts="` → 初次 `ModuleNotFoundError: No module named 'core.taste_specimens'`。
+  - `python -m pytest tests/test_taste_audit.py -q -o "addopts="` → 初次 `ModuleNotFoundError: No module named 'core.taste_audit'`。
+  - `python -m pytest tests/test_taste_audit_cli.py -q -o "addopts="` → 初次 `ModuleNotFoundError: No module named 'scripts.framepack_taste_audit'`。
+  - `python -m pytest tests/test_execution_manifest.py::test_parse_scene_keyed_manifest_with_motion_semantics -q -o "addopts="` → 初次 `AttributeError: 'ManifestWeapon' object has no attribute 'motion_role'`。
+  - `python -m pytest tests/test_director_taste_prompt_contract.py -q -o "addopts="` → 初次 `4 failed`，缺 taste block / Kinetic Continuity / motion semantics / reference docs。
+- GREEN evidence：
+  - `python -m pytest tests/test_taste_grammar.py tests/test_taste_specimens.py -q -o "addopts="` → `12 passed in 0.07s`。
+  - `python -m pytest tests/test_taste_audit.py tests/test_execution_manifest.py -q -o "addopts="` → `19 passed in 0.14s`。
+  - `python -m pytest tests/test_taste_audit_cli.py -q -o "addopts="` → `3 passed in 0.11s`。
+  - `python -m pytest tests/test_director_taste_prompt_contract.py -q -o "addopts="` → `4 passed in 0.08s`。
+- Focused suite：`python -m pytest tests/test_taste_grammar.py tests/test_taste_specimens.py tests/test_taste_audit.py tests/test_taste_audit_cli.py tests/test_execution_manifest.py tests/test_director_taste_prompt_contract.py tests/test_deploy_manifest.py -q -o "addopts="` → `43 passed in 0.32s`。
+- Full suite：`python -m pytest tests/ -q -o "addopts="` → `280 passed in 11.09s`。
+- Root-level focused smoke：`python -m pytest framepack-plugin/tests/test_taste_grammar.py framepack-plugin/tests/test_taste_specimens.py framepack-plugin/tests/test_taste_audit.py framepack-plugin/tests/test_taste_audit_cli.py framepack-plugin/tests/test_execution_manifest.py framepack-plugin/tests/test_director_taste_prompt_contract.py -q -o "addopts="` → `38 passed in 0.36s`。
+- Final targeted check：`python -m pytest tests/test_director_taste_prompt_contract.py tests/test_taste_audit.py tests/test_execution_manifest.py -q -o "addopts="` → `23 passed in 0.19s`。
+- Deploy sync：`cp -r framepack-plugin/. /f/Hermes_windows/plugins/framepack/ && test -f /f/Hermes_windows/plugins/framepack/core/taste_audit.py && test -f /f/Hermes_windows/plugins/framepack/tests/conftest.py` → `deployment sync ok`。
+- Deploy manifest after sync：`python -m pytest tests/test_deploy_manifest.py -q -o "addopts="` → `5 passed in 0.06s`。
+
+- Diff hygiene/security：`git diff --check && python /f/Hermes_windows/skills/software-development/requesting-code-review/scripts/scan_worktree_added_lines.py` → exit 0，`No added-line security red flags found.`。
+- Independent reviewer：passed=true；无 security concerns；无 logic errors；最后一条文档澄清建议已补到 `surprise-operators.md`。
 
 ### 给测试组的入口
 
-- 当前正式测试组入口：v0.10.6 release-prep HEAD `1c803dc`。
-- 推荐命令：
+当前仍是开发分支未提交状态，不要当正式 release 测试入口。
+
+开发侧推荐验证命令：
 
 ```bash
-python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6
+cd F:/hyperframes/framepack-plugin
+python -m pytest tests/ -q -o "addopts="
+python scripts/framepack_taste_audit.py F:/hyperframes/tmp/taste-audit-smoke --format markdown
 ```
 
-- 带案例项目：
-
-```bash
-python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6 --case-project F:/Framepack-01-test
-```
+正式测试组入口仍以 v0.10.6 release 命令为准，直到 v0.11 release-prep/bump 完成。
 
 ### 下次要做什么
 
-- v0.10.6 已发布；如测试组继续回传问题，按 patch release / v0.10.7 分支处理。
-- 可选补强：把代理检测/字体 acquisition 做成显式 helper 或 CLI doctor 项；当前 v0.10.6 已完成审计与文档口径。
-- v0.11 方向：Aesthetic Benchmark / Director Taste System，对表 nexu-io/html-video 21 templates 与 html-anything 10 frame。
+- 按老田习惯，commit 前最后清点提交范围。
+- 不要提交 `tmp/` smoke 目录；`.gitignore` 已加入 `tmp/`。
+- 设计文档、计划文档是否随本次 feature 一起提交由老田决定。
+- 如准备提交，建议 message：`feat: add framepack kinetic taste engine`。
+- 后续 release-prep 才 bump 版本到 v0.11；现在不要写“v0.11 released”。
 
 ## 关键路径
 
 - 项目根：`F:\hyperframes\`
 - 开发目录：`F:\hyperframes\framepack-plugin\`
 - 部署目录：`F:\Hermes_windows\plugins\framepack\`
-- 测试项目：`F:\Framepack-01-test\`（已补 `AGENTS.md` + `.framepack` ledger；仍不是完整命题视频 case）
+- Active independent framepack skill：`F:\Hermes_windows\skills\software-development\framepack\`
+- 当前 smoke 现场：`F:\hyperframes\tmp\taste-audit-smoke\`（保留现场，不提交）
 - Git 分支：`framepack-agent-platform`
 - 远程：https://github.com/ARTHUR-BBU/framepack
 
@@ -87,24 +117,24 @@ python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plu
 - v0.10.1：HyperFrames Compatibility Adapter；命令分类、capability snapshot、registry fallback、proxy/VPN retry、official skill diff、upstream watcher。
 - v0.10.2：Environment & Upgrade Manager groundwork；doctor/install/overlay/upgrade/report/support-window 生命周期托管。
 - v0.10.3：Quality Beyond Lint；语义审计小票、JSON/Markdown audit CLI、handoff 前非阻断 summary、scene-keyed Manifest parser、测试组自动测试脚本。
-- v0.10.4：Arsenal Binding Contract；arsenal 自动创建/同步、canonical weapon function、inline GSAP hint、sync opt-in。本地 commit: `6a63be4`。
-- v0.10.5：Production Quality Layer；timeline manifest、proof frames/contact sheet、scene spec、production quality audit、lightweight hook sync。本地 commit: `17a9455`；后续 hardening commit `be318b5` 修复 shell cd 后项目目录 hydration。
-- v0.10.6：Production Hardening Patch；external font dependency、本地字体资产缺失、低可见性风险、NaN/Infinity、proof path project-local 审计；release-prep commit `1c803dc`。
+- v0.10.4：Arsenal Binding Contract；arsenal 自动创建/同步、canonical weapon function、inline GSAP hint、sync opt-in。
+- v0.10.5：Production Quality Layer；timeline manifest、proof frames/contact sheet、scene spec、production quality audit、lightweight hook sync。
+- v0.10.6：Production Hardening Patch；external font dependency、本地字体资产缺失、低可见性风险、NaN/Infinity、proof path project-local 审计。
+- v0.11-dev：Kinetic Taste Engine；Reference DNA、Visual Physics、Kinetic Grammar、Director Taste Moves、Controlled Surprise、Taste Audit CLI。
 
 ## 待办 / 想法池
 
-- [x] 测试组 v0.10.5 手动项目测试报告已收到并复核。
-- [x] v0.10.5 tag + GitHub Release 已发布。
-- [x] v0.10.6 hardening 首批：Google Fonts 本地化提示、暗底可见性审计、NaN/Infinity 数值拒绝、proof path project-local 审计已实现；weapon binding 强制已有 P1 `manifest_weapon_not_called` 基础，后续可继续升级。
-- [x] Hardening：数值解析拒绝 NaN/Infinity。
-- [x] Hardening：proof path 限定在 project-local 并报 `proof_path_outside_project` P1。
-- [x] v0.10.6 release-prep：全面 bump 版本号/测试脚本/文档口径，确认正式测试组入口。
-- [ ] 文档：hook 会非阻断创建/同步 `.framepack` ledger；CLI 默认 report-first，只在显式 sync/output flags 下写文件。
-- [ ] v0.11 方向：Aesthetic Benchmark / Director Taste System，对表 nexu-io/html-video 21 templates 与 html-anything 10 frame。
+- [x] v0.11 Kinetic Taste Engine 设计文档落盘并获确认。
+- [x] v0.11 Kinetic Taste Engine 实施计划落盘。
+- [x] Kinetic Taste Engine MVP 源码实现 + 测试 + 部署同步。
+- [ ] commit 前 simplify + 审核。
+- [ ] 决定是否补 root-level pytest import convention / surprise edge-case tests。
+- [ ] commit 本轮 feature。
+- [ ] 后续 release-prep 时再 bump v0.11 版本与 release surfaces。
 
 ## 笔记
 
 - 测试组和开发组分工：测试由测试组测，开发侧不要抢跑；开发侧负责修复、交接台、版本/部署/路径口径核验。
 - 老田提交前偏好：先做 “simplify + 审核”，最后再 commit。
 - 交接台更新原则：replace not append；阶段切换/发布/准备开新 session 前必须更新 `.hermes/CONTEXT.md` 并单独提交 handoff。
-- v0.10.5 是“场记层/制片 QA”，不是 HTML 生产器：Framepack 仍不写/patch/render 用户 HTML，只做 prompt、ledger、audit、proof workflow。
+- Framepack 边界不变：Framepack 不写 HTML、不替代 HyperFrames lint/render；Taste Audit 是导演批注，不是审美总分。

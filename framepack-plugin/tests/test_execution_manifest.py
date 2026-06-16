@@ -109,3 +109,46 @@ ignore this
     assert weapons[1].used_by == ["scene_6_extra2"]
     assert weapons[1].handwrite is True
     assert weapons[1].reason == "timeline management, not an animation weapon"
+
+
+def test_parse_scene_keyed_manifest_with_motion_semantics():
+    text = """
+## Execution Manifest
+scene_1:
+  motion_role: hook_mystery
+  grammar: tension_release
+  taste_move: object_worship
+  surprise: scale_violation
+  weapon: text-split-enter
+  code: parts/references/text-split-enter.js
+  params:
+    target: "#s1-title"
+"""
+    weapons = parse_execution_manifest(text)
+    assert len(weapons) == 1
+    weapon = weapons[0]
+    assert weapon.id == "text-split-enter"
+    assert weapon.motion_role == "hook_mystery"
+    assert weapon.grammar == "tension_release"
+    assert weapon.taste_move == "object_worship"
+    assert weapon.surprise == "scale_violation"
+
+
+def test_parse_markdown_bullet_manifest_with_motion_semantics():
+    text = """
+## Execution Manifest
+- weapon: text-split-enter
+  scene: scene_1
+  motion_role: hook_mystery
+  grammar: tension_release
+  taste_move: object_worship
+  surprise: scale_violation
+"""
+    weapons = parse_execution_manifest(text)
+    assert len(weapons) == 1
+    weapon = weapons[0]
+    assert weapon.id == "text-split-enter"
+    assert weapon.motion_role == "hook_mystery"
+    assert weapon.grammar == "tension_release"
+    assert weapon.taste_move == "object_worship"
+    assert weapon.surprise == "scale_violation"
