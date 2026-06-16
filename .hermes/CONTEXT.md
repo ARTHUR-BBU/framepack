@@ -7,10 +7,11 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.10.6 release-prep 已完成，测试组真实 case `F:/Framepack-01-test/pearl-luxe-30s` 初测发现 2 个 P1 + 1 个 P2；开发侧已修整 case 并复跑到 semantic audit 全绿；尚未创建 git tag / GitHub Release。  
+**阶段**: Framepack v0.10.6 已正式发布：annotated tag `v0.10.6` 已推送，GitHub Release 已创建；测试组真实 case `F:/Framepack-01-test/pearl-luxe-30s` 已从 2 个 P1 + 1 个 P2 修整到 semantic audit 全绿。  
 **分支**: `framepack-agent-platform`  
 **正式源码版本**: v0.10.6（`framepack-plugin/plugin.yaml` = `0.10.6`；deployed plugin 与 active independent `framepack` skill 已同步）  
-**最新提交**: `53c3698 handoff: record v0.10.6 release prep`（源码 release-prep 为 `1c803dc chore: prep framepack v0.10.6 release`）  
+**最新提交**: `7fea6c3 handoff: record v0.10.6 case audit cleanup`（tag `v0.10.6` deref commit = `7fea6c3`；源码 release-prep 为 `1c803dc`）  
+**发布状态**: GitHub Release `Framepack v0.10.6 — Production Hardening Patch` 已发布，URL: `https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.6`；非 draft，非 prerelease。  
 **部署状态**: 已同步到 `F:/Hermes_windows/plugins/framepack/`；`F:/Hermes_windows/skills/software-development/framepack/` 独立 skill 已同步；case 项目 `F:/Framepack-01-test/pearl-luxe-30s` 已补 timeline ledger 并修正 scene_3 canonical weapon binding。  
 **测试**: 测试组原命令复跑 `passed=5 failed=0 skipped=0`; source pytest `247 passed`; deploy manifest `5 passed`; deployed smoke ok；case audit `P0=0/P1=0/P2=0/P3=0`, `issues=0`; HyperFrames lint `0 errors / 3 warnings`; validate contrast pass；inspect `0 issues`；security scan clean；previous-version scan clean。
 
@@ -26,9 +27,13 @@
 - ✅ 复核测试组真实 case 报告：初测为 `passed=5 failed=0 skipped=0`，但 `pearl-luxe-30s` semantic audit 有 `manifest_weapon_not_called` P1、`timeline_manifest_missing` P1、`low_visibility_risk` P2。
 - ✅ 修整 case 项目（非插件源码）：scene_3 改为 canonical `cardCascadeReveal()` 调用；生成 `.framepack/timeline-manifest.json`；降低过重黑遮罩/首帧欠曝阈值以消除误伤式低可见性黄灯。
 - ✅ 用测试组原命令复跑：`passed=5 failed=0 skipped=0`，case audit `P0=0/P1=0/P2=0/P3=0`, `issues=0`。
+- ✅ 创建并推送 annotated tag：`v0.10.6` → deref commit `7fea6c3`。
+- ✅ 创建 GitHub Release：`Framepack v0.10.6 — Production Hardening Patch` → `https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.6`。
 
 ### 验证证据
 
+- Release verification：`gh release view v0.10.6 --json tagName,name,url,isDraft,isPrerelease,publishedAt` → tag `v0.10.6`, name `Framepack v0.10.6 — Production Hardening Patch`, `isDraft=false`, `isPrerelease=false`, URL `https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.10.6`。
+- Tag verification：`git rev-parse v0.10.6^{}` → `7fea6c336e089aed74fa5730c5f769d7ea6b3e2c`。
 - Full suite：测试组原命令内部运行 `C:\Python314\python.exe -m pytest tests/ -q -o addopts=` → `247 passed in 6.15s`。
 - Deploy manifest：测试组原命令内部运行 `C:\Python314\python.exe -m pytest tests/test_deploy_manifest.py -q -o addopts=` → `5 passed in 0.04s`。
 - Test-team full command：`python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plugin F:/Hermes_windows/plugins/framepack --output-dir test-team-reports/v0.10.6 --case-project F:/Framepack-01-test/pearl-luxe-30s` → `passed=5 failed=0 skipped=0`。
@@ -58,9 +63,9 @@ python scripts/test_team_v0106_auto_test.py --repo F:/hyperframes --deployed-plu
 
 ### 下次要做什么
 
-- push 当前分支到 origin（如本轮尚未 push）。
-- 若老田确认“正式发布”，再创建 annotated tag `v0.10.6` + GitHub Release，并发布后再次更新交接台。
+- v0.10.6 已发布；如测试组继续回传问题，按 patch release / v0.10.7 分支处理。
 - 可选补强：把代理检测/字体 acquisition 做成显式 helper 或 CLI doctor 项；当前 v0.10.6 已完成审计与文档口径。
+- v0.11 方向：Aesthetic Benchmark / Director Taste System，对表 nexu-io/html-video 21 templates 与 html-anything 10 frame。
 
 ## 关键路径
 
