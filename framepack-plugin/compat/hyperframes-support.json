@@ -2,11 +2,11 @@
   "framepack_version": "0.10.6",
   "hyperframes": {
     "supported_min": "0.6.90",
-    "supported_max_tested": "0.6.97",
+    "supported_max_tested": "0.6.104",
     "soft_max": "0.6.x",
     "hard_block_below": "0.6.80",
     "unknown_newer_policy": "warn_and_probe",
-    "latest_supported_for_downgrade": "0.6.97",
+    "latest_supported_for_downgrade": "0.6.104",
     "required_smoke_tests": [
       "version",
       "root_help",

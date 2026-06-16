@@ -282,7 +282,12 @@ def _sha(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def _default_runner(args: list[str], timeout: int = 30, env: dict[str, str] | None = None) -> str:
+def _default_runner(
+    args: list[str],
+    timeout: int = 30,
+    env: dict[str, str] | None = None,
+    cwd: str | None = None,
+) -> str:
     executable_args = list(args)
     resolved = shutil.which(executable_args[0]) or shutil.which(executable_args[0] + ".cmd")
     if resolved:
@@ -299,6 +304,7 @@ def _default_runner(args: list[str], timeout: int = 30, env: dict[str, str] | No
         check=False,
         shell=False,
         env=process_env,
+        cwd=cwd,
     )
     output = (completed.stdout or "") + (completed.stderr or "")
     if completed.returncode != 0:

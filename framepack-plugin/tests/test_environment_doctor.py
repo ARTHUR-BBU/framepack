@@ -10,9 +10,11 @@ class FakeRunner:
         self.failures = failures or {}
         self.calls = []
 
-    def __call__(self, args, timeout=30, env=None):
+    def __call__(self, args, timeout=30, env=None, cwd=None):
         key = tuple(args)
         self.calls.append((key, dict(env or {})))
+        self.cwd_calls = getattr(self, "cwd_calls", [])
+        self.cwd_calls.append((key, str(cwd) if cwd is not None else None))
         if key in self.failures:
             raise RuntimeError(self.failures[key])
         if key in self.responses:
@@ -23,10 +25,10 @@ class FakeRunner:
 def support_window():
     return HyperFramesSupportWindow(
         supported_min="0.6.90",
-        supported_max_tested="0.6.97",
+        supported_max_tested="0.6.104",
         soft_max="0.6.x",
         hard_block_below="0.6.80",
-        latest_supported_for_downgrade="0.6.97",
+        latest_supported_for_downgrade="0.6.104",
     )
 
 
@@ -166,7 +168,7 @@ def test_doctor_falls_back_to_npx_no_install_without_installing_latest(tmp_path)
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("npx", "--no-install", "hyperframes", "--version"): "0.6.97",
+            ("npx", "--no-install", "hyperframes", "--version"): "0.6.104",
         },
         failures={
             ("hyperframes", "--version"): "not on PATH",
@@ -182,10 +184,12 @@ def test_doctor_falls_back_to_npx_no_install_without_installing_latest(tmp_path)
     report = doctor.run()
 
     assert report.hyperframes_cli.installed is True
-    assert report.hyperframes_cli.version == "0.6.97"
+    assert report.hyperframes_cli.version == "0.6.104"
     called = [args for args, _env in runner.calls]
     assert ("npx", "--no-install", "hyperframes", "--version") in called
     assert ("npx", "--yes", "hyperframes@latest", "--version") not in called
+    cwd_by_call = dict(runner.cwd_calls)
+    assert cwd_by_call[("npx", "--no-install", "hyperframes", "--version")] == str(tmp_path)
 
 
 def test_tool_errors_are_redacted_before_serialization(tmp_path):

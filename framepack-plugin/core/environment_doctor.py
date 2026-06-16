@@ -173,6 +173,7 @@ class EnvironmentDoctor:
         fallback = self._check_tool(
             "hyperframes_cli",
             ["npx", "--no-install", "hyperframes", "--version"],
+            cwd=self.project_dir,
         )
         if fallback.installed:
             return fallback
@@ -181,9 +182,9 @@ class EnvironmentDoctor:
             combined = f"{primary.error}; fallback: {fallback.error}"
         return ToolCheck(name="hyperframes_cli", installed=False, error=combined)
 
-    def _check_tool(self, name: str, args: list[str]) -> ToolCheck:
+    def _check_tool(self, name: str, args: list[str], cwd: Path | None = None) -> ToolCheck:
         try:
-            output = self.runner(args, timeout=30)
+            output = self.runner(args, timeout=30, cwd=str(cwd) if cwd is not None else None)
             version = output.strip().splitlines()[-1] if output.strip() else None
             return ToolCheck(name=name, installed=True, version=version)
         except Exception as exc:

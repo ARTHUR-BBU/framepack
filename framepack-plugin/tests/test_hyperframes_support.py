@@ -8,10 +8,10 @@ from core.hyperframes_support import (
 def window() -> HyperFramesSupportWindow:
     return HyperFramesSupportWindow(
         supported_min="0.6.90",
-        supported_max_tested="0.6.103",
+        supported_max_tested="0.6.104",
         soft_max="0.6.x",
         hard_block_below="0.6.80",
-        latest_supported_for_downgrade="0.6.103",
+        latest_supported_for_downgrade="0.6.104",
     )
 
 
@@ -20,6 +20,15 @@ def test_supported_version_allows_normal_handoff():
 
     assert decision.status == "supported"
     assert decision.allow_discovery is True
+    assert decision.allow_handoff is True
+    assert decision.guarded_mode is False
+    assert decision.requires_smoke is False
+
+
+def test_hyperframes_06104_is_now_inside_tested_window():
+    decision = classify_hyperframes_version("0.6.104", window())
+
+    assert decision.status == "supported"
     assert decision.allow_handoff is True
     assert decision.guarded_mode is False
     assert decision.requires_smoke is False
@@ -75,7 +84,7 @@ def test_unknown_newer_minor_or_major_uses_discovery_only_until_smoke_passes():
     assert failed_smoke.status == "unknown_newer"
     assert failed_smoke.allow_handoff is False
     assert failed_smoke.block_reason == "compatibility_smoke_failed"
-    assert failed_smoke.recommend_downgrade_to == "0.6.103"
+    assert failed_smoke.recommend_downgrade_to == "0.6.104"
 
     passed_smoke = classify_hyperframes_version("0.7.0", window(), smoke_passed=True)
 
@@ -86,7 +95,7 @@ def test_unknown_newer_minor_or_major_uses_discovery_only_until_smoke_passes():
 
 
 def test_prerelease_versions_require_smoke_instead_of_stable_supported_path():
-    before_smoke = classify_hyperframes_version("0.6.103-rc.1", window())
+    before_smoke = classify_hyperframes_version("0.6.104-rc.1", window())
 
     assert before_smoke.status == "prerelease"
     assert before_smoke.allow_discovery is True
@@ -94,7 +103,7 @@ def test_prerelease_versions_require_smoke_instead_of_stable_supported_path():
     assert before_smoke.requires_smoke is True
     assert before_smoke.guarded_mode is True
 
-    after_smoke = classify_hyperframes_version("0.6.103-rc.1", window(), smoke_passed=True)
+    after_smoke = classify_hyperframes_version("0.6.104-rc.1", window(), smoke_passed=True)
 
     assert after_smoke.status == "prerelease"
     assert after_smoke.allow_handoff is True
@@ -102,6 +111,6 @@ def test_prerelease_versions_require_smoke_instead_of_stable_supported_path():
 
 
 def test_parse_version_tuple_ignores_common_suffixes_for_numeric_base_only():
-    assert parse_version_tuple("0.6.103") == (0, 6, 103)
-    assert parse_version_tuple("0.6.103-beta.1") == (0, 6, 103)
+    assert parse_version_tuple("0.6.104") == (0, 6, 104)
+    assert parse_version_tuple("0.6.104-beta.1") == (0, 6, 104)
     assert parse_version_tuple("1.0") == (1, 0, 0)
