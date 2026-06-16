@@ -142,6 +142,37 @@ surprise: material_shift
     assert issue.severity == "risk"
 
 
+def test_ignores_manifest_surprise_none_when_counting_surprises(tmp_path):
+    frame = """
+---
+taste:
+  visual_physics:
+    gravity: low
+  surprise_operator:
+    type: scale_violation
+    intent: Make the pearl celestial.
+---
+"""
+    expanded = """
+## Execution Manifest
+scene_1:
+  surprise: none
+scene_2:
+  surprise: none
+scene_3:
+  surprise: scale_violation
+scene_4:
+  surprise: none
+scene_5:
+  surprise: none
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+    report = audit_project(project)
+    codes = {issue.code for issue in report.issues}
+    assert "too_many_surprises" not in codes
+    assert "no_controlled_surprise" not in codes
+
+
 def test_detects_surprise_operator_without_intent_in_frame_md(tmp_path):
     frame = """
 ---

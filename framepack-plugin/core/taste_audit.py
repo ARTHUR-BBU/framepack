@@ -93,7 +93,14 @@ def _audit_static_mockup(expanded_prompt: str, path: Path) -> list[TasteAuditIss
 def _surprise_mentions(text: str) -> list[str]:
     mentions = re.findall(r"\bsurprise(?:_operator)?\s*:\s*([^\n]+)", text, re.I)
     mentions.extend(re.findall(r"\bsurprise\s*=\s*([^\n]+)", text, re.I))
-    return [mention.strip() for mention in mentions]
+    filtered: list[str] = []
+    for mention in mentions:
+        value = mention.strip()
+        normalized = value.strip('"\'').strip().lower()
+        if normalized in {"none", "no", "null", "false", "n/a", "na"}:
+            continue
+        filtered.append(value)
+    return filtered
 
 
 def _frame_surprise_operator_requires_intent(frame_md: str) -> bool:
