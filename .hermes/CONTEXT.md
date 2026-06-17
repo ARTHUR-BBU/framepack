@@ -7,12 +7,12 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.12.0 五方向开发进行中。方向1（Asset Intake）源码+部署全绿（296/296），端到端验证通过，测试组验收 PASS。方向 2-5 待推进。
+**阶段**: Framepack v0.12.0 五方向开发进行中。方向1（Asset Intake）✅ 完成并测试组验收 PASS。方向2（武器库扩充）✅ 代码完成并 commit（3 bug 修复 + Hermes file_path bug 修复）。方向 3-5 待推进。
 
 **分支**: `framepack-agent-platform`
-**正式源码版本**: plugin.yaml = 0.11.1（Asset Intake 小版本基准；每完成一个方向 bump patch）
-**最后提交**: `3cecbcd` (`bump: v0.11.0 → v0.11.1`)
-**测试**: 源码 296 passed ✅；部署 296 passed ✅
+**正式源码版本**: plugin.yaml = 0.11.1
+**最后提交**: `979a029` (`fix(weapons): align 3 WIP weapons' registration`)
+**测试**: 源码 303 passed ✅；部署 303 passed ✅
 **GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；v0.11.1 尚未 push
 
 ## v0.12.0 五方向计划
@@ -22,7 +22,7 @@
 | 方向 | 描述 | 状态 |
 |------|------|------|
 || 1. Asset Intake | Phase 0 素材收集流程 | ✅ 源码+部署 296/296 全绿，端到端验证通过 ||
-| 2. 武器库扩充 | anime.js + sprite sheet forge | 🔄 builtin_weapons.py 已加 3 武器，未测试未 commit，未走 brainstorming |
+| 2. 武器库扩充 | anime.js + sprite sheet forge | ✅ 3 bug 修复 (commit `979a029`) + Hermes file_path bug 修复 |
 | 3. Taste 广度验证 | emerging/editorial 风格实例测试 | 待开始 |
 | 4. 参数漂移根治 | 源头堵 Manifest→HTML 参数偏差 | 待开始 |
 | 5. studio_edit_blocked | 标记已知限制 + 推上游 | 待开始 |
@@ -40,15 +40,19 @@
 
 结果：源码 296 passed + 部署 296 passed，双位置全绿。
 
-## 方向 2 当前状态（违规）
+## 方向 2 完成记录（commit `979a029`）
 
-`builtin_weapons.py` 已加入 3 个新武器（anime-text-split / svg-morph-transition / sprite-animation），**但**：
-- ❌ 未按开发流程走 brainstorming 做设计
-- ❌ 未写测试
-- ❌ 未 commit
-- ❌ 三个武器的 JS 和 .md 文件虽然在 animation-library 里，但未同步到部署目录
+3 个 bug 修复（接口看起来通了但实际漏电）：
+1. **svg-morph-transition 函数名漂移** — 注册 `svgMorphTransition`，.js 实际 `svgMorph` → quality_audit 永远找不到 canonical 调用 → 修复：对齐为 `svgMorph`
+2. **sprite-animation engine 撒谎** — 标记 `"CSS sprite sheet"`，实际 .js 用 GSAP `tl.to()` → 修复：标记 `"GSAP+CSS sprite sheet"`
+3. **inline_hint 对 anime.js 盲区** — `_inline_gsap_hint` 只检测 `gsap.(to|from|fromTo|timeline)` → 修复：增加 `anime()`/`animate()`+stagger 检测
 
-**下一步必须先补**：方向 1 部署问题修复 → 方向 2 brainstorming 设计。
+测试：8 个新单元测试 RED→GREEN + 3 个端到端场景 + 全量 303/1skipped 双绿（源码+部署）
+
+Hermes 框架 bug（方向 2 附带修复）：
+- `skills_tool.py` `_serve_plugin_skill` 不支持 file_path 参数 → 已修复（调用点 + 函数体）
+- 3 个新测试覆盖 plugin skill 的 file_path / linked_files / not_found
+- 上游 PR 待提
 
 ## 关键路径
 
