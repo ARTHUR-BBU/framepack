@@ -7,65 +7,64 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.11.0 release-prep 完成。Kinetic Taste Engine feature + 兼容性验证 + 版本面同步全部入库。待安排测试组在 0.11.0 上做实例测试。
+**阶段**: Framepack v0.12.0 五方向开发已启动。v0.11.0 全链路发布完毕（GitHub Release + tag v0.11.0 + main 改名）。方向1（Asset Intake）已 commit 但部署插件有 12 个测试失败待修复。
+
 **分支**: `framepack-agent-platform`
-**正式源码版本**: v0.11.0（`framepack-plugin/plugin.yaml` = `0.11.0`）
-**最后提交**: `efcbbff` (`release: bump to v0.11.0`)
-**部署状态**: 已同步全部改动的 Framepack plugin 文件到 `F:/Hermes_windows/plugins/framepack/`；独立 skill 也已同步。
-**测试**: 源码 full suite `284 passed`；golden case taste+quality audit 全绿；HyperFrames 0.6.104 lint/validate/inspect/render/ffprobe 全通过。
+**正式源码版本**: plugin.yaml = 0.11.0（v0.12.0 尚未 bump）
+**最后提交**: `d9ad49f` (`feat: add framepack asset intake phase 0`)
+**测试**: 源码 296 passed；部署插件 280 passed / 12 failed（详见下方）
+**GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；Release 已创建
 
-### Commit 链（0.11.0 全程）
+## v0.12.0 五方向计划
 
-1. `234fb11 feat: add framepack kinetic taste engine` — 核心功能（taste_audit + taste_specimens + Director taste references）
-2. `295410a handoff: record kinetic taste live test pass` — 测试结论记录
-3. `b814f5e fix: ignore empty manifest surprise markers` — taste audit bugfix（`surprise: none` 不再误报 `too_many_surprises`）
-4. `aa72cec chore: validate hyperframes 0.6.104 compatibility` — support window 0.6.97→0.6.104 + doctor cwd fix
-5. `efcbbff release: bump to v0.11.0` — 24 文件版本面同步（plugin.yaml/hooks/core/7 SKILL.md/README/CHANGELOG/AGENTS/compat/templates/tests + test_team 脚本重命名）
+文件: `F:/hyperframes/.hermes/plans/2026-06-17_framepack-v0120-five-directions.md`
 
-### 本轮做了什么
+| 方向 | 描述 | 状态 |
+|------|------|------|
+| 1. Asset Intake | Phase 0 素材收集流程 | ✅ 已 commit `d9ad49f`，⚠️ 部署测试 12 失败 |
+| 2. 武器库扩充 | anime.js + sprite sheet forge | 🔄 builtin_weapons.py 已加 3 武器，未测试未 commit，未走 brainstorming |
+| 3. Taste 广度验证 | emerging/editorial 风格实例测试 | 待开始 |
+| 4. 参数漂移根治 | 源头堵 Manifest→HTML 参数偏差 | 待开始 |
+| 5. studio_edit_blocked | 标记已知限制 + 推上游 | 待开始 |
 
-- ✅ Golden case 清理：`pearl-celestial-memory-20s` warning 从 3 降到 1。
-  - `overlapping_gsap_tweens` ✅ 修掉（`overwrite: 'auto'`）。
-  - `caption_exit_missing_hard_kill` ✅ 修掉（`tl.set` hard kill）。
-  - `gsap_studio_edit_blocked` ⚠️ 保留为结构性限制（0.6.99/0.6.104 无 suppress 机制，不假清洁）。
-- ✅ Taste audit bugfix：`surprise: none` 空标记不再计入 surprise 计数（TDD：红→绿，15 passed）。
-- ✅ Golden case transition 语言修正：generic fade stack → motif-driven transition 表述，taste audit 全绿。
-- ✅ HyperFrames 0.6.104 兼容性验证：
-  - blank smoke 通过。
-  - golden case lint/validate/inspect/render/ffprobe 全通过（inspect 新增 `text_occluded` 规则，用 `data-layout-allow-occlusion` 显式声明解决）。
-  - support window 从 0.6.97 提到 0.6.104。
-- ✅ Environment doctor cwd fix：project-local HyperFrames 探测现在在 `project_dir` 运行，不再被 caller-cwd node_modules 污染。
-  - 修复前：doctor 在 repo 根跑 → 检测到 0.6.88（旧全局依赖）→ GUARDED。
-  - 修复后：doctor 在 case 目录跑 → 检测到 0.6.104 → READY。
-- ✅ 0.11.0 版本面同步：24 个文件，100 insertions / 72 deletions。
-  - plugin.yaml version + description（加 v0.11.0 adds 行）。
-  - 7 个 SKILL.md frontmatter version。
-  - CHANGELOG 新增 0.11.0 条目。
-  - README + docs/README.zh-CN.md。
-  - AGENTS.md managed block。
-  - hooks logger 文案、core 模块 DEFAULT_PLUGIN_VERSION、compat framepack_version。
-  - templates timeline-manifest.example.json。
-  - test_team 脚本/文档重命名 v0106 → v0110。
-  - 测试断言全面更新。
+## 方向 1 部署测试失败详情
 
-### 注意点 / 风险
+源码 `F:/hyperframes/framepack-plugin/` 全绿（296 passed）。
+但部署目录 `F:/Hermes_windows/plugins/framepack/tests/` 有 12 failed：
 
-- ⚠️ Golden case `gsap_studio_edit_blocked` warning 保留为结构性限制，不是假清洁。
-- ⚠️ `F:/Framepack-01-test` 不是 git repo；case 产物属于测试工作台现场。
-- ⚠️ `F:/hyperframes/test-team-runs/` 是自动实例测试现场，未跟踪；保留现场但不混入 release commit。
-- ⚠️ 尚未 git tag v0.11.0；待测试组确认后打 tag。
+- **test_deploy_manifest.py** (1 failed): `test_0106_release_version` → FileNotFoundError: `test_team_v0106_auto_test.py`
+  - 原因: v0.11.0 发布时脚本重命名为 `test_team_v0110_auto_test.py`，但部署的 test_deploy_manifest.py 还在找 v0106
+- **test_environment_doctor.py** (7 failed): 包括 `test_doctor_falls_back_to_npx_no_install_without_installing_latest` 等
+  - 原因: 可能部署的 cwd fix 未生效，或部署目录缺少某个 patch
+- **test_test_team_auto_script.py** (4 failed): 也在找 v0106 脚本
 
-### 下次要做什么
+**根因**: 部署同步不完整——v0.11.0 release-prep 的某些文件变更没有部署到 `F:/Hermes_windows/plugins/framepack/`。需要：
+1. 重新完整部署 plugins/framepack/（含 tests/test_deploy_manifest.py + tests/test_test_team_auto_script.py + scripts/test_team_v0110_auto_test.py）
+2. 重跑部署测试确认全绿
+3. 然后方向 1 才算真正完成
 
-1. 安排测试组在 v0.11.0 上做实例测试（可用 `scripts/test_team_v0110_auto_test.py` 自动验收脚本）。
-2. 测试组确认后打 git tag `v0.11.0`。
-3. 如需合并到 main 分支，用 finishing-a-development-branch skill。
+## 方向 2 当前状态（违规）
 
-### 文件索引
+`builtin_weapons.py` 已加入 3 个新武器（anime-text-split / svg-morph-transition / sprite-animation），**但**：
+- ❌ 未按开发流程走 brainstorming 做设计
+- ❌ 未写测试
+- ❌ 未 commit
+- ❌ 三个武器的 JS 和 .md 文件虽然在 animation-library 里，但未同步到部署目录
+
+**下一步必须先补**：方向 1 部署问题修复 → 方向 2 brainstorming 设计。
+
+## 关键路径
+
+1. 修复部署测试 12 失败 → 方向 1 真正完成
+2. 方向 2 brainstorming → 设计武器库 schema 扩展
+3. 方向 2 实现（anime.js + sprite sheet weapons + arsenal schema update）
+4. 方向 3-5 依次推进
+
+## 文件索引
 
 - 源码: `F:/hyperframes/framepack-plugin/`
 - 部署: `F:/Hermes_windows/plugins/framepack/`
 - 独立 skill: `F:/Hermes_windows/skills/software-development/framepack/SKILL.md`
+- 设计文档: `F:/hyperframes/.hermes/designs/2026-06-17--framepack-asset-intake.md`
+- 五方向计划: `F:/hyperframes/.hermes/plans/2026-06-17_framepack-v0120-five-directions.md`
 - Golden case: `F:/Framepack-01-test/cases/pearl-celestial-memory-20s/`
-- 测试自动验收: `F:/hyperframes/scripts/test_team_v0110_auto_test.py`
-- 测试说明: `F:/hyperframes/TEST_TEAM_AUTOTEST_v0.11.0.md`
