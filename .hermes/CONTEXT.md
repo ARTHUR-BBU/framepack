@@ -7,13 +7,13 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.12.0 五方向开发进行中。方向1（Asset Intake）源码+部署全绿（296/296），端到端验证通过。方向 2-5 待推进。
+**阶段**: Framepack v0.12.0 五方向开发进行中。方向1（Asset Intake）源码+部署全绿（296/296），端到端验证通过，测试组验收 PASS。方向 2-5 待推进。
 
 **分支**: `framepack-agent-platform`
-**正式源码版本**: plugin.yaml = 0.11.0（v0.12.0 尚未 bump）
-**最后提交**: `d9ad49f` (`feat: add framepack asset intake phase 0`)
-**测试**: 源码 296 passed；部署插件 280 passed / 12 failed（详见下方）
-**GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；Release 已创建
+**正式源码版本**: plugin.yaml = 0.11.1（Asset Intake 小版本基准；每完成一个方向 bump patch）
+**最后提交**: `3cecbcd` (`bump: v0.11.0 → v0.11.1`)
+**测试**: 源码 296 passed ✅；部署 296 passed ✅
+**GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；v0.11.1 尚未 push
 
 ## v0.12.0 五方向计划
 
