@@ -30,6 +30,79 @@ Before Phase 1/2 output, read the compact taste references when the user wants a
 
 Core rule: **合格不等于惊艳。** Do not merely choose colors and entrance animations. Give the film an internal Visual Physics, scene-to-scene Kinetic Continuity, 1-3 Director Taste Moves, and at most 1-2 Controlled Surprise operators with intent.
 
+## Phase 0: Asset Intake — 素材收集 (v0.12 NEW)
+
+**This phase runs BEFORE Phase 1.** Before guessing colors, fonts, or scene structure,
+ask the user what assets they already have. The answer determines everything downstream.
+
+### Step 0.1: Judge video type
+
+Read the user's first sentence to determine `video_type`:
+
+| User says | Type |
+|-----------|------|
+| "做个 XX 品牌新品发布视频" | brand_product_launch |
+| "做个产品广告/推广" | brand_product_launch |
+| "解释一下什么是 XX" | educational |
+| "做个 15 秒社交媒体推广" | social_teaser |
+| "做个动感的文字动画" | kinetic_type |
+
+If unclear, ask: "这个视频是品牌推广？知识科普？还是社交媒体内容？"
+
+### Step 0.2: Collect assets by category (conditional depth)
+
+Read `references/asset-intake-checklist.md` for the conditional-depth rules. Not every
+video needs all six categories — depth scales with `video_type`.
+
+**brand_product_launch** — all six categories:
+1. Brand identity: logo (SVG preferred), brand colors, brand fonts, VI spec
+2. Product assets: product images (cut-out or raw), 3D renders, lifestyle photos
+3. Video footage: existing clips, stock footage, screen recordings
+4. Text content: slogan, selling points, product description, CTA, brand story
+5. Audio: licensed BGM, voiceover script/preference, reference music
+6. References: "I want it to feel like THIS" video links, competitor videos
+
+**educational** — categories 4 + 5 + 6 only.
+**social_teaser** — categories 1 + 4 + 3(one image) + 5.
+**kinetic_type** — categories 4 + 5 only.
+
+Do NOT ask six categories for a text-only video. The checklist handles this.
+
+### Step 0.3: Detect transparency
+
+When the user provides images:
+- SVG → naturally transparent ✅
+- PNG/WebP with alpha → run `detect_transparency()` (see `core/asset_detector.py`)
+  - If any pixel alpha < 255 → transparent ✅
+  - If all pixels fully opaque → mark `needs_processing`, suggest `npx hyperframes remove-background`
+- JPG → never transparent → mark `needs_processing`
+
+Framepack only DETECTS and SUGGESTS. It does NOT auto-run remove-background.
+
+### Step 0.4: Write `.framepack/asset-intake.md`
+
+Use the template at `templates/asset-intake-template.md`. Fill in what the user provided.
+Leave missing fields as `null`. Populate the `missing` list with critical gaps.
+
+### Step 0.5: Confirm with user
+
+Show a quick summary, not the full manifest:
+
+```
+📦 素材收集完成：
+  ✅ Logo (SVG) — Aurora Pearls
+  ✅ 产品图 — Celestial Necklace（扣过图）
+  ⚠️ 生活方式照 — 需要抠图处理
+  ❌ 缺少：授权 BGM、旁白文案
+  📋 参考视频：1 个（Vimeo link）
+
+这些料够吗？还缺什么？
+```
+
+Only proceed to Phase 1 after user confirms.
+
+---
+
 ## Phase 1: Intent → frame.md
 
 ### Step 1: Understand the user's intent

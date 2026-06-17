@@ -33,3 +33,4 @@ test-team-reports/
 
 # Legacy (kept for reference only, not tracked)
 .claude/
+test-team-runs/

@@ -12,6 +12,7 @@ HyperFrames 是摄影棚（设备齐全）。Framepack 是导演（更懂用户�
 用户模糊意图
     ↓
 Framepack 创意引擎
+    ├── Phase 0: 素材收集 → asset-intake.md（v0.12 NEW）
     ├── Phase 1: 意图翻译 → frame.md（视觉身份）
     └── Phase 2: 创意细化 → expanded-prompt.md（场景级分解）
     ↓

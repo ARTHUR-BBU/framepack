@@ -109,6 +109,49 @@ def _is_frame_md(file_path: str) -> bool:
     return os.path.basename(file_path) == "frame.md"
 
 
+def _is_asset_intake(file_path: str) -> bool:
+    """asset-intake.md — user-provided material inventory."""
+    return os.path.basename(file_path) == "asset-intake.md"
+
+
+def _handle_asset_intake(ctx, file_path: str):
+    """Validate asset-intake.md structure and inject lightweight TUI feedback."""
+    path = Path(file_path) if os.path.isabs(file_path) else Path(os.getcwd()) / file_path
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as e:
+        logger.warning("Could not read asset-intake.md: %s", e)
+        return
+
+    sections_found: list[str] = []
+    sections_missing: list[str] = []
+    for heading in ("brand", "products", "footage", "text", "audio", "references"):
+        if re.search(rf"^{heading}:", content, re.MULTILINE):
+            sections_found.append(heading)
+        else:
+            sections_missing.append(heading)
+
+    missing_items = bool(re.search(r"(?m)^missing:", content))
+    t_entries = re.findall(r"needs_processing", content)
+    needs_count = len(t_entries)
+
+    parts: list[str] = ["📋 **Framepack — asset-intake 素材检查**\n"]
+    parts.append(f"已收集: {', '.join(sections_found) if sections_found else '(无)'}")
+    if sections_missing:
+        parts.append(f"未收集: {', '.join(sections_missing)}")
+    if needs_count:
+        parts.append(f"需处理: {needs_count} 张图 → 建议 npx hyperframes remove-background")
+    if missing_items:
+        parts.append("⚠️ 有缺失素材标注，Phase 1/2 注意降级处理。")
+    else:
+        parts.append("✅ 素材清单完整，无缺失标注。")
+    parts.append("")
+    parts.append("Phase 1 注意：品牌色（如有）应直接注入 frame.md，跳过调色。")
+
+    ctx.inject_message("\n".join(parts), role="assistant")
+    logger.info("asset-intake.md advice injected")
+
+
 def _is_expanded_prompt(file_path: str) -> bool:
     """expanded-prompt.md — Framepack's creative handoff to HyperFrames."""
     if not file_path:
@@ -428,9 +471,11 @@ def register(ctx):
         elif _is_expanded_prompt(file_path):
             hydrate_guardrails(ctx, project_dir=_project_dir_for_framepack_file(file_path), reason="expanded-prompt write")
             _handle_expanded_prompt(ctx, file_path)
+        elif _is_asset_intake(file_path):
+            _handle_asset_intake(ctx, file_path)
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
-    logger.info("Framepack v0.11.0 post_tool_call hook registered (frame.md + expanded-prompt + guardrail hydration)")
+    logger.info("Framepack v0.11.0 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration)")
 
 
 # ── Handlers ──
