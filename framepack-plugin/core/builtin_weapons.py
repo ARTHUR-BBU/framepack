@@ -23,6 +23,7 @@ def _part(weapon_id: str, function: str, engine: str = "GSAP+CSS") -> dict:
 
 
 BUILTIN_WEAPONS: dict[str, dict] = {
+    # ── GSAP weapons ──
     "text-split-enter": _part("text-split-enter", "textSplitEnter"),
     "caption-clip-wipe": _part("caption-clip-wipe", "captionClipWipe"),
     "bg-blur-mask": _part("bg-blur-mask", "bgBlurMask"),
@@ -34,6 +35,11 @@ BUILTIN_WEAPONS: dict[str, dict] = {
     "splittext-stagger-chars": _part("splittext-stagger-chars", "splitTextStagger", engine="GSAP SplitText"),
     "float-3d-card": _part("float-3d-card", "float3DCard"),
     "card-cascade-reveal": _part("card-cascade-reveal", "cardCascadeReveal"),
+    # ── anime.js weapons (v0.12 NEW) ──
+    "anime-text-split": _part("anime-text-split", "animeTextSplit", engine="anime.js"),
+    "svg-morph-transition": _part("svg-morph-transition", "svgMorph", engine="anime.js"),
+    # ── Sprite sheet weapons (v0.12 NEW) ──
+    "sprite-animation": _part("sprite-animation", "spriteAnimation", engine="GSAP+CSS sprite sheet"),
     "rules.hyperframes-render-safe": {
         "id": "rules.hyperframes-render-safe",
         "source": "builtin",

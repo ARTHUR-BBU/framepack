@@ -260,22 +260,35 @@ def _canonical_function_name(weapon_id: str) -> str | None:
 
 
 def _inline_gsap_hint(html: str, weapon_id: str, params: dict[str, object]) -> dict[str, object]:
-    """Best-effort hint for inline GSAP that resembles a weapon but bypasses its function."""
+    """Best-effort hint for inline animation code that resembles a weapon but bypasses its function.
+
+    Detects both GSAP (gsap.to/from/fromTo/timeline) and anime.js (anime()/animate())
+    inline rewrites. The function name is historical — it now covers multiple engines.
+    """
     gsap_call = bool(re.search(r"\bgsap\.(?:to|from|fromTo|timeline)\s*\(", html))
+    anime_call = bool(re.search(r"\banime\s*\(|\banime\s*\.\s*stagger\s*\(", html))
+    animate_call = bool(re.search(r"\banimate\s*\(", html)) and bool(re.search(r"\bstagger\s*\(", html))
     signals: list[str] = []
     if gsap_call:
         signals.append("gsap_call")
+    if anime_call:
+        signals.append("anime_call")
+    if animate_call:
+        signals.append("animate_call")
     if weapon_id == "text-split-enter" and re.search(r"\bstagger\s*:", html) and re.search(r"\b(?:y|x)\s*:\s*-?\d+", html):
         signals.append("text_split_like_stagger_travel")
+    if weapon_id == "anime-text-split" and re.search(r"\bstagger\s*[\(:]", html) and re.search(r"\b(?:translateY|translateX|y|x)\s*[:,]\s*-?\d+", html):
+        signals.append("anime_text_split_like_stagger")
     for key, value in params.items():
         normalized = _norm(value)
         if normalized and normalized in html:
             signals.append(f"param_value:{key}")
-    suspected = gsap_call and len(signals) >= 2
+    engine_inline = gsap_call or anime_call or animate_call
+    suspected = engine_inline and len(signals) >= 2
     return {
         "suspected": suspected,
         "signals": signals,
-        "recommendation": "Replace the inline GSAP lookalike with the canonical function call from arsenal.json; pattern-equivalent inline code does not satisfy the weapon binding contract.",
+        "recommendation": "Replace the inline animation lookalike with the canonical function call from arsenal.json; pattern-equivalent inline code does not satisfy the weapon binding contract.",
     }
 
 
