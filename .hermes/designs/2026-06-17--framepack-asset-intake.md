@@ -1,7 +1,7 @@
 # Framepack Asset Intake — 素材收集流程设计
 
 > 日期: 2026-06-17
-> 状态: 待审核
+> 状态: 已验证 ✅
 > 关联版本: v0.12.0 (预计)
 > 关联 skill: framepack:framepack-director
 

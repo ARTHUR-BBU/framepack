@@ -7,7 +7,7 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.12.0 五方向开发已启动。v0.11.0 全链路发布完毕（GitHub Release + tag v0.11.0 + main 改名）。方向1（Asset Intake）已 commit 但部署插件有 12 个测试失败待修复。
+**阶段**: Framepack v0.12.0 五方向开发进行中。方向1（Asset Intake）源码+部署全绿（296/296），端到端验证通过。方向 2-5 待推进。
 
 **分支**: `framepack-agent-platform`
 **正式源码版本**: plugin.yaml = 0.11.0（v0.12.0 尚未 bump）
@@ -21,27 +21,24 @@
 
 | 方向 | 描述 | 状态 |
 |------|------|------|
-| 1. Asset Intake | Phase 0 素材收集流程 | ✅ 已 commit `d9ad49f`，⚠️ 部署测试 12 失败 |
+|| 1. Asset Intake | Phase 0 素材收集流程 | ✅ 源码+部署 296/296 全绿，端到端验证通过 ||
 | 2. 武器库扩充 | anime.js + sprite sheet forge | 🔄 builtin_weapons.py 已加 3 武器，未测试未 commit，未走 brainstorming |
 | 3. Taste 广度验证 | emerging/editorial 风格实例测试 | 待开始 |
 | 4. 参数漂移根治 | 源头堵 Manifest→HTML 参数偏差 | 待开始 |
 | 5. studio_edit_blocked | 标记已知限制 + 推上游 | 待开始 |
 
-## 方向 1 部署测试失败详情
+## 方向 1 部署修复记录（2026-06-17 已修复）
 
-源码 `F:/hyperframes/framepack-plugin/` 全绿（296 passed）。
-但部署目录 `F:/Hermes_windows/plugins/framepack/tests/` 有 12 failed：
+部署 12 失败的根因和修复：
+1. **test_deploy_manifest.py** (1 failed) — 版本漂移：部署版查 v0.10.6，源码查 v0.11.0
+   - 修复：覆盖源码版 + 加 `if not path.exists(): continue` 跳过（部署 REPO_ROOT 下无 README.md）
+2. **test_environment_doctor.py** (7 failed) — 缺 v0.11.0 的 cwd fix + 支持 0.6.104
+   - 修复：覆盖源码版（FakeRunner 加 cwd 参数 + 支持窗口 0.6.104）
+3. **test_test_team_auto_script.py** (4 failed) — 引用 v0106 脚本
+   - 修复：覆盖源码版（引用 v0110）+ 脚本复制到 `F:\Hermes_windows\plugins\scripts\`
+4. **test_hyperframes_support.py + test_taste_audit.py** — 潜在漂移，一并覆盖
 
-- **test_deploy_manifest.py** (1 failed): `test_0106_release_version` → FileNotFoundError: `test_team_v0106_auto_test.py`
-  - 原因: v0.11.0 发布时脚本重命名为 `test_team_v0110_auto_test.py`，但部署的 test_deploy_manifest.py 还在找 v0106
-- **test_environment_doctor.py** (7 failed): 包括 `test_doctor_falls_back_to_npx_no_install_without_installing_latest` 等
-  - 原因: 可能部署的 cwd fix 未生效，或部署目录缺少某个 patch
-- **test_test_team_auto_script.py** (4 failed): 也在找 v0106 脚本
-
-**根因**: 部署同步不完整——v0.11.0 release-prep 的某些文件变更没有部署到 `F:/Hermes_windows/plugins/framepack/`。需要：
-1. 重新完整部署 plugins/framepack/（含 tests/test_deploy_manifest.py + tests/test_test_team_auto_script.py + scripts/test_team_v0110_auto_test.py）
-2. 重跑部署测试确认全绿
-3. 然后方向 1 才算真正完成
+结果：源码 296 passed + 部署 296 passed，双位置全绿。
 
 ## 方向 2 当前状态（违规）
 
