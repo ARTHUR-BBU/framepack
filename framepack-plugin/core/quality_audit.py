@@ -399,7 +399,7 @@ def _audit_html_guardrails(project_dir: Path, html: str, manifest: list[Manifest
 
     declared = {ref.id for ref in manifest if not ref.handwrite}
     has_card_structure = bool(re.search(r"id=[\"'][^\"']*card|class=[\"'][^\"']*(?:text-card|card-grid)", html, re.I))
-    has_card_cascade_call = bool(re.search(r"cardCascadeReveal|card-cascade-reveal", html, re.I))
+    has_card_cascade_call = bool(re.search(r"buildCardCascade|cardCascadeReveal|card-cascade-reveal", html, re.I))
     if has_card_structure and "card-cascade-reveal" not in declared and not has_card_cascade_call:
         issues.append(
             QualityIssue(
