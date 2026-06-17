@@ -1,10 +1,10 @@
 name: framepack
-version: "0.11.0"
+version: "0.11.1"
 description: >-
   Prompt Factory for HyperFrames. Translates fuzzy user intent into frame.md
   (visual identity) and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
   Framepack is the director who knows which lights to turn on — not the electrician who wires the studio.
-  v0.11.0 adds: Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens) plus HyperFrames 0.6.104 compatibility and environment doctor cwd fix.
+  v0.11.1 adds Asset Intake (Phase 0): asset detector (PNG/JPG/SVG transparency), six-category asset checklist, asset-intake.md manifest generation, degradation branches by video type. v0.11.0 adds: Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens) plus HyperFrames 0.6.104 compatibility and environment doctor cwd fix.
   v0.10.6 adds: Production Hardening Patch (external font dependency audit, local font asset checks, low-visibility risk audit, finite-number guards, project-local proof path checks) on top of the Production Quality Layer.
   v0.10.5 adds: Production Quality Layer (timeline manifest, proof frames/contact sheets, scene specs, fail-on severity gates) plus Arsenal Binding Contract.
   v0.10.2 adds: Environment & Upgrade Manager (report-only doctor, safe skill install/overlay/upgrade managers, upgrade report).

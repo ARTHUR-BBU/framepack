@@ -61,7 +61,7 @@ hermes plugins enable framepack
 
 # 4. 验证
 hermes plugins list
-# 你应该看到 `framepack` 状态为 **enabled**，版本为 **0.11.0**。
+# 你应该看到 `framepack` 状态为 **enabled**，版本为 **0.11.1**。
 
 # 5. 项目 AGENTS.md 由 Guardrail Hydrator 自动维护 managed block；不要手工覆盖项目自有规则。
 ```
