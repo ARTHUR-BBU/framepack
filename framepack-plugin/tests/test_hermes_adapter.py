@@ -82,6 +82,7 @@ def test_load_patch_registry_missing_file_returns_empty(tmp_path):
     reg = load_patch_registry(tmp_path)
     assert reg["patches"] == []
     assert reg["version"] == 0
+    assert reg["upstream_features"] == []
 
 
 def test_load_patch_registry_malformed_json_returns_empty(tmp_path):

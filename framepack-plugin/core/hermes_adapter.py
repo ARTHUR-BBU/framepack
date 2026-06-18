@@ -92,19 +92,32 @@ def load_patch_registry(project_dir: Path) -> dict:
     """
     patches_file = Path(project_dir) / ".framepack" / "hermes_patches.json"
     if not patches_file.is_file():
-        return {"version": 0, "patches": [], "last_known_hermes_version": None}
+        return _empty_registry()
 
     try:
         data = json.loads(patches_file.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as exc:
         logger.warning("Failed to read hermes_patches.json: %s", exc)
-        return {"version": 0, "patches": [], "last_known_hermes_version": None}
+        return _empty_registry()
 
     # Ensure required keys
     data.setdefault("version", 0)
     data.setdefault("patches", [])
     data.setdefault("last_known_hermes_version", None)
+    data.setdefault("last_known_hyperframes_version", None)
+    data.setdefault("upstream_features", [])
     return data
+
+
+def _empty_registry() -> dict:
+    """Default empty registry with all known keys."""
+    return {
+        "version": 0,
+        "patches": [],
+        "last_known_hermes_version": None,
+        "last_known_hyperframes_version": None,
+        "upstream_features": [],
+    }
 
 
 def check_patches(hermes_home: Path, registry: dict) -> list[PatchStatus]:

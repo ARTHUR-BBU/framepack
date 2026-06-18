@@ -283,6 +283,26 @@ Framepack 产出完成后，HyperFrames 的 `hyperframes` skill 自动接管后�
 
 **Framepack 提供创意灵魂，HyperFrames 补充制作肌肉。是 enrich 关系，不是 replace。**
 
+## Upstream Warning Bridge（v0.12 NEW）
+
+HyperFrames lint 的 warning 分两类：
+
+1. **quality_issue**（必须修）— GSAP tweens 重叠、timeline 太密、字体未声明等
+2. **upstream_limit**（不用管）— HyperFrames 架构限制，如 `gsap_studio_edit_blocked`
+
+Framepack 的 Upstream Warning Bridge 自动分类：
+
+```
+Agent 跑 npx hyperframes lint --json > .framepack/lint-output.json
+    ↓ post_tool_call hook 自动检测
+    ↓ warning_classifier 分类每个 finding
+    ↓ 写入 .framepack/hyperframes-findings.json
+    ↓ quality_audit 合并到统一报告
+```
+
+**Agent 行为**：看到分类为 `upstream_limit` 的 warning，不要试图修复。
+未知的 warning code 默认归入 `upstream_limit`（安全兜底）。
+
 ## 武器库：从"字典"到"执行清单"（v0.8.1 核心教训）
 
 **旧范式（已废弃）：** Agent 在 HTML 阶段"主动查阅"武器库，"建议"用某个武器。

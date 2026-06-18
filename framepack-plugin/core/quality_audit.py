@@ -556,6 +556,28 @@ def _summarize(issues: list[QualityIssue]) -> dict[str, int]:
     return summary
 
 
+def _audit_lint_cache(project_dir: Path) -> list[QualityIssue]:
+    """Read .framepack/hyperframes-findings.json cache and convert classified
+    HyperFrames lint findings into QualityIssue objects.
+
+    Upstream limitations get prefixed with 'upstream:' in their code.
+    Quality issues use their bare code.
+    Unknown warnings default to upstream_limit (safe).
+    """
+    html_path = project_dir / "index.html"
+    try:
+        from .warning_classifier import load_lint_cache, merge_classified_into_quality_issues
+        cache = load_lint_cache(project_dir)
+        if cache is None:
+            return []
+        classified = cache.get("classified", [])
+        return merge_classified_into_quality_issues(classified, str(html_path))
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("Lint cache audit failed: %s", exc)
+        return []
+
+
 def audit_project(project_dir: str | Path) -> QualityAuditReport:
     project_dir = Path(project_dir)
     expanded_prompt = _read(project_dir / ".hyperframes" / "expanded-prompt.md")
@@ -572,5 +594,6 @@ def audit_project(project_dir: str | Path) -> QualityAuditReport:
     issues.extend(_audit_font_dependencies(project_dir, html))
     issues.extend(_audit_visibility(project_dir, frame_md, html))
     issues.extend(_audit_timeline(project_dir, html, expanded_prompt, duration))
+    issues.extend(_audit_lint_cache(project_dir))
 
     return QualityAuditReport(str(project_dir), issues, _summarize(issues))

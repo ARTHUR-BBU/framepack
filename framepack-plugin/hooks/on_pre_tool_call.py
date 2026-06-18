@@ -163,6 +163,43 @@ def _audit_quality_for_hyperframes(ctx, workdir: str) -> None:
         _safe_inject(ctx, f"🧪 **Framepack Quality Audit Warning**\n- quality_audit_error: {exc}", role="user")
 
 
+def _remind_lint_json_if_needed(ctx, command: str) -> None:
+    """When Agent runs `npx hyperframes lint` without --json, remind them
+    to redirect structured output to .framepack/lint-output.json so the
+    warning classifier bridge can pick it up.
+
+    Non-blocking: just injects a nudge message. Does not modify the command.
+    """
+    stripped = command.strip()
+
+    # Must be a lint command
+    if "hyperframes" not in stripped or "lint" not in stripped:
+        return
+
+    # Already using --json — no reminder needed
+    if "--json" in stripped:
+        return
+
+    # Don't fire for lint --help or lint --version
+    if "--help" in stripped or "--version" in stripped:
+        return
+
+    message = (
+        "💡 **Framepack Lint Bridge 提示**\n\n"
+        "你正在运行 `hyperframes lint`，但没有使用 `--json` 标志。\n\n"
+        "Framepack 的 Upstream Warning Bridge 需要结构化的 JSON 输出才能自动分类 warning。\n"
+        "建议改用：\n\n"
+        "```\n"
+        "npx hyperframes lint --json > .framepack/lint-output.json\n"
+        "```\n\n"
+        "这样 Framepack 会自动将 warning 分类为：\n"
+        "- **upstream_limit** — HyperFrames 架构限制（不用管）\n"
+        "- **quality_issue** — 质量问题（必须修）\n\n"
+        "_不使用 --json 也可以运行，但 Framepack 无法自动分类 warning。_"
+    )
+    _safe_inject(ctx, message, role="user")
+
+
 def register(ctx):
     """Register the pre_tool_call hook for handoff readiness."""
 
@@ -193,6 +230,7 @@ def register(ctx):
         _audit_arsenal_for_hyperframes(ctx, workdir)
         _sync_timeline_for_hyperframes(ctx, workdir)
         _audit_quality_for_hyperframes(ctx, workdir)
+        _remind_lint_json_if_needed(ctx, command_for_detection)
 
         frame_md_path = os.path.join(workdir, "frame.md")
         if os.path.isfile(frame_md_path):

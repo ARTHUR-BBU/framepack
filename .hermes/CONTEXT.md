@@ -7,12 +7,12 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.12.0 五方向开发。方向 1-4 全部完成 ✅。方向 5 待开始。
+**阶段**: Framepack v0.12.0 五方向全部完成 ✅。下一步：版本收口（plugin.yaml bump 0.11.1→0.11.2 + 全量同步 + release）
 
 **分支**: `framepack-agent-platform`
-**正式源码版本**: plugin.yaml = 0.11.1（方向 5 完成后 bump 到 0.11.2）
-**最后提交**: `1443b08` (`feat(param-guard): pre-write parameter reference card`)
-**测试**: 源码 347 passed / 1 skipped ✅；部署 347 passed / 1 skipped ✅
+**正式源码版本**: plugin.yaml = 0.11.1（版本收口后 bump 到 0.11.2）
+**最后提交**: 方向 5 待 commit
+**测试**: 源码 390 passed / 1 skipped ✅；部署 390 passed / 1 skipped ✅
 **GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；v0.11.1 尚未 push
 
 **方向完成状态**:
@@ -20,7 +20,7 @@
 - 方向 2 (武器库扩充): `979a029` + `e799064` — 3 bug修复 + drift修复 + 上游 PR #48141
 - 方向 3 (Taste 广度): `605d13e` — taste_audit.py 四项修正 (kinetic/fade/surprise/motif)
 - 方向 4 (参数漂移): `1443b08` — param_guard.py + canonical snippet + hook 集成
-- 方向 5 (studio_edit_blocked): 待开始
+- 方向 5 (Upstream Warning Bridge): 待 commit — warning_classifier.py + quality_audit 集成 + hooks 集成 + hermes_patches.json upstream_features
 
 **额外产出**:
 - Hermes PR #48141: https://github.com/NousResearch/hermes-agent/pull/48141 (skills_tool.py file_path bug)
@@ -32,11 +32,11 @@
 
 | 方向 | 描述 | 状态 |
 |------|------|------|
-|| 1. Asset Intake | Phase 0 素材收集流程 | ✅ 源码+部署 296/296 全绿，端到端验证通过 ||
+| 1. Asset Intake | Phase 0 素材收集流程 | ✅ 源码+部署 296/296 全绿，端到端验证通过 |
 | 2. 武器库扩充 | anime.js + sprite sheet forge | ✅ 3 bug 修复 (commit `979a029`) + Hermes file_path bug 修复 |
-| 3. Taste 广度验证 | emerging/editorial 风格实例测试 | 待开始 |
-| 4. 参数漂移根治 | 源头堵 Manifest→HTML 参数偏差 | 待开始 |
-| 5. studio_edit_blocked | 标记已知限制 + 推上游 | 待开始 |
+| 3. Taste 广度验证 | emerging/editorial 风格实例测试 | ✅ commit `605d13e` (kinetic/fade/surprise/motif) |
+| 4. 参数漂移根治 | 源头堵 Manifest→HTML 参数偏差 | ✅ commit `1443b08` (param_guard + canonical snippet) |
+| 5. Upstream Warning Bridge | HyperFrames lint warning 自动分类 | ✅ 待 commit — warning_classifier + hooks 集成 |
 
 ## 方向 1 部署修复记录（2026-06-17 已修复）
 
@@ -80,9 +80,35 @@ Hermes 框架 bug（方向 2 附带修复）：
 4. ~~Drift 修复（4 孤儿注册 + card-cascade-reveal 路径）~~ ✅
 5. ~~上游 PR #48141 提交~~ ✅
 6. ~~hermes_adapter（修补追踪 + 告警）~~ ✅
-7. 方向 3（Taste 广度验证） ← 下一步
-8. 方向 4（参数漂移根治）
-9. 方向 5（studio_edit_blocked）
+7. ~~方向 3（Taste 广度验证）~~ ✅
+8. ~~方向 4（参数漂移根治）~~ ✅
+9. ~~方向 5（Upstream Warning Bridge）~~ ✅
+10. 版本收口（plugin.yaml bump 0.11.1→0.11.2 + 全量同步 + release） ← 下一步
+
+## 方向 5: Upstream Warning Bridge（方向5 待 commit）
+
+设计文档: `F:/hyperframes/.hermes/designs/2026-06-18--direction5-upstream-warning-bridge.md`
+
+核心：让 quality_audit 合并 HyperFrames lint 的 warning，自动分类为 quality_issue（必须修）和 upstream_limit（不用管），提供一站式质量报告。
+
+数据流：Agent 跑 `npx hyperframes lint --json > .framepack/lint-output.json` → post_tool_call hook 检测 → warning_classifier 分类 → 写 `.framepack/hyperframes-findings.json` → quality_audit 读缓存 → 统一报告。
+
+新增文件：
+- `core/warning_classifier.py` (277 lines) — 数据驱动分类表（5 个已知 code）+ 缓存读写 + 未知兜底 upstream_limit
+- `tests/test_warning_classifier.py` (302 lines, 26 tests) — 分类逻辑 + 缓存 + 未知兜底
+- `tests/test_quality_audit_lint_bridge.py` (171 lines, 8 tests) — quality_audit 读缓存集成
+- `tests/test_lint_bridge_hooks.py` (287 lines, 9 tests) — pre/post hook 集成
+- `templates/hermes_patches.template.json` — 新增 upstream_features 字段
+
+修改文件：
+- `core/quality_audit.py` — `_audit_lint_cache()` 读分类缓存，报告分开展示 upstream_limit
+- `core/hermes_adapter.py` — `load_patch_registry()` 默认返回含 upstream_features + last_known_hyperframes_version
+- `hooks/on_pre_tool_call.py` — `_remind_lint_json_if_needed()` 检测无 --json 时提醒
+- `hooks/on_post_tool_call.py` — `_handle_lint_cache_bridge()` 检测 lint --json 命令并触发分类
+- `guardrails.md` — Known Limitations 段落（上游限制表 + Agent 行为指引）
+- `skills/framepack/SKILL.md` — Upstream Warning Bridge 工作流说明
+
+测试：源码 390 passed / 1 skipped；部署 390 passed / 1 skipped；部署 smoke 5/5 OK
 
 ## hermes_adapter 模块 (commit 待补)
 
@@ -99,5 +125,6 @@ Hermes 框架 bug（方向 2 附带修复）：
 - 部署: `F:/Hermes_windows/plugins/framepack/`
 - 独立 skill: `F:/Hermes_windows/skills/software-development/framepack/SKILL.md`
 - 设计文档: `F:/hyperframes/.hermes/designs/2026-06-17--framepack-asset-intake.md`
+- 方向5设计: `F:/hyperframes/.hermes/designs/2026-06-18--direction5-upstream-warning-bridge.md`
 - 五方向计划: `F:/hyperframes/.hermes/plans/2026-06-17_framepack-v0120-five-directions.md`
 - Golden case: `F:/Framepack-01-test/cases/pearl-celestial-memory-20s/`

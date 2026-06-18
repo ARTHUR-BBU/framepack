@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "last_known_hermes_version": null,
+  "last_known_hyperframes_version": "0.6.99",
+  "patches": [
+    {
+      "id": "skills_tool_file_path",
+      "type": "hermes_patch",
+      "target": "tools/skills_tool.py",
+      "marker": "/* FRAMEPACK PATCH: file_path support */",
+      "description": "Fix skill_view to pass file_path to _serve_plugin_skill"
+    }
+  ],
+  "upstream_features": [
+    {
+      "id": "studio_edit_suppress_flag",
+      "hyperframes_version": "0.6.99",
+      "warning_code": "gsap_studio_edit_blocked",
+      "status": "open",
+      "request": "Add --suppress or per-element suppress attribute for Studio editability warnings",
+      "workaround": "Accept as structural limitation; no code change available",
+      "notes": "Present in all GSAP-heavy compositions. Not a render-quality issue."
+    }
+  ]
+}

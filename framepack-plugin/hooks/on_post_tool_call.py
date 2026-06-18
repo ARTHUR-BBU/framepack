@@ -439,6 +439,91 @@ def _is_framepack_skill_name(name: str) -> bool:
     }
 
 
+def _resolve_workdir_from_command(command: str, base_workdir: str) -> str:
+    """Resolve shell `cd project && ...` prefixes to the effective workdir."""
+    import re as _re
+    cd_match = _re.match(r"\s*cd\s+([^\s&|;]+)", command)
+    if cd_match:
+        target = cd_match.group(1).strip().strip("\"'")
+        base = Path(base_workdir)
+        resolved = base / target if not os.path.isabs(target) else Path(target)
+        return str(resolved)
+    return base_workdir
+
+
+def _is_lint_command(command: str) -> bool:
+    """Check if a terminal command invokes `hyperframes lint`."""
+    stripped = command.strip()
+    return "hyperframes" in stripped and "lint" in stripped
+
+
+def _handle_lint_cache_bridge(ctx, command: str, workdir: str) -> None:
+    """After Agent runs `hyperframes lint`, detect .framepack/lint-output.json,
+    classify findings, save cache, and inject a summary.
+
+    This is the post-execution side of the Upstream Warning Bridge.
+    """
+    if not _is_lint_command(command):
+        return
+
+    effective_workdir = _resolve_workdir_from_command(command, workdir)
+    lint_output_path = Path(effective_workdir, ".framepack", "lint-output.json")
+
+    if not lint_output_path.is_file():
+        return
+
+    try:
+        lint_json = json.loads(lint_output_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("Failed to read lint-output.json: %s", exc)
+        return
+
+    try:
+        from core.warning_classifier import save_lint_cache, classify_lint_output
+        save_lint_cache(Path(effective_workdir), lint_json)
+        classified = classify_lint_output(lint_json)
+    except Exception as exc:
+        logger.warning("Lint cache bridge failed: %s", exc)
+        return
+
+    # Build summary message
+    upstream = [c for c in classified if c["category"] == "upstream_limit"]
+    quality = [c for c in classified if c["category"] == "quality_issue"]
+
+    if not classified:
+        message = (
+            "✅ **Framepack Lint Bridge**\n\n"
+            "hyperframes lint 报告 0 个 warning。一切干净。\n\n"
+            "（缓存已写入 `.framepack/hyperframes-findings.json`）"
+        )
+    else:
+        lines = [
+            "🔍 **Framepack Lint Bridge — Warning 分类报告**\n",
+            f"共 {len(classified)} 个 warning，已自动分类：\n",
+        ]
+        if quality:
+            lines.append(f"**⚠️ 质量问题（必须修）— {len(quality)} 个：**")
+            for item in quality:
+                lines.append(f"  - `{item['code']}` [{item['severity']}]: {item['message'][:80]}")
+            lines.append("")
+
+        if upstream:
+            lines.append(f"**ℹ️ 上游限制（不用管）— {len(upstream)} 个：**")
+            for item in upstream:
+                lines.append(f"  - `{item['code']}`: {item['message'][:80]}")
+            lines.append("")
+
+        lines.append("_分类缓存已写入 `.framepack/hyperframes-findings.json`，下次 quality audit 会自动合并。_")
+
+        message = "\n".join(lines)
+
+    _safe_inject(ctx, message, role="user")
+    logger.info(
+        "Lint cache bridge: %d findings (%d upstream, %d quality)",
+        len(classified), len(upstream), len(quality),
+    )
+
+
 def register(ctx):
     """Register the post_tool_call hook for frame.md and expanded-prompt detection."""
 
@@ -460,6 +545,14 @@ def register(ctx):
                 hydrate_guardrails(ctx, project_dir=os.getcwd(), reason=f"skill_view:{skill_name}")
             return
 
+        # ── Lint cache bridge: detect terminal lint commands ──
+        if tool_name == "terminal":
+            command = args.get("command", "")
+            if command and _is_lint_command(command):
+                workdir = args.get("workdir", "") or os.getcwd()
+                _handle_lint_cache_bridge(ctx, command, workdir)
+            return
+
         if tool_name not in ("write_file",):
             return
 
@@ -475,7 +568,7 @@ def register(ctx):
             _handle_asset_intake(ctx, file_path)
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
-    logger.info("Framepack v0.11.1 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration)")
+    logger.info("Framepack v0.11.1 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration + lint cache bridge)")
 
 
 # ── Param Card Injection ──
