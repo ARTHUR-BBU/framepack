@@ -234,10 +234,10 @@ class TestQualityAuditCanonicalSnippet:
             assert len(issues) == 1
             issue = issues[0]
             assert issue.code == "weapon_parameter_drift"
-            assert issue.severity == "P1"
+            assert issue.severity == "P2"
             # The canonical snippet should be in details
             assert "canonical_snippet" in (issue.details or {}), \
-                "P1 drift issue should include canonical_snippet in details"
+                "P2 drift issue should include canonical_snippet in details"
             snippet = issue.details["canonical_snippet"]
             assert "0.85" in snippet
             assert "power2.out" in snippet

@@ -11,6 +11,8 @@ from pathlib import Path
 import re
 from typing import Any
 
+from .taste_grammar import moves_by_energy_level
+
 
 @dataclass
 class TasteAuditIssue:
@@ -197,8 +199,8 @@ def _is_intentionally_restrained(frame_md: str) -> bool:
     taste_moves_match = re.search(r"taste_moves:\s*\n((?:\s+-\s+.+\n)+)", frame_md)
     if taste_moves_match:
         moves_block = taste_moves_match.group(1)
-        high_energy_moves = {"editorial_punch", "system_awakening", "kinetic_typography_attack",
-                             "data_cathedral", "interface_ballet"}
+        # Query the single source of truth — no shadow vocabulary
+        high_energy_moves = set(moves_by_energy_level("high"))
         moves_found = set()
         for move_match in re.finditer(r"-\s+(\w+)", moves_block):
             move = move_match.group(1).lower().strip()

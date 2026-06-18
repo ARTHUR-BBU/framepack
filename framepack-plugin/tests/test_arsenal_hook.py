@@ -195,7 +195,7 @@ scene_2:
         encoding="utf-8",
     )
     (tmp_path / "index.html").write_text(
-        "<div data-hf-id='x'></div><script>textSplitEnter(tl,el,{travelDistance:'120px'});</script>",
+        "<div data-hf-id='x'></div><script>textSplitEnter(tl,el,{travelDistance:'200px'});</script>",
         encoding="utf-8",
     )
     ctx = MagicMock()

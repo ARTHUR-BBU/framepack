@@ -100,7 +100,48 @@ def _norm(value: object) -> str:
         return text
     if not math.isfinite(number):
         return text
-    return str(int(number)) if number.is_integer() else str(number)
+    if number == int(number):
+        return str(int(number))
+    return f"{number:g}"
+
+
+# ── v0.13: threshold-based drift detection ──
+_NUMERIC_WITH_UNIT = re.compile(r"^(-?\d+(?:\.\d+)?)\s*(px|%|s|ms|deg|em|rem|vh|vw|turn)?$", re.I)
+_DRIFT_THRESHOLD = 3.0  # ratio beyond which numeric drift is considered significant
+
+
+def _extract_numeric(value: object) -> float | None:
+    """Extract a numeric scalar from a value, handling CSS units.
+
+    Returns None for non-numeric values (ease strings, color hex, etc.).
+    """
+    text = str(value).strip().strip("'\"")
+    match = _NUMERIC_WITH_UNIT.match(text)
+    if match:
+        return float(match.group(1))
+    return _coerce_float(text)
+
+
+def _is_drift_significant(expected: object, actual: object) -> bool:
+    """Determine whether a parameter drift is significant enough to report.
+
+    For numeric values (including CSS units like "60px"): uses a 3x ratio
+    threshold — creative adjustments within 3x are normal, not drift.
+
+    For non-numeric values (ease, color, direction): exact match required.
+    Any mismatch is drift.
+    """
+    exp_num = _extract_numeric(expected)
+    act_num = _extract_numeric(actual)
+
+    if exp_num is not None and act_num is not None:
+        ratio = max(exp_num, act_num) / min(exp_num, act_num) if min(exp_num, act_num) != 0 else float("inf")
+        if act_num == 0 and exp_num == 0:
+            return False
+        return ratio > _DRIFT_THRESHOLD
+
+    # At least one is non-numeric — exact match required
+    return _norm(expected) != _norm(actual)
 
 
 def _is_remote_url(value: str) -> bool:
@@ -456,15 +497,15 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
             if key not in call:
                 continue
             actual = call[key]
-            if _norm(actual) != _norm(expected):
+            if _is_drift_significant(expected, actual):
                 drift[key] = {"expected": _norm(expected), "actual": _norm(actual)}
         if drift:
             canonical_snippet = _build_canonical_snippet(fn, params)
             issues.append(
                 QualityIssue(
                     "weapon_parameter_drift",
-                    "P1",
-                    f"Weapon {ref.id!r} call parameters drift from Execution Manifest",
+                    "P2",
+                    f"Weapon {ref.id!r} call parameters drift significantly (>3x for numeric, mismatch for non-numeric) from Execution Manifest",
                     str(html_path),
                     ref.used_by[0] if ref.used_by else None,
                     ref.id,

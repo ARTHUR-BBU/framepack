@@ -80,3 +80,52 @@ def test_lookup_helpers_raise_keyerror_for_unknown_id():
             assert "missing" in str(exc)
         else:
             raise AssertionError("expected KeyError")
+
+
+def test_every_taste_move_has_energy_level():
+    """All 12 taste moves must declare an energy_level (low/medium/high)."""
+    from core.taste_grammar import TASTE_MOVES
+    valid = {"low", "medium", "high"}
+    for move in TASTE_MOVES:
+        level = move.get("energy_level")
+        assert level in valid, f"{move['id']}: energy_level={level!r}, must be one of {valid}"
+
+
+def test_moves_by_energy_level_returns_expected_classification():
+    """The single source of truth for energy classification.
+
+    taste_audit.py queries this instead of hardcoding subsets — if this
+    test passes, the shadow vocabulary is gone.
+    """
+    from core.taste_grammar import moves_by_energy_level
+    high = set(moves_by_energy_level("high"))
+    medium = set(moves_by_energy_level("medium"))
+    low = set(moves_by_energy_level("low"))
+
+    # All 12 moves classified, no overlaps
+    assert len(high) + len(medium) + len(low) == 12
+    assert high & medium == set()
+    assert high & low == set()
+    assert medium & low == set()
+
+    # High-energy set matches the original hardcoded values (regression guard)
+    assert high == {
+        "editorial_punch",
+        "interface_ballet",
+        "data_cathedral",
+        "kinetic_typography_attack",
+        "system_awakening",
+    }
+
+
+def test_taste_audit_uses_grammar_not_hardcoded_moves():
+    """taste_audit.py must NOT hardcode high-energy move IDs.
+
+    This test prevents the shadow vocabulary from creeping back in.
+    """
+    from pathlib import Path
+    src = (Path(__file__).resolve().parent.parent / "core" / "taste_audit.py").read_text("utf-8")
+    # The old pattern was a set literal of move IDs
+    assert '"editorial_punch", "system_awakening"' not in src, (
+        "taste_audit.py still hardcodes high_energy_moves — use moves_by_energy_level() instead"
+    )

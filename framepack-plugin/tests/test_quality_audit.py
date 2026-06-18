@@ -74,8 +74,8 @@ scene_5_extra:
   <div data-hf-id="hf-card" id="s3-card1" class="text-card"></div>
 </div>
 <script>
-textSplitEnter(tl,document.getElementById('s2-coalesce'),{travelDistance:'120px',duration:0.7},8.0);
-elasticScaleEnter(tl,document.getElementById('s5-real'),{fromScale:0.5,duration:0.8,ease:'back.out(1.7)'},37.0);
+textSplitEnter(tl,document.getElementById('s2-coalesce'),{travelDistance:'200px',duration:0.7},8.0);
+elasticScaleEnter(tl,document.getElementById('s5-real'),{fromScale:0.2,duration:0.8,ease:'back.out(1.7)'},37.0);
 </script>
 """,
         encoding="utf-8",
@@ -171,7 +171,7 @@ scene_5_extra:
     (tmp_path / "index.html").write_text(
         """
 <script>
-elasticScaleEnter(tl,el,{fromScale:0.5,duration:0.8,ease:'back.out(1.7)'},37.0);
+elasticScaleEnter(tl,el,{fromScale:0.2,duration:0.8,ease:'back.out(1.7)'},37.0);
 </script>
 """,
         encoding="utf-8",
@@ -181,7 +181,7 @@ elasticScaleEnter(tl,el,{fromScale:0.5,duration:0.8,ease:'back.out(1.7)'},37.0);
     drift = [i for i in report.issues if i.code == "weapon_parameter_drift"]
 
     assert len(drift) == 1
-    assert drift[0].details["drift"]["fromScale"] == {"expected": "0.85", "actual": "0.5"}
+    assert drift[0].details["drift"]["fromScale"] == {"expected": "0.85", "actual": "0.2"}
     assert drift[0].details["drift"]["ease"] == {"expected": "elastic.out(1, 0.3)", "actual": "back.out(1.7)"}
 
 
@@ -295,7 +295,7 @@ scene_1:
     (tmp_path / "index.html").write_text(
         """
 <script>
-catalogOnlyFx(tl, el, {travelDistance: '120px'});
+catalogOnlyFx(tl, el, {travelDistance: '200px'});
 </script>
 """,
         encoding="utf-8",
@@ -313,7 +313,7 @@ catalogOnlyFx(tl, el, {travelDistance: '120px'});
 
     assert len(drift) == 1
     assert drift[0].details["function"] == "catalogOnlyFx"
-    assert drift[0].details["drift"]["travelDistance"] == {"expected": "60px", "actual": "120px"}
+    assert drift[0].details["drift"]["travelDistance"] == {"expected": "60px", "actual": "200px"}
 
 
 def test_parameter_drift_accepts_quoted_values_that_contain_commas(tmp_path):
@@ -432,3 +432,114 @@ colors:
 
     assert issue.severity == "P2"
     assert "brightness" in issue.details["signals"]
+
+
+# ── v0.13: Parameter drift threshold detection ──
+
+
+def test_numeric_drift_within_threshold_does_not_report(tmp_path):
+    """3x threshold: 0.8→1.2 (1.5x) is normal creative adjustment, not drift."""
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: elastic-scale-enter
+  params:
+    duration: 0.8
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+elasticScaleEnter(tl, el, {duration: 1.2});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    assert not [i for i in report.issues if i.code == "weapon_parameter_drift"]
+
+
+def test_numeric_drift_beyond_threshold_reports_as_p2(tmp_path):
+    """3x threshold: 0.8→6.0 (7.5x) is suspicious drift, report as P2 (suggestion)."""
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: elastic-scale-enter
+  params:
+    duration: 0.8
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+elasticScaleEnter(tl, el, {duration: 6.0});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    drift = [i for i in report.issues if i.code == "weapon_parameter_drift"]
+    assert len(drift) == 1
+    assert drift[0].severity == "P2", "parameter drift should be P2 (suggestion), not P1"
+
+
+def test_non_numeric_drift_reports_as_p2(tmp_path):
+    """Non-numeric params (ease, color, direction) require exact match; mismatch = P2."""
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: elastic-scale-enter
+  params:
+    ease: "elastic.out(1, 0.3)"
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+elasticScaleEnter(tl, el, {ease: 'back.out(1.7)'});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    drift = [i for i in report.issues if i.code == "weapon_parameter_drift"]
+    assert len(drift) == 1
+    assert drift[0].severity == "P2"
+
+
+def test_css_unit_drift_within_threshold_does_not_report(tmp_path):
+    """CSS values with units: 60px→120px (2x) is normal, not drift."""
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: text-split-enter
+  params:
+    travelDistance: "60px"
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+textSplitEnter(tl, el, {travelDistance: '120px'});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    assert not [i for i in report.issues if i.code == "weapon_parameter_drift"]

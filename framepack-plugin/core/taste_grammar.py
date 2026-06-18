@@ -67,6 +67,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "物件崇拜",
         "description": "Treat the product like sculpture or a sacred object.",
         "example": "The hero object emerges slowly from darkness before any copy appears.",
+        "energy_level": "low",
     },
     {
         "id": "editorial_punch",
@@ -74,6 +75,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "杂志重拳",
         "description": "Use oversized editorial typography as a kinetic event.",
         "example": "A single word slams in like a magazine cover headline.",
+        "energy_level": "high",
     },
     {
         "id": "silence_before_drop",
@@ -81,6 +83,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "爆发前静默",
         "description": "Create appetite through restraint before a release beat.",
         "example": "The frame holds nearly empty for one second before the CTA lands.",
+        "energy_level": "low",
     },
     {
         "id": "motif_reincarnation",
@@ -88,6 +91,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "母题转生",
         "description": "A recurring visual motif changes form across scenes.",
         "example": "A pearl becomes a halo, then a portal, then the CTA ring.",
+        "energy_level": "medium",
     },
     {
         "id": "interface_ballet",
@@ -95,6 +99,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "界面编舞",
         "description": "UI and mockups move like choreographed performers.",
         "example": "Cards arc around a device mockup before snapping into a dashboard.",
+        "energy_level": "high",
     },
     {
         "id": "data_cathedral",
@@ -102,6 +107,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "数据圣殿",
         "description": "Turn data into spatial architecture instead of flat charts.",
         "example": "Metrics rise as luminous pillars in a deep grid hall.",
+        "energy_level": "high",
     },
     {
         "id": "liquid_brand",
@@ -109,6 +115,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "液态品牌",
         "description": "Brand elements flow through the film as liquid, ribbons, or light.",
         "example": "A brand line becomes a ribbon, then a wipe, then an underline.",
+        "energy_level": "medium",
     },
     {
         "id": "cold_open",
@@ -116,6 +123,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "冷开场",
         "description": "Start with a strong visual question before explanatory copy.",
         "example": "A glowing object pulses in silence before the product is named.",
+        "energy_level": "medium",
     },
     {
         "id": "kinetic_typography_attack",
@@ -123,6 +131,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "动态字体攻击",
         "description": "Let type become the main motion subject, not just labels.",
         "example": "Words split, collide, and reform in rhythm with the beat.",
+        "energy_level": "high",
     },
     {
         "id": "product_reveal_ritual",
@@ -130,6 +139,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "产品揭幕仪式",
         "description": "Make the product appearance feel ceremonial.",
         "example": "Light, shadow, and supporting elements prepare the frame before reveal.",
+        "energy_level": "medium",
     },
     {
         "id": "system_awakening",
@@ -137,6 +147,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "系统苏醒",
         "description": "A technical product wakes from grid, signal, or boot sequence.",
         "example": "Dim grid lines pulse on before UI panels initialize.",
+        "energy_level": "high",
     },
     {
         "id": "human_imperfection",
@@ -144,6 +155,7 @@ TASTE_MOVES: list[dict[str, str]] = [
         "name_zh": "人味瑕疵",
         "description": "Small non-mechanical irregularities add hand feel.",
         "example": "Hand-drawn lines wobble slightly before locking into a precise layout.",
+        "energy_level": "low",
     },
 ]
 
@@ -238,3 +250,12 @@ def get_taste_move(item_id: str) -> dict[str, Any]:
 
 def get_surprise_operator(item_id: str) -> dict[str, Any]:
     return _lookup(SURPRISE_OPERATORS, item_id)
+
+
+def moves_by_energy_level(level: str) -> list[str]:
+    """Return all taste move IDs with the given energy_level.
+
+    This is the single source of truth for energy classification —
+    taste_audit.py and other consumers query this instead of hardcoding subsets.
+    """
+    return [item["id"] for item in TASTE_MOVES if item.get("energy_level") == level]
