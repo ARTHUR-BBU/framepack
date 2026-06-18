@@ -63,10 +63,24 @@ Hermes 框架 bug（方向 2 附带修复）：
 
 ## 关键路径
 
-1. 修复部署测试 12 失败 → 方向 1 真正完成
-2. 方向 2 brainstorming → 设计武器库 schema 扩展
-3. 方向 2 实现（anime.js + sprite sheet weapons + arsenal schema update）
-4. 方向 3-5 依次推进
+1. ~~修复部署测试 12 失败 → 方向 1 真正完成~~ ✅
+2. ~~方向 2 brainstorming → 设计武器库 schema 扩展~~ ✅
+3. ~~方向 2 实现（anime.js + sprite sheet weapons + arsenal schema update）~~ ✅
+4. ~~Drift 修复（4 孤儿注册 + card-cascade-reveal 路径）~~ ✅
+5. ~~上游 PR #48141 提交~~ ✅
+6. ~~hermes_adapter（修补追踪 + 告警）~~ ✅
+7. 方向 3（Taste 广度验证） ← 下一步
+8. 方向 4（参数漂移根治）
+9. 方向 5（studio_edit_blocked）
+
+## hermes_adapter 模块 (commit 待补)
+
+- `core/hermes_adapter.py` — 版本门控的 patch 追踪系统（marker-based）
+- 触发链：`hydrate_guardrails() → run_patch_audit_if_needed() → patch_audit_report()`
+- 版本门控：`should_check_patches()` 检测 Hermes 版本变化，没变跳过
+- 注册的首个 patch：`skills_tool_file_path`（PR #48141）
+- `.framepack/hermes_patches.json` — patch 注册表
+- 17 测试（14 核心 + 3 集成），双绿 327/327
 
 ## 文件索引
 
