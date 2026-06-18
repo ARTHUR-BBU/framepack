@@ -28,6 +28,15 @@ class ArsenalWarning:
     severity: str
     weapon_id: str | None = None
 
+    @classmethod
+    def from_error(cls, message: str) -> "ArsenalWarning":
+        """Construct an arsenal_error warning from a raw error string.
+
+        Used at hook boundaries where arsenal sync raised an exception and
+        we need a warning-shaped object to feed into _build_arsenal_warning_message.
+        """
+        return cls(code="arsenal_error", message=message, severity="warn", weapon_id=None)
+
 
 @dataclass
 class ArsenalSyncResult:
@@ -329,7 +338,3 @@ def reconcile_manifest(data: dict, manifest_weapons: list[ManifestWeapon], plugi
         data["plugin_version_updated"] = DEFAULT_PLUGIN_VERSION
     warnings.extend(validate_arsenal(data, Path(".")))
     return data, warnings
-
-
-def save_arsenal(path: Path, data: dict) -> None:
-    _atomic_write_json(path, data)

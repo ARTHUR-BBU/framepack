@@ -200,20 +200,6 @@ def load_lint_cache(project_dir: Path) -> dict[str, Any] | None:
         return None
 
 
-def load_lint_output(project_dir: Path) -> dict[str, Any] | None:
-    """Load raw lint --json output (the Agent's redirect file).
-
-    Returns None if file doesn't exist.
-    """
-    path = _lint_output_path(project_dir)
-    if not path.is_file():
-        return None
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return None
-
-
 # ── Quality audit integration ──────────────────────────────────────────
 
 def merge_classified_into_quality_issues(

@@ -58,6 +58,7 @@ PARAM_ALIASES = {
 
 
 def _read(path: Path) -> str:
+    """Read text file, return '' if missing. Mirrored in taste_audit.py — keep in sync."""
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 

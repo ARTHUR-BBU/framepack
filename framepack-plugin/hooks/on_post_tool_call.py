@@ -19,7 +19,8 @@ import re
 from pathlib import Path
 
 from .guardrails import hydrate_guardrails
-from core.arsenal_registry import sync_arsenal_from_project
+from core.arsenal_registry import sync_arsenal_from_project, ArsenalWarning
+from core.shell_utils import resolve_effective_workdir
 
 logger = logging.getLogger(__name__)
 
@@ -409,10 +410,10 @@ def _sync_arsenal_for_expanded_prompt(ctx, file_path: str, content: str) -> None
         result = sync_arsenal_from_project(project_dir, Path(__file__).resolve().parent.parent)
         warnings = list(result.warnings)
         if result.error:
-            warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": result.error, "severity": "warn", "weapon_id": None})())
+            warnings.append(ArsenalWarning.from_error(result.error))
     except Exception as exc:
         logger.warning("Arsenal reconciliation failed: %s", exc)
-        warnings = [type("WarningLike", (), {"code": "arsenal_error", "message": str(exc), "severity": "warn", "weapon_id": None})()]
+        warnings = [ArsenalWarning.from_error(str(exc))]
 
     message = _build_arsenal_warning_message(warnings)
     if message:
@@ -439,18 +440,6 @@ def _is_framepack_skill_name(name: str) -> bool:
     }
 
 
-def _resolve_workdir_from_command(command: str, base_workdir: str) -> str:
-    """Resolve shell `cd project && ...` prefixes to the effective workdir."""
-    import re as _re
-    cd_match = _re.match(r"\s*cd\s+([^\s&|;]+)", command)
-    if cd_match:
-        target = cd_match.group(1).strip().strip("\"'")
-        base = Path(base_workdir)
-        resolved = base / target if not os.path.isabs(target) else Path(target)
-        return str(resolved)
-    return base_workdir
-
-
 def _is_lint_command(command: str) -> bool:
     """Check if a terminal command invokes `hyperframes lint`."""
     stripped = command.strip()
@@ -466,7 +455,7 @@ def _handle_lint_cache_bridge(ctx, command: str, workdir: str) -> None:
     if not _is_lint_command(command):
         return
 
-    effective_workdir = _resolve_workdir_from_command(command, workdir)
+    effective_workdir = resolve_effective_workdir(command, workdir)
     lint_output_path = Path(effective_workdir, ".framepack", "lint-output.json")
 
     if not lint_output_path.is_file():

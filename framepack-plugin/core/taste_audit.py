@@ -45,7 +45,7 @@ def _read(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
-def _summary(issues: list[TasteAuditIssue]) -> dict[str, int]:
+def _summarize(issues: list[TasteAuditIssue]) -> dict[str, int]:
     summary = {severity: 0 for severity in SEVERITIES}
     for issue in issues:
         summary[issue.severity] = summary.get(issue.severity, 0) + 1
@@ -346,4 +346,4 @@ def audit_project(project_dir: str | Path) -> TasteAuditReport:
     issues.extend(_audit_surprise_usage(frame_md, expanded_prompt, frame_path, expanded_path))
     issues.extend(_audit_motif_transformation(frame_md, expanded_prompt, frame_path, expanded_path))
 
-    return TasteAuditReport(str(project), issues, _summary(issues))
+    return TasteAuditReport(str(project), issues, _summarize(issues))
