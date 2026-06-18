@@ -192,7 +192,34 @@ def sync_project_agents(
         )
 
 
+def _safe_inject_patch_warning(ctx, report: str) -> None:
+    """Inject a Hermes patch drift warning into the session (best-effort)."""
+    if ctx is None or not hasattr(ctx, "inject_message"):
+        return
+    message = (
+        "⚠️ **Hermes Patch Drift Detected**\n\n"
+        f"{report}\n\n"
+        "Local Hermes patches may have been overwritten by an upgrade. "
+        "Re-apply the patches or verify functionality."
+    )
+    try:
+        ctx.inject_message(message, role="user")
+    except Exception as exc:
+        logger.debug("patch warning injection failed: %s", exc)
+
+
 def hydrate_guardrails(ctx, project_dir: Path | str | None = None, reason: str = "") -> GuardrailsSyncResult:
     if project_dir is None:
         project_dir = os.getcwd()
-    return sync_project_agents(project_dir, _plugin_dir_from_hook_file(), ctx=ctx, reason=reason)
+    result = sync_project_agents(project_dir, _plugin_dir_from_hook_file(), ctx=ctx, reason=reason)
+
+    # Version-gated Hermes patch audit — only checks when Hermes version changes
+    try:
+        from core.hermes_adapter import run_patch_audit_if_needed
+        patch_report = run_patch_audit_if_needed(project_dir)
+        if patch_report and "drift" in patch_report.lower():
+            _safe_inject_patch_warning(ctx, patch_report)
+    except Exception as exc:
+        logger.debug("Hermes patch audit skipped: %s", exc)
+
+    return result
