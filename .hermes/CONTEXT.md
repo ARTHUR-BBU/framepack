@@ -7,13 +7,24 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.12.0 五方向开发进行中。方向1（Asset Intake）✅ 完成并测试组验收 PASS。方向2（武器库扩充）✅ 代码完成并 commit（3 bug 修复 + Hermes file_path bug 修复）。方向 3-5 待推进。
+**阶段**: Framepack v0.12.0 五方向开发。方向 1-4 全部完成 ✅。方向 5 待开始。
 
 **分支**: `framepack-agent-platform`
-**正式源码版本**: plugin.yaml = 0.11.1
-**最后提交**: `979a029` (`fix(weapons): align 3 WIP weapons' registration`)
-**测试**: 源码 303 passed ✅；部署 303 passed ✅
+**正式源码版本**: plugin.yaml = 0.11.1（方向 5 完成后 bump 到 0.11.2）
+**最后提交**: `1443b08` (`feat(param-guard): pre-write parameter reference card`)
+**测试**: 源码 347 passed / 1 skipped ✅；部署 347 passed / 1 skipped ✅
 **GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；v0.11.1 尚未 push
+
+**方向完成状态**:
+- 方向 1 (Asset Intake): `d9ad49f` — asset_detector.py + checklist + template
+- 方向 2 (武器库扩充): `979a029` + `e799064` — 3 bug修复 + drift修复 + 上游 PR #48141
+- 方向 3 (Taste 广度): `605d13e` — taste_audit.py 四项修正 (kinetic/fade/surprise/motif)
+- 方向 4 (参数漂移): `1443b08` — param_guard.py + canonical snippet + hook 集成
+- 方向 5 (studio_edit_blocked): 待开始
+
+**额外产出**:
+- Hermes PR #48141: https://github.com/NousResearch/hermes-agent/pull/48141 (skills_tool.py file_path bug)
+- hermes_adapter.py: marker-based patch drift detection (core 完成, hooks 集成到 guardrails.py)
 
 ## v0.12.0 五方向计划
 
