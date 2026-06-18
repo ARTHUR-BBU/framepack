@@ -40,7 +40,14 @@
 
 结果：源码 296 passed + 部署 296 passed，双位置全绿。
 
-## 方向 2 完成记录（commit `979a029`）
+## 上游 PR
+
+- **PR #48141**: fix(skills): plugin skill_view ignores file_path, returns linked_files=None
+  - https://github.com/NousResearch/hermes-agent/pull/48141
+  - 状态：已提交，等待 NousResearch 审核
+  - 本地 patch：F:\Hermes_windows\hermes-agent\tools\skills_tool.py
+  - PR 目录：F:\Hermes_windows\hermes-agent-pr\ (分支 fix/plugin-skill-file-path)
+
 
 3 个 bug 修复（接口看起来通了但实际漏电）：
 1. **svg-morph-transition 函数名漂移** — 注册 `svgMorphTransition`，.js 实际 `svgMorph` → quality_audit 永远找不到 canonical 调用 → 修复：对齐为 `svgMorph`
