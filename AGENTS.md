@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.11.1 — sync with plugin.yaml and README -->
+<!-- version: 0.12.0 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -181,7 +181,7 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.11.1 hooks do seven things:
+v0.12.0 hooks do seven things:
 
 ```text
 pre_tool_call:
@@ -264,7 +264,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.11.1 skills:
+Framepack v0.12.0 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|

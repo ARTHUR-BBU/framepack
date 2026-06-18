@@ -36,26 +36,26 @@ def test_main_framepack_skill_version_matches_plugin_version():
     assert _frontmatter_version(PLUGIN_ROOT / "skills" / "framepack" / "SKILL.md") == plugin_version
 
 
-def test_0110_release_version_is_synchronized_across_release_surfaces():
+def test_0120_release_version_is_synchronized_across_release_surfaces():
     plugin_version = _plugin_version(PLUGIN_ROOT)
-    assert plugin_version == "0.11.1"
+    assert plugin_version == "0.12.0"
 
     release_files = {
-        REPO_ROOT / "README.md": ["version **0.11.1**", "Framepack v0.11.1"],
-        REPO_ROOT / "docs" / "README.zh-CN.md": ["版本为 **0.11.1**"],
-        REPO_ROOT / "AGENTS.md": ["version: 0.11.1", "v0.11.1 hooks", "Framepack v0.11.1 skills"],
-        PLUGIN_ROOT / "plugin.yaml": ["version: \"0.11.1\"", "v0.11.1 adds Asset Intake (Phase 0): asset detector (PNG/JPG/SVG transparency), six-category asset checklist, asset-intake.md manifest generation, degradation branches by video type. v0.11.0 adds: Kinetic Taste Engine"],
-        PLUGIN_ROOT / "skills" / "framepack" / "SKILL.md": ["# Framepack v0.11.1 — HyperFrames Prompt Factory", "Environment & Upgrade Manager"],
-        PLUGIN_ROOT / "__init__.py": ["Framepack v0.11.1 Plugin registering"],
-        PLUGIN_ROOT / "hooks" / "on_pre_tool_call.py": ["v0.11.1 philosophy", "Framepack v0.11.1 pre_tool_call hook registered"],
-        PLUGIN_ROOT / "hooks" / "on_post_tool_call.py": ["Framepack v0.11.1", "Framepack v0.11.1 post_tool_call hook registered"],
-        PLUGIN_ROOT / "compat" / "hyperframes-support.json": ['"framepack_version": "0.11.1"'],
-        PLUGIN_ROOT / "core" / "arsenal_registry.py": ['DEFAULT_PLUGIN_VERSION = "0.11.1"'],
-        PLUGIN_ROOT / "core" / "timeline_manifest.py": ['DEFAULT_PLUGIN_VERSION = "0.11.1"'],
-        PLUGIN_ROOT / "scripts" / "apply_skill_overlays.py": ['FRAMEPACK_VERSION = "0.11.1"'],
+        REPO_ROOT / "README.md": ["version **0.12.0**", "Framepack v0.12.0"],
+        REPO_ROOT / "docs" / "README.zh-CN.md": ["版本为 **0.12.0**"],
+        REPO_ROOT / "AGENTS.md": ["version: 0.12.0", "v0.12.0 hooks", "Framepack v0.12.0 skills"],
+        PLUGIN_ROOT / "plugin.yaml": ["version: \"0.12.0\"", "v0.12.0 adds Arsenal expansion"],
+        PLUGIN_ROOT / "skills" / "framepack" / "SKILL.md": ["# Framepack v0.12.0 — HyperFrames Prompt Factory", "Environment & Upgrade Manager"],
+        PLUGIN_ROOT / "__init__.py": ["Framepack v0.12.0 Plugin registering"],
+        PLUGIN_ROOT / "hooks" / "on_pre_tool_call.py": ["v0.12.0 philosophy", "Framepack v0.12.0 pre_tool_call hook registered"],
+        PLUGIN_ROOT / "hooks" / "on_post_tool_call.py": ["Framepack v0.12.0", "Framepack v0.12.0 post_tool_call hook registered"],
+        PLUGIN_ROOT / "compat" / "hyperframes-support.json": ['"framepack_version": "0.12.0"'],
+        PLUGIN_ROOT / "core" / "arsenal_registry.py": ['DEFAULT_PLUGIN_VERSION = "0.12.0"'],
+        PLUGIN_ROOT / "core" / "timeline_manifest.py": ['DEFAULT_PLUGIN_VERSION = "0.12.0"'],
+        PLUGIN_ROOT / "scripts" / "apply_skill_overlays.py": ['FRAMEPACK_VERSION = "0.12.0"'],
         PLUGIN_ROOT / "templates" / "timeline-manifest.example.json": [
-            '"plugin_version_created": "0.11.1"',
-            '"plugin_version_updated": "0.11.1"',
+            '"plugin_version_created": "0.12.0"',
+            '"plugin_version_updated": "0.12.0"',
         ],
     }
     for path, needles in release_files.items():
