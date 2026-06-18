@@ -11,7 +11,7 @@
 
 **分支**: `framepack-agent-platform`
 **正式源码版本**: plugin.yaml = 0.11.1（版本收口后 bump 到 0.11.2）
-**最后提交**: 方向 5 待 commit
+**最后提交**: `79c25b4` (`feat: bridge HyperFrames lint warnings into quality_audit with upstream classification`)
 **测试**: 源码 390 passed / 1 skipped ✅；部署 390 passed / 1 skipped ✅
 **GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；v0.11.1 尚未 push
 
@@ -20,7 +20,7 @@
 - 方向 2 (武器库扩充): `979a029` + `e799064` — 3 bug修复 + drift修复 + 上游 PR #48141
 - 方向 3 (Taste 广度): `605d13e` — taste_audit.py 四项修正 (kinetic/fade/surprise/motif)
 - 方向 4 (参数漂移): `1443b08` — param_guard.py + canonical snippet + hook 集成
-- 方向 5 (Upstream Warning Bridge): 待 commit — warning_classifier.py + quality_audit 集成 + hooks 集成 + hermes_patches.json upstream_features
+- 方向 5 (Upstream Warning Bridge): `79c25b4` — warning_classifier.py + quality_audit 集成 + hooks 集成 + hermes_patches.json upstream_features
 
 **额外产出**:
 - Hermes PR #48141: https://github.com/NousResearch/hermes-agent/pull/48141 (skills_tool.py file_path bug)
@@ -85,7 +85,7 @@ Hermes 框架 bug（方向 2 附带修复）：
 9. ~~方向 5（Upstream Warning Bridge）~~ ✅
 10. 版本收口（plugin.yaml bump 0.11.1→0.11.2 + 全量同步 + release） ← 下一步
 
-## 方向 5: Upstream Warning Bridge（方向5 待 commit）
+## 方向 5: Upstream Warning Bridge (`79c25b4`)
 
 设计文档: `F:/hyperframes/.hermes/designs/2026-06-18--direction5-upstream-warning-bridge.md`
 
