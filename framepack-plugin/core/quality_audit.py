@@ -413,6 +413,18 @@ def _audit_html_guardrails(project_dir: Path, html: str, manifest: list[Manifest
     return issues
 
 
+def _build_canonical_snippet(function_name: str, params: dict[str, object]) -> str:
+    """Build a canonical code snippet showing correct parameter usage."""
+    param_lines = []
+    for key, value in params.items():
+        if isinstance(value, str):
+            param_lines.append(f'    {key}: "{value}"')
+        else:
+            param_lines.append(f"    {key}: {value}")
+    joined = ",\n".join(param_lines)
+    return f"{function_name}({{\n{joined}\n}})"
+
+
 def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[ManifestWeapon]) -> list[QualityIssue]:
     issues: list[QualityIssue] = []
     html_path = project_dir / "index.html"
@@ -446,15 +458,16 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
             if _norm(actual) != _norm(expected):
                 drift[key] = {"expected": _norm(expected), "actual": _norm(actual)}
         if drift:
+            canonical_snippet = _build_canonical_snippet(fn, params)
             issues.append(
                 QualityIssue(
                     "weapon_parameter_drift",
                     "P1",
                     f"Weapon {ref.id!r} call parameters drift from Execution Manifest",
                     str(html_path),
-                    scene=ref.used_by[0] if ref.used_by else None,
-                    weapon_id=ref.id,
-                    details={"function": fn, "drift": drift},
+                    ref.used_by[0] if ref.used_by else None,
+                    ref.id,
+                    {"function": fn, "drift": drift, "canonical_snippet": canonical_snippet},
                 )
             )
     return issues

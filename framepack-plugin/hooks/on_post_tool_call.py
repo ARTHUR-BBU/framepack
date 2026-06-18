@@ -478,6 +478,24 @@ def register(ctx):
     logger.info("Framepack v0.11.1 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration)")
 
 
+# ── Param Card Injection ──
+
+
+def _inject_param_card_if_manifest(ctx, file_path: str) -> None:
+    """After expanded-prompt.md is written, extract param card from Manifest
+    and inject it so the Agent has exact values when writing HTML."""
+    try:
+        project_dir = _project_dir_for_framepack_file(file_path)
+        from core.param_guard import extract_param_card
+
+        card = extract_param_card(project_dir)
+        if card:
+            _safe_inject(ctx, card, role="user")
+            logger.info("Parameter reference card injected from Execution Manifest")
+    except Exception as e:
+        logger.warning("Param card injection failed (non-blocking): %s", e)
+
+
 # ── Handlers ──
 
 def _handle_frame_md(ctx, file_path: str) -> None:
@@ -511,6 +529,9 @@ def _handle_expanded_prompt(ctx, file_path: str) -> None:
         return
 
     _sync_arsenal_for_expanded_prompt(ctx, file_path, content)
+
+    # Inject parameter reference card from Execution Manifest
+    _inject_param_card_if_manifest(ctx, file_path)
 
     analysis = _analyze_expanded_prompt(ctx, content)
     if analysis is None:
