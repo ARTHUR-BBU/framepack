@@ -7,13 +7,14 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.12.0 五方向全部完成 + simplify + 版本收口 ✅。当前：测试组独立验收中（第二轮待回）。
+**阶段**: Framepack v0.12.0 五方向全部完成 + simplify + 版本收口 + 独立验收通过 + **已发布** ✅
 
-**分支**: `framepack-agent-platform`
+**分支**: `main`（合并自 `framepack-agent-platform`）
 **正式源码版本**: plugin.yaml = **0.12.0** ✅
-**最后提交**: `ea4f9dd` (`fix: relocate test_team script into plugin package, fix deploy version drift`)
+**GitHub**: tag `v0.12.0` 已推；Release 已创建；origin/main = v0.12.0
+**发布链接**: https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.12.0
 **测试**: 源码 390 passed / 1 skipped ✅；部署 390 passed / 1 skipped ✅（双绿）
-**GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；v0.12.0 待 push（等测试组验收通过）
+**独立验收**: pytest 390/0, lint 0 errors, snapshot 10/10, render 6.1MB 35s 1080p ✅
 
 **方向完成状态**:
 - 方向 1 (Asset Intake): `d9ad49f` — asset_detector.py + checklist + template
