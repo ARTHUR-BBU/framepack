@@ -58,6 +58,7 @@ PARAM_ALIASES = {
 
 
 def _read(path: Path) -> str:
+    """Read text file, return '' if missing. Mirrored in taste_audit.py — keep in sync."""
     return path.read_text(encoding="utf-8") if path.is_file() else ""
 
 
@@ -260,22 +261,35 @@ def _canonical_function_name(weapon_id: str) -> str | None:
 
 
 def _inline_gsap_hint(html: str, weapon_id: str, params: dict[str, object]) -> dict[str, object]:
-    """Best-effort hint for inline GSAP that resembles a weapon but bypasses its function."""
+    """Best-effort hint for inline animation code that resembles a weapon but bypasses its function.
+
+    Detects both GSAP (gsap.to/from/fromTo/timeline) and anime.js (anime()/animate())
+    inline rewrites. The function name is historical — it now covers multiple engines.
+    """
     gsap_call = bool(re.search(r"\bgsap\.(?:to|from|fromTo|timeline)\s*\(", html))
+    anime_call = bool(re.search(r"\banime\s*\(|\banime\s*\.\s*stagger\s*\(", html))
+    animate_call = bool(re.search(r"\banimate\s*\(", html)) and bool(re.search(r"\bstagger\s*\(", html))
     signals: list[str] = []
     if gsap_call:
         signals.append("gsap_call")
+    if anime_call:
+        signals.append("anime_call")
+    if animate_call:
+        signals.append("animate_call")
     if weapon_id == "text-split-enter" and re.search(r"\bstagger\s*:", html) and re.search(r"\b(?:y|x)\s*:\s*-?\d+", html):
         signals.append("text_split_like_stagger_travel")
+    if weapon_id == "anime-text-split" and re.search(r"\bstagger\s*[\(:]", html) and re.search(r"\b(?:translateY|translateX|y|x)\s*[:,]\s*-?\d+", html):
+        signals.append("anime_text_split_like_stagger")
     for key, value in params.items():
         normalized = _norm(value)
         if normalized and normalized in html:
             signals.append(f"param_value:{key}")
-    suspected = gsap_call and len(signals) >= 2
+    engine_inline = gsap_call or anime_call or animate_call
+    suspected = engine_inline and len(signals) >= 2
     return {
         "suspected": suspected,
         "signals": signals,
-        "recommendation": "Replace the inline GSAP lookalike with the canonical function call from arsenal.json; pattern-equivalent inline code does not satisfy the weapon binding contract.",
+        "recommendation": "Replace the inline animation lookalike with the canonical function call from arsenal.json; pattern-equivalent inline code does not satisfy the weapon binding contract.",
     }
 
 
@@ -386,7 +400,7 @@ def _audit_html_guardrails(project_dir: Path, html: str, manifest: list[Manifest
 
     declared = {ref.id for ref in manifest if not ref.handwrite}
     has_card_structure = bool(re.search(r"id=[\"'][^\"']*card|class=[\"'][^\"']*(?:text-card|card-grid)", html, re.I))
-    has_card_cascade_call = bool(re.search(r"cardCascadeReveal|card-cascade-reveal", html, re.I))
+    has_card_cascade_call = bool(re.search(r"buildCardCascade|cardCascadeReveal|card-cascade-reveal", html, re.I))
     if has_card_structure and "card-cascade-reveal" not in declared and not has_card_cascade_call:
         issues.append(
             QualityIssue(
@@ -398,6 +412,18 @@ def _audit_html_guardrails(project_dir: Path, html: str, manifest: list[Manifest
             )
         )
     return issues
+
+
+def _build_canonical_snippet(function_name: str, params: dict[str, object]) -> str:
+    """Build a canonical code snippet showing correct parameter usage."""
+    param_lines = []
+    for key, value in params.items():
+        if isinstance(value, str):
+            param_lines.append(f'    {key}: "{value}"')
+        else:
+            param_lines.append(f"    {key}: {value}")
+    joined = ",\n".join(param_lines)
+    return f"{function_name}({{\n{joined}\n}})"
 
 
 def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[ManifestWeapon]) -> list[QualityIssue]:
@@ -433,15 +459,16 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
             if _norm(actual) != _norm(expected):
                 drift[key] = {"expected": _norm(expected), "actual": _norm(actual)}
         if drift:
+            canonical_snippet = _build_canonical_snippet(fn, params)
             issues.append(
                 QualityIssue(
                     "weapon_parameter_drift",
                     "P1",
                     f"Weapon {ref.id!r} call parameters drift from Execution Manifest",
                     str(html_path),
-                    scene=ref.used_by[0] if ref.used_by else None,
-                    weapon_id=ref.id,
-                    details={"function": fn, "drift": drift},
+                    ref.used_by[0] if ref.used_by else None,
+                    ref.id,
+                    {"function": fn, "drift": drift, "canonical_snippet": canonical_snippet},
                 )
             )
     return issues
@@ -530,6 +557,28 @@ def _summarize(issues: list[QualityIssue]) -> dict[str, int]:
     return summary
 
 
+def _audit_lint_cache(project_dir: Path) -> list[QualityIssue]:
+    """Read .framepack/hyperframes-findings.json cache and convert classified
+    HyperFrames lint findings into QualityIssue objects.
+
+    Upstream limitations get prefixed with 'upstream:' in their code.
+    Quality issues use their bare code.
+    Unknown warnings default to upstream_limit (safe).
+    """
+    html_path = project_dir / "index.html"
+    try:
+        from .warning_classifier import load_lint_cache, merge_classified_into_quality_issues
+        cache = load_lint_cache(project_dir)
+        if cache is None:
+            return []
+        classified = cache.get("classified", [])
+        return merge_classified_into_quality_issues(classified, str(html_path))
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning("Lint cache audit failed: %s", exc)
+        return []
+
+
 def audit_project(project_dir: str | Path) -> QualityAuditReport:
     project_dir = Path(project_dir)
     expanded_prompt = _read(project_dir / ".hyperframes" / "expanded-prompt.md")
@@ -546,5 +595,6 @@ def audit_project(project_dir: str | Path) -> QualityAuditReport:
     issues.extend(_audit_font_dependencies(project_dir, html))
     issues.extend(_audit_visibility(project_dir, frame_md, html))
     issues.extend(_audit_timeline(project_dir, html, expanded_prompt, duration))
+    issues.extend(_audit_lint_cache(project_dir))
 
     return QualityAuditReport(str(project_dir), issues, _summarize(issues))

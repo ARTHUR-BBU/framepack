@@ -1,7 +1,7 @@
 ---
 name: framepack
-description: "Framepack v0.11.0 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens), Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
-version: 0.11.0
+description: "Framepack v0.12.0 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens), Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
+version: 0.12.0
 author: 老田 + Hermes
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,7 +11,7 @@ metadata:
     related_skills: [hyperframes, hyperframes-cli, gsap]
 ---
 
-# Framepack v0.11.0 — HyperFrames Prompt Factory
+# Framepack v0.12.0 — HyperFrames Prompt Factory
 
 Framepack is a Hermes Agent Plugin that translates fuzzy video intent into
 precise creative briefs HyperFrames can render. It does two things and hands off.
@@ -24,6 +24,7 @@ precise creative briefs HyperFrames can render. It does two things and hands off
 用户模糊意图 ("帮我做个珍珠品牌 30 秒视频")
     ↓
 Framepack 创意引擎
+    ├── Phase 0: 素材收集 → asset-intake.md（NEW v0.12）
     ├── Phase 1: 意图翻译 → frame.md（视觉身份）
     └── Phase 2: 创意细化 → expanded-prompt.md（场景级分解）
     ↓
@@ -82,6 +83,13 @@ Framepack 现在不只会“发现环境不对”，还会把安装/升级拆成
 - `core/framepack_upgrade_report.py` + `scripts/framepack_upgrade_report.py` — 汇总 doctor/install/upgrade/smoke JSON 证据，生成升级报告。
 
 铁律：doctor/report/dry-run 路径不允许下载、安装、升级、降级或调用 `npx --yes package@latest` 粉饰太平；安装器必须先预检全部 required sources，缺一个就一个都不写。
+
+### v0.12 Asset Intake (NEW)
+
+- **Phase 0: Asset Intake** — structured asset collection before creative work. `skills/framepack-director/references/asset-intake-checklist.md` provides conditional-depth rules by video type (brand_product_launch → all 6 categories, educational → 3, etc.).
+- **Transparent channel detection** — `core/asset_detector.py` analyzes PNG alpha channels, SVG format, and JPG opacity without external dependencies (stdlib-only PNG parsing). Marks `needs_processing` for images that would benefit from `npx hyperframes remove-background`.
+- **asset-intake.md manifest** — `.framepack/asset-intake.md` with YAML-structured inventory of user-provided brand identity, product images, footage, text content, audio, and references plus a `missing` list.
+- **Director Phase 0** — `skills/framepack-director/SKILL.md` now opens with Phase 0 (judge video type → collect by category → detect transparency → write manifest → confirm) before proceeding to Phase 1.
 
 ### v0.11.0 Kinetic Taste Engine
 
@@ -274,6 +282,26 @@ Framepack 产出完成后，HyperFrames 的 `hyperframes` skill 自动接管后�
 - Step 3: Plan → 写 HTML → lint → render
 
 **Framepack 提供创意灵魂，HyperFrames 补充制作肌肉。是 enrich 关系，不是 replace。**
+
+## Upstream Warning Bridge（v0.12 NEW）
+
+HyperFrames lint 的 warning 分两类：
+
+1. **quality_issue**（必须修）— GSAP tweens 重叠、timeline 太密、字体未声明等
+2. **upstream_limit**（不用管）— HyperFrames 架构限制，如 `gsap_studio_edit_blocked`
+
+Framepack 的 Upstream Warning Bridge 自动分类：
+
+```
+Agent 跑 npx hyperframes lint --json > .framepack/lint-output.json
+    ↓ post_tool_call hook 自动检测
+    ↓ warning_classifier 分类每个 finding
+    ↓ 写入 .framepack/hyperframes-findings.json
+    ↓ quality_audit 合并到统一报告
+```
+
+**Agent 行为**：看到分类为 `upstream_limit` 的 warning，不要试图修复。
+未知的 warning code 默认归入 `upstream_limit`（安全兜底）。
 
 ## 武器库：从"字典"到"执行清单"（v0.8.1 核心教训）
 

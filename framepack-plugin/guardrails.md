@@ -12,6 +12,7 @@ HyperFrames 是摄影棚（设备齐全）。Framepack 是导演（更懂用户�
 用户模糊意图
     ↓
 Framepack 创意引擎
+    ├── Phase 0: 素材收集 → asset-intake.md（v0.12 NEW）
     ├── Phase 1: 意图翻译 → frame.md（视觉身份）
     └── Phase 2: 创意细化 → expanded-prompt.md（场景级分解）
     ↓
@@ -198,6 +199,29 @@ Framepack skills:
 | framepack-reference-miner | 参考视频 DNA 提取 | 需要参考时 |
 
 > 注：`framepack:xxx` 格式的是插件内技能，需用冒号全名；不加前缀的是独立技能，直接用短名。|
+
+## Known Limitations — HyperFrames 上游限制
+
+某些 HyperFrames lint warning 是 HyperFrames 架构的设计决策，不是 Framepack bug，
+也不是可以修复的质量问题。Framepack quality_audit 会自动将它们分类为 `upstream_limit`，
+与可修复的质量问题（`quality_issue`）分开展示。
+
+| Warning Code | 描述 | 状态 | 规避方式 |
+|---|---|---|---|
+| gsap_studio_edit_blocked | GSAP 注册 timeline 的元素 Studio 不可拖拽编辑 | 等上游加 suppress 标记 | 不在 Studio 里拖拽 GSAP 管的元素 |
+
+**Agent 行为**：看到 `upstream_limit` 分类的 warning，不要试图修复——这是 HyperFrames 的
+结构性限制，修不了。只在 `quality_issue` 分类上花时间。
+
+**Upstream Warning Bridge 工作流**：
+
+```
+1. Agent 跑 npx hyperframes lint --json > .framepack/lint-output.json
+2. post_tool_call hook 自动检测 → 分类 → 写 .framepack/hyperframes-findings.json
+3. quality_audit 读缓存 → 统一报告（quality_issue + upstream_limit 分开）
+```
+
+如果 Agent 跑 `npx hyperframes lint`（没有 `--json`），pre_tool_call hook 会提醒加 `--json`。
 
 ## Core Principle
 

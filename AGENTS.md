@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.11.0 — sync with plugin.yaml and README -->
+<!-- version: 0.12.0 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -181,7 +181,7 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.11.0 hooks do seven things:
+v0.12.0 hooks do seven things:
 
 ```text
 pre_tool_call:
@@ -264,7 +264,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.11.0 skills:
+Framepack v0.12.0 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|
@@ -344,9 +344,9 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 Framepack is installed as an agent-native video creative workbench for this project.
 
 - Trigger Framepack for vague video requests, creative direction, or style matching.
-- Framepack produces frame.md + expanded-prompt.md (with Execution Manifest), then HyperFrames takes over.
+- Framepack flow: Phase 0 (Asset Intake → asset-intake.md) → Phase 1 (frame.md) → Phase 2 (expanded-prompt.md + Execution Manifest), then HyperFrames takes over.
 - **铁律：写 HTML 前先读 Execution Manifest。武器有就用，裸写 GSAP 只允许 HANDWRITE 场景。**
-- `.framepack/arsenal.json` 是武器收发室——下载、注册、去重、生命周期全在这里。
+- `.framepack/arsenal.json` 是武器收发室；`.framepack/asset-intake.md` 是素材清单（NEW v0.12）。
 - Start every HyperFrames project from the offline-safe baseline: `npx hyperframes init --example blank`; richer official registry examples/components are opportunistic, not guaranteed.
 - Framepack does NOT audit HTML. Use `npx hyperframes lint` for that.
 <!-- FRAMEPACK MANAGED BLOCK END -->

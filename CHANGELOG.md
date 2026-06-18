@@ -1,5 +1,61 @@
 # Changelog
 
+## 0.12.0 — Five Directions Release (2026-06-18)
+
+Five development directions completed, tested end-to-end, and validated by independent test team.
+
+### Direction 1 — Asset Intake (Phase 0)
+
+- **Asset detection before creative work** — before Phase 1, Framepack asks what assets the user already has. Detects video type (brand_product_launch / educational / social_teaser / kinetic_type), collects assets conditionally (not every video needs all 6 categories), and detects image transparency (SVG/PNG-alpha/JPG).
+- **Transparency detection** — `core/asset_detector.py` checks pixel alpha; suggests `npx hyperframes remove-background` for opaque assets. Framepack detects and suggests, never auto-processes.
+- **Asset manifest** — writes `.framepack/asset-intake.md` from template; shows user a compact summary, not raw YAML.
+
+### Direction 2 — Arsenal Registry Alignment
+
+- **Weapon registration fixes** — 3 WIP weapons had function-name mismatches, wrong engine tags, or anime.js blind spots. All fixed; registry now matches actual `.js` implementations.
+- **Registry drift repair** — 4 orphan weapons registered; `card-cascade-reveal` path corrected from `_part()` to `_block()`.
+- **Short-name disambiguation** — 7 framepack skills had duplicate copies causing ambiguous lookups; merged and de-duplicated.
+
+### Direction 3 — Taste Audit Style Awareness
+
+- **Style-aware auditing** — `core/taste_audit.py` no longer overfits to the luxury-pearl specimen. Audit now respects the project's `reference_dna` and scales expectations per style (emerging/editorial styles get different thresholds).
+- **Kinetic taste fixes** — fade-stack monotony, surprise operator density, kinetic grammar coherence, and manifest surprise semantics all corrected for cross-style fairness.
+
+### Direction 4 — Parameter Drift Guard
+
+- **Parameter reference card** — `core/param_guard.py` generates a pre-write parameter reference from weapon SKILL.md specs, so the HTML-writing Agent has exact defaults before touching code.
+- **P1 canonical snippet** — weapons emit canonical usage snippets that reduce inline GSAP/anime.js rewriting (the "Agent doesn't call canonical" problem — partial mitigation; full resolution tracked for v0.13.0).
+
+### Direction 5 — Upstream Warning Bridge
+
+- **HyperFrames lint warning classification** — `core/warning_classifier.py` with a data-driven category table classifies upstream warnings (`gsap_studio_edit_blocked` → upstream_limit, `overlapping_gsap_tweens` → quality_issue, unknown → safe fallback).
+- **Quality Audit integration** — lint findings cached to `.framepack/hyperframes-findings.json`, classified, and surfaced in the Quality Audit summary alongside arsenal/manifest checks.
+- **Hook integration** — pre-tool-call reminds Agent to use `--json` for structured lint output; post-tool-call detects lint completion and triggers cache + classify.
+- **Hermes patch tracking** — `core/hermes_adapter.py` tracks local patches (marker-based drift detection) and warns when Hermes updates overwrite them. Upstream PR [#48141](https://github.com/NousResearch/hermes-agent/pull/48141) submitted for the underlying `skill_view file_path` bug.
+
+### Cleanup (simplify pass)
+
+- **Dead code removal** — `core/arsenal.py` (258 lines, zero references) + `save_arsenal()` + `load_lint_output()` deleted. Net -276 lines.
+- **Shared workdir parser** — `core/shell_utils.py` extracted to break pre↔post hook circular dependency; fixed weak `cd "path with spaces" && cmd` parsing.
+- **Dedup** — three inline `WarningLike` stubs → `ArsenalWarning.from_error()` classmethod.
+- **Test-team script relocation** — moved from repo root into `framepack-plugin/scripts/` to eliminate deploy-sync blind spot that caused version drift.
+
+### Compatibility
+
+- **HyperFrames 0.6.99+** — validated compatible.
+- **Hermes Agent** — local patch for `skills_tool.py` file_path bug; upstream PR pending.
+
+### Tests
+
+- **390 passed, 1 skipped, 0 failed** (source + deploy dual-green).
+- Independent test-team validation: pytest 390/0, lint 0 errors, snapshot 10/10 zero black frames, render 6.1 MB 35s 1080p.
+- New tests: warning_classifier (26), quality_audit lint bridge (8), lint bridge hooks (9), hermes_adapter upstream_features (17), param guard, taste style-awareness.
+
+### Known Limitations (tracked for v0.13.0)
+
+- **taste vocabulary not wired** — `taste_grammar.py` + `taste_specimens.py` + ManifestWeapon taste fields are designed but not yet consumed by `taste_audit.py` (which uses a hardcoded vocabulary). Wiring eliminates hardcoding but carries false-positive risk; deferred to a dedicated direction.
+- **Parameter drift detection is partial** — detects drift but doesn't enforce canonical weapon usage. Full resolution is the v0.13.0 direction 4 goal.
+
 ## 0.11.0 — Kinetic Taste Engine (2026-06-17)
 
 ### Taste Engine

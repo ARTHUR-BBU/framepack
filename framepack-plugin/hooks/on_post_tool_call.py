@@ -1,4 +1,4 @@
-"""Framepack v0.11.0 — Prompt Factory hooks.
+"""Framepack v0.12.0 — Prompt Factory hooks.
 
 Framepack is the director's creative engine. It produces two deliverables:
   1. frame.md — visual identity (HyperFrames Step 1 input)
@@ -19,7 +19,8 @@ import re
 from pathlib import Path
 
 from .guardrails import hydrate_guardrails
-from core.arsenal_registry import sync_arsenal_from_project
+from core.arsenal_registry import sync_arsenal_from_project, ArsenalWarning
+from core.shell_utils import resolve_effective_workdir
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +108,49 @@ def _is_frame_md(file_path: str) -> bool:
     if not file_path:
         return False
     return os.path.basename(file_path) == "frame.md"
+
+
+def _is_asset_intake(file_path: str) -> bool:
+    """asset-intake.md — user-provided material inventory."""
+    return os.path.basename(file_path) == "asset-intake.md"
+
+
+def _handle_asset_intake(ctx, file_path: str):
+    """Validate asset-intake.md structure and inject lightweight TUI feedback."""
+    path = Path(file_path) if os.path.isabs(file_path) else Path(os.getcwd()) / file_path
+    try:
+        content = path.read_text(encoding="utf-8", errors="replace")
+    except OSError as e:
+        logger.warning("Could not read asset-intake.md: %s", e)
+        return
+
+    sections_found: list[str] = []
+    sections_missing: list[str] = []
+    for heading in ("brand", "products", "footage", "text", "audio", "references"):
+        if re.search(rf"^{heading}:", content, re.MULTILINE):
+            sections_found.append(heading)
+        else:
+            sections_missing.append(heading)
+
+    missing_items = bool(re.search(r"(?m)^missing:", content))
+    t_entries = re.findall(r"needs_processing", content)
+    needs_count = len(t_entries)
+
+    parts: list[str] = ["📋 **Framepack — asset-intake 素材检查**\n"]
+    parts.append(f"已收集: {', '.join(sections_found) if sections_found else '(无)'}")
+    if sections_missing:
+        parts.append(f"未收集: {', '.join(sections_missing)}")
+    if needs_count:
+        parts.append(f"需处理: {needs_count} 张图 → 建议 npx hyperframes remove-background")
+    if missing_items:
+        parts.append("⚠️ 有缺失素材标注，Phase 1/2 注意降级处理。")
+    else:
+        parts.append("✅ 素材清单完整，无缺失标注。")
+    parts.append("")
+    parts.append("Phase 1 注意：品牌色（如有）应直接注入 frame.md，跳过调色。")
+
+    ctx.inject_message("\n".join(parts), role="assistant")
+    logger.info("asset-intake.md advice injected")
 
 
 def _is_expanded_prompt(file_path: str) -> bool:
@@ -366,10 +410,10 @@ def _sync_arsenal_for_expanded_prompt(ctx, file_path: str, content: str) -> None
         result = sync_arsenal_from_project(project_dir, Path(__file__).resolve().parent.parent)
         warnings = list(result.warnings)
         if result.error:
-            warnings.append(type("WarningLike", (), {"code": "arsenal_error", "message": result.error, "severity": "warn", "weapon_id": None})())
+            warnings.append(ArsenalWarning.from_error(result.error))
     except Exception as exc:
         logger.warning("Arsenal reconciliation failed: %s", exc)
-        warnings = [type("WarningLike", (), {"code": "arsenal_error", "message": str(exc), "severity": "warn", "weapon_id": None})()]
+        warnings = [ArsenalWarning.from_error(str(exc))]
 
     message = _build_arsenal_warning_message(warnings)
     if message:
@@ -396,6 +440,79 @@ def _is_framepack_skill_name(name: str) -> bool:
     }
 
 
+def _is_lint_command(command: str) -> bool:
+    """Check if a terminal command invokes `hyperframes lint`."""
+    stripped = command.strip()
+    return "hyperframes" in stripped and "lint" in stripped
+
+
+def _handle_lint_cache_bridge(ctx, command: str, workdir: str) -> None:
+    """After Agent runs `hyperframes lint`, detect .framepack/lint-output.json,
+    classify findings, save cache, and inject a summary.
+
+    This is the post-execution side of the Upstream Warning Bridge.
+    """
+    if not _is_lint_command(command):
+        return
+
+    effective_workdir = resolve_effective_workdir(command, workdir)
+    lint_output_path = Path(effective_workdir, ".framepack", "lint-output.json")
+
+    if not lint_output_path.is_file():
+        return
+
+    try:
+        lint_json = json.loads(lint_output_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("Failed to read lint-output.json: %s", exc)
+        return
+
+    try:
+        from core.warning_classifier import save_lint_cache, classify_lint_output
+        save_lint_cache(Path(effective_workdir), lint_json)
+        classified = classify_lint_output(lint_json)
+    except Exception as exc:
+        logger.warning("Lint cache bridge failed: %s", exc)
+        return
+
+    # Build summary message
+    upstream = [c for c in classified if c["category"] == "upstream_limit"]
+    quality = [c for c in classified if c["category"] == "quality_issue"]
+
+    if not classified:
+        message = (
+            "✅ **Framepack Lint Bridge**\n\n"
+            "hyperframes lint 报告 0 个 warning。一切干净。\n\n"
+            "（缓存已写入 `.framepack/hyperframes-findings.json`）"
+        )
+    else:
+        lines = [
+            "🔍 **Framepack Lint Bridge — Warning 分类报告**\n",
+            f"共 {len(classified)} 个 warning，已自动分类：\n",
+        ]
+        if quality:
+            lines.append(f"**⚠️ 质量问题（必须修）— {len(quality)} 个：**")
+            for item in quality:
+                lines.append(f"  - `{item['code']}` [{item['severity']}]: {item['message'][:80]}")
+            lines.append("")
+
+        if upstream:
+            lines.append(f"**ℹ️ 上游限制（不用管）— {len(upstream)} 个：**")
+            for item in upstream:
+                lines.append(f"  - `{item['code']}`: {item['message'][:80]}")
+            lines.append("")
+
+        lines.append("_分类缓存已写入 `.framepack/hyperframes-findings.json`，下次 quality audit 会自动合并。_")
+
+        message = "\n".join(lines)
+
+    _safe_inject(ctx, message, role="user")
+    logger.info(
+        "Lint cache bridge: %d findings (%d upstream, %d quality)",
+        len(classified), len(upstream), len(quality),
+    )
+
+
 def register(ctx):
     """Register the post_tool_call hook for frame.md and expanded-prompt detection."""
 
@@ -417,6 +534,14 @@ def register(ctx):
                 hydrate_guardrails(ctx, project_dir=os.getcwd(), reason=f"skill_view:{skill_name}")
             return
 
+        # ── Lint cache bridge: detect terminal lint commands ──
+        if tool_name == "terminal":
+            command = args.get("command", "")
+            if command and _is_lint_command(command):
+                workdir = args.get("workdir", "") or os.getcwd()
+                _handle_lint_cache_bridge(ctx, command, workdir)
+            return
+
         if tool_name not in ("write_file",):
             return
 
@@ -428,9 +553,29 @@ def register(ctx):
         elif _is_expanded_prompt(file_path):
             hydrate_guardrails(ctx, project_dir=_project_dir_for_framepack_file(file_path), reason="expanded-prompt write")
             _handle_expanded_prompt(ctx, file_path)
+        elif _is_asset_intake(file_path):
+            _handle_asset_intake(ctx, file_path)
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
-    logger.info("Framepack v0.11.0 post_tool_call hook registered (frame.md + expanded-prompt + guardrail hydration)")
+    logger.info("Framepack v0.12.0 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration + lint cache bridge)")
+
+
+# ── Param Card Injection ──
+
+
+def _inject_param_card_if_manifest(ctx, file_path: str) -> None:
+    """After expanded-prompt.md is written, extract param card from Manifest
+    and inject it so the Agent has exact values when writing HTML."""
+    try:
+        project_dir = _project_dir_for_framepack_file(file_path)
+        from core.param_guard import extract_param_card
+
+        card = extract_param_card(project_dir)
+        if card:
+            _safe_inject(ctx, card, role="user")
+            logger.info("Parameter reference card injected from Execution Manifest")
+    except Exception as e:
+        logger.warning("Param card injection failed (non-blocking): %s", e)
 
 
 # ── Handlers ──
@@ -466,6 +611,9 @@ def _handle_expanded_prompt(ctx, file_path: str) -> None:
         return
 
     _sync_arsenal_for_expanded_prompt(ctx, file_path, content)
+
+    # Inject parameter reference card from Execution Manifest
+    _inject_param_card_if_manifest(ctx, file_path)
 
     analysis = _analyze_expanded_prompt(ctx, content)
     if analysis is None:

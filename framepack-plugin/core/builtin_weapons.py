@@ -22,7 +22,26 @@ def _part(weapon_id: str, function: str, engine: str = "GSAP+CSS") -> dict:
     }
 
 
+def _block(weapon_id: str, function: str, engine: str = "GSAP") -> dict:
+    """Register a scene-level block weapon.
+
+    Blocks live in blocks/ (not parts/) and compose multiple parts into
+    a complex scene. Their .js files expose build*() entry points.
+    """
+    return {
+        "id": weapon_id,
+        "source": "builtin",
+        "kind": "block",
+        "skill": "framepack:framepack-animation-library",
+        "file": f"blocks/{weapon_id}.md",
+        "code": f"blocks/references/{weapon_id}.js",
+        "engine": engine,
+        "function": function,
+    }
+
+
 BUILTIN_WEAPONS: dict[str, dict] = {
+    # ── GSAP weapons ──
     "text-split-enter": _part("text-split-enter", "textSplitEnter"),
     "caption-clip-wipe": _part("caption-clip-wipe", "captionClipWipe"),
     "bg-blur-mask": _part("bg-blur-mask", "bgBlurMask"),
@@ -33,7 +52,18 @@ BUILTIN_WEAPONS: dict[str, dict] = {
     "gradient-shift": _part("gradient-shift", "gradientShift"),
     "splittext-stagger-chars": _part("splittext-stagger-chars", "splitTextStagger", engine="GSAP SplitText"),
     "float-3d-card": _part("float-3d-card", "float3DCard"),
-    "card-cascade-reveal": _part("card-cascade-reveal", "cardCascadeReveal"),
+    # ── Orphan parts/ weapons (drift repair v0.11.1) ──
+    "stagger-grid-reveal": _part("stagger-grid-reveal", "staggerGridReveal", engine="GSAP"),
+    "particle-blob-bg": _part("particle-blob-bg", "createParticleBlob", engine="anime.js"),
+    "macos-notification": _part("macos-notification", "showMacOSNotification", engine="GSAP"),
+    "number-count-up": _part("number-count-up", "numberCountUp", engine="GSAP"),
+    # ── anime.js weapons (v0.12 NEW) ──
+    "anime-text-split": _part("anime-text-split", "animeTextSplit", engine="anime.js"),
+    "svg-morph-transition": _part("svg-morph-transition", "svgMorph", engine="anime.js"),
+    # ── Sprite sheet weapons (v0.12 NEW) ──
+    "sprite-animation": _part("sprite-animation", "spriteAnimation", engine="GSAP+CSS sprite sheet"),
+    # ── Block weapons (scene-level compositions) ──
+    "card-cascade-reveal": _block("card-cascade-reveal", "buildCardCascade", engine="GSAP"),
     "rules.hyperframes-render-safe": {
         "id": "rules.hyperframes-render-safe",
         "source": "builtin",

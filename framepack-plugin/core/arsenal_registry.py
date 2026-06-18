@@ -16,7 +16,7 @@ from .execution_manifest import ManifestWeapon, parse_execution_manifest
 from .trusted_sources import is_trusted_url
 
 SCHEMA_VERSION = "1.0.0"
-DEFAULT_PLUGIN_VERSION = "0.11.0"
+DEFAULT_PLUGIN_VERSION = "0.12.0"
 VALID_STATUSES = {"active", "unused", "archived"}
 VALID_SOURCES = {"builtin", "web", "local", "library"}
 
@@ -27,6 +27,15 @@ class ArsenalWarning:
     message: str
     severity: str
     weapon_id: str | None = None
+
+    @classmethod
+    def from_error(cls, message: str) -> "ArsenalWarning":
+        """Construct an arsenal_error warning from a raw error string.
+
+        Used at hook boundaries where arsenal sync raised an exception and
+        we need a warning-shaped object to feed into _build_arsenal_warning_message.
+        """
+        return cls(code="arsenal_error", message=message, severity="warn", weapon_id=None)
 
 
 @dataclass
@@ -329,7 +338,3 @@ def reconcile_manifest(data: dict, manifest_weapons: list[ManifestWeapon], plugi
         data["plugin_version_updated"] = DEFAULT_PLUGIN_VERSION
     warnings.extend(validate_arsenal(data, Path(".")))
     return data, warnings
-
-
-def save_arsenal(path: Path, data: dict) -> None:
-    _atomic_write_json(path, data)

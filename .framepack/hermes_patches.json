@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "last_known_hermes_version": "0.17.0",
+  "patches": [
+    {
+      "id": "skills_tool_file_path",
+      "target": "tools/skills_tool.py",
+      "marker": "# FRAMEPACK-PATCH: skills_tool_file_path",
+      "description": "Plugin skill_view file_path support + linked_files probe",
+      "pr": "https://github.com/NousResearch/hermes-agent/pull/48141",
+      "applied_date": "2026-06-18"
+    }
+  ]
+}
