@@ -87,8 +87,14 @@ def _build_quality_audit_message(report) -> str:
     if not report.issues:
         return ""
     summary = report.summary
+    has_p0 = summary.get("P0", 0) > 0
+    header = (
+        "⛔ **BLOCKING — P0 issues must be fixed before render**"
+        if has_p0
+        else "🧪 **Framepack Quality Audit — report-first / non-blocking**"
+    )
     lines = [
-        "🧪 **Framepack Quality Audit — report-first / non-blocking**",
+        header,
         "",
         f"P0: {summary.get('P0', 0)} · P1: {summary.get('P1', 0)} · P2: {summary.get('P2', 0)} · P3: {summary.get('P3', 0)}",
         "",
@@ -97,9 +103,13 @@ def _build_quality_audit_message(report) -> str:
     for issue in report.issues[:5]:
         target = f" `{issue.weapon_id}`" if issue.weapon_id else ""
         scene = f" ({issue.scene})" if issue.scene else ""
-        lines.append(f"- {issue.severity} {issue.code}{target}{scene}: {issue.message}")
+        marker = "⛔" if issue.severity == "P0" else "·"
+        lines.append(f"- [{issue.severity}] {marker} {issue.code}{target}{scene}: {issue.message}")
     if len(report.issues) > 5:
         lines.append(f"- … {len(report.issues) - 5} more issue(s). Run `python scripts/framepack_quality_audit.py <project>` for JSON/Markdown details.")
+    if has_p0:
+        lines.append("")
+        lines.append("**P0 issues are blocking. Do not proceed to render until all P0 issues are resolved.**")
     lines.append("")
 
     return "\n".join(lines)

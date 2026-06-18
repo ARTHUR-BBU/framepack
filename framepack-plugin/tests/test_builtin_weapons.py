@@ -89,3 +89,32 @@ def test_every_registered_weapon_has_matching_js_file():
         assert code_path, f"{wid}: no code path"
         full = skill_root / code_path
         assert full.is_file(), f"{wid}: code file not found at {code_path}"
+
+
+def test_registered_function_name_matches_js_definition():
+    """Every weapon's registered 'function' must be defined in its .js file.
+
+    Prevents function-name drift between registry and weapon source.
+    Without this, the P0 weapon_not_called gate would false-positive on
+    weapons whose entry point was renamed during refactoring.
+    """
+    import re
+    import core.builtin_weapons as bw
+    from pathlib import Path
+
+    skill_root = Path(__file__).resolve().parent.parent / "skills" / "framepack-animation-library"
+    mismatches = []
+    for wid, record in bw.BUILTIN_WEAPONS.items():
+        if record.get("kind") not in ("part", "block"):
+            continue
+        fn_name = record.get("function")
+        if not fn_name:
+            continue
+        code_path = skill_root / record["code"]
+        src = code_path.read_text(encoding="utf-8")
+        # Look for: function Name( or function Name (
+        pattern = rf"\bfunction\s+{re.escape(fn_name)}\s*\("
+        if not re.search(pattern, src):
+            defined = re.findall(r"function\s+(\w+)\s*\(", src)
+            mismatches.append(f"{wid}: registered '{fn_name}', defined {defined}")
+    assert not mismatches, "Function name drift:\n" + "\n".join(mismatches)

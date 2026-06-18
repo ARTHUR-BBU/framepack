@@ -54,7 +54,7 @@ BUILTIN_WEAPONS: dict[str, dict] = {
     "float-3d-card": _part("float-3d-card", "float3DCard"),
     # ── Orphan parts/ weapons (drift repair v0.11.1) ──
     "stagger-grid-reveal": _part("stagger-grid-reveal", "staggerGridReveal", engine="GSAP"),
-    "particle-blob-bg": _part("particle-blob-bg", "createParticleBlob", engine="anime.js"),
+    "particle-blob-bg": _part("particle-blob-bg", "animateParticleBlob", engine="anime.js"),
     "macos-notification": _part("macos-notification", "showMacOSNotification", engine="GSAP"),
     "number-count-up": _part("number-count-up", "numberCountUp", engine="GSAP"),
     # ── anime.js weapons (v0.12 NEW) ──

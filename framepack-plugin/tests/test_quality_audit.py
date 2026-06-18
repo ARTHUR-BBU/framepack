@@ -211,6 +211,43 @@ textSplitEnter(tl, el, {distance: '60px'});
     assert any(i.code == "manifest_weapon_not_called" for i in report.issues)
 
 
+def test_manifest_weapon_not_called_is_p0_blocking(tmp_path):
+    """v0.13: manifest_weapon_not_called upgraded from P1 to P0.
+
+    After the Element-Inject refactor (all 21 weapons usable), there is
+    no architectural excuse for Agent to skip weapon function calls.
+    Inline GSAP lookalikes are no longer acceptable — the weapon MUST
+    be called by its canonical function name.
+    """
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: text-split-enter
+  params:
+    travelDistance: "60px"
+""",
+        encoding="utf-8",
+    )
+    # HTML with NO weapon function call — Agent hand-wrote instead
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+gsap.from(chars, { y: 60, opacity: 0, stagger: 0.03, duration: 0.7 });
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    not_called = [i for i in report.issues if i.code == "manifest_weapon_not_called"]
+    assert len(not_called) == 1
+    assert not_called[0].severity == "P0", (
+        f"manifest_weapon_not_called must be P0 (blocking) in v0.13+, got {not_called[0].severity}"
+    )
+
+
 def test_not_called_issue_hints_when_inline_gsap_pattern_is_present(tmp_path):
     _write_minimal_registry(tmp_path)
     (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
@@ -236,7 +273,8 @@ gsap.from(chars, { y: 60, opacity: 0, stagger: 0.03, duration: 0.7 });
     not_called = [i for i in report.issues if i.code == "manifest_weapon_not_called"]
 
     assert len(not_called) == 1
-    assert not_called[0].severity == "P1"
+    # v0.13: upgraded from P1 to P0 (blocking) after Element-Inject refactor
+    assert not_called[0].severity == "P0"
     assert not_called[0].details["function"] == "textSplitEnter"
     assert not_called[0].details["inline_hint"]["suspected"] is True
     assert "canonical function" in not_called[0].details["inline_hint"]["recommendation"]

@@ -442,8 +442,8 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
             issues.append(
                 QualityIssue(
                     "manifest_weapon_not_called",
-                    "P1",
-                    f"Manifest weapon {ref.id!r} maps to {fn}(), but no call was found in index.html",
+                    "P0",
+                    f"⛔ BLOCKING: Manifest weapon {ref.id!r} maps to {fn}(), but no call was found in index.html. After v0.13 Element-Inject refactor, all weapons are callable — Agent must use the canonical function, not inline GSAP lookalikes",
                     str(html_path),
                     scene=ref.used_by[0] if ref.used_by else None,
                     weapon_id=ref.id,

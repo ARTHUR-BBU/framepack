@@ -204,7 +204,8 @@ scene_2:
     hook(tool_name="terminal", args={"command": "npx hyperframes render", "workdir": str(tmp_path)})
 
     injected = "\n".join(call.args[0] for call in ctx.inject_message.call_args_list)
-    assert "Framepack Quality Audit" in injected
+    # v0.13: P0 issues trigger BLOCKING header; the test data has P0 arsenal mismatches
+    assert "BLOCKING" in injected
     assert "P0" in injected
     assert "weapon_parameter_drift" in injected
 

@@ -31,7 +31,7 @@ def test_stagger_grid_reveal_registered():
 def test_particle_blob_bg_registered():
     w = resolve_builtin_weapon("particle-blob-bg")
     assert w is not None
-    assert w["function"] == "createParticleBlob"
+    assert w["function"] == "animateParticleBlob"
     assert w["engine"] == "anime.js"
     assert w["file"] == "parts/particle-blob-bg.md"
 
