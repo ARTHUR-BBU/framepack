@@ -6,11 +6,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "test_team_v0110_auto_test.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "test_team_auto_test.py"
 
 
 def _load_script_module():
-    spec = importlib.util.spec_from_file_location("test_team_v0110_auto_test", SCRIPT)
+    spec = importlib.util.spec_from_file_location("test_team_auto_test", SCRIPT)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     sys.modules[spec.name] = module

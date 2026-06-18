@@ -212,7 +212,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[1]), help="Framepack repository root")
+    parser.add_argument("--repo", default=str(Path(__file__).resolve().parents[2]), help="Framepack repository root")
     parser.add_argument("--case-project", default="", help="Optional real HyperFrames/Framepack case project to quality-audit")
     parser.add_argument("--deployed-plugin", default="F:/Hermes_windows/plugins/framepack", help="Optional deployed Framepack plugin path")
     parser.add_argument("--output-dir", default="test-team-reports/v0.12.0", help="Directory for JSON/Markdown reports")
