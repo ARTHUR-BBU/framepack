@@ -58,3 +58,34 @@ def test_builtin_weapon_catalog_covers_v0102_digital_soliloquy_weapons():
 
     assert missing == set()
     assert "rules.hyperframes-render-safe" in ids
+
+
+def test_builtin_catalog_includes_all_block_weapons():
+    """Every block weapon (.js in blocks/) must be registered.
+
+    data-chart-editorial, hero-3d-device-spin, sticky-flowchart were
+    missing from the catalog — Phase 4 drift repair.
+    """
+    ids = list_builtin_weapon_ids()
+    block_weapons = {"card-cascade-reveal", "data-chart-editorial",
+                     "hero-3d-device-spin", "sticky-flowchart"}
+    missing = block_weapons.difference(ids)
+    assert missing == set(), f"Block weapons missing from catalog: {missing}"
+
+
+def test_every_registered_weapon_has_matching_js_file():
+    """Every weapon whose kind is part/block must point to a real .js file.
+
+    Prevents registry-vs-filesystem drift.
+    """
+    import core.builtin_weapons as bw
+    from pathlib import Path
+
+    skill_root = Path(__file__).resolve().parent.parent / "skills" / "framepack-animation-library"
+    for wid, record in bw.BUILTIN_WEAPONS.items():
+        if record.get("kind") not in ("part", "block"):
+            continue
+        code_path = record.get("code")
+        assert code_path, f"{wid}: no code path"
+        full = skill_root / code_path
+        assert full.is_file(), f"{wid}: code file not found at {code_path}"

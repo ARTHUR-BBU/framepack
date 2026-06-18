@@ -54,6 +54,49 @@ metadata:
 | **Template** | 1 件 | 45-75s 完整视频 | 整桌菜谱 |
 | **Library** | 1 件 | 引擎适配 | anime.js 引擎层 |
 
+## ⚔️ 架构契约：Element-Inject Pattern（v0.13+）
+
+**全部 21 件武器遵循统一架构契约：零 createElement / 零 innerHTML。**
+
+武器分两种调用模式：
+
+### 模式 A：纯注入型（大部分 part 武器）
+
+Agent 在 HTML 里预写好 DOM 结构，武器函数只做动画操作：
+
+```html
+<!-- Agent 预写 -->
+<div class="bg-blur-mask" style="position:absolute;inset:0;..."></div>
+```
+```js
+// 武器只操作已有元素
+bgBlurMask(tl, container, { duration: 0.4 });
+```
+
+每件武器的 .js 文件头部有完整的 `STATIC HTML PREREQUISITE` 块——照抄。
+
+### 模式 B：Setup+Animate 拆分（block 武器 + 数据驱动武器）
+
+对于 DOM 结构由数据驱动的武器（卡片数量、节点数据等），用两步调用：
+
+```js
+// Step 1: Setup 生成 HTML 字符串（纯函数，不碰 DOM）
+const html = cardCascadeSetup({ cardCount: 4, layout: 'fan' });
+
+// Agent 把 html 字符串写进 index.html 的场景容器里
+
+// Step 2: Animate 操作已存在的 DOM
+buildCardCascade(tl, container, { stagger: 0.12 });
+```
+
+**为什么这样设计**：HyperFrames 编译器做静态解析——DOM 必须在 HTML 里预先存在，运行时 createElement 出来的元素编译器看不见，渲染时会黑屏或丢失。这是铁律。
+
+### 违反契约的后果
+
+如果武器代码里出现 `document.createElement` / `innerHTML =`，契约测试（`test_weapon_architecture_contract.py`）会立即报红。
+
+---
+
 ## 快速匹配表（Agent 查这个决定用什么武器）
 
 | 需要什么效果 | 武器 | 类型 | 引擎 |

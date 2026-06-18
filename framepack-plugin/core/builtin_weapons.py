@@ -64,6 +64,9 @@ BUILTIN_WEAPONS: dict[str, dict] = {
     "sprite-animation": _part("sprite-animation", "spriteAnimation", engine="GSAP+CSS sprite sheet"),
     # ── Block weapons (scene-level compositions) ──
     "card-cascade-reveal": _block("card-cascade-reveal", "buildCardCascade", engine="GSAP"),
+    "data-chart-editorial": _block("data-chart-editorial", "buildDataChart", engine="GSAP"),
+    "hero-3d-device-spin": _block("hero-3d-device-spin", "buildDeviceSpin", engine="GSAP"),
+    "sticky-flowchart": _block("sticky-flowchart", "buildStickyFlowchart", engine="GSAP"),
     "rules.hyperframes-render-safe": {
         "id": "rules.hyperframes-render-safe",
         "source": "builtin",
