@@ -7,13 +7,13 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: Framepack v0.12.0 五方向全部完成 ✅。下一步：版本收口（plugin.yaml bump 0.11.1→0.11.2 + 全量同步 + release）
+**阶段**: Framepack v0.12.0 五方向全部完成 + simplify + 版本收口 ✅。当前：测试组独立验收中（第二轮待回）。
 
 **分支**: `framepack-agent-platform`
-**正式源码版本**: plugin.yaml = 0.11.1（版本收口后 bump 到 0.11.2）
-**最后提交**: `79c25b4` (`feat: bridge HyperFrames lint warnings into quality_audit with upstream classification`)
-**测试**: 源码 390 passed / 1 skipped ✅；部署 390 passed / 1 skipped ✅
-**GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；v0.11.1 尚未 push
+**正式源码版本**: plugin.yaml = **0.12.0** ✅
+**最后提交**: `ea4f9dd` (`fix: relocate test_team script into plugin package, fix deploy version drift`)
+**测试**: 源码 390 passed / 1 skipped ✅；部署 390 passed / 1 skipped ✅（双绿）
+**GitHub**: origin/main = v0.11.0；tag v0.11.0 已推；v0.12.0 待 push（等测试组验收通过）
 
 **方向完成状态**:
 - 方向 1 (Asset Intake): `d9ad49f` — asset_detector.py + checklist + template
