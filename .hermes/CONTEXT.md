@@ -7,110 +7,66 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.13.0 武器架构重构 + 品味接线全部完成，测试组验收 PASS，待真实视频项目测试 + 版本发布
+**阶段**: v0.14.0 权重控制系统 + Sprite Forge 全部开发完成，506 passed 零回归，待实战测试
 
 **分支**: `main`
-**源码版本**: plugin.yaml = 0.12.0（v0.13.0 尚未 bump）
-**测试**: 432 passed / 1 skipped ✅ 零回归（开发环境 + 部署环境双确认）
-**最新 commit**: 待提交 — 品味系统接线（taste_audit → quality_audit 桥接）
+**源码版本**: plugin.yaml = 0.14.0 ✅
+**测试**: 506 passed / 1 skipped ✅ 零回归（开发环境 + 部署环境双确认，content hash 一致）
+**最新 commit**: 版本号 bump release commit
 
-### v0.13.0 进度（全部完成）
+### v0.14.0 交付内容（全部完成）
 
-| 步骤 | 内容 | 状态 |
-|------|------|------|
-| P1-P3 | 10 件自建DOM型武器 → 元素注入型（21/21 合规） | ✅ |
-| P4 | 注册表补全 3 个 block 武器 + SKILL.md 架构契约文档 | ✅ |
-| P5 | manifest_weapon_not_called P1→P0 阻断 | ✅ |
-| P6 | taste vocabulary 接线（消除影子词表） | ✅ |
-| P7 | 参数漂移 3x 阈值检测（P1→P2） | ✅ |
-| **品味接线** | taste_audit 接入 quality_audit（方向A） | **✅ 完成** |
+| Phase | 内容 | 状态 |
+|-------|------|------|
+| A | ControlProfile 五行权重 + render_directive() | ✅ |
+| B | Hook 神经通路穿透（frame.md 注入 + expanded-prompt 一致性检查 + caution_motion 兼容） | ✅ |
+| C | quality_audit 接入权重一致性检查（P2 需解释） | ✅ |
+| D | director skill Phase 0.5 试菜流程 + guardrails 权重系统规则 | ✅ |
+| E | Sprite Forge（process_sprite.py + make_layout_guide.py + 知识库 + SKILL.md + 武器衔接） | ✅ |
+| F | 版本号 bump 0.12.0→0.14.0 + 部署同步 + CONTEXT 更新 | ✅ |
 
-### 品味系统接线（已完成）
+### 五行权重系统（v0.14 核心）
 
-**设计文档**: `F:/hyperframes/.hermes/designs/2026-06-19--v013-taste-wiring.md`
+五个正交权重，相生相克涵盖所有创意控制：
+- 木 creative_autonomy — 创意自主度
+- 金 restraint_force — 克制力
+- 火 atmosphere_density — 氛围密度
+- 水 motion_dynamism — 动作张力
+- 土 weapon_reliance — 武器依赖度
 
-**实现内容**:
-1. `core/quality_audit.py` 新增 `TASTE_SEVERITY_MAP`（risk→P1, suggestion→P2, note→P3）
-2. `_validate_specimen_ids()` — 解析 frame.md 的 reference_dna 列表，无效 ID → P1
-3. `_audit_taste()` — 桥接 taste_audit.audit_project() 到 quality pipeline，保留 suggestion 到 details
-4. audit_project() 第 8 个审计函数（_audit_lint_cache 之后）
-5. 8 个新测试（test_quality_audit_taste_bridge.py），覆盖三档映射 + 标本验证 + suggestion 保留 + summary 集成
-6. 不做 P0 阻断（留给方向 C），不改 taste_audit.py 检测逻辑
+流程：试菜（Phase 0.5）→ 自定权重 → 写入 frame.md control_profile → Hook 神经通路穿透到末梢 → 权重一致性检查（P2）
 
-**部署**: 已同步到 F:/Hermes_windows/plugins/framepack/（content hash 双确认）
+### Sprite Forge（v0.14 能力升级）
 
-### 测试组验收（v0.13 品味接线）
+不集成生图工具，只出 prompt 让用户外出生成 → 拿回来后 Framepack 做后处理（裁切/去背/装订）→ 交给 sprite-animation 武器播放。
+- `skills/framepack-sprite-forge/scripts/process_sprite.py` — 品红去背+切帧+QC
+- `skills/framepack-sprite-forge/scripts/make_layout_guide.py` — 布局参考图
+- `skills/framepack-sprite-forge/references/` — prompt 规则 + 素材类型指南
 
-**报告**: `F:/Framepack-01-test/reports/v0.13/taste-wiring-test-report.md` + `.json`
-**结论**: 品味接线功能验收 PASS（8/8 自动 + 11/11 手动全通过）
+### 部署同步
 
-**暴露的部署同步问题**（已修复）:
-- 根因: P1-P7 武器重构的 37 个文件未同步到部署目录（size 相同但内容不同的文件被 size diff 漏检）
-- 关键 case: `test_quality_audit_cli.py` 开发源码用 `travelDistance:'200px'`（3.33x>3x→drift），部署目录残留旧数据 `'120px'`（2x<3x→no drift），导致测试在部署环境失败
-- 修复: content hash 对比全量同步 37 文件，部署目录 432 passed 确认一致
-- 教训: 部署同步必须用 content hash，不能只比 file size
+源码 `F:/hyperframes/framepack-plugin/` 与部署 `F:/Hermes_windows/plugins/framepack/` 全量 content hash 验证一致（203 文件，0 mismatch）。
 
-## v0.13.0 武器架构重构总览
+## 设计文档
 
-### 做了什么
-
-v0.12.0 的 21 件武器中有 10 件是"自建DOM型"——它们自己 createElement 建结构，跟 HyperFrames 的"先搭骨架再填动画"铁律打架。全部重构为"元素注入型"：Agent 先写 HTML 结构，武器只负责动画。
-
-### 重构的 10 件武器
-
-| 武器 | 类型 | 行数 | commit |
-|------|------|------|--------|
-| bg-blur-mask | part | 62 | P1 |
-| anime-text-split | part | 66 | P2 |
-| typewriter-cursor | part | 89 | P2 |
-| macos-notification | part | 86 | P2 |
-| light-leak-carma | part | 94 | P2 |
-| card-cascade-reveal | block | 139 | P2 |
-| hero-3d-device-spin | block | 112 | P2 |
-| particle-blob-bg | part | 83 | P3 |
-| sticky-flowchart | block | 110 | P3 |
-| data-chart-editorial | block | 133 | P3 |
-
-### 三把尺子（永久护栏）
-
-1. **武器架构契约测试** — 扫描每件武器 .js，发现 createElement 立即报红
-2. **函数名一致性测试** — 注册表的函数名必须和 .js 定义完全匹配
-3. **P0 阻断门禁** — Agent 跳过武器函数自己手写，门禁挡住
-
-### p6 影子词表消除
-
-- taste_grammar.py 的 TASTE_MOVES 加了 energy_level 元数据
-- 新增 `moves_by_energy_level()` 作为唯一查询入口
-- taste_audit.py 不再硬编码 high_energy_moves 集合
-
-### p7 参数漂移阈值
-
-- 数值参数: 3x 差异才报漂移（P2）
-- CSS 单位 (px/%/s/deg): 先提取数值再比阈值
-- 非数值参数 (ease/color): 精确匹配
-- severity: P1→P2（建议级别，不阻断）
-
-## 版本发布计划
-
-全部完成后:
-1. ~~品味系统接线（方向A）~~ ← 当前
-2. 真实视频项目测试（验证 Agent 能用之前用不了的武器）
-3. 版本 bump 0.12.0→0.13.0 + changelog + tag + release
+- `F:/hyperframes/.hermes/designs/2026-06-19--v014-weight-control-system.md` — 权重控制系统设计（五行框架）
+- `F:/hyperframes/.hermes/designs/2026-06-19--sprite-forge-integration.md` — Sprite Forge 集成设计
+- `F:/hyperframes/.hermes/designs/2026-06-19--v013-taste-wiring.md` — v0.13 品味接线设计（已实现）
 
 ## 关键路径
 
-1. ~~P1-P7 武器架构重构~~ ✅
-2. ~~品味系统接线~~ ✅
-3. ~~部署同步修复（content hash 全量）~~ ✅
-4. ~~测试组验收~~ ✅ PASS
-5. **真实视频项目测试** ← 下一步
-6. 版本发布 v0.13.0
+1. ~~v0.13 武器架构重构~~ ✅
+2. ~~v0.13 品味接线~~ ✅
+3. ~~v0.14 权重控制系统~~ ✅
+4. ~~v0.14 Sprite Forge~~ ✅
+5. ~~版本 bump 0.14.0 + 部署同步~~ ✅
+6. **实战测试** ← 下一步
 
 ## 文件索引
 
 - 源码: `F:/hyperframes/framepack-plugin/`
 - 部署: `F:/Hermes_windows/plugins/framepack/`
-- 品味接线设计: `F:/hyperframes/.hermes/designs/2026-06-19--v013-taste-wiring.md`
-- 武器重构设计: `F:/hyperframes/.hermes/designs/2026-06-18--v0130-weapon-architecture-refactor.md`
-- 测试报告（v0.12.0 独立验收）: `F:/Framepack-01-test/reports/v0.12.0/framepack-v0120-test-report.md`
+- 权重核心: `core/control_profile.py` + `core/restraint_audit.py`
+- Hook 穿透: `hooks/on_post_tool_call.py`（_build_weight_directive + _build_weight_consistency_report）
+- Sprite Forge: `skills/framepack-sprite-forge/`
 - 独立 skill: `F:/Hermes_windows/skills/software-development/framepack/SKILL.md`
