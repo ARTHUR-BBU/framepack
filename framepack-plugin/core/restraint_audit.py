@@ -79,6 +79,19 @@ def audit_weight_consistency(
             requires_explanation=True,
         ))
 
+    # B-2: caution_motion — 高谨慎 motion 被 expanded-prompt 使用时告警
+    prompt_lower = expanded_prompt.lower()
+    for motion, caution_val in cp.caution_motion.items():
+        if caution_val >= 0.7 and motion.lower() in prompt_lower:
+            issues.append(ConsistencyIssue(
+                code="caution_motion_violation",
+                severity="P2",
+                message=(f"caution_motion 声明 {motion}={caution_val}（高谨慎），"
+                         f"但 expanded-prompt 中使用了 {motion}。"
+                         f"请解释为何使用高谨慎度动效，或替换为更温和的方案。"),
+                requires_explanation=True,
+            ))
+
     return issues
 
 

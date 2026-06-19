@@ -147,3 +147,38 @@ class TestHelperFunctions:
         from core.restraint_audit import _ATMOSPHERE_KEYWORDS
         assert len(_ATMOSPHERE_KEYWORDS) == len(set(_ATMOSPHERE_KEYWORDS)), \
             f"重复项: {set([x for x in _ATMOSPHERE_KEYWORDS if _ATMOSPHERE_KEYWORDS.count(x) > 1])}"
+
+
+class TestCautionMotionAudit:
+    """B-2: 审计层应消费 caution_motion — 高谨慎 motion 被使用时产生 P2 issue"""
+
+    def test_high_caution_motion_used_in_prompt_flags_p2(self):
+        """caution_motion shake=0.9 且 expanded-prompt 里用了 shake → P2"""
+        cp = ControlProfile(
+            weights=Weights(),
+            caution_motion={"shake": 0.9},
+        )
+        prompt = "scene1: SLAM text\nscene2: shake camera\nscene3: fade"
+        issues = audit_weight_consistency(cp, prompt)
+        codes = [i.code for i in issues]
+        assert "caution_motion_violation" in codes, \
+            f"应告警高谨慎 motion 被使用，但 issues={codes}"
+
+    def test_low_caution_motion_not_flagged(self):
+        """caution_motion flash=0.3（低谨慎）被使用不告警"""
+        cp = ControlProfile(
+            weights=Weights(),
+            caution_motion={"flash": 0.3},
+        )
+        prompt = "scene1: flash transition\nscene2: fade"
+        issues = audit_weight_consistency(cp, prompt)
+        codes = [i.code for i in issues]
+        assert "caution_motion_violation" not in codes
+
+    def test_no_caution_motion_no_issue(self):
+        """没有 caution_motion → 不审计此维度"""
+        cp = ControlProfile(weights=Weights())
+        prompt = "scene1: shake\nscene2: spin"
+        issues = audit_weight_consistency(cp, prompt)
+        codes = [i.code for i in issues]
+        assert "caution_motion_violation" not in codes

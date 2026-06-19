@@ -182,3 +182,29 @@ class TestWeightDirectiveRendering:
         cp = ControlProfile(weights=Weights(motion_dynamism=0.15))
         d = cp.render_directive()
         assert "沉稳" in d or "平静" in d or "沉稳" in d
+
+    def test_render_directive_includes_caution_motion(self):
+        """B-1: render_directive 必须渲染 caution_motion，否则数据对 Agent 不可见"""
+        cp = ControlProfile(
+            weights=Weights(),
+            caution_motion={"shake": 0.9, "spin": 0.7, "flash": 0.3},
+        )
+        d = cp.render_directive()
+        assert "shake" in d, "caution_motion shake 未出现在指令中"
+        assert "spin" in d, "caution_motion spin 未出现在指令中"
+        assert "flash" in d, "caution_motion flash 未出现在指令中"
+
+    def test_render_directive_empty_caution_motion_omits_section(self):
+        """B-1: caution_motion 为空时不渲染该段落"""
+        cp = ControlProfile(weights=Weights())
+        d = cp.render_directive()
+        assert "谨慎" not in d or "caution" not in d.lower()
+
+    def test_render_directive_caution_motion_shows_values(self):
+        """B-1: caution_motion 渲染应包含具体谨慎度数值"""
+        cp = ControlProfile(
+            weights=Weights(),
+            caution_motion={"shake": 0.9},
+        )
+        d = cp.render_directive()
+        assert "0.9" in d, "caution 值 0.9 未出现在指令中"

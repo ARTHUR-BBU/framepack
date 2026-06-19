@@ -150,6 +150,24 @@ class ControlProfile:
                          "中庸武器依赖——武器和裸写搭配使用。")
 
         lines.append("")
+
+        # B-1: caution_motion 渲染 — 不渲染则数据对 Agent 不可见
+        if self.caution_motion:
+            lines.append("### 动效谨慎度（caution_motion）")
+            lines.append("")
+            for name, val in sorted(self.caution_motion.items(),
+                                     key=lambda kv: -kv[1]):
+                if val >= 0.7:
+                    lines.append(f"- {name}={val}: 高谨慎——"
+                                 "尽量避免或极克制使用。")
+                elif val <= 0.3:
+                    lines.append(f"- {name}={val}: 低谨慎——"
+                                 "可以自由使用。")
+                else:
+                    lines.append(f"- {name}={val}: "
+                                 "中等谨慎——酌情使用。")
+            lines.append("")
+
         lines.append("以上指令基于你试菜后的自评权重，请在后续阶段遵循。")
         return "\n".join(lines)
 
