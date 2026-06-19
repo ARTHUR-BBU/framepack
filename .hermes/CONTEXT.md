@@ -7,60 +7,96 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.14.0 权重控制系统 + Sprite Forge 全部开发完成，506 passed 零回归，待实战测试
+**阶段**: v0.14.0 实战测试 → 瑕疵修复迭代中（7/9 已修复，2 个待办）
 
 **分支**: `main`
 **源码版本**: plugin.yaml = 0.14.0 ✅
-**测试**: 506 passed / 1 skipped ✅ 零回归（开发环境 + 部署环境双确认，content hash 一致）
-**最新 commit**: 版本号 bump release commit
+**测试**: 526 passed / 1 skipped ✅ 零回归（从 511 涨到 526，+15 回归测试）
+**部署同步**: 源码与部署目录 content hash 一致 ✅
 
-### v0.14.0 交付内容（全部完成）
+### 实战测试结果（6 命题 × 3 轮 × 独立 subagent）
 
-| Phase | 内容 | 状态 |
-|-------|------|------|
-| A | ControlProfile 五行权重 + render_directive() | ✅ |
-| B | Hook 神经通路穿透（frame.md 注入 + expanded-prompt 一致性检查 + caution_motion 兼容） | ✅ |
-| C | quality_audit 接入权重一致性检查（P2 需解释） | ✅ |
-| D | director skill Phase 0.5 试菜流程 + guardrails 权重系统规则 | ✅ |
-| E | Sprite Forge（process_sprite.py + make_layout_guide.py + 知识库 + SKILL.md + 武器衔接） | ✅ |
-| F | 版本号 bump 0.12.0→0.14.0 + 部署同步 + CONTEXT 更新 | ✅ |
+报告位置: `F:/hyperframes/framepack-e2e-test/reports/`
+- report-A-weight-flow.md — 五行权重端到端
+- report-B-backward-compat.md — 向后兼容+版本迁移
+- report-C-consistency-audit.md — 一致性审计深度
+- report-D-sprite-forge.md — Sprite Forge 管线
+- report-E-hook-neural-pathway.md — Hook 神经通路
+- report-F-quality-audit.md — quality_audit 主管线
+- SUMMARY.md — 总汇总（27 个发现分级）
 
-### 五行权重系统（v0.14 核心）
+### 瑕疵修复进度（TDD 全流程）
 
-五个正交权重，相生相克涵盖所有创意控制：
+| # | 等级 | 问题 | 测试数 | commit | 状态 |
+|---|------|------|--------|--------|------|
+| E-1 | 高危 | 权重注入被 LLM 质检耦合导致静默断流 | +3 | (E-1 commit) | ✅ |
+| B-7 | 功能 | 跨块名误迁移 forbidden_motion | +2 | 7822f75 | ✅ |
+| D-1 | 中危 | 非品红底色键失效静默通过 | +1 | 75408fb | ✅ |
+| D-3 | 中危 | QC 报告不落盘 JSON | +1 | 75408fb | ✅ |
+| D-2 | 中危 | 非正方形 cell 被强制压方 | +2 | 98ca8e2 | ✅ |
+| B-1 | 中危 | render_directive 不渲染 caution_motion | +3 | c4cd361 | ✅ |
+| B-2 | 中危 | 审计层不消费 caution_motion | +3 | c4cd361 | ✅ |
+| **C-1** | 中危 | 裸 sceneN: 行正则跨行吞词 | — | — | ⏳ 待修 |
+| **MED7** | 低 | docstring 明确相生相克为隐喻 | — | — | ⏳ 待修 |
+
+## 下一步：完成最后 2 个修复
+
+### C-1（中危，进行中）
+**根因**: `core/restraint_audit.py:113` 的正则 `scene\d+:?\s*([\w-]+)` 里 `\s*` 包含换行符。当某行是裸 `scene1:`（冒号后无武器名），`\s*` 跨行吞掉下一行首词。
+
+**复现**:
+```python
+_handwrite_ratio("scene1:\nscene2: HANDWRITE")
+# 正则匹配: scene1: + 跨行 + "scene2" 作为武器名
+# 结果: hw_ratio 被污染，高 reliance 下漏报 weapon_reliance_mismatch
+```
+
+**修复方案**（已确认）:
+1. RED 测试: `_handwrite_ratio("scene1:\nscene2: HANDWRITE")` 返回正确值而非污染值
+2. GREEN: `\s*` → `[ \t]*`（只匹配空格/tab，不含换行）
+3. 顺便加 C-4 词首锚定防 `obscene1:` 误匹配
+
+### MED7（低，待办）
+**问题**: A-F1 报告发现 Agent 可能误把"五行相生相克"当硬约束（水克火=不能高张力+高氛围），实际是隐喻不是约束。
+
+**修复方案**: 在 `core/control_profile.py` 的 ControlProfile 类 docstring + Weights dataclass 加说明："相生相克是创意方向的隐喻引导，不是数学约束。权重各自独立，不互相限制。"
+
+### 修复完成后
+1. 全量回归确认 526+ passed
+2. 部署同步（md5）
+3. git commit
+4. 更新本 CONTEXT.md
+5. 更新 SUMMARY.md 汇总报告
+
+## 关键修复详情（已完成的）
+
+### E-1（最有价值）
+权重注入是纯本地计算（零 LLM 依赖），但被放在 `_handle_frame_md` / `_handle_expanded_prompt` 的 `_analyze_*()` 返回 None 的提前 return 之后。任何 LLM 抖动 → 权重特性静默失效。修复：权重注入移到分析调用之前 + 分析调用包 try/except。
+
+### B-1 + B-2（同一通路两端）
+caution_motion（向后兼容迁移的 forbidden_motion）进了 ControlProfile 对象，但：
+- B-1: `render_directive()` 不渲染 → Agent 看不到 → 修复：五行之后追加 caution_motion 段落
+- B-2: `audit_weight_consistency()` 不审计 → 高谨慎 motion 被使用无 issue → 修复：新增 caution_motion_violation 审计维度（P2）
+
+### D-2
+`center_single_sprite` 画布恒为正方形，sprite bbox 超过画布时硬裁。280x200 sprite 进 200x200 → 80px 被裁。修复：fit-in 缩放保留宽高比。
+
+## 五行权重系统（v0.14 核心）
+
+五个正交权重，相生相克涵盖所有创意控制（**注意：相生相克是隐喻不是硬约束，见 MED7**）：
 - 木 creative_autonomy — 创意自主度
 - 金 restraint_force — 克制力
 - 火 atmosphere_density — 氛围密度
 - 水 motion_dynamism — 动作张力
 - 土 weapon_reliance — 武器依赖度
 
-流程：试菜（Phase 0.5）→ 自定权重 → 写入 frame.md control_profile → Hook 神经通路穿透到末梢 → 权重一致性检查（P2）
-
-### Sprite Forge（v0.14 能力升级）
-
-不集成生图工具，只出 prompt 让用户外出生成 → 拿回来后 Framepack 做后处理（裁切/去背/装订）→ 交给 sprite-animation 武器播放。
-- `skills/framepack-sprite-forge/scripts/process_sprite.py` — 品红去背+切帧+QC
-- `skills/framepack-sprite-forge/scripts/make_layout_guide.py` — 布局参考图
-- `skills/framepack-sprite-forge/references/` — prompt 规则 + 素材类型指南
-
-### 部署同步
-
-源码 `F:/hyperframes/framepack-plugin/` 与部署 `F:/Hermes_windows/plugins/framepack/` 全量 content hash 验证一致（203 文件，0 mismatch）。
+ControlProfile 默认权重: 全 0.5
+render_directive(): high/low 分档生成行为指令
 
 ## 设计文档
 
-- `F:/hyperframes/.hermes/designs/2026-06-19--v014-weight-control-system.md` — 权重控制系统设计（五行框架）
+- `F:/hyperframes/.hermes/designs/2026-06-19--v014-weight-control-system.md` — 权重控制系统设计
 - `F:/hyperframes/.hermes/designs/2026-06-19--sprite-forge-integration.md` — Sprite Forge 集成设计
-- `F:/hyperframes/.hermes/designs/2026-06-19--v013-taste-wiring.md` — v0.13 品味接线设计（已实现）
-
-## 关键路径
-
-1. ~~v0.13 武器架构重构~~ ✅
-2. ~~v0.13 品味接线~~ ✅
-3. ~~v0.14 权重控制系统~~ ✅
-4. ~~v0.14 Sprite Forge~~ ✅
-5. ~~版本 bump 0.14.0 + 部署同步~~ ✅
-6. **实战测试** ← 下一步
 
 ## 文件索引
 
@@ -70,3 +106,11 @@
 - Hook 穿透: `hooks/on_post_tool_call.py`（_build_weight_directive + _build_weight_consistency_report）
 - Sprite Forge: `skills/framepack-sprite-forge/`
 - 独立 skill: `F:/Hermes_windows/skills/software-development/framepack/SKILL.md`
+- 测试报告: `F:/hyperframes/framepack-e2e-test/reports/`
+
+## 开发铁律提醒
+
+- TDD: RED → GREEN → 全量回归 → 部署同步(md5) → git commit
+- 部署同步必须用 content hash（md5），不能只比 file size
+- 改完 PLUGIN 文件必须同步到 `F:/Hermes_windows/plugins/framepack/`
+- 修复 skill 用到问题应 patch skill_manage
