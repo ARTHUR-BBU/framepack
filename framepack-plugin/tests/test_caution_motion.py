@@ -116,3 +116,47 @@ class TestCautionMotionDefaultField:
         """构造时传入越界值也会被 clamp。"""
         cp = ControlProfile(caution_motion={"spin": 2.0, "shake": -1.0})
         assert cp.caution_motion == {"spin": 1.0, "shake": 0.0}
+
+
+class TestBlockCollisionGuard:
+    """B-7: forbidden_motion / caution_motion 必须绑定 control_profile 父块。
+
+    不能跨块名误抓 taste.visual_physics 等其他块的同名子块。
+    """
+
+    def test_taste_block_forbidden_motion_not_migrated(self):
+        """taste.visual_physics 下的 forbidden_motion 不应迁移进 caution_motion"""
+        md = (
+            "---\n"
+            "control_profile:\n"
+            "  weights:\n"
+            "    restraint_force: 0.8\n"
+            "taste:\n"
+            "  visual_physics:\n"
+            "    forbidden_motion:\n"
+            "      - generic slide-in\n"
+            "      - random bounce\n"
+            "---\n"
+        )
+        cp = ControlProfile.from_frame_md(md)
+        assert cp is not None
+        assert cp.caution_motion == {}
+
+    def test_control_profile_forbidden_still_works(self):
+        """修复后 control_profile 下的 forbidden_motion 仍正常迁移"""
+        md = (
+            "---\n"
+            "control_profile:\n"
+            "  weights:\n"
+            "    restraint_force: 0.8\n"
+            "  forbidden_motion:\n"
+            "    - shake\n"
+            "taste:\n"
+            "  visual_physics:\n"
+            "    forbidden_motion:\n"
+            "      - random bounce\n"
+            "---\n"
+        )
+        cp = ControlProfile.from_frame_md(md)
+        assert cp is not None
+        assert cp.caution_motion == {"shake": 0.9}

@@ -164,10 +164,16 @@ class ControlProfile:
         if "control_profile" not in text:
             return None
 
-        weight_block = _extract_yaml_block(text, "weights")
-        assess_block = _extract_yaml_block(text, "self_assessment")
-        caution_block = _extract_yaml_block(text, "caution_motion")
-        forbidden_block = _extract_yaml_block(text, "forbidden_motion")
+        # 先提取 control_profile 块，限制子块搜索范围（B-7 修复：
+        # 避免 taste.visual_physics 等其他块的同名子块被误抓）
+        profile_block = _extract_yaml_block(text, "control_profile")
+        if not profile_block.strip():
+            return None
+
+        weight_block = _extract_yaml_block(profile_block, "weights")
+        assess_block = _extract_yaml_block(profile_block, "self_assessment")
+        caution_block = _extract_yaml_block(profile_block, "caution_motion")
+        forbidden_block = _extract_yaml_block(profile_block, "forbidden_motion")
 
         weight_vals = _parse_key_values(weight_block, cls._WEIGHT_KEYS)
         assess_vals = _parse_key_values(assess_block, cls._ASSESS_KEYS)
