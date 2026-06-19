@@ -61,7 +61,11 @@ def split_grid(img: Image.Image, rows: int, cols: int) -> List[Image.Image]:
 
 
 def center_single_sprite(img: Image.Image, cell_size: int) -> Image.Image:
-    """Crop the opaque region of ``img`` and re-center it on a cell_size canvas."""
+    """Crop the opaque region of ``img`` and re-center it on a cell_size canvas.
+
+    If the sprite is larger than the canvas, it is scaled down preserving
+    aspect ratio (fit-in) — content is never cropped (D-2 fix).
+    """
     src = img.convert("RGBA")
     canvas = Image.new("RGBA", (cell_size, cell_size), (0, 0, 0, 0))
     bbox = src.split()[3].getbbox()
@@ -69,6 +73,15 @@ def center_single_sprite(img: Image.Image, cell_size: int) -> Image.Image:
         return canvas  # fully transparent input -> blank canvas
     sprite = src.crop(bbox)
     sw, sh = sprite.size
+
+    # D-2: fit-in — sprite 超过画布时按宽高比缩放，内容不被裁切
+    if sw > cell_size or sh > cell_size:
+        scale = min(cell_size / sw, cell_size / sh)
+        new_w = max(1, int(sw * scale))
+        new_h = max(1, int(sh * scale))
+        sprite = sprite.resize((new_w, new_h), Image.LANCZOS)
+        sw, sh = new_w, new_h
+
     x = (cell_size - sw) // 2
     y = (cell_size - sh) // 2
     canvas.paste(sprite, (x, y), sprite)

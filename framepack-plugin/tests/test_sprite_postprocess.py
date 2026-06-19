@@ -130,6 +130,51 @@ def test_center_single_sprite_empty_returns_blank_canvas():
     assert (np.array(out)[..., 3] == 0).all()
 
 
+def test_center_single_sprite_oversized_fits_without_crop():
+    """D-2: sprite bbox 超过画布尺寸时，应按宽高比缩放入画布，不硬裁。"""
+    # 280x200 的不透明 sprite，画布只有 200x200
+    big = Image.new("RGBA", (300, 200), (0, 0, 0, 0))
+    block = _solid(280, 200, (50, 100, 200)).convert("RGBA")
+    block.putalpha(255)
+    big.paste(block, (0, 0), block)
+
+    out = process_sprite.center_single_sprite(big, 200)
+    arr = np.array(out)
+
+    # 关键：不能有内容被裁掉——画布四角必须全透明（fit-in 后有留白）
+    assert arr[0, 0, 3] == 0      # 左上角透明
+    assert arr[0, -1, 3] == 0     # 右上角透明
+    assert arr[-1, 0, 3] == 0     # 左下角透明
+    assert arr[-1, -1, 3] == 0    # 右下角透明
+
+    # 内容仍在画布内（中心区域不透明）
+    assert arr[100, 100, 3] > 0
+
+
+def test_center_single_sprite_oversized_preserves_aspect():
+    """D-2: fit-in 缩放后 sprite 宽高比不变（280:200 = 1.4:1）"""
+    big = Image.new("RGBA", (300, 200), (0, 0, 0, 0))
+    block = _solid(280, 200, (50, 100, 200)).convert("RGBA")
+    block.putalpha(255)
+    big.paste(block, (0, 0), block)
+
+    out = process_sprite.center_single_sprite(big, 200)
+    arr = np.array(out)
+    alpha = arr[..., 3]
+
+    # 找到不透明区域的 bbox
+    rows = np.any(alpha > 0, axis=1)
+    cols = np.any(alpha > 0, axis=0)
+    rmin, rmax = np.where(rows)[0][[0, -1]]
+    cmin, cmax = np.where(cols)[0][[0, -1]]
+    w = cmax - cmin + 1
+    h = rmax - rmin + 1
+    ratio = w / h
+
+    # 原始 280:200 = 1.4，缩放后比例应保持
+    assert abs(ratio - 1.4) < 0.05, f"宽高比被破坏: {ratio} != 1.4"
+
+
 # ---------------------------------------------------------------------------
 # clean_edges
 # ---------------------------------------------------------------------------
