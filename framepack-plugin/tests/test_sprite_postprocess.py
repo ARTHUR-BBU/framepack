@@ -265,3 +265,38 @@ class TestQCReport:
         )
         assert res.returncode == 0, res.stderr
         assert "QC" in res.stdout or "qc" in res.stdout.lower()
+
+    def test_qc_warns_no_transparency_non_magenta_bg(self):
+        """D-1: 有内容但几乎 0 透明 → 背景可能不是品红，必须告警"""
+        # 全不透明帧（模拟非品红底色，色键完全没起作用）
+        arr = np.full((40, 40, 4), [100, 150, 200, 255], dtype=np.uint8)
+        frame = Image.fromarray(arr, "RGBA")
+        report = process_sprite.generate_qc_report([frame])
+        assert report["non_empty_frames"] == 1  # 有内容
+        assert report["transparent_ratio"] < 0.02  # 但几乎没透明
+        assert any("transparency" in w.lower() or "background" in w.lower()
+                    or "magenta" in w.lower()
+                    for w in report["warnings"]), \
+            f"应告警背景色键失效，但 warnings={report['warnings']}"
+
+    def test_qc_report_written_to_json(self, tmp_path):
+        """D-3: pipeline 应把 QC 报告落盘为 JSON"""
+        import json
+        sheet = _magenta_sheet_with_cells(1, 1, 50, [(255, 100, 50)])
+        inp = tmp_path / "input.png"
+        sheet.save(inp)
+        outdir = tmp_path / "out"
+        res = subprocess.run(
+            [sys.executable, str(SCRIPTS_DIR / "process_sprite.py"),
+             "process", "--input", str(inp),
+             "--rows", "1", "--cols", "1",
+             "--output-dir", str(outdir),
+             "--cell-size", "50"],
+            capture_output=True, text=True,
+        )
+        assert res.returncode == 0, res.stderr
+        qc_file = outdir / "qc-report.json"
+        assert qc_file.exists(), "qc-report.json 未落盘"
+        data = json.loads(qc_file.read_text())
+        assert "transparent_ratio" in data
+        assert "warnings" in data

@@ -194,6 +194,13 @@ def generate_qc_report(frames: List[Image.Image]) -> dict:
             "— chroma key threshold may need adjustment"
         )
 
+    # D-1: 有内容但几乎没透明 → 背景可能不是品红，色键失效
+    if transparent_ratio < 0.02 and non_empty > 0:
+        warnings.append(
+            f"Almost no transparency produced ({transparent_ratio:.1%}) "
+            "— background may not be pure magenta #FF00FF"
+        )
+
     return {
         "transparent_ratio": round(transparent_ratio, 4),
         "non_empty_frames": non_empty,
@@ -256,6 +263,11 @@ def run_pipeline(
     save_transparent_gif(frames, str(gif_path), fps=fps)
 
     qc = generate_qc_report(frames)
+    # D-3: QC 报告落盘为 JSON，供下游自动化读取
+    import json
+    (out / "qc-report.json").write_text(
+        json.dumps(qc, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     return sheet_path, qc
 
 
