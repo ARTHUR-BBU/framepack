@@ -21,6 +21,7 @@ from pathlib import Path
 from .guardrails import hydrate_guardrails
 from core.arsenal_registry import sync_arsenal_from_project, ArsenalWarning
 from core.control_profile import ControlProfile
+from core.restraint_audit import audit_weight_consistency
 from core.shell_utils import resolve_effective_workdir
 
 logger = logging.getLogger(__name__)
@@ -622,6 +623,33 @@ def _handle_frame_md(ctx, file_path: str) -> None:
         logger.info("frame.md weight directive injected")
 
 
+def _build_weight_consistency_report(frame_md_content: str,
+                                      expanded_prompt: str) -> str | None:
+    """检查五行权重与 expanded-prompt 的一致性，生成 P2 报告。
+
+    返回 None 当：
+      - frame.md 没有 control_profile（向后兼容）
+      - 权重与产出一致（无 mismatch）
+    """
+    try:
+        cp = ControlProfile.from_frame_md(frame_md_content)
+    except Exception:
+        return None
+    if cp is None:
+        return None
+
+    issues = audit_weight_consistency(cp, expanded_prompt=expanded_prompt)
+    if not issues:
+        return None
+
+    lines = ["## 五行权重一致性检查（P2，需要解释）", ""]
+    for issue in issues:
+        lines.append(f"- [{issue.severity}] {issue.message}")
+    lines.append("")
+    lines.append("请在 expanded-prompt.md 里对以上每项做出解释，或调整你的产出。")
+    return "\n".join(lines)
+
+
 def _handle_expanded_prompt(ctx, file_path: str) -> None:
     logger.info("expanded-prompt.md detected: %s", file_path)
     try:
@@ -645,3 +673,22 @@ def _handle_expanded_prompt(ctx, file_path: str) -> None:
     message = _build_expanded_prompt_advice(analysis)
     _safe_inject(ctx, message, role="user")
     logger.info("expanded-prompt advice injected")
+
+    # 五行权重一致性检查注入（v0.14）
+    # 从同目录找 frame.md 读取 control_profile
+    expanded_path = Path(file_path)
+    search_dirs = [expanded_path.parent, expanded_path.parent.parent]
+    frame_md_content = ""
+    for d in search_dirs:
+        frame_path = d / "frame.md"
+        if frame_path.exists():
+            try:
+                frame_md_content = _read_file_safe(str(frame_path))
+            except Exception:
+                pass
+            break
+    if frame_md_content:
+        report = _build_weight_consistency_report(frame_md_content, content)
+        if report:
+            _safe_inject(ctx, report, role="user")
+            logger.info("expanded-prompt weight consistency report injected")
