@@ -115,3 +115,70 @@ class TestControlProfileParsing:
     def test_from_frame_md_file_not_found(self):
         cp = ControlProfile.from_frame_md_file(Path("/nonexistent/frame.md"))
         assert cp is None
+
+
+class TestWeightDirectiveRendering:
+    """render_directive() 把五行权重翻译成面向当前阶段的具体行为指令。"""
+
+    def test_render_directive_contains_all_five_weights(self):
+        cp = ControlProfile(weights=Weights(
+            creative_autonomy=0.8, restraint_force=0.7, atmosphere_density=0.3,
+            motion_dynamism=0.6, weapon_reliance=0.5))
+        directive = cp.render_directive()
+        for label in ("creative_autonomy", "restraint_force",
+                      "atmosphere_density", "motion_dynamism", "weapon_reliance"):
+            assert label in directive
+
+    def test_render_directive_high_autonomy_says_trust(self):
+        """木 creative_autonomy 高 → 指令说'信任自己的创意判断'"""
+        cp = ControlProfile(weights=Weights(creative_autonomy=0.85))
+        d = cp.render_directive()
+        assert "信任" in d
+
+    def test_render_directive_low_autonomy_says_follow_guide(self):
+        """木 creative_autonomy 低 → 指令说'需要风格库引导'"""
+        cp = ControlProfile(weights=Weights(creative_autonomy=0.15))
+        d = cp.render_directive()
+        assert "引导" in d or "参考" in d
+
+    def test_render_directive_low_restraint_warns_about_piling(self):
+        """金 restraint_force 低 → 指令警告'堆砌倾向'"""
+        cp = ControlProfile(weights=Weights(restraint_force=0.15))
+        d = cp.render_directive()
+        assert "堆砌" in d
+
+    def test_render_directive_high_restraint_says_keep_minimal(self):
+        """金 restraint_force 高 → 指令说'克制/精简'"""
+        cp = ControlProfile(weights=Weights(restraint_force=0.85))
+        d = cp.render_directive()
+        assert "克制" in d or "精简" in d
+
+    def test_render_directive_includes_atmosphere_layer_cap(self):
+        """火 atmosphere_density → 指令包含具体层数上限"""
+        cp = ControlProfile(weights=Weights(atmosphere_density=0.3))
+        d = cp.render_directive()
+        assert "2" in d  # floor(0.3*7)=2
+
+    def test_render_directive_high_weapon_reliance_says_use_arsenal(self):
+        """土 weapon_reliance 高 → 指令说'武器库兜底'"""
+        cp = ControlProfile(weights=Weights(weapon_reliance=0.85))
+        d = cp.render_directive()
+        assert "武器" in d or "arsenal" in d.lower()
+
+    def test_render_directive_low_weapon_reliance_allows_handwrite(self):
+        """土 weapon_reliance 低 → 指令允许裸写"""
+        cp = ControlProfile(weights=Weights(weapon_reliance=0.15))
+        d = cp.render_directive()
+        assert "裸写" in d or "handwrite" in d.lower() or "自由" in d
+
+    def test_render_directive_high_motion_dynamism_says_bold(self):
+        """水 motion_dynamism 高 → 指令说'大胆/激进'"""
+        cp = ControlProfile(weights=Weights(motion_dynamism=0.85))
+        d = cp.render_directive()
+        assert "大胆" in d or "激进" in d or "张力" in d
+
+    def test_render_directive_low_motion_dynamism_says_calm(self):
+        """水 motion_dynamism 低 → 指令说'沉稳/平静'"""
+        cp = ControlProfile(weights=Weights(motion_dynamism=0.15))
+        d = cp.render_directive()
+        assert "沉稳" in d or "平静" in d or "沉稳" in d

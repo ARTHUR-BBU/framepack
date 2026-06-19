@@ -71,6 +71,76 @@ class ControlProfile:
     _ASSESS_KEYS = ("content_understanding", "color_confidence",
                     "rhythm_confidence", "restraint_instinct")
 
+    # ── Directive Rendering ──
+
+    def render_directive(self) -> str:
+        """把五行权重翻译成面向当前阶段的具体行为指令文本（给 hook 注入用）。
+
+        五行各有高/中/低三档指引文案，根据权重值自动选择。
+        """
+        w = self.weights
+        lines = ["## 五行权重指令（自动生成，来自你的 control_profile）", ""]
+
+        # 木 creative_autonomy
+        if w.creative_autonomy > 0.7:
+            lines.append(f"木 creative_autonomy={w.creative_autonomy}: 信任你的创意判断，"
+                         "可以自主选择风格、混合独特元素，不必拘泥风格库。")
+        elif w.creative_autonomy < 0.3:
+            lines.append(f"木 creative_autonomy={w.creative_autonomy}: 创意自主度低，"
+                         "需要风格库引导，优先参考 visual-styles.md 的推荐。")
+        else:
+            lines.append(f"木 creative_autonomy={w.creative_autonomy}: "
+                         "中庸自主度——可自主但建议参考风格库验证。")
+
+        # 金 restraint_force
+        if w.restraint_force > 0.7:
+            lines.append(f"金 restraint_force={w.restraint_force}: 克制力高，"
+                         "保持精简，每个元素的存在必须有理由，少即是多。")
+        elif w.restraint_force < 0.3:
+            lines.append(f"金 restraint_force={w.restraint_force}: 克制力低，"
+                         "注意堆砌倾向——加之前问自己：这个元素是否真的必要？")
+        else:
+            lines.append(f"金 restraint_force={w.restraint_force}: "
+                         "中庸克制力——适度即可，但警惕过度堆砌。")
+
+        # 火 atmosphere_density
+        cap = w.atmosphere_layer_cap()
+        if w.atmosphere_density < 0.3:
+            lines.append(f"火 atmosphere_density={w.atmosphere_density}: "
+                         f"氛围密度低，层数上限约{cap}层，默认克制不加。")
+        elif w.atmosphere_density > 0.7:
+            lines.append(f"火 atmosphere_density={w.atmosphere_density}: "
+                         f"氛围密度高，层数上限约{cap}层，可以铺多层氛围。")
+        else:
+            lines.append(f"火 atmosphere_density={w.atmosphere_density}: "
+                         f"中庸氛围密度，层数上限约{cap}层。")
+
+        # 水 motion_dynamism
+        if w.motion_dynamism > 0.7:
+            lines.append(f"水 motion_dynamism={w.motion_dynamism}: 动作张力高，"
+                         "可以用大胆/激进的动画动词（SLAM、PUNCH、BURST）。")
+        elif w.motion_dynamism < 0.3:
+            lines.append(f"水 motion_dynamism={w.motion_dynamism}: 动作张力低，"
+                         "保持沉稳/平静的节奏，用 drift、fade 这类温和动词。")
+        else:
+            lines.append(f"水 motion_dynamism={w.motion_dynamism}: "
+                         "中庸动作张力——动静搭配。")
+
+        # 土 weapon_reliance
+        if w.weapon_reliance > 0.7:
+            lines.append(f"土 weapon_reliance={w.weapon_reliance}: 武器依赖度高，"
+                         "每个场景尽量用武器库兜底，HANDWRITE 需要理由。")
+        elif w.weapon_reliance < 0.3:
+            lines.append(f"土 weapon_reliance={w.weapon_reliance}: 武器依赖度低，"
+                         "允许自由裸写 GSAP，武器是可选强化工具不是强制。")
+        else:
+            lines.append(f"土 weapon_reliance={w.weapon_reliance}: "
+                         "中庸武器依赖——武器和裸写搭配使用。")
+
+        lines.append("")
+        lines.append("以上指令基于你试菜后的自评权重，请在后续阶段遵循。")
+        return "\n".join(lines)
+
     @classmethod
     def from_frame_md(cls, text: str) -> ControlProfile | None:
         """从 frame.md 文本解析 control_profile 块。
