@@ -1,7 +1,7 @@
 ---
 name: framepack
-description: "Framepack v0.14.0 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens), Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
-version: 0.14.0
+description: "Framepack v0.14.1 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens), Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
+version: 0.14.1
 author: 老田 + Hermes
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,7 +11,7 @@ metadata:
     related_skills: [hyperframes, hyperframes-cli, gsap]
 ---
 
-# Framepack v0.14.0 — HyperFrames Prompt Factory
+# Framepack v0.14.1 — HyperFrames Prompt Factory
 
 Framepack is a Hermes Agent Plugin that translates fuzzy video intent into
 precise creative briefs HyperFrames can render. It does two things and hands off.

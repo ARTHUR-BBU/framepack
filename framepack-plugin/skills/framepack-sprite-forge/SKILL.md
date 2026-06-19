@@ -6,7 +6,7 @@ description: >-
   用户拿图纸去外部工具生图，拿回来后跑确定性后处理（色键去背景、切帧、对齐、质检），
   产出透明 sprite sheet，交给 sprite-animation 武器播放。
   做"出图纸"和"裁切装订"，不做"替用户生图"（创意主权留给用户）。
-version: 0.14.0
+version: 0.14.1
 linked_files:
   references/prompt-rules.md: "生图 prompt 工程规则（核心知识资产）"
   references/sheet-modes.md: "素材类型/动作/网格/视角推断指南"
