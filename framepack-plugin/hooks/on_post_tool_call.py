@@ -20,6 +20,7 @@ from pathlib import Path
 
 from .guardrails import hydrate_guardrails
 from core.arsenal_registry import sync_arsenal_from_project, ArsenalWarning
+from core.control_profile import ControlProfile
 from core.shell_utils import resolve_effective_workdir
 
 logger = logging.getLogger(__name__)
@@ -580,6 +581,21 @@ def _inject_param_card_if_manifest(ctx, file_path: str) -> None:
 
 # ── Handlers ──
 
+def _build_weight_directive(frame_md_content: str) -> str | None:
+    """从 frame.md 文本提取 ControlProfile 并生成五行权重指令。
+
+    返回 None 当 frame.md 没有 control_profile 块（向后兼容旧项目）。
+    """
+    try:
+        cp = ControlProfile.from_frame_md(frame_md_content)
+    except Exception as e:
+        logger.warning("ControlProfile parse failed: %s", e)
+        return None
+    if cp is None:
+        return None
+    return cp.render_directive()
+
+
 def _handle_frame_md(ctx, file_path: str) -> None:
     logger.info("frame.md detected: %s", file_path)
     try:
@@ -598,6 +614,12 @@ def _handle_frame_md(ctx, file_path: str) -> None:
     message = _build_frame_md_advice(analysis)
     _safe_inject(ctx, message, role="user")
     logger.info("frame.md advice injected")
+
+    # 五行权重指令注入（v0.14）
+    weight_directive = _build_weight_directive(content)
+    if weight_directive:
+        _safe_inject(ctx, weight_directive, role="user")
+        logger.info("frame.md weight directive injected")
 
 
 def _handle_expanded_prompt(ctx, file_path: str) -> None:
