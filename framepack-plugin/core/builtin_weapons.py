@@ -61,7 +61,28 @@ BUILTIN_WEAPONS: dict[str, dict] = {
     "anime-text-split": _part("anime-text-split", "animeTextSplit", engine="anime.js"),
     "svg-morph-transition": _part("svg-morph-transition", "svgMorph", engine="anime.js"),
     # ── Sprite sheet weapons (v0.12 NEW) ──
-    "sprite-animation": _part("sprite-animation", "spriteAnimation", engine="GSAP+CSS sprite sheet"),
+    # v0.14: params documents the sprite-animation contract. `spriteUrl` is the
+    # hand-off point from framepack-sprite-forge — it points at the transparent
+    # sheet produced by process_sprite.py. This key is descriptive metadata for
+    # the arsenal catalog; it does not change runtime weapon resolution.
+    "sprite-animation": {
+        **_part("sprite-animation", "spriteAnimation", engine="GSAP+CSS sprite sheet"),
+        "params": {
+            "spriteUrl": (
+                "Path/URL to a transparent sprite sheet PNG. "
+                "Produced by framepack-sprite-forge (process_sprite.py) as "
+                "sheet-transparent.png. If omitted, the element's existing "
+                "background-image is used."
+            ),
+            "frameCount": "Total frames in the sheet (= rows x cols for a grid).",
+            "frameWidth": "Single frame width in px (cell_size).",
+            "frameHeight": "Single frame height in px (cell_size).",
+            "fps": "Playback framerate (idle slow ~4-6, effect fast ~10-20).",
+            "loopCount": "Times to loop. Cycles use a large number, one-shot actions use 1.",
+            "direction": "horizontal | vertical — how frames step through the sheet.",
+            "pingPong": "true to play forward then backward (e.g. idle sway).",
+        },
+    },
     # ── Block weapons (scene-level compositions) ──
     "card-cascade-reveal": _block("card-cascade-reveal", "buildCardCascade", engine="GSAP"),
     "data-chart-editorial": _block("data-chart-editorial", "buildDataChart", engine="GSAP"),
