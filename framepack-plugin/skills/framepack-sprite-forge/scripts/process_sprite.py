@@ -17,6 +17,7 @@ CLI:
 from __future__ import annotations
 
 import argparse
+import collections
 import sys
 from pathlib import Path
 from typing import List
@@ -31,17 +32,58 @@ MAGENTA = (255, 0, 255)
 # ---------------------------------------------------------------------------
 # Core post-processing functions
 # ---------------------------------------------------------------------------
-def remove_bg_magenta(img: Image.Image, threshold: int = 30) -> Image.Image:
-    """Remove a magenta (#FF00FF) background via euclidean color-distance keying.
+def detect_background_color(img: Image.Image) -> tuple[int, int, int]:
+    """Sample the image edges and return the dominant background color.
 
-    Every pixel whose RGB distance to magenta is below ``threshold`` becomes
-    fully transparent; all other pixels are kept fully opaque. Returns an RGBA
-    image.
+    Generation models don't obey hex values precisely — a prompted
+    ``#FF00FF magenta`` often comes back as a darker fuchsia like
+    ``(230, 45, 183)``. By sampling the margins (the subject sits in the
+    central ~60% safe area, so the edges are pure background) we recover the
+    *actual* background color the model painted, letting the chroma key hit
+    it regardless of which tool generated the image.
+
+    Returns the dominant edge color as an ``(R, G, B)`` tuple.
     """
+    rgb = img.convert("RGB")
+    arr = np.asarray(rgb, dtype=np.uint8)
+    w, h = rgb.size
+    margin = max(2, min(w, h) // 50)  # ~2% edge band, at least 2px
+    # 采样四条边缘带（角色在中央 60% 安全区，边缘是纯背景）
+    edge = np.concatenate([
+        arr[:margin, :, :].reshape(-1, 3),    # top band
+        arr[-margin:, :, :].reshape(-1, 3),   # bottom band
+        arr[:, :margin, :].reshape(-1, 3),    # left band
+        arr[:, -margin:, :].reshape(-1, 3),   # right band
+    ])
+    counter = collections.Counter(map(tuple, edge.tolist()))
+    # 0×0 等退化图像不可达（pipeline 只处理真实生图产物），但加一道
+    # 防御性兜底，避免外部直接调用时 IndexError。
+    if not counter:
+        return MAGENTA
+    return counter.most_common(1)[0][0]
+
+
+def remove_bg_magenta(
+    img: Image.Image,
+    threshold: int = 30,
+    key_color: tuple[int, int, int] | None = None,
+) -> Image.Image:
+    """Remove a solid-color background via euclidean color-distance keying.
+
+    Every pixel whose RGB distance to ``key_color`` is below ``threshold``
+    becomes fully transparent; all other pixels stay fully opaque. Returns an
+    RGBA image.
+
+    ``key_color`` defaults to pure magenta (#FF00FF) for backward
+    compatibility. Pass ``detect_background_color(img)`` to adaptively key
+    whatever background the generation model actually painted — essential for
+    non-SD models whose "magenta" drifts from the exact hex value.
+    """
+    target = key_color if key_color is not None else MAGENTA
     rgb = img.convert("RGB")
     arr = np.asarray(rgb, dtype=np.int32)
     r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
-    dist = np.sqrt((r - MAGENTA[0]) ** 2 + (g - MAGENTA[1]) ** 2 + (b - MAGENTA[2]) ** 2)
+    dist = np.sqrt((r - target[0]) ** 2 + (g - target[1]) ** 2 + (b - target[2]) ** 2)
     alpha = np.where(dist < threshold, 0, 255).astype(np.uint8)
     rgba = np.dstack([arr.astype(np.uint8), alpha])
     return Image.fromarray(rgba, "RGBA")
@@ -260,7 +302,12 @@ def run_pipeline(
     out.mkdir(parents=True, exist_ok=True)
 
     raw = Image.open(input_path)
-    keyed = remove_bg_magenta(raw, threshold=threshold)
+    # 自适应背景检测：生图工具对 #FF00FF 服从度有限，画出的"magenta"
+    # 常常是偏暗洋红(如 230,45,183)。从图像边缘采样实际背景色再做色键，
+    # 对所有生图工具都健壮。纯品红背景时 detect 返回 (255,0,255)，
+    # 行为与修复前完全一致（向后兼容）。
+    bg_color = detect_background_color(raw)
+    keyed = remove_bg_magenta(raw, threshold=threshold, key_color=bg_color)
     cleaned = clean_edges(keyed)
     raw_frames = split_grid(cleaned, rows, cols)
     frames = [center_single_sprite(f, cell_size) for f in raw_frames]

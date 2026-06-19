@@ -35,22 +35,9 @@ def _solid(w, h, rgb):
 
 def _magenta_sheet_with_cells(rows, cols, cell, fill_colors):
     """Magenta (#FF00FF) background sheet with a centered color block per cell."""
-    w = cols * cell
-    h = rows * cell
-    arr = np.zeros((h, w, 3), dtype=np.uint8)
-    arr[..., 0] = 255
-    arr[..., 1] = 0
-    arr[..., 2] = 255
-    img = Image.fromarray(arr, "RGB")
-    for i, color in enumerate(fill_colors):
-        r = i // cols
-        c = i % cols
-        cx0 = c * cell
-        cy0 = r * cell
-        inset = cell // 4
-        block = _solid(cell - 2 * inset, cell - 2 * inset, color)
-        img.paste(block, (cx0 + inset, cy0 + inset))
-    return img
+    # 纯品红是 _custom_bg_sheet 的特化版；通用 helper 在文件底部定义，
+    # 模块加载完成后即可前向引用（运行时解析）。
+    return _custom_bg_sheet(rows, cols, cell, (255, 0, 255), fill_colors)
 
 
 # ---------------------------------------------------------------------------
@@ -345,3 +332,136 @@ class TestQCReport:
         data = json.loads(qc_file.read_text())
         assert "transparent_ratio" in data
         assert "warnings" in data
+
+
+# --------------------------------------------------------------------------- #
+# Adaptive background detection — 非纯品红背景的自适应色键
+#
+# 根因: remove_bg_magenta 硬编码 MAGENTA=(255,0,255)，真实生图工具
+# (Grok/DALL·E/Nano Banana 等非 SD 系) 对 hex 服从度有限，画出的"magenta"
+# 常常是偏暗洋红 (230,45,183)，距离纯品红 77-86px，默认阈值 30 完全够不着，
+# 导致 0% 透明、管线断流。修复 = 色键自适应检测实际背景色。
+# --------------------------------------------------------------------------- #
+def _custom_bg_sheet(rows, cols, cell, bg_rgb, fill_colors):
+    """和 _magenta_sheet_with_cells 一样，但背景色可自定义。"""
+    w = cols * cell
+    h = rows * cell
+    arr = np.zeros((h, w, 3), dtype=np.uint8)
+    arr[..., 0] = bg_rgb[0]
+    arr[..., 1] = bg_rgb[1]
+    arr[..., 2] = bg_rgb[2]
+    img = Image.fromarray(arr, "RGB")
+    for i, color in enumerate(fill_colors):
+        r = i // cols
+        c = i % cols
+        inset = cell // 4
+        block = _solid(cell - 2 * inset, cell - 2 * inset, color)
+        img.paste(block, (c * cell + inset, r * cell + inset))
+    return img
+
+
+class TestAdaptiveBackgroundDetection:
+    def test_detect_returns_dominant_edge_color(self):
+        """detect_background_color 从边缘采样，返回最常见的背景色"""
+        img = _custom_bg_sheet(1, 1, 40, (50, 100, 200), [(255, 0, 0)])
+        bg = process_sprite.detect_background_color(img)
+        assert bg == (50, 100, 200)
+
+    def test_detect_ignores_center_content(self):
+        """detect_background_color 不被中心内容干扰（角色在 60% 安全区）"""
+        # 绿色背景，中心占 50% 的大红块——边缘仍是绿色
+        img = _custom_bg_sheet(1, 1, 100, (0, 200, 0), [(255, 0, 0)])
+        bg = process_sprite.detect_background_color(img)
+        assert bg == (0, 200, 0)
+
+    def test_detect_pure_magenta_returns_exact(self):
+        """纯品红背景应返回 (255,0,255)"""
+        img = _solid(40, 40, (255, 0, 255))
+        bg = process_sprite.detect_background_color(img)
+        assert bg == (255, 0, 255)
+
+    def test_detect_off_magenta_realistic(self):
+        """偏暗洋红 (230,45,183) — 真实生图工具实际输出的背景色"""
+        img = _custom_bg_sheet(2, 3, 60, (230, 45, 183),
+                               [(255, 0, 0)] * 6)
+        bg = process_sprite.detect_background_color(img)
+        assert bg == (230, 45, 183)
+
+    def test_detect_empty_image_does_not_crash(self):
+        """0×0 退化图像不应 crash，返回默认品红（防御性 guard）"""
+        empty = Image.new("RGB", (0, 0))
+        bg = process_sprite.detect_background_color(empty)
+        assert bg == (255, 0, 255)
+
+
+class TestRemoveBgCustomKeyColor:
+    def test_custom_key_color_removes_off_magenta_bg(self):
+        """key_color 参数能键控非纯品红背景"""
+        img = _custom_bg_sheet(1, 1, 40, (230, 45, 183), [(255, 0, 0)])
+        out = process_sprite.remove_bg_magenta(
+            img, threshold=30, key_color=(230, 45, 183)
+        )
+        arr = np.array(out)
+        assert (arr[..., 3] == 0).any()   # 背景变透明
+        assert arr[20, 20, 3] == 255      # 中心红色块保留
+
+    def test_default_key_color_is_pure_magenta(self):
+        """不传 key_color 时向后兼容，行为和现在一样（纯品红键控）"""
+        img = _magenta_sheet_with_cells(1, 1, 40, [(255, 0, 0)])
+        out_default = process_sprite.remove_bg_magenta(img, threshold=30)
+        out_explicit = process_sprite.remove_bg_magenta(
+            img, threshold=30, key_color=(255, 0, 255)
+        )
+        assert np.array_equal(np.array(out_default), np.array(out_explicit))
+
+    def test_fixed_magenta_fails_on_off_magenta_bg(self):
+        """用纯品红键控偏暗洋红背景 → 0% 透明（复现真实 bug）"""
+        img = _custom_bg_sheet(1, 1, 40, (230, 45, 183), [(255, 0, 0)])
+        out = process_sprite.remove_bg_magenta(img, threshold=30)
+        arr = np.array(out)
+        assert (arr[..., 3] == 255).all()  # 全不透明，色键完全没起作用
+
+
+class TestPipelineAdaptiveBackground:
+    """端到端: run_pipeline 应自适应检测背景色，不依赖纯品红硬编码。
+
+    这组测试直接复现真实生图场景——生图工具画出的"magenta"是偏暗洋红
+    (230,45,183)，距离纯品红 77-86px。修复前 pipeline 0% 透明断流；
+    修复后应自动检测实际背景色并正确键控。
+    """
+
+    def test_adapts_to_off_magenta_background(self, tmp_path):
+        """偏暗洋红背景 + 默认参数 → pipeline 应产生 >10% 透明度"""
+        sheet = _custom_bg_sheet(
+            2, 2, 50, (230, 45, 183),
+            [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)],
+        )
+        inp = tmp_path / "off_magenta.png"
+        sheet.save(inp)
+        outdir = tmp_path / "out"
+        sheet_path, qc = process_sprite.run_pipeline(
+            input_path=str(inp), rows=2, cols=2,
+            output_dir=str(outdir), cell_size=50,
+        )
+        assert qc["transparent_ratio"] > 0.10, (
+            f"自适应色键失败，透明度仅 {qc['transparent_ratio']:.1%}"
+        )
+        # 不应有"色键失效"警告（背景被正确检测并键控了）
+        assert not any("transparency" in w.lower() for w in qc["warnings"]), (
+            f"不应告警色键失效: {qc['warnings']}"
+        )
+
+    def test_pure_magenta_unchanged_after_fix(self, tmp_path):
+        """回归: 纯品红背景的 pipeline 行为不变（向后兼容）"""
+        sheet = _magenta_sheet_with_cells(
+            2, 2, 50, [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0)]
+        )
+        inp = tmp_path / "pure_magenta.png"
+        sheet.save(inp)
+        outdir = tmp_path / "out"
+        _, qc = process_sprite.run_pipeline(
+            input_path=str(inp), rows=2, cols=2,
+            output_dir=str(outdir), cell_size=50,
+        )
+        assert qc["transparent_ratio"] > 0.10
+        assert qc["non_empty_frames"] == 4
