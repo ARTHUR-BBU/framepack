@@ -49,6 +49,15 @@ class QualityAuditReport:
 
 SEVERITIES = ("P0", "P1", "P2", "P3")
 
+# Taste-audit severity → quality-audit severity.
+# Taste problems never escalate to P0 — they advise, not block.
+# risk → "this doesn't work", suggestion → "could be better", note → "FYI".
+TASTE_SEVERITY_MAP = {
+    "risk": "P1",
+    "suggestion": "P2",
+    "note": "P3",
+}
+
 PARAM_ALIASES = {
     "elastic-scale-enter": {
         "scale_from": "fromScale",
@@ -620,6 +629,124 @@ def _audit_lint_cache(project_dir: Path) -> list[QualityIssue]:
         return []
 
 
+def _validate_specimen_ids(frame_md: str, frame_path: Path) -> list[QualityIssue]:
+    """Check that reference_dna specimen IDs declared in frame.md are known.
+
+    taste_audit itself does not validate specimen IDs — this is the quality
+    layer catching an Agent that wrote a non-existent reference_dna ID.
+    """
+    from .taste_specimens import specimen_ids
+    valid_ids = set(specimen_ids())
+
+    # List format: "reference_dna:\n  - id1\n  - id2"
+    block = re.search(
+        r"reference_dna\s*:\s*\n((?:[ \t]*-[ \t].+\n?)+)", frame_md
+    )
+    if not block:
+        return []
+
+    declared = re.findall(r"^\s*-\s*(.+?)\s*$", block.group(1), re.M)
+    issues: list[QualityIssue] = []
+    for specimen_id in declared:
+        if specimen_id not in valid_ids:
+            issues.append(
+                QualityIssue(
+                    code="specimen_id_unknown",
+                    severity="P1",
+                    message=(
+                        f"reference_dna specimen ID '{specimen_id}' is not a "
+                        f"known reference specimen."
+                    ),
+                    path=str(frame_path),
+                    details={
+                        "invalid_id": specimen_id,
+                        "valid_ids": sorted(valid_ids),
+                    },
+                )
+            )
+    return issues
+
+
+def _audit_taste(project_dir: Path, frame_md: str) -> list[QualityIssue]:
+    """Bridge taste_audit into the quality pipeline.
+
+    The taste trio (specimens / grammar / auditor) was previously suspended —
+    zero runtime consumers. This function is the hiring paperwork that puts
+    the sommelier on the kitchen staff.
+
+    1. Validates reference_dna specimen IDs against the known registry.
+    2. Calls taste_audit.audit_project() and maps each TasteAuditIssue to a
+       QualityIssue via TASTE_SEVERITY_MAP. The taste-only 'suggestion' field
+       is preserved inside details.
+    """
+    issues: list[QualityIssue] = []
+    issues.extend(_validate_specimen_ids(frame_md, project_dir / "frame.md"))
+
+    try:
+        from .taste_audit import audit_project as taste_audit_project
+
+        taste_report = taste_audit_project(project_dir)
+        for taste_issue in taste_report.issues:
+            severity = TASTE_SEVERITY_MAP.get(taste_issue.severity, "P3")
+            details = dict(taste_issue.details) if taste_issue.details else {}
+            if taste_issue.suggestion:
+                details["suggestion"] = taste_issue.suggestion
+            issues.append(
+                QualityIssue(
+                    code=taste_issue.code,
+                    severity=severity,
+                    message=taste_issue.message,
+                    path=taste_issue.path,
+                    scene=taste_issue.scene,
+                    details=details or None,
+                )
+            )
+    except Exception as exc:
+        import logging
+
+        logging.getLogger(__name__).warning(
+            "Taste audit bridge failed: %s", exc
+        )
+
+    return issues
+
+
+def _audit_weight_consistency(project_dir: Path, frame_md: str,
+                               expanded_prompt: str) -> list[QualityIssue]:
+    """Bridge restraint_audit (weight consistency) into the quality pipeline.
+
+    Reads ControlProfile from frame.md and checks consistency with
+    expanded-prompt.md. Maps ConsistencyIssue → QualityIssue.
+    Returns empty list when no control_profile (backward compat).
+    """
+    try:
+        from .control_profile import ControlProfile
+        from .restraint_audit import audit_weight_consistency
+
+        cp = ControlProfile.from_frame_md(frame_md)
+        if cp is None:
+            return []
+
+        consistency_issues = audit_weight_consistency(cp, expanded_prompt)
+        return [
+            QualityIssue(
+                code=ci.code,
+                severity=ci.severity,
+                message=ci.message,
+                path=str(project_dir / ".hyperframes" / "expanded-prompt.md"),
+                scene=None,
+                details={"requires_explanation": ci.requires_explanation},
+            )
+            for ci in consistency_issues
+        ]
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Weight consistency audit bridge failed: %s", exc
+        )
+        return []
+
+
 def audit_project(project_dir: str | Path) -> QualityAuditReport:
     project_dir = Path(project_dir)
     expanded_prompt = _read(project_dir / ".hyperframes" / "expanded-prompt.md")
@@ -637,5 +764,7 @@ def audit_project(project_dir: str | Path) -> QualityAuditReport:
     issues.extend(_audit_visibility(project_dir, frame_md, html))
     issues.extend(_audit_timeline(project_dir, html, expanded_prompt, duration))
     issues.extend(_audit_lint_cache(project_dir))
+    issues.extend(_audit_taste(project_dir, frame_md))
+    issues.extend(_audit_weight_consistency(project_dir, frame_md, expanded_prompt))
 
     return QualityAuditReport(str(project_dir), issues, _summarize(issues))
