@@ -61,7 +61,7 @@ hermes plugins enable framepack
 
 # 4. 验证
 hermes plugins list
-# 你应该看到 `framepack` 状态为 **enabled**，版本为 **0.14.1**。
+# 你应该看到 `framepack` 状态为 **enabled**，版本为 **0.14.2**。
 
 # 5. 项目 AGENTS.md 由 Guardrail Hydrator 自动维护 managed block；不要手工覆盖项目自有规则。
 ```
@@ -71,6 +71,8 @@ hermes plugins list
 MIT
 
 ---
+
+**v0.14.2** 修复 Sprite Forge 色键断流：生图工具画出的“magenta”常是偏暗洋红（如 `230,45,183` 而非 `255,0,255`），硬编码纯品红键控完全失效——0% 透明，管线断流。新增 `detect_background_color()` 从图像边缘采样实际背景色自适应键控，对所有生图工具健壮，向后兼容纯品红。+10 回归测试（531->541）。
 
 **v0.14.1** 是生产加固版。多角度端到端测试暴露 9 个瑕疵，本版全部修复：权重注入守卫（LLM 质检与权重插入解耦，避免质检跳过时权重静默丢失）、restraint 正则加固（handwrite 比例不再跨行误匹配、不再误抓 `obscene1:` 这类词首前缀）、caution_motion 渲染与审计覆盖、Sprite Forge QC 报告输出与非方形单元缩放、YAML 块名迁移守卫、五行 Weights docstring 明确"相生相克是创意方向隐喻而非数学约束"，另 +20 回归测试锁定修复（511→531）。
 

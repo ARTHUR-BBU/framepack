@@ -48,7 +48,7 @@ HyperFrames takes over:
 Video 🎬
 ```
 
-## Plugin Hooks (v0.14.1)
+## Plugin Hooks (v0.14.2)
 
 ```text
 pre_tool_call:
@@ -97,8 +97,10 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.14.1**.
+# You should see `framepack` with status **enabled** and version **0.14.2**.
 ```
+
+**Framepack v0.14.2** fixes Sprite Forge chroma-key stall: image-generation tools paint "magenta" as a darker fuchsia (e.g. `230,45,183` instead of `255,0,255`), so the hardcoded pure-magenta key missed it entirely — 0% transparency, pipeline dead. New `detect_background_color()` samples the actual background from image edges and keys against that, making Sprite Forge robust across all generation tools while staying backward-compatible with pure magenta. +10 regression tests (531->541).
 
 **Framepack v0.14.1** is a production-hardening release. Multi-angle E2E testing surfaced 9 defects; this release fixes all of them: weight-injection guardrails (LLM quality-check decoupled from weight insertion so weight directives cannot silently drop when the LLM check skips), restraint-audit regex hardening (handwrite-ratio matcher no longer collapses across newlines or false-matches word prefixes like `obscene1:`), caution_motion rendering & audit coverage, Sprite Forge QC report emission & non-square cell scaling, cross-block-name migration guard for YAML blocks, five-element Weights docstring clarified so the 相生相克 metaphor is understood as creative-direction guidance (not a mathematical constraint), and +20 regression tests locking the fixes (511→531).
 

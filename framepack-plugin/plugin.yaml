@@ -1,9 +1,10 @@
 name: framepack
-version: "0.14.1"
+version: "0.14.2"
 description: >-
   Prompt Factory for HyperFrames. Translates fuzzy user intent into frame.md
   (visual identity) and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
   Framepack is the director who knows which lights to turn on — not the electrician who wires the studio.
+  v0.14.2 fixes: Sprite Forge adaptive chroma key — image-gen tools paint "magenta" as darker fuchsia (e.g. 230,45,183), hardcoded pure-magenta key caused 0% transparency / pipeline stall. New detect_background_color() samples actual background from image edges; remove_bg_magenta gains key_color param (backward-compatible). +10 tests (531->541).
   v0.14.1 fixes: production hardening from multi-angle E2E testing (9 defects — weight injection decoupled from LLM quality check to prevent silent dropout, regex cross-line/cross-word match in handwrite ratio audit, caution_motion rendering & audit coverage, sprite QC report output & non-square cell scaling, cross-block-name migration guard, five-element metaphor clarified as guidance not mathematical constraint).
   v0.14.0 adds: Five-Element Weight Control System (ControlProfile with creative_autonomy/restraint_force/atmosphere_density/motion_dynamism/weapon_reliance weights, Phase 0.5 试菜 flow, Hook nerve-pathway penetration, weight consistency audit at P2), caution_motion weighted motion system (forbidden_motion backward compat), Sprite Forge workshop (process_sprite.py chroma-key cutting + make_layout_guide.py layout reference + prompt rules knowledge base), Taste audit bridge to quality_audit (TASTE_SEVERITY_MAP).
   v0.12.0 adds Arsenal expansion (anime.js + sprite sheet forge), Taste audit broadening (kinetic/fade/surprise/motif fixes), Parameter drift guard (param_guard.py + canonical snippets), Upstream Warning Bridge (lint --json classification into quality_audit). v0.11.1 adds Asset Intake (Phase 0): asset detector (PNG/JPG/SVG transparency), six-category asset checklist, asset-intake.md manifest generation, degradation branches by video type. v0.11.0 adds: Kinetic Taste Engine (taste audit, surprise
