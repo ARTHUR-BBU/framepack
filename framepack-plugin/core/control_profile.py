@@ -7,7 +7,9 @@
   水 motion_dynamism    — 动作张力
   土 weapon_reliance    — 武器依赖度
 
-相生相克（覆盖万控）:
+相生相克（覆盖万控，**但只是隐喻引导，不是数学约束**;
+五个权重各自独立、可任意组合，真正的阈值检查在
+``restraint_audit.audit_weight_consistency()`` 里）:
   木 克 土 — 自主高，武器依赖自然降低（V1 模式）
   土 克 水 — 武器兜底多，动作更规范可控
   水 克 火 — 动作张力高，氛围不需要太浓（动静互补）
@@ -27,7 +29,16 @@ def _clamp(v: float) -> float:
 
 @dataclass(frozen=True)
 class Weights:
-    """五个核心控制权重——像五行，正交但相生相克。"""
+    """五个核心控制权重——像五行，正交但相生相克。
+
+    重要：相生相克是创意方向的隐喻引导，不是数学约束。
+    五个权重各自独立，互相不限制。Agent 可以同时设置
+    高水（高张力）和高火（高氛围）——"水克火"只是提示
+    "高张力时氛围可能不需要太浓"，而非禁止这种组合。
+    权重的真正约束在 render_directive() 的分档文案和
+    audit_weight_consistency() 的阈值检查里，不在此处的
+    五行类比。
+    """
     creative_autonomy: float = 0.5      # 木｜创意自主度
     restraint_force: float = 0.5       # 金｜克制力
     atmosphere_density: float = 0.4    # 火｜氛围密度（默认偏克制）

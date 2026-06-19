@@ -121,10 +121,16 @@ def _count_atmosphere_layers(text: str) -> int:
 
 
 def _handwrite_ratio(text: str) -> float:
-    """计算 Execution Manifest 里 HANDWRITE 的比例。"""
-    # 匹配 sceneN: weapon_name 格式
+    """计算 Execution Manifest 里 HANDWRITE 的比例。
+
+    正则说明（C-1 + C-4 修复）:
+      - ``\\b`` 词边界：防止 'obscene1:' 被误匹配（C-4）
+      - ``[ \\t]*`` 只匹配空格/tab：防止裸 'scene1:' 跨行吞掉
+        下一行首词（C-1，原 ``\\s*`` 含换行符）
+    """
+    # 匹配 sceneN: weapon_name 格式（词首锚定 + 不跨行）
     manifest_entries = re.findall(
-        r'scene\d+:?\s*([\w-]+)', text, re.IGNORECASE)
+        r'\bscene\d+:?[ \t]*([\w-]+)', text, re.IGNORECASE)
     if not manifest_entries:
         return 0.0
     hw_count = sum(1 for entry in manifest_entries

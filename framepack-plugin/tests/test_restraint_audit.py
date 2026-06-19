@@ -148,6 +148,39 @@ class TestHelperFunctions:
         assert len(_ATMOSPHERE_KEYWORDS) == len(set(_ATMOSPHERE_KEYWORDS)), \
             f"重复项: {set([x for x in _ATMOSPHERE_KEYWORDS if _ATMOSPHERE_KEYWORDS.count(x) > 1])}"
 
+    def test_handwrite_ratio_bare_scene_colon_no_crossline(self):
+        """C-1: 裸 scene1:（冒号后无武器名）不应跨行吞下一行首词。
+
+        根因: 正则 scene\\d+:?\\s*([\\w-]+) 的 \\s* 包含换行符。
+        当某行是裸 scene1:，\\s* 跨行吞掉下一行首词 'scene2'，
+        导致真正的 HANDWRITE 根本不被识别（hw_ratio 被污染为 0.0）。
+        """
+        text = "scene1:\nscene2: HANDWRITE"
+        ratio = _handwrite_ratio(text)
+        # 正确行为: scene1: 无武器名 → 跳过；scene2: HANDWRITE → 1 条 hw
+        # ratio = 1/1 = 1.0
+        assert ratio == 1.0, f"C-1 跨行吞词 bug: ratio={ratio}"
+
+    def test_handwrite_ratio_word_boundary_obscene(self):
+        """C-4: obscene1: 这类不应匹配 sceneN: 模式（词首锚定）。
+
+        根因: 正则 scene\\d+ 没有 \\b 词边界，会在 'obscene1' 中部
+        匹配到 'scene1'，导致误识别。
+        """
+        text = "obscene1: HANDWRITE"
+        ratio = _handwrite_ratio(text)
+        # 正确行为: 无合法 sceneN: 条目 → ratio = 0.0
+        assert ratio == 0.0, f"C-4 词首锚定 bug: ratio={ratio}"
+
+    def test_handwrite_ratio_case_insensitive_after_word_boundary(self):
+        """\\b 词边界不应破坏 re.IGNORECASE —— 大写 SCENE 仍应匹配。
+
+        Reviewer 建议: 确认加 \\b 后 re.IGNORECASE 仍生效。
+        """
+        text = "SCENE1: HANDWRITE\nscene2: blur"
+        ratio = _handwrite_ratio(text)
+        assert ratio == 0.5, f"re.IGNORECASE 被 \\b 破坏: ratio={ratio}"
+
 
 class TestCautionMotionAudit:
     """B-2: 审计层应消费 caution_motion — 高谨慎 motion 被使用时产生 P2 issue"""

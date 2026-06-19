@@ -208,3 +208,27 @@ class TestWeightDirectiveRendering:
         )
         d = cp.render_directive()
         assert "0.9" in d, "caution 值 0.9 未出现在指令中"
+
+
+class TestMetaphorNotConstraintDocstring:
+    """MED7: 五行相生相克必须明确为隐喻，不是数学约束。
+
+    背景: A-F1 报告发现 Agent 可能误把"五行相生相克"当硬约束
+    （水克火 = 不能同时高张力+高氛围），实际是隐喻不是约束。
+    五个权重各自独立，可任意组合。
+    """
+
+    def test_weights_docstring_explicit_metaphor_not_constraint(self):
+        """Weights docstring 必须明确相生相克是隐喻不是硬约束"""
+        doc = Weights.__doc__ or ""
+        assert "隐喻" in doc, f"Weights docstring 缺少'隐喻'说明: {doc!r}"
+        assert "约束" in doc, f"Weights docstring 缺少'约束'说明: {doc!r}"
+        # 锁定"不是...约束"的明确否定语义
+        assert ("不是" in doc and "约束" in doc), \
+            f"Weights docstring 必须明确否定'约束': {doc!r}"
+
+    def test_weights_docstring_weights_independent(self):
+        """Weights docstring 必须说明五个权重各自独立可任意组合"""
+        doc = Weights.__doc__ or ""
+        assert ("独立" in doc or "各自" in doc), \
+            f"Weights docstring 缺少权重独立说明: {doc!r}"
