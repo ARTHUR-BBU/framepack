@@ -63,6 +63,15 @@ class ControlProfile:
     """权重表——类比 Three.js 的 sceneWeights，frame.md 里的新块。"""
     weights: Weights = field(default_factory=Weights)
     self_assessment: SelfAssessment = field(default_factory=SelfAssessment)
+    # v0.14: motion 审计——每个 motion 名 → 0-1 谨慎度权重。
+    # 旧版 forbidden_motion (list) 解析时自动转为 0.9（高谨慎度）。
+    # 注意：caution_motion 是字典而非单一权重，故不进 _WEIGHT_KEYS。
+    caution_motion: dict[str, float] = field(default_factory=dict)
+
+    def __post_init__(self):
+        # frozen dataclass → 用 object.__setattr__ 绕过；值 clamp 到 0-1。
+        clamped = {k: _clamp(v) for k, v in self.caution_motion.items()}
+        object.__setattr__(self, "caution_motion", clamped)
 
     # ── Parsing ──
 
@@ -70,6 +79,9 @@ class ControlProfile:
                     "atmosphere_density", "motion_dynamism", "weapon_reliance")
     _ASSESS_KEYS = ("content_understanding", "color_confidence",
                     "rhythm_confidence", "restraint_instinct")
+
+    # 旧版 forbidden_motion list → 每项自动转为此 caution 值（高谨慎度）。
+    _FORBIDDEN_CAUTION = 0.9
 
     # ── Directive Rendering ──
 
@@ -154,11 +166,19 @@ class ControlProfile:
 
         weight_block = _extract_yaml_block(text, "weights")
         assess_block = _extract_yaml_block(text, "self_assessment")
+        caution_block = _extract_yaml_block(text, "caution_motion")
+        forbidden_block = _extract_yaml_block(text, "forbidden_motion")
 
         weight_vals = _parse_key_values(weight_block, cls._WEIGHT_KEYS)
         assess_vals = _parse_key_values(assess_block, cls._ASSESS_KEYS)
+        # caution_motion 是 dict（任意 key），不受 _WEIGHT_KEYS 过滤。
+        caution_vals = _parse_dict_block(caution_block)
+        # 旧版 forbidden_motion 是 list（key 即 motion 名）→ 每项转 0.9。
+        # 显式 caution_motion 值优先于 forbidden 的默认 0.9（新格式胜出）。
+        for name in _parse_list_block(forbidden_block):
+            caution_vals.setdefault(name, cls._FORBIDDEN_CAUTION)
 
-        if not weight_vals and not assess_vals:
+        if not weight_vals and not assess_vals and not caution_vals:
             return None
 
         return cls(
@@ -166,6 +186,7 @@ class ControlProfile:
                                for k in cls._WEIGHT_KEYS}),
             self_assessment=SelfAssessment(**{k: assess_vals.get(k, 0.5)
                                                for k in cls._ASSESS_KEYS}),
+            caution_motion=caution_vals,
         )
 
     @classmethod
@@ -229,4 +250,36 @@ def _parse_key_values(block_text: str, valid_keys: tuple[str, ...]) -> dict[str,
                 result[key] = float(match.group(1))
             except ValueError:
                 pass
+    return result
+
+
+def _parse_dict_block(block_text: str) -> dict[str, float]:
+    """Parse a YAML-ish 'key: float' block into a dict (any key allowed).
+
+    Used for caution_motion, where key = motion 名, value = 0-1 谨慎度。
+    glow / 任何 key 都按普通条目处理，无白名单过滤。
+    """
+    result: dict[str, float] = {}
+    for line in block_text.splitlines():
+        match = re.match(r'^\s*([A-Za-z0-9_][\w\-]*)\s*:\s*(-?[\d.]+)\s*$', line)
+        if match:
+            try:
+                result[match.group(1)] = float(match.group(2))
+            except ValueError:
+                pass
+    return result
+
+
+def _parse_list_block(block_text: str) -> list[str]:
+    """Parse a YAML-ish '- item' list block into a list of names.
+
+    Used for the legacy forbidden_motion list (key 即 motion 名)。
+    """
+    result: list[str] = []
+    for line in block_text.splitlines():
+        match = re.match(r'^\s*-\s*(.+?)\s*$', line)
+        if match:
+            name = match.group(1).strip().strip('"').strip("'")
+            if name:
+                result.append(name)
     return result
