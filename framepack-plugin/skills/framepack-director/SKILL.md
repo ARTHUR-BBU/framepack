@@ -103,6 +103,114 @@ Only proceed to Phase 1 after user confirms.
 
 ---
 
+## Phase 0.5: 试菜 → 自定权重 → 自执行 (v0.14 NEW)
+
+**This phase runs between Asset Intake and Phase 1.** It's where you, the Agent,
+taste the ingredients and decide how much creative latitude you deserve for this
+project. The output is a **Control Profile** — five weights that will steer every
+creative decision downstream.
+
+### Why this phase exists
+
+The old Framepack was all train tracks (状态机): pick ONE style, follow a forbidden
+list, register weapons, obey taste rules. Strong models felt handcuffed; weak ones
+ran wild. v0.14 replaces discrete switches with continuous weights — a field that
+steers instead of a track that traps.
+
+### The five weights (五行框架)
+
+Five orthogonal dimensions, like the five elements (五行), whose interactions
+(generation/克 restriction) cover all creative control:
+
+| Element | Weight | What it controls |
+|---------|--------|------------------|
+| 木 (Wood) | `creative_autonomy` | Trust your own creative judgment (style choice, transitions) |
+| 金 (Metal) | `restraint_force` | Self-imposed restraint against over-stacking |
+| 火 (Fire) | `atmosphere_density` | How rich the visual atmosphere layers are |
+| 水 (Water) | `motion_dynamism` | How aggressive the animation energy is |
+| 土 (Earth) | `weapon_reliance` | How much you lean on the arsenal weapons vs handwrite |
+
+### Step 1: 试菜 (Taste the ingredients)
+
+Read the user's intent + asset intake. Then ask yourself honestly:
+
+- **How well do I understand this content?** (content_understanding: 0-1)
+- **How confident am I about the color/typography direction?** (color_confidence: 0-1)
+- **How confident am I about rhythm and pacing?** (rhythm_confidence: 0-1)
+- **What's my instinct on restraint here — should I hold back or go bold?** (restraint_instinct: 0-1)
+
+This is honest self-assessment, not performance. A 0.4 confidence is fine —
+it means "I should lean on the style library and weapon arsenal more."
+
+### Step 2: Derive the five weights
+
+From your self-assessment, derive the five control weights. The mapping is
+*advisory, not mechanical* — use your judgment:
+
+```
+creative_autonomy  — high when you deeply understand the content and have a clear vision
+restraint_force    — high when the brand feels premium/minimalist, low when it's playful/maximalist
+atmosphere_density — high for cinematic/luxury, low for tech/data/clean
+motion_dynamism    — high for energetic/youthful, low for calm/corporate
+weapon_reliance    — high when your confidence is low (weapons are your safety net),
+                     low when your confidence is high (trust your own choreography)
+```
+
+Default balanced profile (use when uncertain):
+```yaml
+creative_autonomy: 0.6
+restraint_force: 0.7
+atmosphere_density: 0.4
+motion_dynamism: 0.5
+weapon_reliance: 0.5
+```
+
+### Step 3: Write the Control Profile into frame.md
+
+The control profile goes into frame.md's frontmatter as a `control_profile` block.
+This is the field that downstream hooks will read to steer every decision:
+
+```yaml
+control_profile:
+  self_assessment:
+    content_understanding: 0.8
+    color_confidence: 0.7
+    rhythm_confidence: 0.6
+    restraint_instinct: 0.85
+  weights:
+    creative_autonomy: 0.8
+    restraint_force: 0.85
+    atmosphere_density: 0.2
+    motion_dynamism: 0.5
+    weapon_reliance: 0.3
+  caution_motion: {}   # optional: motion names with 0-1 caution weights
+```
+
+### Step 4: Show the user (briefly, not the raw YAML)
+
+Tell the user what latitude you're taking and why, in plain language:
+
+> "我对这个品牌理解得比较透，创意上我会主导——氛围保持克制（品牌调性偏高级），
+> 动画节奏中等，武器库作为参考而非强制。"
+
+If the user disagrees ("no, I want more atmosphere" / "use more weapons"), adjust
+the weights. This is a co-creation moment, not a solo declaration.
+
+### How the weights reach the nerve endings
+
+You don't need to manually enforce these weights everywhere — Framepack's hooks
+will inject weight-derived directives at two checkpoints:
+
+1. **After frame.md is written** → you'll receive a directive translating weights
+   into concrete behavioral guidance (atmosphere layer caps, weapon expectations).
+2. **After expanded-prompt.md is written** → a consistency check compares your
+   actual output against the weights you set. Mismatches surface as P2 issues
+   that require you to explain yourself.
+
+The weights are not decoration. They will be checked. Set them honestly.
+
+---
+
 ## Phase 1: Intent → frame.md
 
 ### Step 1: Understand the user's intent

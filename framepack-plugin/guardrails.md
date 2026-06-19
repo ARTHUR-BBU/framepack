@@ -13,11 +13,12 @@ HyperFrames 是摄影棚（设备齐全）。Framepack 是导演（更懂用户�
     ↓
 Framepack 创意引擎
     ├── Phase 0: 素材收集 → asset-intake.md（v0.12 NEW）
-    ├── Phase 1: 意图翻译 → frame.md（视觉身份）
+    ├── Phase 0.5: 试菜 → Control Profile → 五行权重（v0.14 NEW）
+    ├── Phase 1: 意图翻译 → frame.md（视觉身份 + control_profile 权重表）
     └── Phase 2: 创意细化 → expanded-prompt.md（场景级分解）
     ↓
 HyperFrames 工具链接管
-    ├── 读 frame.md（视觉参数）
+    ├── 读 frame.md（视觉参数 + 权重表）
     ├── 读 expanded-prompt.md（场景规划）
     ├── Layout Before Animation → 写 HTML
     ├── hyperframes lint → 验证
@@ -39,6 +40,25 @@ Framepack 的边界：到 expanded-prompt.md 为止。之后的 HTML 编写、�
 - 用户已经明确知道要什么，不需要创意建议
 
 ## 创意阶段流程
+
+### Phase 0.5: 试菜 → 五行权重 → Control Profile (v0.14 NEW)
+
+**输入**：用户的模糊意图 + Phase 0 素材清单
+**输出**：frame.md frontmatter 里的 `control_profile` 块
+
+Agent 读完素材后，诚实自问：内容理解多深？色彩/节奏信心多少？克制还是放？从自评推导出五个权重——
+
+| 五行 | 权重 | 管什么 |
+|------|------|--------|
+| 木 | creative_autonomy | 创意自主度（信不信自己的直觉） |
+| 金 | restraint_force | 克制力（防堆砌） |
+| 火 | atmosphere_density | 氛围密度（视效浓淡） |
+| 水 | motion_dynamism | 动作张力（动画激进程度） |
+| 土 | weapon_reliance | 武器依赖度（兜底 vs 裸写） |
+
+五个权重正交但相生相克（木克土、土克水、水克火、火克金、金克木），涵盖所有创意控制场景。详见 framepack-director SKILL.md 的 Phase 0.5 段落。
+
+**铁律：权重不是摆设。** frame.md 写完后，Hook 1 会把权重翻译成具体行为指令注入给 Agent；expanded-prompt.md 写完后，Hook 2 做权重一致性检查（P2 级，需解释）。权重要能穿透到每一个神经末梢。
 
 ### Phase 1: 意图翻译 → frame.md
 
