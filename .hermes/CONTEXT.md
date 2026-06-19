@@ -7,11 +7,11 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.14.0 实战测试 → 瑕疵修复迭代中（7/9 已修复，2 个待办）
+**阶段**: v0.14.0 实战测试 → 瑕疵修复全部完成（9/9）✅
 
 **分支**: `main`
-**源码版本**: plugin.yaml = 0.14.0 ✅
-**测试**: 526 passed / 1 skipped ✅ 零回归（从 511 涨到 526，+15 回归测试）
+**源码版本**: plugin.yaml = 0.14.0（瑕疵修复未 bump，待老田决策）
+**测试**: 531 passed / 1 skipped ✅ 零回归（从 511 涨到 531，+20 回归测试）
 **部署同步**: 源码与部署目录 content hash 一致 ✅
 
 ### 实战测试结果（6 命题 × 3 轮 × 独立 subagent）
@@ -36,37 +36,23 @@
 | D-2 | 中危 | 非正方形 cell 被强制压方 | +2 | 98ca8e2 | ✅ |
 | B-1 | 中危 | render_directive 不渲染 caution_motion | +3 | c4cd361 | ✅ |
 | B-2 | 中危 | 审计层不消费 caution_motion | +3 | c4cd361 | ✅ |
-| **C-1** | 中危 | 裸 sceneN: 行正则跨行吞词 | — | — | ⏳ 待修 |
-| **MED7** | 低 | docstring 明确相生相克为隐喻 | — | — | ⏳ 待修 |
+| **C-1** | 中危 | 裸 sceneN: 行正则跨行吞词 | +3 | 708307b | ✅ |
+| **MED7** | 低 | docstring 明确相生相克为隐喻 | +2 | 708307b | ✅ |
 
-## 下一步：完成最后 2 个修复
+## 瑕疵修复全部完成 ✅
 
-### C-1（中危，进行中）
-**根因**: `core/restraint_audit.py:113` 的正则 `scene\d+:?\s*([\w-]+)` 里 `\s*` 包含换行符。当某行是裸 `scene1:`（冒号后无武器名），`\s*` 跨行吞掉下一行首词。
+9/9 瑕疵已修复，531 passed 零回归，部署同步。最后一轮（C-1+C-4+MED7）TDD 全流程：
+- RED: 5 个失败测试（跨行吞词、词首锚定、隐喻缺失×2、uppercase IGNORECASE）
+- GREEN: 正则 `\s*`→`[ \t]*` + 加 `\b`；Weights+模块 docstring 加隐喻说明
+- 独立 reviewer subagent: passed=true，0 安全/逻辑问题
+- 11 个 edge case 全通过（多裸 scene/tab/无冒号/大写/多位数字等）
 
-**复现**:
-```python
-_handwrite_ratio("scene1:\nscene2: HANDWRITE")
-# 正则匹配: scene1: + 跨行 + "scene2" 作为武器名
-# 结果: hw_ratio 被污染，高 reliance 下漏报 weapon_reliance_mismatch
-```
+## 待老田决策
 
-**修复方案**（已确认）:
-1. RED 测试: `_handwrite_ratio("scene1:\nscene2: HANDWRITE")` 返回正确值而非污染值
-2. GREEN: `\s*` → `[ \t]*`（只匹配空格/tab，不含换行）
-3. 顺便加 C-4 词首锚定防 `obscene1:` 误匹配
-
-### MED7（低，待办）
-**问题**: A-F1 报告发现 Agent 可能误把"五行相生相克"当硬约束（水克火=不能高张力+高氛围），实际是隐喻不是约束。
-
-**修复方案**: 在 `core/control_profile.py` 的 ControlProfile 类 docstring + Weights dataclass 加说明："相生相克是创意方向的隐喻引导，不是数学约束。权重各自独立，不互相限制。"
-
-### 修复完成后
-1. 全量回归确认 526+ passed
-2. 部署同步（md5）
-3. git commit
-4. 更新本 CONTEXT.md
-5. 更新 SUMMARY.md 汇总报告
+瑕疵修复是 patch 级累积（9 个），源码版本仍 0.14.0。选项：
+1. 保持 0.14.0（瑕疵修复作为 0.14.0 的 post-release fix，不单独发版）
+2. bump 到 0.14.1（给瑕疵修复一个明确版本标签）
+3. 直接进入下一个 minor 版本开发
 
 ## 关键修复详情（已完成的）
 
