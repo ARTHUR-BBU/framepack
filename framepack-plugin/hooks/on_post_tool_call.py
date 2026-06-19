@@ -607,7 +607,19 @@ def _handle_frame_md(ctx, file_path: str) -> None:
     if not content.strip():
         return
 
-    analysis = _analyze_frame_md(ctx, content)
+    # 五行权重指令注入（v0.14）— 纯本地计算，必须在 LLM 质检之前执行
+    # 这样即使 LLM 不可用，权重指令仍能到达 Agent（E-1 修复）
+    weight_directive = _build_weight_directive(content)
+    if weight_directive:
+        _safe_inject(ctx, weight_directive, role="user")
+        logger.info("frame.md weight directive injected")
+
+    # LLM 质检 — 包在 try/except 里，异常不阻塞 hook（E-1 修复）
+    try:
+        analysis = _analyze_frame_md(ctx, content)
+    except Exception as e:
+        logger.warning("frame.md analysis raised: %s", e)
+        analysis = None
     if analysis is None:
         logger.warning("frame.md analysis failed")
         return
@@ -615,12 +627,6 @@ def _handle_frame_md(ctx, file_path: str) -> None:
     message = _build_frame_md_advice(analysis)
     _safe_inject(ctx, message, role="user")
     logger.info("frame.md advice injected")
-
-    # 五行权重指令注入（v0.14）
-    weight_directive = _build_weight_directive(content)
-    if weight_directive:
-        _safe_inject(ctx, weight_directive, role="user")
-        logger.info("frame.md weight directive injected")
 
 
 def _build_weight_consistency_report(frame_md_content: str,
@@ -665,16 +671,8 @@ def _handle_expanded_prompt(ctx, file_path: str) -> None:
     # Inject parameter reference card from Execution Manifest
     _inject_param_card_if_manifest(ctx, file_path)
 
-    analysis = _analyze_expanded_prompt(ctx, content)
-    if analysis is None:
-        logger.warning("expanded-prompt analysis failed")
-        return
-
-    message = _build_expanded_prompt_advice(analysis)
-    _safe_inject(ctx, message, role="user")
-    logger.info("expanded-prompt advice injected")
-
-    # 五行权重一致性检查注入（v0.14）
+    # 五行权重一致性检查注入（v0.14）— 纯本地计算，必须在 LLM 质检之前执行
+    # 这样即使 LLM 不可用，一致性报告仍能到达 Agent（E-1 修复）
     # 从同目录找 frame.md 读取 control_profile
     expanded_path = Path(file_path)
     search_dirs = [expanded_path.parent, expanded_path.parent.parent]
@@ -692,3 +690,17 @@ def _handle_expanded_prompt(ctx, file_path: str) -> None:
         if report:
             _safe_inject(ctx, report, role="user")
             logger.info("expanded-prompt weight consistency report injected")
+
+    # LLM 质检 — 包在 try/except 里，异常不阻塞 hook（E-1 修复）
+    try:
+        analysis = _analyze_expanded_prompt(ctx, content)
+    except Exception as e:
+        logger.warning("expanded-prompt analysis raised: %s", e)
+        analysis = None
+    if analysis is None:
+        logger.warning("expanded-prompt analysis failed")
+        return
+
+    message = _build_expanded_prompt_advice(analysis)
+    _safe_inject(ctx, message, role="user")
+    logger.info("expanded-prompt advice injected")
