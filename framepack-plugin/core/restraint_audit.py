@@ -87,7 +87,7 @@ def audit_weight_consistency(
 _ATMOSPHERE_KEYWORDS = [
     "particle", "grid-line", "gradient", "glow", "light-leak",
     "noise", "bokeh", "vignette", "shimmer", "aura", "haze",
-    "grid", "gradient", "shimmer",
+    "grid",
 ]
 
 
@@ -111,7 +111,7 @@ def _handwrite_ratio(text: str) -> float:
     """计算 Execution Manifest 里 HANDWRITE 的比例。"""
     # 匹配 sceneN: weapon_name 格式
     manifest_entries = re.findall(
-        r'scene\d+:?\s*(\w+)', text, re.IGNORECASE)
+        r'scene\d+:?\s*([\w-]+)', text, re.IGNORECASE)
     if not manifest_entries:
         return 0.0
     hw_count = sum(1 for entry in manifest_entries

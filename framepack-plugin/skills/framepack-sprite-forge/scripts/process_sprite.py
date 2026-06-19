@@ -135,6 +135,91 @@ def save_transparent_gif(
     )
 
 
+# ---------------------------------------------------------------------------#
+# QC Report (瑕疵 1 修复: 显式 QC 报告输出)
+# ---------------------------------------------------------------------------
+def generate_qc_report(frames: List[Image.Image]) -> dict:
+    """Generate a QC report dict from processed frames.
+
+    Metrics:
+      - transparent_ratio: fraction of fully-transparent pixels
+      - non_empty_frames: frames with >1% opaque content
+      - total_frames: total frame count
+      - magenta_residue_ratio: chroma-key survivors (residual magenta pixels)
+      - warnings: list of human-readable warning strings
+    """
+    total = len(frames)
+    non_empty = 0
+    transparent_px = 0
+    total_px = 0
+    magenta_residue_px = 0
+
+    for frame in frames:
+        arr = np.asarray(frame.convert("RGBA"))
+        alpha = arr[..., 3]
+        total_px += alpha.size
+        transparent_px += int(np.count_nonzero(alpha == 0))
+
+        opaque_ratio = np.count_nonzero(alpha > 0) / max(alpha.size, 1)
+        if opaque_ratio > 0.01:
+            non_empty += 1
+
+        # Detect residual magenta (chroma-key survivors)
+        r, g, b = arr[..., 0], arr[..., 1], arr[..., 2]
+        is_magenta = (
+            (np.abs(r.astype(np.int16) - 255) < 30)
+            & (g.astype(np.int16) < 30)
+            & (np.abs(b.astype(np.int16) - 255) < 30)
+            & (alpha > 0)
+        )
+        magenta_residue_px += int(np.count_nonzero(is_magenta))
+
+    transparent_ratio = transparent_px / max(total_px, 1)
+    magenta_residue_ratio = magenta_residue_px / max(total_px, 1)
+
+    warnings: list[str] = []
+    if non_empty == 0:
+        warnings.append(
+            "ALL frames empty — check input image background color "
+            "(must be pure magenta #FF00FF)"
+        )
+    elif non_empty < total:
+        warnings.append(
+            f"{total - non_empty}/{total} frames appear empty "
+            "(no visible content after chroma key)"
+        )
+    if magenta_residue_ratio > 0.01:
+        warnings.append(
+            f"Magenta residue detected ({magenta_residue_ratio:.1%} of pixels) "
+            "— chroma key threshold may need adjustment"
+        )
+
+    return {
+        "transparent_ratio": round(transparent_ratio, 4),
+        "non_empty_frames": non_empty,
+        "total_frames": total,
+        "magenta_residue_ratio": round(magenta_residue_ratio, 4),
+        "warnings": warnings,
+    }
+
+
+def format_qc_summary(report: dict) -> str:
+    """Format QC report as a human-readable summary for stdout."""
+    lines = [
+        f"QC: {report['non_empty_frames']}/{report['total_frames']} non-empty frames, "
+        f"{report['transparent_ratio']:.1%} transparent"
+    ]
+    if report["magenta_residue_ratio"] > 0:
+        lines.append(
+            f"     magenta residue: {report['magenta_residue_ratio']:.1%}"
+        )
+    for w in report["warnings"]:
+        lines.append(f"     WARNING: {w}")
+    if not report["warnings"]:
+        lines.append("     OK — no issues detected")
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # Pipeline + CLI
 # ---------------------------------------------------------------------------
@@ -146,8 +231,11 @@ def run_pipeline(
     cell_size: int,
     threshold: int = 30,
     fps: int = 8,
-) -> Path:
-    """Run the full post-processing pipeline and write artifacts to output_dir."""
+) -> tuple[Path, dict]:
+    """Run the full post-processing pipeline and write artifacts to output_dir.
+
+    Returns (sheet_path, qc_report).
+    """
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -167,7 +255,8 @@ def run_pipeline(
     gif_path = out / "animation.gif"
     save_transparent_gif(frames, str(gif_path), fps=fps)
 
-    return sheet_path
+    qc = generate_qc_report(frames)
+    return sheet_path, qc
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -195,7 +284,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
     if args.command == "process":
-        sheet_path = run_pipeline(
+        sheet_path, qc = run_pipeline(
             input_path=args.input,
             rows=args.rows,
             cols=args.cols,
@@ -205,6 +294,7 @@ def main(argv: list[str] | None = None) -> int:
             fps=args.fps,
         )
         print(f"Wrote {sheet_path}")
+        print(format_qc_summary(qc))
         return 0
     parser.error(f"Unknown command: {args.command}")
     return 2

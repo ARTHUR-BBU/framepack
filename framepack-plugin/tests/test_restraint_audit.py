@@ -133,3 +133,17 @@ class TestHelperFunctions:
     def test_handwrite_ratio(self):
         assert _handwrite_ratio("scene1: HANDWRITE\nscene2: blur") == 0.5
         assert _handwrite_ratio("") == 0.0
+
+    def test_handwrite_ratio_hyphenated_weapon_names(self):
+        """连字符武器名（如 card-cascade-reveal）不应被截断"""
+        text = ("scene1: card-cascade-reveal\n"
+                "scene2: bg-blur-mask\n"
+                "scene3: HANDWRITE")
+        ratio = _handwrite_ratio(text)
+        assert ratio == 1.0 / 3.0
+
+    def test_atmosphere_keywords_no_duplicates(self):
+        """_ATMOSPHERE_KEYWORDS 列表不应有重复项（代码气味修复）"""
+        from core.restraint_audit import _ATMOSPHERE_KEYWORDS
+        assert len(_ATMOSPHERE_KEYWORDS) == len(set(_ATMOSPHERE_KEYWORDS)), \
+            f"重复项: {set([x for x in _ATMOSPHERE_KEYWORDS if _ATMOSPHERE_KEYWORDS.count(x) > 1])}"

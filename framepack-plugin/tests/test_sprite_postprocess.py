@@ -219,3 +219,49 @@ def test_cli_process_pipeline(tmp_path):
     sheet_img = Image.open(outdir / "sheet-transparent.png")
     assert sheet_img.mode == "RGBA"
     assert sheet_img.size == (100, 100)
+
+
+# ---------------------------------------------------------------------------
+# QC Report tests (瑕疵 1 修复: process_sprite.py 缺显式 QC 报告输出)
+# ---------------------------------------------------------------------------
+class TestQCReport:
+    def test_generate_qc_report_returns_dict(self):
+        """generate_qc_report 返回包含必要指标的 dict"""
+        arr = np.zeros((40, 40, 4), dtype=np.uint8)
+        arr[10:30, 10:30] = [255, 100, 50, 255]  # 中心色块
+        frame = Image.fromarray(arr, "RGBA")
+        frames = [frame, frame]
+
+        report = process_sprite.generate_qc_report(frames)
+        assert "transparent_ratio" in report
+        assert "non_empty_frames" in report
+        assert "total_frames" in report
+        assert "magenta_residue_ratio" in report
+        assert "warnings" in report
+        assert report["total_frames"] == 2
+        assert report["non_empty_frames"] == 2
+
+    def test_qc_report_all_empty_frames(self):
+        """全透明帧的 QC 报告应标记为警告"""
+        arr = np.zeros((40, 40, 4), dtype=np.uint8)  # 全透明
+        frame = Image.fromarray(arr, "RGBA")
+        report = process_sprite.generate_qc_report([frame, frame])
+        assert report["non_empty_frames"] == 0
+        assert len(report["warnings"]) > 0
+
+    def test_pipeline_stdout_includes_qc_summary(self, tmp_path):
+        """CLI process 命令 stdout 应包含 QC 摘要"""
+        sheet = _magenta_sheet_with_cells(1, 1, 50, [(255, 100, 50)])
+        inp = tmp_path / "input.png"
+        sheet.save(inp)
+        outdir = tmp_path / "out"
+        res = subprocess.run(
+            [sys.executable, str(SCRIPTS_DIR / "process_sprite.py"),
+             "process", "--input", str(inp),
+             "--rows", "1", "--cols", "1",
+             "--output-dir", str(outdir),
+             "--cell-size", "50"],
+            capture_output=True, text=True,
+        )
+        assert res.returncode == 0, res.stderr
+        assert "QC" in res.stdout or "qc" in res.stdout.lower()
