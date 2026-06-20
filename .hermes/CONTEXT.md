@@ -7,10 +7,13 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.14.2 已发版 ✅ + Sprite Forge 火焰实战验证（SF-AK1/AK2 两轮修复）
+**阶段**: v0.14.2 GitHub Release 已正式发布 ✅ + Sprite Forge 火焰实战验证完成
 **分支**: `main`
 **源码版本**: plugin.yaml = 0.14.2 ✅
-**测试**: 548 passed / 1 skipped ✅ 零回归（v0.14.1 的 541 → +7 erode 测试）
+**正式发布**: `v0.14.2` tag → `52a2ab1`（最后一个产品代码提交，非 handoff）
+**GitHub Release**: https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.14.2 ✅
+**远端 main**: 包含发布后 handoff；release artifact 以 tag `v0.14.2` 为准
+**测试**: 548 passed / 1 skipped ✅（正式发布前 fresh run，2026-06-20）
 **部署同步**: 源码与部署目录 md5 全一致 ✅（最近一次同步 5 文件，2026-06-20）
 
 ### 上次做了什么
@@ -33,6 +36,8 @@ Sprite Forge 动画覆盖范围头脑风暴 → 火焰循环实战验证 → 发
   合成 vision 确认生产可用。独立 reviewer PASS（0 must-fix）。
 - ✅ **Sprite Forge 文档扩展**：SKILL.md 加 erode CLI/参数表/流水线说明；
   sheet-modes.md 推断速查表加 erode 列 + 火焰行；prompt-rules.md 规则 8。
+- ✅ **正式发布 v0.14.2**：push main 到 GitHub；创建 annotated tag `v0.14.2`
+  指向 `52a2ab1`；创建 GitHub Release；读回验证 `isDraft=false`、`isPrerelease=false`。
 
 ### 下次要做什么
 
