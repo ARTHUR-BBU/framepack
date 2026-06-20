@@ -7,78 +7,60 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.14.1 已发版 ✅（v0.14.0 实战测试 → 9 瑕疵修复 → 版本 bump 完成）
-
+**阶段**: v0.14.2 已发版 ✅ + Sprite Forge 火焰实战验证（SF-AK1/AK2 两轮修复）
 **分支**: `main`
-**源码版本**: plugin.yaml = 0.14.1 ✅
-**测试**: 531 passed / 1 skipped ✅ 零回归（从 511 涨到 531，+20 回归测试）
-**部署同步**: 源码与部署目录 204 文件 md5 全一致 ✅
+**源码版本**: plugin.yaml = 0.14.2 ✅
+**测试**: 548 passed / 1 skipped ✅ 零回归（v0.14.1 的 541 → +7 erode 测试）
+**部署同步**: 源码与部署目录 md5 全一致 ✅（最近一次同步 5 文件，2026-06-20）
 
-### 实战测试结果（6 命题 × 3 轮 × 独立 subagent）
+### 上次做了什么
 
-报告位置: `F:/hyperframes/framepack-e2e-test/reports/`
-- report-A-weight-flow.md — 五行权重端到端
-- report-B-backward-compat.md — 向后兼容+版本迁移
-- report-C-consistency-audit.md — 一致性审计深度
-- report-D-sprite-forge.md — Sprite Forge 管线
-- report-E-hook-neural-pathway.md — Hook 神经通路
-- report-F-quality-audit.md — quality_audit 主管线
-- SUMMARY.md — 总汇总（27 个发现分级）
+Sprite Forge 动画覆盖范围头脑风暴 → 火焰循环实战验证 → 发现并修复 2 个色键健壮性缺口：
 
-### 瑕疵修复进度（TDD 全流程）
+- ✅ **头脑风暴 7 个战场**：有机特效/粒子爆发/角色/漫画特效/天气/风格化UI/材质。
+  核心判断"形状在变用 GSAP，内容在变用 Sprite Forge"。用户选先做实战验证。
+- ✅ **火焰循环实战**（第 1 个验证方向）：出图纸 → 用户生图（2×4, 8 帧）→ 后处理。
+  暴露角色 sprite 不会遇到的"辉光过渡区卡色键"问题。
+- ✅ **SF-AK1 修复**（commit `103b255`）：生图工具画 magenta 是 (230,45,183) 而非
+  (255,0,255)，硬编码阈值 30 够不着 → 加 `detect_background_color()` 自适应检测。
+  TDD 全流程，7 测试，真实图验证 56.8% transparent。
+- ✅ **版本 bump 0.14.1 → 0.14.2**（commit `068b2f0`）：4-phase 精细处理，
+  23 文件同步，零版本漂移。
+- ✅ **SF-AK2 修复**（commit `52a2ab1`）：火焰辉光外缘与品红背景的过渡区
+  （距离 30-200px 的粉品红像素）卡在色键灰色地带 → 新增 `erode_alpha()` alpha
+  通道形态学收缩 + prompt-rules.md 规则 8（辉光最小化，两层防线）。
+  TDD 全流程，7 测试，真实火焰图 erode=6 后品红边缘 19.8%→0.8%，深色背景
+  合成 vision 确认生产可用。独立 reviewer PASS（0 must-fix）。
+- ✅ **Sprite Forge 文档扩展**：SKILL.md 加 erode CLI/参数表/流水线说明；
+  sheet-modes.md 推断速查表加 erode 列 + 火焰行；prompt-rules.md 规则 8。
 
-| # | 等级 | 问题 | 测试数 | commit | 状态 |
-|---|------|------|--------|--------|------|
-| E-1 | 高危 | 权重注入被 LLM 质检耦合导致静默断流 | +3 | (E-1 commit) | ✅ |
-| B-7 | 功能 | 跨块名误迁移 forbidden_motion | +2 | 7822f75 | ✅ |
-| D-1 | 中危 | 非品红底色键失效静默通过 | +1 | 75408fb | ✅ |
-| D-3 | 中危 | QC 报告不落盘 JSON | +1 | 75408fb | ✅ |
-| D-2 | 中危 | 非正方形 cell 被强制压方 | +2 | 98ca8e2 | ✅ |
-| B-1 | 中危 | render_directive 不渲染 caution_motion | +3 | c4cd361 | ✅ |
-| B-2 | 中危 | 审计层不消费 caution_motion | +3 | c4cd361 | ✅ |
-| **C-1** | 中危 | 裸 sceneN: 行正则跨行吞词 | +3 | 708307b | ✅ |
-| **MED7** | 低 | docstring 明确相生相克为隐喻 | +2 | 708307b | ✅ |
+### 下次要做什么
 
-## 瑕疵修复全部完成 ✅
+Sprite Forge 动画覆盖范围还剩 2 个验证方向（用户说"等等吧"）：
+- **爆炸/烟花**（粒子爆发类）—— 验证"结构每帧不同"，一次性播放（loopCount=1）
+- **速度线**（漫画特效类）—— 验证"风格化图形"，最轻量
+- 跑通后用真实数据锚点更新 sheet-modes.md 分类表（当前是游戏化分类，
+  头脑风暴发现应按视频制作需求重组：有机特效/粒子/漫画特效优先级最高）
 
-9/9 瑕疵已修复，531 passed 零回归，部署同步。最后一轮（C-1+C-4+MED7）TDD 全流程：
-- RED: 5 个失败测试（跨行吞词、词首锚定、隐喻缺失×2、uppercase IGNORECASE）
-- GREEN: 正则 `\s*`→`[ \t]*` + 加 `\b`；Weights+模块 docstring 加隐喻说明
-- 独立 reviewer subagent: passed=true，0 安全/逻辑问题
-- 11 个 edge case 全通过（多裸 scene/tab/无冒号/大写/多位数字等）
+**deferred**：
+- `remove_bg_magenta` 重命名（名不副实了，属 refactor commit 范畴）
 
-## 已决策：bump 0.14.1 ✅
+### commit 链（v0.14.2 线）
 
-老田决策：bump 到 0.14.1（给瑕疵修复一个明确版本标签）。已完成：
-- 23 文件版本引用同步，60 处替换
-- 独立 reviewer 版本漂移审计：PASSED，0 阻断性发现
-- 部署同步 204 文件 md5 全一致
-- 全量回归 531 passed / 1 skipped
+```
+52a2ab1 fix(sprite-forge): alpha erosion for glow-fringe (SF-AK2)
+068b2f0 release: bump v0.14.1 → v0.14.2
+103b255 fix(sprite-forge): adaptive chroma key for off-magenta (SF-AK1)
+6f21092 [verified] release v0.14.1 — production hardening
+```
 
-## 关键修复详情（已完成的）
+### Sprite Forge 实战产物
 
-### E-1（最有价值）
-权重注入是纯本地计算（零 LLM 依赖），但被放在 `_handle_frame_md` / `_handle_expanded_prompt` 的 `_analyze_*()` 返回 None 的提前 return 之后。任何 LLM 抖动 → 权重特性静默失效。修复：权重注入移到分析调用之前 + 分析调用包 try/except。
-
-### B-1 + B-2（同一通路两端）
-caution_motion（向后兼容迁移的 forbidden_motion）进了 ControlProfile 对象，但：
-- B-1: `render_directive()` 不渲染 → Agent 看不到 → 修复：五行之后追加 caution_motion 段落
-- B-2: `audit_weight_consistency()` 不审计 → 高谨慎 motion 被使用无 issue → 修复：新增 caution_motion_violation 审计维度（P2）
-
-### D-2
-`center_single_sprite` 画布恒为正方形，sprite bbox 超过画布时硬裁。280x200 sprite 进 200x200 → 80px 被裁。修复：fit-in 缩放保留宽高比。
-
-## 五行权重系统（v0.14 核心）
-
-五个正交权重，相生相克涵盖所有创意控制（**注意：相生相克是隐喻不是硬约束，见 MED7**）：
-- 木 creative_autonomy — 创意自主度
-- 金 restraint_force — 克制力
-- 火 atmosphere_density — 氛围密度
-- 水 motion_dynamism — 动作张力
-- 土 weapon_reliance — 武器依赖度
-
-ControlProfile 默认权重: 全 0.5
-render_directive(): high/low 分档生成行为指令
+`F:/hyperframes/assets/sprites/` 下有两个真实验证案例：
+- `walk-cycle-pixel-demo/` — 角色走路循环（SF-AK1 验证用）
+- `fire-loop-demo/` — 火焰循环（SF-AK2 验证用），含 erode-0/2/4/6/8/10 对比产物
+  和 `composite-compare.png`（深色背景合成对比图）
+- 注意：assets/ 未纳入 git（在仓库上层）
 
 ## 设计文档
 
