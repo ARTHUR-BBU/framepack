@@ -1,0 +1,302 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "portrait_12",
+      "source_url": "https://i.pravatar.cc/300?img=12",
+      "local_path": "assets/portraits/portrait-12.jpg",
+      "risk": "random_provider",
+      "sha256": "37da3616a88e1a12da551338c01469a0ac4e23f64b3b5534f2655aa06a96206a",
+      "bytes": 13809,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "portrait_47",
+      "source_url": "https://i.pravatar.cc/300?img=47",
+      "local_path": "assets/portraits/portrait-47.jpg",
+      "risk": "random_provider",
+      "sha256": "fe65d132b66675b73af17d59d63618ed531238c60064745d2f1e2c0a5fdc912b",
+      "bytes": 16833,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "portrait_15",
+      "source_url": "https://i.pravatar.cc/300?img=15",
+      "local_path": "assets/portraits/portrait-15.jpg",
+      "risk": "random_provider",
+      "sha256": "d6969d4a23494ae2a7653799a7947e750e166600f2b1a2614eda9c840189aef2",
+      "bytes": 13539,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "portrait_32",
+      "source_url": "https://i.pravatar.cc/300?img=32",
+      "local_path": "assets/portraits/portrait-32.jpg",
+      "risk": "random_provider",
+      "sha256": "4c1c8e52b610f80845f5e6e1e8a8cc3d2cf3fffbfbba6af4f773eb5751edbf2d",
+      "bytes": 12534,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "portrait_5",
+      "source_url": "https://i.pravatar.cc/300?img=5",
+      "local_path": "assets/portraits/portrait-5.jpg",
+      "risk": "random_provider",
+      "sha256": "388cb23b1998effeedb28f01e0b4eb568c064d12b9d832cfb36921bd4ff74830",
+      "bytes": 14445,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "portrait_58",
+      "source_url": "https://i.pravatar.cc/300?img=58",
+      "local_path": "assets/portraits/portrait-58.jpg",
+      "risk": "random_provider",
+      "sha256": "4867586ee398e90a16e5278175c031357ee7fd8b2523edc54c7c463a0dd4b5ad",
+      "bytes": 23300,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "portrait_23",
+      "source_url": "https://i.pravatar.cc/300?img=23",
+      "local_path": "assets/portraits/portrait-23.jpg",
+      "risk": "random_provider",
+      "sha256": "f9f37c85f5bd91064831e00711f67891c8950c03b7c39b266894dc2ef5a78e1d",
+      "bytes": 7679,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "portrait_68",
+      "source_url": "https://i.pravatar.cc/300?img=68",
+      "local_path": "assets/portraits/portrait-68.jpg",
+      "risk": "random_provider",
+      "sha256": "006ebcf0d42d867f3c85f7347adf55e2cdd147514325a40fb2ad42743a8a9885",
+      "bytes": 8936,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "artwork_glassroom",
+      "source_url": "https://picsum.photos/seed/glassroom/300/300",
+      "local_path": "assets/artwork/glassroom.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "b8b72bfb08c0da1840488fb31408368ae42f7ae07ed0ce190336032ebe2601af",
+      "bytes": 16263,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "artwork_hero",
+      "source_url": "https://picsum.photos/seed/noema-hero-art/500/280",
+      "local_path": "assets/artwork/noema-hero-art.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "47223b1708711422bbc73e41696ab45f8df40a2071acf1791d1d324c65f4ddf1",
+      "bytes": 22196,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "artwork_noema_a1",
+      "source_url": "https://picsum.photos/seed/noema-a1/120/120",
+      "local_path": "assets/artwork/noema-a1.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "4c46edf3b693346a222e489a3a676a7038fa89ef636c6e28fe1f8ee69b96b477",
+      "bytes": 1699,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "artwork_noema_a2",
+      "source_url": "https://picsum.photos/seed/noema-a2/120/120",
+      "local_path": "assets/artwork/noema-a2.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "5228f2766700651d5f765b58d781e94213f16561edad6cd674064b569ca3b4ae",
+      "bytes": 4002,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "artwork_noema_a3",
+      "source_url": "https://picsum.photos/seed/noema-a3/120/120",
+      "local_path": "assets/artwork/noema-a3.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "8ffd08d72f298ee312b66b16e95cf78bb7ddb2f295fa0cc7436089602fc6ad99",
+      "bytes": 3758,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_01",
+      "source_url": "https://picsum.photos/seed/archive-01/480/600",
+      "local_path": "assets/archive/archive-01.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "df35a890c29da51e5f7249ddc417194098a181eae7ef383c11d27355d4247110",
+      "bytes": 30182,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_02",
+      "source_url": "https://picsum.photos/seed/archive-02/480/600",
+      "local_path": "assets/archive/archive-02.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "e539e9a9bb4bc7ae22748778d447126619144cab0ec41322cc2290f2c93ba5e4",
+      "bytes": 25889,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_03",
+      "source_url": "https://picsum.photos/seed/archive-03/480/600",
+      "local_path": "assets/archive/archive-03.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "4698483f914c99a51b783c36740c6846619d31cc94e3ee3e4616eea53f2bec21",
+      "bytes": 73961,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_04",
+      "source_url": "https://picsum.photos/seed/archive-04/480/600",
+      "local_path": "assets/archive/archive-04.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "dc23d2a75c003ed0e3392d193d27c2358e4acbc58ed37bcad869d62ab5c43202",
+      "bytes": 34827,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_05",
+      "source_url": "https://picsum.photos/seed/archive-05/480/600",
+      "local_path": "assets/archive/archive-05.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "d812cabef4dd470d9571af7fab9009cd1795282b770c71d8cd3e04cca0a52d15",
+      "bytes": 56285,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_06",
+      "source_url": "https://picsum.photos/seed/archive-06/480/600",
+      "local_path": "assets/archive/archive-06.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "c214d21625564acde2094ec56155b9a142e361e234b77c7b5c8a66701c8cfa80",
+      "bytes": 7074,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_07",
+      "source_url": "https://picsum.photos/seed/archive-07/480/600",
+      "local_path": "assets/archive/archive-07.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "3ddb605ca8eb5c2cacec14438b70dd5076f9d2d21798b1b3a31da793c32180ce",
+      "bytes": 62256,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_08",
+      "source_url": "https://picsum.photos/seed/archive-08/480/600",
+      "local_path": "assets/archive/archive-08.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "344d064f7ad02a6cd144857eceb50c2e0b50726a120e69a9429712637dccae2f",
+      "bytes": 68595,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_09",
+      "source_url": "https://picsum.photos/seed/archive-09/480/600",
+      "local_path": "assets/archive/archive-09.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "7f5f0445ef99752ac21ac0bcaa80611cadc2c61e67744780223f0a7f2b88a45e",
+      "bytes": 54019,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_10",
+      "source_url": "https://picsum.photos/seed/archive-10/480/600",
+      "local_path": "assets/archive/archive-10.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "f6aa0ce8e9d3f6161290656a9f31e3a87fd6aa39d8e5b632cdae6e7251a7665a",
+      "bytes": 20825,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_11",
+      "source_url": "https://picsum.photos/seed/archive-11/480/600",
+      "local_path": "assets/archive/archive-11.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "0207668e570a26704ee1429dbf4e80d0ef9848b752656ed75b20c52914c83750",
+      "bytes": 45215,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_12",
+      "source_url": "https://picsum.photos/seed/archive-12/480/600",
+      "local_path": "assets/archive/archive-12.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "684a7809cc0aa5ea8e3951e6f0c32306488dc5797ab422890cd6bec1ff87f771",
+      "bytes": 31652,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_13",
+      "source_url": "https://picsum.photos/seed/archive-13/480/600",
+      "local_path": "assets/archive/archive-13.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "62d23c3ff607cf0978f3f46d78804e4e7104b2fa9d8c0dc4d4cd228b2cbd6ef4",
+      "bytes": 28634,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_14",
+      "source_url": "https://picsum.photos/seed/archive-14/480/600",
+      "local_path": "assets/archive/archive-14.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "58f5fb268f0b5c4765ec2c897bed9d59671a7a572f0c6b8ad8c6af4823127c7c",
+      "bytes": 30337,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "archive_15",
+      "source_url": "https://picsum.photos/seed/archive-15/480/600",
+      "local_path": "assets/archive/archive-15.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "335315c16b941a8470922f1f82524bc47e4c397aedc6fd19ecbdd5920c987f15",
+      "bytes": 34042,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "build_a",
+      "source_url": "https://picsum.photos/seed/build-a/120/120",
+      "local_path": "assets/artwork/build-a.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "7187ceb83950118c922d052d6af5f5867479ceded6834c0b012ae211770867cb",
+      "bytes": 2472,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "build_b",
+      "source_url": "https://picsum.photos/seed/build-b/120/120",
+      "local_path": "assets/artwork/build-b.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "e4bb48801408ef5bbacd09d3a3575561a886892ed9434d277c3c73a21786f5e1",
+      "bytes": 4883,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "build_c",
+      "source_url": "https://picsum.photos/seed/build-c/120/120",
+      "local_path": "assets/artwork/build-c.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "af3310eaefc21d118e9a19af350333fe558da117461fee4a42146b0aa09e40fe",
+      "bytes": 3974,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "build_d",
+      "source_url": "https://picsum.photos/seed/build-d/120/120",
+      "local_path": "assets/artwork/build-d.jpg",
+      "risk": "seeded_placeholder",
+      "sha256": "f51cec177c633621891696d949149a32f396d1c54bd853c806eea3def971e075",
+      "bytes": 5249,
+      "content_type": "image/jpeg"
+    },
+    {
+      "id": "qr_leigh",
+      "source_url": "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/917d6f93-fb36-439a-8c48-884b67b35381_1600w.jpg",
+      "local_path": "assets/qr/leigh-qr.jpg",
+      "risk": "remote_static",
+      "sha256": "585a27183f42ba3e445f4cfb2a80d4e3b45de28606857c5053f0e30f81392ab0",
+      "bytes": 77557,
+      "content_type": "image/jpeg"
+    }
+  ]
+}

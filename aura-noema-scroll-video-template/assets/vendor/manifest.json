@@ -1,0 +1,14 @@
+{
+  "vendor_assets": [
+    {
+      "path": "assets/vendor/gsap-3.14.2.min.js",
+      "package": "gsap",
+      "version": "3.14.2",
+      "source_url": "https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js",
+      "sha256": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
+      "bytes": 72779,
+      "risk": "vendored_runtime_dependency",
+      "usage": "local deterministic GSAP runtime for HyperFrames timeline"
+    }
+  ]
+}

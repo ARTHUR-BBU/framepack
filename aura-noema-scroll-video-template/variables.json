@@ -1,0 +1,25 @@
+{
+  "brand_name": "NOEMA.ART",
+  "tagline": "Where your practice lives",
+  "cta_label": "Create Card",
+  "email": "hello@noema.art",
+  "featured_artist": {
+    "name": "Leigh Witherell",
+    "role": "Painter",
+    "location": "London"
+  },
+  "support": {
+    "amount": "$25",
+    "supporter": "Maya Chen",
+    "message": "For your studio practice"
+  },
+  "board_cards": [
+    { "type": "Exhibition", "title": "Open Call:\nNew Forms", "location": "Montréal", "date": "Aug 12" },
+    { "type": "Community", "title": "Studio Visit\nNight", "location": "Toronto", "date": "Jul 04" },
+    { "type": "Funding", "title": "Emerging\nArtist Grant", "location": "Online", "date": "Sep 18" },
+    { "type": "Collab", "title": "Print\nExchange", "location": "Brooklyn", "date": "Jul 22" },
+    { "type": "Residency", "title": "Quiet Room\nProgram", "location": "Copenhagen", "date": "Oct 08" },
+    { "type": "Mentorship", "title": "Crit Circle\nOnline", "location": "Remote", "date": "Aug 01" },
+    { "type": "Studio", "title": "Shared\nPress Wall", "location": "Paris", "date": "Jul 30" }
+  ]
+}

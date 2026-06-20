@@ -1,0 +1,28 @@
+{
+  "fonts": [
+    {
+      "family": "Anton",
+      "source_css": "https://fonts.googleapis.com/css2?family=Anton&display=swap",
+      "source_font_url": "https://fonts.gstatic.com/s/anton/v27/1Ptgg87LROyAm3Kz-C8.woff2",
+      "local_path": "assets/fonts/anton.woff2",
+      "sha256": "d0fa07ff63dd60cbc0e2f58e29c802dca2a5ae0276c999f59c6111ab7bbaec3b",
+      "bytes": 18612
+    },
+    {
+      "family": "Inter",
+      "source_css": "https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&display=swap",
+      "source_font_url": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+      "local_path": "assets/fonts/inter.woff2",
+      "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+      "bytes": 48256
+    },
+    {
+      "family": "Caveat",
+      "source_css": "https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap",
+      "source_font_url": "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6eIWpYQ.woff2",
+      "local_path": "assets/fonts/caveat.woff2",
+      "sha256": "15f9638095ad5ec9816f93d66805ca1a87e71dc5a76b596bfce1c78d4704c405",
+      "bytes": 51020
+    }
+  ]
+}
