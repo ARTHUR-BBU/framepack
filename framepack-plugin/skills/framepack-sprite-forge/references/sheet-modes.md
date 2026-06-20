@@ -147,14 +147,20 @@ cell_size 决定的是**输出**画布大小；生图时模型画的原始 cell 
 
 ## 8. 推断速查（一句话创意 → 参数）
 
-| 用户说 | asset_type | action | 帧数 | rows×cols | viewpoint | style 默认 |
-|--------|-----------|--------|------|-----------|-----------|-----------|
-| "像素小人跑步" | character | run | 8 | 2×4 | side | pixel_art |
-| "角色待机呼吸" | character | idle | 4 | 2×2 | side | pixel_art |
-| "挥剑攻击" | character | attack | 6 | 2×3 | side | pixel_art |
-| "爆炸特效" | effect | explode | 8 | 2×4 | front | clean_hd |
-| "火球飞行" | projectile | effect | 4 | 2×2 | side | clean_hd |
-| "金币图标转动" | ui_icon | ui_loop | 6 | 2×3 | front | flat_illustration |
-| "治愈法术圈" | spell | cast | 6 | 2×3 | topdown | cel_shaded |
+|| 用户说 | asset_type | action | 帧数 | rows×cols | viewpoint | style 默认 | erode |
+|--------|-----------|--------|------|-----------|-----------|-----------|------|
+| "像素小人跑步" | character | run | 8 | 2×4 | side | pixel_art | 0 |
+| "角色待机呼吸" | character | idle | 4 | 2×2 | side | pixel_art | 0 |
+| "挥剑攻击" | character | attack | 6 | 2×3 | side | pixel_art | 0 |
+| "爆炸特效" | effect | explode | 8 | 2×4 | front | clean_hd | 4-6 |
+| "火焰循环" | effect | effect | 6-8 | 2×3 | front | clean_hd | 4-8 |
+| "火球飞行" | projectile | effect | 4 | 2×2 | side | clean_hd | 0-2 |
+| "金币图标转动" | ui_icon | ui_loop | 6 | 2×3 | front | flat_illustration | 0 |
+| "治愈法术圈" | spell | cast | 6 | 2×3 | topdown | cel_shaded | 4-6 |
 
 这张表是默认值的快速参考，不是硬规则——用户说了不同的就听用户的。
+
+**erode_pixels 推断逻辑**：发光体（effect/spell/impact）天然有辉光过渡区，
+需要 alpha erode 清理色键残留。非发光体（character/projectile/ui_icon）
+硬边缘无辉光，erode=0。辉光宽度不确定时取中位数 6，小尺寸 sprite（cell_size
+≤128）减半到 2-3 避免侵蚀过多。详见 `prompt-rules.md` 规则 8。

@@ -465,3 +465,144 @@ class TestPipelineAdaptiveBackground:
         )
         assert qc["transparent_ratio"] > 0.10
         assert qc["non_empty_frames"] == 4
+
+
+def _glow_fringe_sheet(cell, bg_rgb, core_color, fringe_color, fringe_width=4):
+    """带辉光过渡区的合成图：bg 背景 + fringe_color 环 + core_color 核心。
+
+    模拟火焰/光效的辉光边缘——fringe_color 距离 bg 超过色键阈值 30，
+    色键不清除它，复现真实生图工具在品红背景上画辉光导致的色键残留。
+    """
+    arr = np.zeros((cell, cell, 3), dtype=np.uint8)
+    arr[..., 0] = bg_rgb[0]
+    arr[..., 1] = bg_rgb[1]
+    arr[..., 2] = bg_rgb[2]
+    cx, cy = cell // 2, cell // 2
+    core_half = cell // 4
+    outer = core_half + fringe_width
+    # 辉光环
+    arr[cx - outer:cx + outer, cy - outer:cy + outer] = fringe_color
+    # 核心块
+    arr[cx - core_half:cx + core_half, cy - core_half:cy + core_half] = core_color
+    return Image.fromarray(arr, "RGB")
+
+
+# ---------------------------------------------------------------------------
+# erode_alpha — alpha 通道形态学收缩，清理辉光过渡区的色键残留
+# ---------------------------------------------------------------------------
+class TestErodeAlpha:
+    """erode_alpha 对 alpha 通道做 N 像素收缩（erode），吃掉辉光过渡区。
+    这是 effect/spell 类素材（火焰、光效）色键后清理品红边缘的标准操作。
+    """
+
+    def test_zero_pixels_is_noop(self):
+        """erode_alpha(pixels=0) 不改变图像"""
+        img = _magenta_sheet_with_cells(1, 1, 40, [(255, 0, 0)])
+        keyed = process_sprite.remove_bg_magenta(img)
+        eroded = process_sprite.erode_alpha(keyed, pixels=0)
+        assert np.array_equal(np.array(eroded), np.array(keyed))
+
+    def test_erode_reduces_opaque_area(self):
+        """erode 后不透明像素数量减少"""
+        img = _magenta_sheet_with_cells(1, 1, 40, [(255, 0, 0)])
+        keyed = process_sprite.remove_bg_magenta(img)
+        before = np.count_nonzero(np.array(keyed)[..., 3] > 0)
+        eroded = process_sprite.erode_alpha(keyed, pixels=2)
+        after = np.count_nonzero(np.array(eroded)[..., 3] > 0)
+        assert after < before, (
+            f"erode 应减少不透明像素: {before} -> {after}"
+        )
+
+    def test_erode_zeros_rgb_on_eroded_pixels(self):
+        """被侵蚀变透明的像素，RGB 必须置零（防止 GIF 颜色泄漏）"""
+        arr = np.zeros((40, 40, 4), dtype=np.uint8)
+        # 红色核心
+        arr[12:28, 12:28] = [255, 0, 0, 255]
+        # 粉品红环（模拟辉光残留，色键不清除）
+        arr[10:30, 10:12] = [255, 0, 200, 255]
+        arr[10:30, 28:30] = [255, 0, 200, 255]
+        arr[10:12, 12:28] = [255, 0, 200, 255]
+        arr[28:30, 12:28] = [255, 0, 200, 255]
+        img = Image.fromarray(arr, "RGBA")
+
+        eroded = process_sprite.erode_alpha(img, pixels=3)
+        result = np.array(eroded)
+        transparent = result[..., 3] == 0
+        assert (result[transparent, :3] == 0).all(), (
+            "透明像素的 RGB 必须置零，否则 GIF 里会泄漏颜色"
+        )
+
+    def test_erode_preserves_core(self):
+        """erode 2px 不侵蚀大实心块的中心区域"""
+        arr = np.zeros((100, 100, 4), dtype=np.uint8)
+        arr[20:80, 20:80] = [255, 0, 0, 255]
+        img = Image.fromarray(arr, "RGBA")
+
+        eroded = process_sprite.erode_alpha(img, pixels=2)
+        result = np.array(eroded)
+        assert (result[40:60, 40:60, 3] == 255).all(), (
+            "erode 2px 不应侵蚀中心实心区域"
+        )
+
+    def test_erode_on_fully_opaque_is_noop(self):
+        """全不透明图像 erode 后仍全不透明（min of all-255 = 255）"""
+        arr = np.full((40, 40, 4), 255, dtype=np.uint8)
+        arr[..., :3] = [200, 50, 50]
+        img = Image.fromarray(arr, "RGBA")
+
+        eroded = process_sprite.erode_alpha(img, pixels=5)
+        result = np.array(eroded)
+        assert (result[..., 3] == 255).all(), (
+            "全不透明图像 erode 后不应有透明像素"
+        )
+
+
+class TestPipelineErodeGlowFringe:
+    """端到端: pipeline 加 erode 后应减少辉光残留。
+
+    合成图复现真实火焰 sprite 的"辉光过渡区卡色键"问题——
+    生图工具在品红背景上画辉光，辉光外缘颜色介于品红和火焰橙红之间，
+    距离品红 30-100 的过渡区像素被色键保留，形成品红边缘。
+    erode 收缩 alpha 通道吃掉这圈残留。
+    """
+
+    def test_erode_reduces_fringe_residue(self, tmp_path):
+        """带辉光环的 sheet，erode_pixels=2 后品红系边缘像素减少"""
+        # fringe_color (255,0,180) 距离品红 (255,0,255) = 75 > 30
+        # 色键不清除它 → 残留在 sprite 边缘
+        sheet = _glow_fringe_sheet(
+            60, (255, 0, 255), (255, 80, 0), (255, 0, 180), fringe_width=4
+        )
+        inp = tmp_path / "glow.png"
+        sheet.save(inp)
+        outdir_no_erode = tmp_path / "no_erode"
+        outdir_erode = tmp_path / "erode"
+
+        _, qc_no = process_sprite.run_pipeline(
+            input_path=str(inp), rows=1, cols=1,
+            output_dir=str(outdir_no_erode), cell_size=60,
+        )
+        _, qc_erode = process_sprite.run_pipeline(
+            input_path=str(inp), rows=1, cols=1,
+            output_dir=str(outdir_erode), cell_size=60,
+            erode_pixels=2,
+        )
+        # erode 后不透明像素应比 erode 前少（辉光环被侵蚀）
+        ratio_no = 1 - qc_no["transparent_ratio"]
+        ratio_erode = 1 - qc_erode["transparent_ratio"]
+        assert ratio_erode < ratio_no, (
+            f"erode 应减少不透明比例: {ratio_no:.3f} -> {ratio_erode:.3f}"
+        )
+
+    def test_default_erode_is_zero_backward_compat(self, tmp_path):
+        """默认 erode_pixels=0，pipeline 行为与现有版本一致（向后兼容）"""
+        sheet = _magenta_sheet_with_cells(1, 1, 40, [(255, 0, 0)])
+        inp = tmp_path / "basic.png"
+        sheet.save(inp)
+        outdir = tmp_path / "out"
+        _, qc = process_sprite.run_pipeline(
+            input_path=str(inp), rows=1, cols=1,
+            output_dir=str(outdir), cell_size=40,
+        )
+        assert qc["non_empty_frames"] == 1
+        assert qc["transparent_ratio"] > 0.10

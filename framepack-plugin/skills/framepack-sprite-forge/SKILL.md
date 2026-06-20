@@ -100,6 +100,7 @@ Execution Manifest 里用 `sprite-animation` 武器引用 `sheet-transparent.png
 | **视角** viewpoint | 从哪个角度（side/topdown/isometric/front） | `side` |
 | **cell_size** | 输出单帧画布像素 | `384` |
 | **fps** | 动作节奏（idle 慢/effect 快） | `8` |
+| **erode_pixels** | alpha 边缘收缩（effect/spell 清理辉光） | `0` |
 
 推断原则：
 - **帧数必须 = rows×cols**。用户要的帧数没有完美网格时，优先把帧数调到最近的网格积数，
@@ -122,10 +123,16 @@ python scripts/process_sprite.py process \
   --cell-size <px>                 # 必填：输出单帧画布像素（正方形）
   --threshold <0-255>              # 可选：品红色键阈值，默认 30
   --fps <N>                        # 可选：GIF 导出帧率，默认 8
+  --erode-pixels <N>               # 可选：alpha 边缘收缩（effect/spell 清理辉光），默认 0
 ```
 
-处理流水线：自适应背景检测 → 色键去背景 → 边缘清理 → 按网格切帧 → 单帧居中对齐 →
-重组透明 sheet → 导出单帧 PNG + 透明 GIF。
+处理流水线：自适应背景检测 → 色键去背景 → 边缘清理 → [alpha erode] → 按网格切帧 →
+单帧居中对齐 → 重组透明 sheet → 导出单帧 PNG + 透明 GIF。
+
+> **alpha erode（辉光清理）**：发光体素材（火焰/能量球/魔法光效）天然有辉光，
+> 辉光外缘与品红背景的过渡区卡在色键阈值的灰色地带，形成品红边缘。
+> `--erode-pixels` 收缩 alpha 通道吃掉这圈残留。character/projectile/ui_icon
+> 硬边缘无辉光，erode=0；effect/spell/impact 推荐 4-8。详见 prompt-rules.md 规则 8。
 
 > **自适应背景检测**：后处理不再依赖纯品红 #FF00FF 硬编码。脚本从图像边缘采样
 > 实际背景色（生图工具对 hex 服从度有限，画出的"magenta"常是偏暗洋红如

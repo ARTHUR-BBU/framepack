@@ -155,6 +155,33 @@ def clean_edges(img: Image.Image) -> Image.Image:
     return Image.fromarray(rgba, "RGBA")
 
 
+def erode_alpha(img: Image.Image, pixels: int = 2) -> Image.Image:
+    """Erode the alpha channel by ``pixels`` iterations of 3×3 minimum filter.
+
+    Each iteration shrinks the opaque region by ~1px in every direction,
+    removing thin colour-key survivors that sit in the glow-transition zone
+    (common with effect/spell sprites whose soft aura blends into the magenta
+    background).  ``pixels=0`` is a no-op.
+
+    RGB channels are zeroed wherever alpha becomes 0 so no colour bleeds
+    through the key during GIF export.
+    """
+    if pixels <= 0:
+        return img.convert("RGBA")
+    src = img.convert("RGBA")
+    a = src.split()[3]
+    for _ in range(pixels):
+        a = a.filter(ImageFilter.MinFilter(size=3))
+    a_arr = np.asarray(a)
+    rgba = np.asarray(src).copy()
+    transparent = a_arr == 0
+    rgba[transparent, 0] = 0
+    rgba[transparent, 1] = 0
+    rgba[transparent, 2] = 0
+    rgba[..., 3] = a_arr
+    return Image.fromarray(rgba, "RGBA")
+
+
 def compose_sheet(frames: List[Image.Image], rows: int, cols: int) -> Image.Image:
     """Re-assemble ``frames`` (reading order) into a rows x cols sprite sheet."""
     if not frames:
@@ -293,6 +320,7 @@ def run_pipeline(
     cell_size: int,
     threshold: int = 30,
     fps: int = 8,
+    erode_pixels: int = 0,
 ) -> tuple[Path, dict]:
     """Run the full post-processing pipeline and write artifacts to output_dir.
 
@@ -309,6 +337,8 @@ def run_pipeline(
     bg_color = detect_background_color(raw)
     keyed = remove_bg_magenta(raw, threshold=threshold, key_color=bg_color)
     cleaned = clean_edges(keyed)
+    if erode_pixels > 0:
+        cleaned = erode_alpha(cleaned, pixels=erode_pixels)
     raw_frames = split_grid(cleaned, rows, cols)
     frames = [center_single_sprite(f, cell_size) for f in raw_frames]
 
@@ -349,6 +379,11 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--threshold", type=int, default=30, help="Magenta key threshold.")
     p.add_argument("--fps", type=int, default=8, help="GIF frames per second.")
+    p.add_argument(
+        "--erode-pixels", type=int, default=0,
+        help="Alpha-channel erosion in pixels (for glow/aura fringe cleanup on "
+             "effect/spell sprites). 0 = disabled.",
+    )
     return parser
 
 
@@ -364,6 +399,7 @@ def main(argv: list[str] | None = None) -> int:
             cell_size=args.cell_size,
             threshold=args.threshold,
             fps=args.fps,
+            erode_pixels=args.erode_pixels,
         )
         print(f"Wrote {sheet_path}")
         print(format_qc_summary(qc))

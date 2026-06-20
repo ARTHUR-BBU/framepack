@@ -148,6 +148,66 @@ Negative / do NOT:
 
 ---
 
+## 规则 8：发光体素材的辉光最小化（effect/spell 专属）
+
+**仅适用于 `effect` / `spell` / `impact` 类素材**（火焰、能量球、爆炸、魔法光效）。
+character / projectile / ui_icon 不受此规则约束。
+
+### 问题
+
+发光体素材天然有辉光（glow/aura）——这是它们的视觉特征。但生图工具在品红
+背景上画辉光时，辉光的外缘会自然融入品红色，产生一段从品红到火焰色的颜色渐变。
+
+这段渐变是**色键的天敌**：
+
+- 色键按颜色距离清除，阈值 30 只能吃掉最接近品红的外缘
+- 渐变中段（距离品红 30-200 的粉品红/粉红像素）被色键保留
+- 这些像素在 sprite 边缘形成一圈品红色光环
+- 后处理 `erode_alpha` 可以收缩 alpha 吃掉残余，但辉光太宽（>8px）时 erode 也会吃掉火焰本体
+
+### prompt 写法
+
+effect/spell 类素材的 prompt 必须额外包含以下约束：
+
+```
+Minimal soft glow around the flame — keep the color transition from core to
+background edge as tight as possible (2-3 pixels max). Do NOT paint a wide
+diffuse aura or atmospheric haze blending into the magenta background.
+The outer flame boundary should have a hard, clean color stop, not a slow
+gradient fading into magenta.
+```
+
+并在负面提示中额外加入：
+
+```
+- no wide diffuse glow, no atmospheric aura blending into background
+- no slow color gradient from subject edge to magenta background
+```
+
+### 后处理配合
+
+即使 prompt 要求了最小辉光，生图工具仍可能画出 4-8px 的过渡区。后处理
+`erode_alpha` 作为第二层防线清理残余：
+
+```bash
+# effect/spell 类素材推荐 erode 4-8 像素
+python process_sprite.py process ... --erode-pixels 6
+```
+
+erode 推荐值（见 `sheet-modes.md` 推断速查表）：
+- 辉光窄（prompt 服从度高）→ erode 2-4
+- 辉光中等（默认情况）→ erode 4-6
+- 辉光宽（生图工具不听话）→ erode 6-8
+
+### 两层防线原则
+
+prompt 减辉光 + 后处理 erode 是**互补关系**，不是替代关系：
+- 只有 prompt 不够：生图工具不一定服从"最小辉光"指令
+- 只有 erode 不够：辉光太宽时 erode 会吃掉火焰本体
+- 两者配合：prompt 让过渡区尽可能窄（2-3px），erode 清理残余
+
+---
+
 ## 通用 Prompt 模板
 
 把下面模板里的 `{...}` 替换成推断出的参数（推断逻辑见 `sheet-modes.md`
