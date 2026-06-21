@@ -434,6 +434,311 @@ colors:
     assert "brightness" in issue.details["signals"]
 
 
+# ── Execution contract audit: Manifest declaration must match HTML implementation ──
+
+
+def test_manifest_weapon_without_params_must_still_call_canonical_function(tmp_path):
+    """Regression for test-team P1: weapon declarations with no params escaped audit.
+
+    The Execution Manifest is a contract. A builtin weapon declaration means the
+    HTML must call the canonical weapon function even when no params block is
+    present.
+    """
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".framepack" / "arsenal.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "project": tmp_path.name,
+                "weapons": {
+                    "card-cascade-reveal": {
+                        "id": "card-cascade-reveal",
+                        "source": "builtin",
+                        "status": "active",
+                        "used_by": ["scene_3"],
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_3:
+  weapon: card-cascade-reveal
+  code: "blocks/references/card-cascade-reveal.js"
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+gsap.fromTo('.card', {y: 40, opacity: 0}, {y: 0, opacity: 1, stagger: 0.08});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    not_called = [issue for issue in report.issues if issue.code == "manifest_weapon_not_called"]
+
+    assert len(not_called) == 1
+    assert not_called[0].severity == "P0"
+    assert not_called[0].weapon_id == "card-cascade-reveal"
+    assert not_called[0].details["category"] == "execution_contract"
+    assert not_called[0].details["function"] == "buildCardCascade"
+
+
+def test_manifest_handwrite_allows_inline_gsap_without_weapon_call(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: HANDWRITE
+  reason: source ScrollTrigger is ground truth
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+gsap.fromTo('.headline', {y: 40}, {y: 0});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+
+    assert not [issue for issue in report.issues if issue.code == "manifest_weapon_not_called"]
+
+
+def test_manifest_reference_only_weapon_does_not_block_on_missing_call(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".framepack" / "arsenal.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "project": tmp_path.name,
+                "weapons": {
+                    "card-cascade-reveal": {
+                        "id": "card-cascade-reveal",
+                        "source": "builtin",
+                        "status": "active",
+                        "used_by": ["scene_3"],
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_3:
+  weapon: card-cascade-reveal
+  binding: reference_only
+  reason: use as visual vocabulary; source ScrollTrigger remains canonical
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+gsap.fromTo('.card', {y: 40, opacity: 0}, {y: 0, opacity: 1, stagger: 0.08});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+    codes = [issue.code for issue in report.issues]
+
+    assert "manifest_weapon_not_called" not in codes
+    reference_notes = [issue for issue in report.issues if issue.code == "manifest_weapon_reference_only"]
+    assert len(reference_notes) == 1
+    assert reference_notes[0].severity == "P3"
+    assert reference_notes[0].details["category"] == "execution_contract"
+
+
+def test_manifest_mode_reference_only_weapon_does_not_block_on_missing_call(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_3:
+  weapon: card-cascade-reveal
+  mode: reference_only
+  reason: visual vocabulary only
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text("<script>gsap.to('.card', {y: 0});</script>", encoding="utf-8")
+
+    report = audit_project(tmp_path)
+
+    assert not [issue for issue in report.issues if issue.code == "manifest_weapon_not_called"]
+    assert [issue for issue in report.issues if issue.code == "manifest_weapon_reference_only"]
+
+
+def test_manifest_binding_reference_is_not_reference_only_exemption(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".framepack" / "arsenal.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "project": tmp_path.name,
+                "weapons": {
+                    "card-cascade-reveal": {
+                        "id": "card-cascade-reveal",
+                        "source": "builtin",
+                        "status": "active",
+                        "used_by": ["scene_3"],
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_3:
+  weapon: card-cascade-reveal
+  binding: reference
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text("<script>gsap.to('.card', {y: 0});</script>", encoding="utf-8")
+
+    report = audit_project(tmp_path)
+
+    assert [issue for issue in report.issues if issue.code == "manifest_weapon_not_called"]
+    assert not [issue for issue in report.issues if issue.code == "manifest_weapon_reference_only"]
+
+
+def test_function_definition_comment_and_string_do_not_satisfy_weapon_call(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".framepack" / "arsenal.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "project": tmp_path.name,
+                "weapons": {
+                    "card-cascade-reveal": {
+                        "id": "card-cascade-reveal",
+                        "source": "builtin",
+                        "status": "active",
+                        "used_by": ["scene_3"],
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_3:
+  weapon: card-cascade-reveal
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+function buildCardCascade() { return null; }
+// buildCardCascade(tl, cards)
+const doc = "buildCardCascade(tl, cards)";
+gsap.fromTo('.card', {y: 40}, {y: 0});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+
+    not_called = [issue for issue in report.issues if issue.code == "manifest_weapon_not_called"]
+    assert len(not_called) == 1
+    assert not_called[0].weapon_id == "card-cascade-reveal"
+
+
+def test_object_method_definition_does_not_satisfy_weapon_call(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".framepack" / "arsenal.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "project": tmp_path.name,
+                "weapons": {
+                    "card-cascade-reveal": {
+                        "id": "card-cascade-reveal",
+                        "source": "builtin",
+                        "status": "active",
+                        "used_by": ["scene_3"],
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_3:
+  weapon: card-cascade-reveal
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+const helpers = {
+  buildCardCascade(opts) { return opts; }
+};
+class Demo { buildCardCascade(opts) { return opts; } }
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+
+    assert [issue for issue in report.issues if issue.code == "manifest_weapon_not_called"]
+
+
+def test_parameter_drift_ignores_commented_and_string_literal_matching_calls(tmp_path):
+    _write_minimal_registry(tmp_path)
+    (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+        """
+## Execution Manifest
+scene_1:
+  weapon: text-split-enter
+  params:
+    travelDistance: "60px"
+""",
+        encoding="utf-8",
+    )
+    (tmp_path / "index.html").write_text(
+        """
+<script>
+// textSplitEnter(tl, el, {travelDistance: '60px'});
+const doc = "textSplitEnter(tl, el, {travelDistance: '60px'})";
+textSplitEnter(tl, el, {travelDistance: '240px'});
+</script>
+""",
+        encoding="utf-8",
+    )
+
+    report = audit_project(tmp_path)
+
+    drift = [issue for issue in report.issues if issue.code == "weapon_parameter_drift"]
+    assert len(drift) == 1
+    assert drift[0].details["drift"]["travelDistance"] == {"expected": "60px", "actual": "240px"}
+
+
 # ── v0.13: Parameter drift threshold detection ──
 
 

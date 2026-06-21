@@ -19,6 +19,8 @@ class ManifestWeapon:
     grammar: str | None = None
     taste_move: str | None = None
     surprise: str | None = None
+    binding: str | None = None
+    mode: str | None = None
 
 
 def _manifest_section(text: str) -> str:
@@ -73,6 +75,8 @@ def _parse_kv_block(block: dict[str, object]) -> ManifestWeapon | None:
         grammar=_clean(block.get("grammar")) if block.get("grammar") is not None else None,
         taste_move=_clean(block.get("taste_move")) if block.get("taste_move") is not None else None,
         surprise=_clean(block.get("surprise")) if block.get("surprise") is not None else None,
+        binding=_clean(block.get("binding")) if block.get("binding") is not None else None,
+        mode=_clean(block.get("mode")) if block.get("mode") is not None else None,
     )
 
 
@@ -143,7 +147,7 @@ def parse_execution_manifest(text: str) -> list[ManifestWeapon]:
             current["params"][param_kv.group(1)] = _coerce_scalar(param_kv.group(2))
             continue
 
-        kv = re.match(r"^(id|weapon|source|used_by|scene|scenes|code|reason|motion_role|grammar|taste_move|surprise)\s*:\s*(.+)$", stripped)
+        kv = re.match(r"^(id|weapon|source|used_by|scene|scenes|code|reason|motion_role|grammar|taste_move|surprise|binding|mode)\s*:\s*(.+)$", stripped)
         if kv and current is not None:
             current[kv.group(1)] = _clean(kv.group(2))
             in_params = False

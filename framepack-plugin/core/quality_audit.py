@@ -294,7 +294,12 @@ def _parse_js_object(raw: str) -> dict[str, str]:
 
 def _extract_function_option_objects(html: str, function_name: str) -> list[dict[str, str]]:
     pattern = re.compile(rf"{re.escape(function_name)}\s*\([^;]*?\{{(?P<body>[^{{}}]*)\}}[^;]*?\)", re.S)
-    return [_parse_js_object(match.group("body")) for match in pattern.finditer(html)]
+    masked = _mask_js_comments_and_strings(html)
+    return [
+        _parse_js_object(match.group("body"))
+        for match in pattern.finditer(html)
+        if _is_executable_function_match(masked, match.start(), function_name)
+    ]
 
 
 def _normalize_params(weapon_id: str, params: dict[str, object]) -> dict[str, object]:
@@ -308,6 +313,130 @@ def _canonical_function_name(weapon_id: str) -> str | None:
         return None
     function_name = weapon.get("function")
     return str(function_name) if function_name else None
+
+
+def _is_reference_only(ref: ManifestWeapon) -> bool:
+    """Return True when a manifest weapon is explicitly visual vocabulary only."""
+    values = {str(value).strip().lower().replace("-", "_") for value in (ref.binding, ref.mode) if value}
+    return "reference_only" in values
+
+
+def _mask_js_comments_and_strings(text: str) -> str:
+    """Mask JS comments/strings while preserving length and newlines.
+
+    This is a lightweight scanner for audit heuristics, not a full JS parser.
+    It prevents comments or string literals from satisfying canonical function
+    call checks.
+    """
+    result: list[str] = []
+    i = 0
+    state: str | None = None
+    escaped = False
+    while i < len(text):
+        char = text[i]
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+
+        if state == "line_comment":
+            if char == "\n":
+                result.append(char)
+                state = None
+            else:
+                result.append(" ")
+            i += 1
+            continue
+
+        if state == "block_comment":
+            if char == "*" and nxt == "/":
+                result.extend("  ")
+                state = None
+                i += 2
+            else:
+                result.append("\n" if char == "\n" else " ")
+                i += 1
+            continue
+
+        if state in {"'", '"', "`"}:
+            quote = state
+            if escaped:
+                result.append("\n" if char == "\n" else " ")
+                escaped = False
+            elif char == "\\":
+                result.append(" ")
+                escaped = True
+            elif char == quote:
+                result.append(" ")
+                state = None
+            else:
+                result.append("\n" if char == "\n" else " ")
+            i += 1
+            continue
+
+        if char == "/" and nxt == "/":
+            result.extend("  ")
+            state = "line_comment"
+            i += 2
+            continue
+        if char == "/" and nxt == "*":
+            result.extend("  ")
+            state = "block_comment"
+            i += 2
+            continue
+        if char in {"'", '"', "`"}:
+            result.append(" ")
+            state = char
+            i += 1
+            continue
+
+        result.append(char)
+        i += 1
+
+    return "".join(result)
+
+
+def _find_closing_paren(text: str, open_index: int) -> int | None:
+    depth = 0
+    for index in range(open_index, len(text)):
+        char = text[index]
+        if char == "(":
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth == 0:
+                return index
+    return None
+
+
+def _is_executable_function_match(masked_html: str, start: int, function_name: str) -> bool:
+    if masked_html[start: start + len(function_name)] != function_name:
+        return False
+
+    after_name = start + len(function_name)
+    while after_name < len(masked_html) and masked_html[after_name].isspace():
+        after_name += 1
+    if after_name >= len(masked_html) or masked_html[after_name] != "(":
+        return False
+
+    prefix = masked_html[max(0, start - 32): start]
+    if re.search(r"(?:^|[^\w$])function\s+$", prefix):
+        return False
+
+    close_paren = _find_closing_paren(masked_html, after_name)
+    if close_paren is None:
+        return False
+
+    suffix = masked_html[close_paren + 1: close_paren + 16].lstrip()
+    if suffix.startswith("{"):
+        return False
+    return True
+
+
+def _has_canonical_function_call(html: str, function_name: str) -> bool:
+    masked = _mask_js_comments_and_strings(html)
+    pattern = re.compile(rf"\b{re.escape(function_name)}\s*\(")
+    return any(
+        _is_executable_function_match(masked, match.start(), function_name)
+        for match in pattern.finditer(masked)
+    )
 
 
 def _inline_gsap_hint(html: str, weapon_id: str, params: dict[str, object]) -> dict[str, object]:
@@ -341,7 +470,6 @@ def _inline_gsap_hint(html: str, weapon_id: str, params: dict[str, object]) -> d
         "signals": signals,
         "recommendation": "Replace the inline animation lookalike with the canonical function call from arsenal.json; pattern-equivalent inline code does not satisfy the weapon binding contract.",
     }
-
 
 def _find_matching_call(calls: list[dict[str, str]], params: dict[str, object]) -> dict[str, str] | None:
     if not calls:
@@ -407,7 +535,7 @@ def _audit_arsenal(project_dir: Path, arsenal: dict[str, Any], manifest: list[Ma
 
     weapons = arsenal.get("weapons") if isinstance(arsenal.get("weapons"), dict) else {}
     for ref in manifest:
-        if ref.handwrite or ref.id == "HANDWRITE":
+        if ref.handwrite or ref.id == "HANDWRITE" or _is_reference_only(ref):
             continue
         if ref.id not in weapons:
             issues.append(
@@ -464,6 +592,58 @@ def _audit_html_guardrails(project_dir: Path, html: str, manifest: list[Manifest
     return issues
 
 
+
+def _audit_execution_contract(project_dir: Path, html: str, manifest: list[ManifestWeapon]) -> list[QualityIssue]:
+    """Check that Execution Manifest weapon declarations are implemented in HTML.
+
+    Parameter drift checks already compare declared params against actual calls.
+    This contract audit closes the no-params gap: a required builtin weapon must
+    call its canonical function even when the manifest has no params block.
+    """
+    issues: list[QualityIssue] = []
+    html_path = project_dir / "index.html"
+    for ref in manifest:
+        if ref.handwrite or ref.id == "HANDWRITE":
+            continue
+        function_name = _canonical_function_name(ref.id)
+        if not function_name:
+            continue
+        if _is_reference_only(ref):
+            issues.append(
+                QualityIssue(
+                    "manifest_weapon_reference_only",
+                    "P3",
+                    f"Manifest weapon {ref.id!r} is marked reference_only; HTML is not required to call {function_name}(), but this weapon is visual vocabulary rather than executed arsenal code",
+                    str(project_dir / ".hyperframes" / "expanded-prompt.md"),
+                    scene=ref.used_by[0] if ref.used_by else None,
+                    weapon_id=ref.id,
+                    details={
+                        "category": "execution_contract",
+                        "function": function_name,
+                        "binding": ref.binding,
+                        "mode": ref.mode,
+                    },
+                )
+            )
+            continue
+        if not _has_canonical_function_call(html, function_name):
+            issues.append(
+                QualityIssue(
+                    "manifest_weapon_not_called",
+                    "P0",
+                    f"⛔ BLOCKING: Manifest weapon {ref.id!r} maps to {function_name}(), but index.html does not call the canonical weapon function. Declare HANDWRITE/reference_only if this is intentional; otherwise use the arsenal function instead of inline GSAP/anime lookalikes.",
+                    str(html_path),
+                    scene=ref.used_by[0] if ref.used_by else None,
+                    weapon_id=ref.id,
+                    details={
+                        "category": "execution_contract",
+                        "function": function_name,
+                        "inline_hint": _inline_gsap_hint(html, ref.id, _normalize_params(ref.id, ref.params or {})),
+                    },
+                )
+            )
+    return issues
+
 def _build_canonical_snippet(function_name: str, params: dict[str, object]) -> str:
     """Build a canonical code snippet showing correct parameter usage."""
     param_lines = []
@@ -480,10 +660,10 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
     issues: list[QualityIssue] = []
     html_path = project_dir / "index.html"
     for ref in manifest:
-        if ref.handwrite or not ref.params:
+        if ref.handwrite or _is_reference_only(ref) or not ref.params:
             continue
         fn = _canonical_function_name(ref.id)
-        if not fn:
+        if not fn or not _has_canonical_function_call(html, fn):
             continue
         calls = _extract_function_option_objects(html, fn)
         params = _normalize_params(ref.id, ref.params)
@@ -493,11 +673,15 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
                 QualityIssue(
                     "manifest_weapon_not_called",
                     "P0",
-                    f"⛔ BLOCKING: Manifest weapon {ref.id!r} maps to {fn}(), but no call was found in index.html. After v0.13 Element-Inject refactor, all weapons are callable — Agent must use the canonical function, not inline GSAP lookalikes",
+                    f"⛔ BLOCKING: Manifest weapon {ref.id!r} maps to {fn}(), but no call in index.html matches its declared params. Agent must use the canonical function with the manifest contract, not a lookalike call with unrelated options.",
                     str(html_path),
                     scene=ref.used_by[0] if ref.used_by else None,
                     weapon_id=ref.id,
-                    details={"function": fn, "inline_hint": _inline_gsap_hint(html, ref.id, params)},
+                    details={
+                        "category": "execution_contract",
+                        "function": fn,
+                        "inline_hint": _inline_gsap_hint(html, ref.id, params),
+                    },
                 )
             )
             continue
@@ -522,7 +706,6 @@ def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[Manifest
                 )
             )
     return issues
-
 
 def _audit_timeline(project_dir: Path, html: str, expanded_prompt: str, duration: float | None) -> list[QualityIssue]:
     issues: list[QualityIssue] = []
@@ -759,6 +942,7 @@ def audit_project(project_dir: str | Path) -> QualityAuditReport:
     issues: list[QualityIssue] = []
     issues.extend(_audit_arsenal(project_dir, arsenal, manifest, duration))
     issues.extend(_audit_html_guardrails(project_dir, html, manifest))
+    issues.extend(_audit_execution_contract(project_dir, html, manifest))
     issues.extend(_audit_parameter_drift(project_dir, html, manifest))
     issues.extend(_audit_font_dependencies(project_dir, html))
     issues.extend(_audit_visibility(project_dir, frame_md, html))
