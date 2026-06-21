@@ -7,65 +7,70 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.14.2 GitHub Release 已正式发布 ✅ + Sprite Forge 火焰实战验证完成
+**阶段**: v0.14.2 正式发布后开发线（Unreleased）— NOEMA 视频模板金样板 + Execution Contract Audit 已本地提交
 **分支**: `main`
-**源码版本**: plugin.yaml = 0.14.2 ✅
-**正式发布**: `v0.14.2` tag → `52a2ab1`（最后一个产品代码提交，非 handoff）
+**源码版本**: plugin.yaml = 0.14.2（正式源码版本仍是 v0.14.2）
+**正式发布**: `v0.14.2` tag → `52a2ab1`（release artifact，以 tag 为准）
 **GitHub Release**: https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.14.2 ✅
-**远端 main**: 包含发布后 handoff；release artifact 以 tag `v0.14.2` 为准
-**测试**: 548 passed / 1 skipped ✅（正式发布前 fresh run，2026-06-20）
-**部署同步**: 源码与部署目录 md5 全一致 ✅（最近一次同步 5 文件，2026-06-20）
+**最新本地提交**: `4ed4b6f` — `[verified] fix: add execution contract audit for manifest weapon calls`
+**未发版开发成果**: `8647ed1` NOEMA scroll video template；`4ed4b6f` Execution Contract Audit
+**测试**: 556 passed / 1 skipped ✅（framepack-plugin full suite，2026-06-21）
+**部署同步**: `execution_manifest.py` + `quality_audit.py` 已同步到 `F:\Hermes_windows\plugins\framepack\`，md5 一致；deployed runtime smoke 通过
+**工作区**: 仅 `assets/` 未跟踪（Sprite Forge 真实验证产物，保留现场，不纳入本轮提交）
 
 ### 上次做了什么
 
-Sprite Forge 动画覆盖范围头脑风暴 → 火焰循环实战验证 → 发现并修复 2 个色键健壮性缺口：
-
-- ✅ **头脑风暴 7 个战场**：有机特效/粒子爆发/角色/漫画特效/天气/风格化UI/材质。
-  核心判断"形状在变用 GSAP，内容在变用 Sprite Forge"。用户选先做实战验证。
-- ✅ **火焰循环实战**（第 1 个验证方向）：出图纸 → 用户生图（2×4, 8 帧）→ 后处理。
-  暴露角色 sprite 不会遇到的"辉光过渡区卡色键"问题。
-- ✅ **SF-AK1 修复**（commit `103b255`）：生图工具画 magenta 是 (230,45,183) 而非
-  (255,0,255)，硬编码阈值 30 够不着 → 加 `detect_background_color()` 自适应检测。
-  TDD 全流程，7 测试，真实图验证 56.8% transparent。
-- ✅ **版本 bump 0.14.1 → 0.14.2**（commit `068b2f0`）：4-phase 精细处理，
-  23 文件同步，零版本漂移。
-- ✅ **SF-AK2 修复**（commit `52a2ab1`）：火焰辉光外缘与品红背景的过渡区
-  （距离 30-200px 的粉品红像素）卡在色键灰色地带 → 新增 `erode_alpha()` alpha
-  通道形态学收缩 + prompt-rules.md 规则 8（辉光最小化，两层防线）。
-  TDD 全流程，7 测试，真实火焰图 erode=6 后品红边缘 19.8%→0.8%，深色背景
-  合成 vision 确认生产可用。独立 reviewer PASS（0 must-fix）。
-- ✅ **Sprite Forge 文档扩展**：SKILL.md 加 erode CLI/参数表/流水线说明；
-  sheet-modes.md 推断速查表加 erode 列 + 火焰行；prompt-rules.md 规则 8。
-- ✅ **正式发布 v0.14.2**：push main 到 GitHub；创建 annotated tag `v0.14.2`
-  指向 `52a2ab1`；创建 GitHub Release；读回验证 `isDraft=false`、`isPrerelease=false`。
+- ✅ **NOEMA 动态网站 → 60 秒视频模板金样板**（commit `8647ed1`）：
+  - 路线是“视频导演版”，不是网页录屏；不保留 ScrollTrigger，不使用 `repeat:-1`。
+  - 11 个 HyperFrames `clip`，root 显式 `data-duration="60"`。
+  - 33 个远程资产冻结到本地，GSAP runtime 改为本地 vendored。
+  - `lint` 0 errors / 0 warnings；`inspect` 0 layout issues；render 1920×1080、30fps、60s、1800 frames；visual QA PASS；独立 reviewer 三轮通过。
+  - 项目路径：`F:\hyperframes\aura-noema-scroll-video-template\`
+- ✅ **Execution Contract Audit 系统修复**（commit `4ed4b6f`）：
+  - 解决测试组 P1：Manifest 声明武器但 HTML 实际裸写、旧 audit 漏检。
+  - 集成到现有 `core/quality_audit.py`，不另起审计孤岛。
+  - Manifest weapon 即使无 params，也必须调用 canonical function；否则报 `manifest_weapon_not_called` P0。
+  - `HANDWRITE` 是合法豁免；`binding/mode: reference_only` 是视觉参考豁免；普通 `reference` 不豁免。
+  - 注释、字符串、函数定义、对象方法、class 方法不能冒充真实调用；注释/字符串里的“正确参数”不能掩盖真实参数漂移。
+  - 新增设计文档：`.hermes/designs/2026-06-21--execution-contract-audit.md`
+- ✅ **TDD + review + 部署验证**：
+  - 新增/扩展 `tests/test_quality_audit.py` 回归测试。
+  - full suite：556 passed / 1 skipped。
+  - 最终独立 reviewer：passed=true，security_concerns=[]，logic_errors=[]。
+  - 部署目录 md5 校验 + runtime smoke 通过。
+- ✅ **路径坑已处理**：
+  - Windows Python 中不能用 `/f/Hermes_windows/...` 当部署路径；会误建 `F:\f\Hermes_windows`。
+  - 已改用原生 `F:\Hermes_windows\...` 并删除误建空目录。
 
 ### 下次要做什么
 
-Sprite Forge 动画覆盖范围还剩 2 个验证方向（用户说"等等吧"）：
-- **爆炸/烟花**（粒子爆发类）—— 验证"结构每帧不同"，一次性播放（loopCount=1）
-- **速度线**（漫画特效类）—— 验证"风格化图形"，最轻量
-- 跑通后用真实数据锚点更新 sheet-modes.md 分类表（当前是游戏化分类，
-  头脑风暴发现应按视频制作需求重组：有机特效/粒子/漫画特效优先级最高）
+1. **按需 push 当前 main**：当前 `4ed4b6f` 是本地提交；如要共享给测试组/远端，需要执行 `git push` 并读回 `origin/main`。
+2. **测试组复测 P1**：重点验证 Manifest 声明武器但 HTML 未调用时是否报 `manifest_weapon_not_called` P0；HANDWRITE/reference_only 是否不误报；参数漂移是否能抓住。
+3. **视频模板用户端激活/使用路径产品化**：把 `aura-noema-scroll-video-template` 从金样板整理成可复用入口（README/命令/变量替换/复制模板/渲染流程）。
+4. **处理测试组 P2/P3**：P2 垃圾资产（Caveat.ttf 404、未引用 phone-thumb 图片）和 P3 arsenal 策略/方法论文档表述。
+5. **后续 Sprite Forge 实战验证**：爆炸/烟花（一次性粒子爆发）、速度线（漫画风格化图形）。
 
-**deferred**：
-- `remove_bg_magenta` 重命名（名不副实了，属 refactor commit 范畴）
-
-### commit 链（v0.14.2 线）
+### 近期 commit 链
 
 ```
-52a2ab1 fix(sprite-forge): alpha erosion for glow-fringe (SF-AK2)
+4ed4b6f [verified] fix: add execution contract audit for manifest weapon calls
+8647ed1 [verified] feat: add NOEMA scroll video template
+1a18b75 handoff: v0.14.2 GitHub Release 已正式发布
+52a2ab1 fix(sprite-forge): alpha erosion for glow-fringe cleanup on effect/spell sprites  ← v0.14.2 tag
 068b2f0 release: bump v0.14.1 → v0.14.2
-103b255 fix(sprite-forge): adaptive chroma key for off-magenta (SF-AK1)
-6f21092 [verified] release v0.14.1 — production hardening
+103b255 fix(sprite-forge): adaptive chroma key for off-magenta backgrounds
 ```
 
-### Sprite Forge 实战产物
+### 关键路径补充
 
-`F:/hyperframes/assets/sprites/` 下有两个真实验证案例：
-- `walk-cycle-pixel-demo/` — 角色走路循环（SF-AK1 验证用）
-- `fire-loop-demo/` — 火焰循环（SF-AK2 验证用），含 erode-0/2/4/6/8/10 对比产物
-  和 `composite-compare.png`（深色背景合成对比图）
-- 注意：assets/ 未纳入 git（在仓库上层）
+- NOEMA 视频模板金样板：`F:\hyperframes\aura-noema-scroll-video-template\`
+- 模板变量：`aura-noema-scroll-video-template\variables.json`
+- 模板视觉身份：`aura-noema-scroll-video-template\frame.md`
+- 模板生产 brief：`aura-noema-scroll-video-template\.hyperframes\expanded-prompt.md`
+- 模板 HTML：`aura-noema-scroll-video-template\index.html`
+- 本地资产清单：`aura-noema-scroll-video-template\assets\manifest.json`
+- 本地 GSAP：`aura-noema-scroll-video-template\assets\vendor\gsap-3.14.2.min.js`
+- Execution Contract Audit 设计：`.hermes\designs\2026-06-21--execution-contract-audit.md`
 
 ## 设计文档
 
