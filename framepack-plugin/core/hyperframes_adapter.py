@@ -50,13 +50,14 @@ DISCOVERY_COMMANDS = {
 
 PROJECT_SCAFFOLD_COMMANDS = {"init"}
 REGISTRY_COMMANDS = {"catalog", "add", "capture"}
-MEDIA_PREPROCESS_COMMANDS = {"transcribe", "tts", "remove-background"}
+MEDIA_PREPROCESS_COMMANDS = {"beats", "transcribe", "tts", "remove-background"}
 CLOUD_SIDE_EFFECT_COMMANDS = {"publish", "cloud", "lambda", "cloudrun"}
-REQUIRES_HANDOFF_COMMANDS = {"lint", "inspect", "preview", "render", "snapshot"}
+REQUIRES_HANDOFF_COMMANDS = {"lint", "validate", "inspect", "layout", "snapshot", "preview", "play", "present", "render"}
 SIDE_EFFECTFUL_COMMANDS = {
     "init",
     "add",
     "capture",
+    "beats",
     "transcribe",
     "tts",
     "remove-background",
@@ -65,6 +66,9 @@ SIDE_EFFECTFUL_COMMANDS = {
     "cloud",
     "lambda",
     "cloudrun",
+    "preview",
+    "play",
+    "present",
     "render",
     "snapshot",
 }

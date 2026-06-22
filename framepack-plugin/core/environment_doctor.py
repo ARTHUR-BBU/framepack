@@ -193,9 +193,31 @@ class EnvironmentDoctor:
     def _missing_skills(self) -> list[str]:
         missing: list[str] = []
         for name in REQUIRED_HYPERFRAMES_SKILLS:
-            if not (self.skills_dir / name / "SKILL.md").is_file():
+            if not self._has_standalone_skill(name):
                 missing.append(name)
         return missing
+
+    def _has_standalone_skill(self, name: str) -> bool:
+        """Return whether ``name`` exists as a loadable standalone Hermes skill.
+
+        Hermes skills can be stored either directly under the provided skills
+        directory or one category below it (for example
+        ``skills/software-development/hyperframes-cli/SKILL.md``). References
+        nested inside another skill do not count: upstream HyperFrames 0.6.121
+        ships ``hyperframes-cli`` as its own skill, and Framepack expects
+        ``skill_view('hyperframes-cli')`` to work.
+        """
+        direct = self.skills_dir / name / "SKILL.md"
+        if direct.is_file():
+            return True
+        if not self.skills_dir.is_dir():
+            return False
+        for candidate in self.skills_dir.glob(f"*/{name}/SKILL.md"):
+            if (candidate.parent.parent / "SKILL.md").is_file():
+                continue
+            if candidate.is_file():
+                return True
+        return False
 
     def _status(
         self,

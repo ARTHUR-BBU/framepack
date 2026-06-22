@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "hyperframes": "^0.6.88",
+    "hyperframes": "0.6.121",
     "sharp": "^0.34.5"
   }
 }
