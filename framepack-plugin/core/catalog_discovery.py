@@ -6,10 +6,11 @@ manifests so Framepack can see components that HyperFrames exposes locally.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+from core.path_utils import read_json_or_none, to_posix_string
 
 
 @dataclass(frozen=True)
@@ -19,13 +20,6 @@ class CatalogComponent:
     description: str = ""
     use_cases: list[str] = field(default_factory=list)
     source: str = ""
-
-
-def _read_json(path: Path) -> Any | None:
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
 
 
 def _component_from_obj(name: str, obj: Any, source: Path) -> CatalogComponent | None:
@@ -47,7 +41,7 @@ def _component_from_obj(name: str, obj: Any, source: Path) -> CatalogComponent |
         name=str(name),
         description=description,
         use_cases=use_cases,
-        source=str(source).replace("\\", "/"),
+        source=to_posix_string(source),
     )
 
 
@@ -111,7 +105,7 @@ def discover_catalog_components(project_dir: str | Path) -> list[CatalogComponen
     for source in sources:
         if not source.is_file():
             continue
-        data = _read_json(source)
+        data = read_json_or_none(source)
         if data is None:
             continue
         for comp in _extract_components(data, source):

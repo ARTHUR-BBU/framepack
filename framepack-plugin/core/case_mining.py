@@ -12,6 +12,8 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from core.path_utils import to_posix_string
+
 
 @dataclass(frozen=True)
 class CaseSummary:
@@ -124,7 +126,7 @@ def summarize_case(case_dir: str | Path) -> CaseSummary:
 
     return CaseSummary(
         name=case.name,
-        path=str(case).replace("\\", "/"),
+        path=to_posix_string(case),
         tone=tone,
         catalog_components=catalog,
         lessons=lessons,

@@ -6,10 +6,10 @@ It produces report-first candidates so the user/dev can decide.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+
+from core.path_utils import read_json_or_none, to_posix_string
 
 
 @dataclass(frozen=True)
@@ -36,13 +36,6 @@ def detect_successful_render(project_dir: str | Path) -> bool:
     return False
 
 
-def _read_json(path: Path) -> Any | None:
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return None
-
-
 def collect_promotion_candidates(project_dir: str | Path) -> list[PromotionCandidate]:
     """Collect reusable template/weapon candidates after successful render.
 
@@ -66,7 +59,7 @@ def collect_promotion_candidates(project_dir: str | Path) -> list[PromotionCandi
         candidates.append(PromotionCandidate(
             kind="template",
             name=f"{project.name or 'case'}-template",
-            path=str(index).replace("\\", "/"),
+            path=to_posix_string(index),
             reason=reason,
         ))
 
@@ -78,13 +71,13 @@ def collect_promotion_candidates(project_dir: str | Path) -> list[PromotionCandi
                 candidates.append(PromotionCandidate(
                     kind="weapon",
                     name=file.stem,
-                    path=str(file).replace("\\", "/"),
+                    path=to_posix_string(file),
                     reason="project weapon used in successful render",
                 ))
 
     # Arsenal used weapons can become documentation/reference candidates.
     arsenal = project / ".framepack" / "arsenal.json"
-    data = _read_json(arsenal)
+    data = read_json_or_none(arsenal)
     if isinstance(data, dict):
         weapons = data.get("weapons", {})
         if isinstance(weapons, dict):
@@ -99,7 +92,7 @@ def collect_promotion_candidates(project_dir: str | Path) -> list[PromotionCandi
                 candidates.append(PromotionCandidate(
                     kind="weapon",
                     name=str(name),
-                    path=str(source).replace("\\", "/"),
+                    path=to_posix_string(source),
                     reason="arsenal weapon recorded in successful render",
                 ))
 
