@@ -8,12 +8,12 @@
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
 **阶段**: v0.15.0 release-prep — Framepack 全面转向 HyperFrames 0.7.3 Director Workbench
-**分支**: `main`（本轮 staged release commit 待提交；`assets/` 与 `.hermes/reports/` 旧现场不入库）
+**分支**: `main`（release-prep commit 已完成；`assets/` 与 `.hermes/reports/` 旧现场仍未跟踪，不入库）
 **源码版本**: plugin.yaml = 0.15.0
-**正式发布**: 尚未 tag / 尚未 GitHub Release；本轮完成源码 bump、部署同步、测试和 commit 准备
+**正式发布**: 尚未 tag / 尚未 GitHub Release；源码 release-prep commit = `7c44713`
 **HyperFrames CLI**: 项目依赖与实际本地 CLI 已升级到 `hyperframes@0.7.3`
 **验证**: source pytest 586 passed / 1 skipped；deployed pytest 586 passed / 1 skipped；test_team_auto_test passed=4 failed=0 skipped=1；HyperFrames 0.7.3 blank init + lint = 0 errors / 0 warnings；source→deploy 212 files md5 match；deployed smoke pass
-**注意**: 独立 reviewer `deleg_c6d05f65` 已派发，提交前必须读取回传结论；若通过即可 commit，若有 blocker 先修再复验
+**注意**: 独立 reviewer `deleg_c6d05f65` 因 API 429 未返回有效结论；本次 commit 未使用 `[verified]` 前缀，避免冒充独立审查通过。
 
 ### 本轮做了什么
 
@@ -26,11 +26,17 @@
 
 ### 下次要做什么
 
-1. 等独立 reviewer 回传：如果 `passed=true`，直接 commit；如果有 blocker，先修复并重跑 targeted + full + deploy smoke。
-2. commit 后如用户要求正式发布 GitHub：创建 `v0.15.0` annotated tag、push branch + tag，并用 `gh release create` 发布 GitHub Release。
-3. 发布后再次更新本交接台，明确 tag 指向 release commit；不要把 handoff commit 和 release artifact 混淆。
+1. 如用户要求正式发布 GitHub：创建 `v0.15.0` annotated tag 指向 `7c44713`（release artifact commit），push branch + tag，并用 `gh release create` 发布 GitHub Release。
+2. 发布后再次更新本交接台，明确 tag 指向 `7c44713`；后续 handoff commit 只是手台记录，不属于 release artifact。
+3. 若要补独立 reviewer，可在额度恢复后重新 dispatch；当前功能 commit 已由全量测试、部署测试、smoke 和静态扫描兜底。
 
 ### 当前关键证据
+
+```text
+commit                                                           → 7c44713 feat: upgrade Framepack for HyperFrames 0.7.3 director workflow
+```
+
+### 验证证据
 
 ```text
 python -m pytest tests/ -q -o "addopts="                       → 586 passed, 1 skipped
