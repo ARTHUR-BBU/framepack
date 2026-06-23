@@ -1,0 +1,213 @@
+"""Tests for context hydrator — workbench-wide AGENTS.md/CLAUDE.md sync."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from core.context_hydrator import (
+    ContextFileStatus,
+    ContextSyncReport,
+    check_context_sync,
+    hydrate_context,
+    find_workbench_root,
+    collect_context_files,
+)
+
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
+def _make_plugin_dir(tmp_path: Path) -> Path:
+    """Create a fake plugin directory with guardrails.md + plugin.yaml."""
+    plugin = tmp_path / "_plugin"
+    plugin.mkdir()
+    (plugin / "plugin.yaml").write_text(
+        'name: framepack\nversion: "0.15.0"\n', encoding="utf-8"
+    )
+    (plugin / "guardrails.md").write_text(
+        "# Guardrails\n\n- rule one\n- rule two\n", encoding="utf-8"
+    )
+    return plugin
+
+
+def _make_workbench(tmp_path: Path) -> Path:
+    """Create a fake workbench root."""
+    wb = tmp_path / "workbench"
+    wb.mkdir()
+    (wb / "WORKBENCH.md").write_text("# Workbench\n", encoding="utf-8")
+    (wb / "cases").mkdir()
+    return wb
+
+
+# ---------------------------------------------------------------------------
+# find_workbench_root
+# ---------------------------------------------------------------------------
+
+class TestFindWorkbenchRoot:
+    def test_finds_by_workbench_md(self, tmp_path):
+        wb = _make_workbench(tmp_path)
+        case = wb / "cases" / "my-case"
+        case.mkdir()
+        result = find_workbench_root(case)
+        assert result == wb.resolve()
+
+    def test_finds_from_root_itself(self, tmp_path):
+        wb = _make_workbench(tmp_path)
+        result = find_workbench_root(wb)
+        assert result == wb.resolve()
+
+    def test_finds_by_agents_plus_cases(self, tmp_path):
+        wb = tmp_path / "wb2"
+        wb.mkdir()
+        (wb / "AGENTS.md").write_text("# agents\n", encoding="utf-8")
+        (wb / "cases").mkdir()
+        result = find_workbench_root(wb)
+        assert result == wb.resolve()
+
+    def test_none_if_not_workbench(self, tmp_path):
+        bare = tmp_path / "bare"
+        bare.mkdir()
+        result = find_workbench_root(bare)
+        assert result is None
+
+
+# ---------------------------------------------------------------------------
+# collect_context_files
+# ---------------------------------------------------------------------------
+
+class TestCollectContextFiles:
+    def test_collects_root_agents(self, tmp_path):
+        wb = _make_workbench(tmp_path)
+        (wb / "AGENTS.md").write_text("# agents\n", encoding="utf-8")
+        files = collect_context_files(wb)
+        names = [f.name for f in files]
+        assert "AGENTS.md" in names
+
+    def test_collects_case_agents(self, tmp_path):
+        wb = _make_workbench(tmp_path)
+        case = wb / "cases" / "video-01"
+        case.mkdir()
+        (case / "AGENTS.md").write_text("# case\n", encoding="utf-8")
+        files = collect_context_files(wb)
+        case_files = [f for f in files if "video-01" in str(f)]
+        assert len(case_files) >= 1
+
+    def test_includes_claude_md(self, tmp_path):
+        wb = _make_workbench(tmp_path)
+        (wb / "CLAUDE.md").write_text("# claude\n", encoding="utf-8")
+        files = collect_context_files(wb)
+        names = [f.name for f in files]
+        assert "CLAUDE.md" in names
+
+
+# ---------------------------------------------------------------------------
+# check_context_sync — stale detection
+# ---------------------------------------------------------------------------
+
+class TestCheckContextSync:
+    def test_stale_agents_detected(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        # Stale AGENTS.md — old version, no managed block
+        (wb / "AGENTS.md").write_text(
+            "# Framepack Agent Guide\n<!-- version: 0.11.0 -->\n",
+            encoding="utf-8",
+        )
+        report = check_context_sync(wb, plugin)
+        assert not report.project_context_current
+        assert len(report.stale_files) > 0
+        assert any("0.11.0" in s for s in report.stale_files)
+
+    def test_current_managed_block_not_stale(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        # Build a current managed block
+        from hooks.guardrails import build_guardrails_payload, build_managed_block
+        payload = build_guardrails_payload(plugin)
+        (wb / "AGENTS.md").write_text(
+            "# My rules\n\n" + payload.block + "\n", encoding="utf-8"
+        )
+        report = check_context_sync(wb, plugin)
+        assert report.project_context_current
+        assert len(report.stale_files) == 0
+
+    def test_missing_file_not_stale(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        # No AGENTS.md at all
+        report = check_context_sync(wb, plugin)
+        # Missing files shouldn't cause stale; they just don't exist
+        assert report.project_context_current
+
+    def test_case_level_stale(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        case = wb / "cases" / "video-x"
+        case.mkdir()
+        (case / "AGENTS.md").write_text(
+            "# Case\n<!-- version: 0.14.0 -->\n", encoding="utf-8"
+        )
+        report = check_context_sync(wb, plugin)
+        assert not report.project_context_current
+        assert any("video-x" in s for s in report.stale_files)
+
+    def test_records_detected_version(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        (wb / "AGENTS.md").write_text(
+            "# Framepack\n<!-- version: 0.12.0 -->\n", encoding="utf-8"
+        )
+        report = check_context_sync(wb, plugin)
+        agents_status = [f for f in report.files if f.path.endswith("AGENTS.md") and "workbench" in f.path][0]
+        assert agents_status.detected_version == "0.12.0"
+
+
+# ---------------------------------------------------------------------------
+# hydrate_context — writes
+# ---------------------------------------------------------------------------
+
+class TestHydrateContext:
+    def test_appends_managed_block_to_stale(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        (wb / "AGENTS.md").write_text(
+            "# Old rules\n<!-- version: 0.11.0 -->\n", encoding="utf-8"
+        )
+        report = hydrate_context(wb, plugin)
+        # After hydration, managed block should be present
+        agents = (wb / "AGENTS.md").read_text(encoding="utf-8")
+        assert "FRAMEPACK MANAGED BLOCK" in agents
+        assert "0.15.0" in agents
+        # Original content preserved
+        assert "# Old rules" in agents
+
+    def test_writes_context_sync_md(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        (wb / "AGENTS.md").write_text("# rules\n", encoding="utf-8")
+        hydrate_context(wb, plugin)
+        sync_md = wb / ".framepack" / "context-sync.md"
+        assert sync_md.is_file()
+        content = sync_md.read_text(encoding="utf-8")
+        assert "version: 0.15.0" in content
+
+    def test_context_sync_current_after_hydrate(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        (wb / "AGENTS.md").write_text(
+            "# Old\n<!-- version: 0.11.0 -->\n", encoding="utf-8"
+        )
+        report = hydrate_context(wb, plugin)
+        assert report.project_context_current
+
+    def test_preserves_user_content(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        original = "# My Custom Rules\n\nThis is my project.\n\nDon't touch this.\n"
+        (wb / "AGENTS.md").write_text(original, encoding="utf-8")
+        hydrate_context(wb, plugin)
+        content = (wb / "AGENTS.md").read_text(encoding="utf-8")
+        assert "# My Custom Rules" in content
+        assert "Don't touch this." in content
+        assert "FRAMEPACK MANAGED BLOCK" in content

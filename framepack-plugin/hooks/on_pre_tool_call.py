@@ -26,6 +26,7 @@ from core.hyperframes_adapter import (
 from core.quality_audit import audit_project
 from core.pre_render_audit import audit_pre_render, build_pre_render_audit_message
 from core.timeline_manifest import parse_hyperframes_time_windows, sync_timeline_from_project
+from core.render_readiness import build_readiness_board, render_board_summary, render_board_markdown, GateStatus
 
 
 def _invokes_hyperframes_command(command: str) -> bool:
@@ -162,6 +163,39 @@ def _audit_pre_render_for_hyperframes(ctx, workdir: str) -> None:
         _safe_inject(ctx, f"🎬 **Framepack Pre-render Audit Warning**\n- pre_render_audit_error: {exc}", role="user")
 
 
+def _inject_readiness_board(ctx, workdir: str) -> None:
+    """Build a Readiness Board and inject a summary before render/preview.
+
+    Also writes .framepack/render-readiness.md for persistent evidence.
+    """
+    project_dir = Path(workdir)
+    try:
+        board = build_readiness_board(project_dir)
+        # Write persistent markdown
+        fp_dir = project_dir / ".framepack"
+        fp_dir.mkdir(parents=True, exist_ok=True)
+        (fp_dir / "render-readiness.md").write_text(
+            render_board_markdown(board), encoding="utf-8", newline="\n"
+        )
+        # Inject summary
+        summary = render_board_summary(board)
+        # Add red gate names for visibility
+        red_gates = [g.name for g in board.gates if g.status is GateStatus.RED]
+        yellow_gates = [g.name for g in board.gates if g.status is GateStatus.YELLOW]
+        detail_lines = [summary]
+        if red_gates:
+            detail_lines.append(f"  🔴 RED gates: {', '.join(red_gates)}")
+        if yellow_gates:
+            detail_lines.append(f"  🟡 YELLOW gates: {', '.join(yellow_gates)}")
+        detail_lines.append(
+            "  _Framepack advises; you decide. "
+            "You can render anyway, but the label reflects workflow evidence._"
+        )
+        _safe_inject(ctx, "\n".join(detail_lines), role="user")
+    except Exception as exc:
+        logger.warning("pre_tool_call readiness board failed: %s", exc)
+
+
 def _remind_lint_json_if_needed(ctx, command: str) -> None:
     """When Agent runs `npx hyperframes lint` without --json, remind them
     to redirect structured output to .framepack/lint-output.json so the
@@ -230,6 +264,7 @@ def register(ctx):
         _sync_timeline_for_hyperframes(ctx, workdir)
         _audit_quality_for_hyperframes(ctx, workdir)
         if _is_pre_render_review_command(command_for_detection):
+            _inject_readiness_board(ctx, workdir)
             _audit_pre_render_for_hyperframes(ctx, workdir)
         _remind_lint_json_if_needed(ctx, command_for_detection)
 
