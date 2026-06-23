@@ -1,25 +1,173 @@
 {
-  "brand_name": "NOEMA.ART",
-  "tagline": "Where your practice lives",
-  "cta_label": "Create Card",
-  "email": "hello@noema.art",
-  "featured_artist": {
-    "name": "Leigh Witherell",
-    "role": "Painter",
-    "location": "London"
+  "template_meta": {
+    "template_id": "noema-scroll-video",
+    "template_name": "NOEMA Scroll Video Template",
+    "maturity": "agent_managed_template",
+    "template_version": "0.1.0",
+    "hyperframes_version": "0.6.121",
+    "duration_seconds": 60,
+    "resolution": "1920x1080",
+    "fps": 30,
+    "scene_count": 11,
+    "notes": "This file is a content contract / schema seed. The current index.html is static-first and must still be edited to reflect these values."
   },
-  "support": {
-    "amount": "$25",
-    "supporter": "Maya Chen",
-    "message": "For your studio practice"
+  "brand": {
+    "name": "NOEMA.ART",
+    "tagline": "Where your practice lives",
+    "cta_label": "Create Card",
+    "email": "hello@noema.art",
+    "url": "noema.art",
+    "footer_copyright": "2026 © NOEMA.ART"
   },
-  "board_cards": [
-    { "type": "Exhibition", "title": "Open Call:\nNew Forms", "location": "Montréal", "date": "Aug 12" },
-    { "type": "Community", "title": "Studio Visit\nNight", "location": "Toronto", "date": "Jul 04" },
-    { "type": "Funding", "title": "Emerging\nArtist Grant", "location": "Online", "date": "Sep 18" },
-    { "type": "Collab", "title": "Print\nExchange", "location": "Brooklyn", "date": "Jul 22" },
-    { "type": "Residency", "title": "Quiet Room\nProgram", "location": "Copenhagen", "date": "Oct 08" },
-    { "type": "Mentorship", "title": "Crit Circle\nOnline", "location": "Remote", "date": "Aug 01" },
-    { "type": "Studio", "title": "Shared\nPress Wall", "location": "Paris", "date": "Jul 30" }
-  ]
+  "visual_identity": {
+    "source_of_truth": "frame.md",
+    "palette": {
+      "indigo": "#4F46E5",
+      "emerald": "#10B981",
+      "rose": "#F43F5E",
+      "black": "#050505",
+      "white": "#ffffff",
+      "paper": "#f4efe7"
+    },
+    "fonts": ["Anton", "Inter", "Caveat"],
+    "style_keywords": ["brutalist poster", "cropped typography", "card cascade", "grid-backed scenes"]
+  },
+  "prop_strategy": {
+    "mode": "frozen_assets",
+    "allowed_modes": ["frozen_assets", "programmatic", "user_assets", "mixed"],
+    "rule": "For cross-domain reuse, replace the visual props as well as the copy."
+  },
+  "scene_copy": {
+    "loader": {
+      "brand_name": "NOEMA.ART",
+      "tagline": "Where your practice lives",
+      "meta_left": "001 / Portfolio OS",
+      "meta_right": "Loading creative presence"
+    },
+    "hero": {
+      "poster_word": "NOEMA.ART",
+      "cta_label": "Create Card",
+      "bottom_copy": "One card for your work, your story, and your next opportunity.",
+      "cards": [
+        { "name": "Mira Saint", "role": "Artist · Montréal", "button": "Support Artist", "wallet": "▣ Add to Apple Wallet" },
+        { "name": "Leigh Witherell", "role": "Painter · London", "button": "Support Artist", "wallet": "▣ Add to Apple Wallet" },
+        { "name": "Glass Room Archive", "role": "Curator · Berlin", "button": "Support Artist", "wallet": "▣ Add to Apple Wallet" }
+      ]
+    },
+    "interlude": {
+      "headline": "ARTISTS & CURATORS",
+      "primary_copy": "For creators, designers and artists.",
+      "secondary_copy": "A living card for exhibitions, contact, bookings, press and support. Carried in every pocket."
+    },
+    "product": {
+      "poster_word": "THE LINK",
+      "pass_label": "PASS",
+      "featured_name": "Leigh Witherell",
+      "featured_role": "Painter · UK, London",
+      "profile_description": "Painter — large-scale oil works",
+      "url": "noema.art/leigh",
+      "button": "Support Artist",
+      "bottom_copy": "A digital pass and a living profile. Everywhere you are.",
+      "kicker": "Scan · Save · Support"
+    },
+    "manifesto": {
+      "cloud_words": "PORTFOLIO LINKS SUPPORT BOOKINGS CONTACT GALLERY PRESS PRACTICE STUDIO COMMUNITY",
+      "sentence": ["Everything", "your", "creative", "practice", "needs,", "gathered", "into", "one", "living", "portfolio."],
+      "handwritten_word": "finally",
+      "meta": "04 / Manifesto"
+    },
+    "archive": {
+      "poster_word": "ARCHIVE",
+      "bottom_copy": "From one focused work to a complete creative archive.",
+      "kicker": "3 × 5 living gallery"
+    },
+    "builder": {
+      "poster_word": "BUILD",
+      "step_number": "01",
+      "note": "Assembled in real time as the page moves.",
+      "system_title": "NOEMA PROFILE",
+      "system_subtitle": "Live card system / v.01",
+      "modules": [
+        { "label": "Bio", "copy": "Painter working with gesture, memory and public space." },
+        { "label": "Gallery", "copy": "" },
+        { "label": "Actions", "items": ["Support", "Contact", "Bookings", "Press"] },
+        { "label": "Wallet pass", "copy": "▣ Add" }
+      ]
+    },
+    "board": {
+      "poster_word": "BOARD",
+      "cards": [
+        { "type": "Exhibition", "title": "Open Call:\nNew Forms", "location": "Montréal", "date": "Aug 12" },
+        { "type": "Community", "title": "Studio Visit\nNight", "location": "Toronto", "date": "Jul 04" },
+        { "type": "Funding", "title": "Emerging\nArtist Grant", "location": "Online", "date": "Sep 18" },
+        { "type": "Collab", "title": "Print\nExchange", "location": "Brooklyn", "date": "Jul 22" },
+        { "type": "Residency", "title": "Quiet Room\nProgram", "location": "Copenhagen", "date": "Oct 08" },
+        { "type": "Mentorship", "title": "Crit Circle\nOnline", "location": "Remote", "date": "Aug 01" },
+        { "type": "Studio", "title": "Shared\nPress Wall", "location": "Paris", "date": "Jul 30" }
+      ]
+    },
+    "support": {
+      "poster_word": "SUPPORT",
+      "steps": [
+        { "eyebrow": "01 / Visitor", "headline": "DISCOVERED", "copy": "Someone scans your card after a show, post, talk or studio visit." },
+        { "eyebrow": "02 / Action", "headline": "SUPPORTED", "button": "Support Artist" },
+        { "eyebrow": "03 / Creator", "headline": "BACKED", "copy": "Support lands directly inside your creative practice." }
+      ],
+      "notification": {
+        "eyebrow": "New support received",
+        "amount": "$25",
+        "supporter": "Maya Chen",
+        "message": "For your studio practice"
+      }
+    },
+    "cta_build": {
+      "words": ["SEEN", "SAVED", "SUPPORTED"]
+    },
+    "join": {
+      "poster_word": "CREATE",
+      "handwritten_word": "your card",
+      "copy": "Create your NOEMA card and share your practice wherever it is seen.",
+      "footer_columns": [
+        ["2026 © NOEMA.ART", "hello@noema.art"],
+        ["Brand Kit", "Gift Card"],
+        ["Terms & Conditions", "Privacy Policy", "Cookie Policy"]
+      ]
+    }
+  },
+  "asset_slots": {
+    "hero_cards": [
+      { "slot": "card1_portrait", "current_path": "assets/portraits/portrait-12.jpg", "reuse_guidance": "portrait, persona card, terminal panel, or feature card" },
+      { "slot": "card2_portrait", "current_path": "assets/portraits/portrait-47.jpg", "reuse_guidance": "primary persona/product proof" },
+      { "slot": "card3_visual", "current_path": "assets/artwork/glassroom.jpg", "reuse_guidance": "third anchor concept or proof card" }
+    ],
+    "product_pair": [
+      { "slot": "qr_or_pass", "current_path": "assets/qr/leigh-qr.jpg", "reuse_guidance": "real QR, QR-like matrix, pass graphic, or dashboard widget" },
+      { "slot": "phone_hero", "current_path": "assets/artwork/noema-hero-art.jpg", "reuse_guidance": "product screen, diagram, screenshot, or programmatic panel" }
+    ],
+    "archive_grid": {
+      "count": 15,
+      "current_glob": "assets/archive/archive-*.jpg",
+      "reuse_guidance": "capability tiles, case thumbnails, module cards, screenshots, or proof grid"
+    },
+    "builder_gallery": {
+      "count": 4,
+      "current_glob": "assets/artwork/build-*.jpg",
+      "reuse_guidance": "code diffs, process snapshots, feature thumbnails, or SVG panels"
+    },
+    "join_members": {
+      "count": 6,
+      "current_glob": "assets/portraits/portrait-*.jpg",
+      "reuse_guidance": "customer marks, agent orbs, team avatars, logos, or geometric badges"
+    }
+  },
+  "validation": {
+    "commands_use_pinned_cli": true,
+    "hyperframes_cli": "npx hyperframes@0.6.121",
+    "expected_duration": "60.000000",
+    "expected_width": 1920,
+    "expected_height": 1080,
+    "expected_fps": "30/1",
+    "expected_frames": 1800,
+    "qa_file": "TEMPLATE-QA.md"
+  }
 }

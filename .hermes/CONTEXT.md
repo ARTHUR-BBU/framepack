@@ -7,75 +7,61 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.14.2 正式发布后开发线（Unreleased）— NOEMA 视频模板金样板 + Execution Contract Audit 已本地提交
-**分支**: `main`
+**阶段**: v0.14.2 正式发布后开发线（Unreleased）— NOEMA 模板产品化进行中/已完成实现验证，等待独立 reviewer 回传
+**分支**: `main`（与 `origin/main` 对齐；当前有未提交工作区改动）
 **源码版本**: plugin.yaml = 0.14.2（正式源码版本仍是 v0.14.2）
 **正式发布**: `v0.14.2` tag → `52a2ab1`（release artifact，以 tag 为准）
-**GitHub Release**: https://github.com/ARTHUR-BBU/framepack/releases/tag/v0.14.2 ✅
-**最新本地提交**: `4ed4b6f` — `[verified] fix: add execution contract audit for manifest weapon calls`
-**未发版开发成果**: `8647ed1` NOEMA scroll video template；`4ed4b6f` Execution Contract Audit
-**测试**: 556 passed / 1 skipped ✅（framepack-plugin full suite，2026-06-21）
-**部署同步**: `execution_manifest.py` + `quality_audit.py` 已同步到 `F:\Hermes_windows\plugins\framepack\`，md5 一致；deployed runtime smoke 通过
-**工作区**: 仅 `assets/` 未跟踪（Sprite Forge 真实验证产物，保留现场，不纳入本轮提交）
+**最新提交**: `ac9bf84` — `[verified] feat: align Framepack with HyperFrames 0.6.121 support window, CLI commands, and standalone hyperframes-cli skill`
+**本轮未提交改动**: NOEMA agent-managed template 产品化文档/schema/inspect 标注
+**HyperFrames CLI**: 产品化验收命令固定使用 `npx hyperframes@0.6.121`，避免 bare npx 漂到 0.7.x
+**验证**: variables.json JSON OK；lint 0 errors / 1 known GSAP Studio warning；inspect 0 layout issues；validate 0 errors / 225 contrast warnings；render + ffprobe 通过（60.000000s / 1920x1080 / 30fps / 1800 frames / 21025268 bytes）
+**注意**: 独立 reviewer `deleg_d8aa60b1` 已派发，最终提交前需读取回传结论；本轮尚未 commit/push
+**工作区**: `.hermes/CONTEXT.md`、NOEMA 模板文件、设计/计划文档有改动；`.hermes/reports/` 与 `assets/` 仍为既有未跟踪现场，保留不动
 
 ### 上次做了什么
 
-- ✅ **NOEMA 动态网站 → 60 秒视频模板金样板**（commit `8647ed1`）：
-  - 路线是“视频导演版”，不是网页录屏；不保留 ScrollTrigger，不使用 `repeat:-1`。
-  - 11 个 HyperFrames `clip`，root 显式 `data-duration="60"`。
-  - 33 个远程资产冻结到本地，GSAP runtime 改为本地 vendored。
-  - `lint` 0 errors / 0 warnings；`inspect` 0 layout issues；render 1920×1080、30fps、60s、1800 frames；visual QA PASS；独立 reviewer 三轮通过。
-  - 项目路径：`F:\hyperframes\aura-noema-scroll-video-template\`
-- ✅ **Execution Contract Audit 系统修复**（commit `4ed4b6f`）：
-  - 解决测试组 P1：Manifest 声明武器但 HTML 实际裸写、旧 audit 漏检。
-  - 集成到现有 `core/quality_audit.py`，不另起审计孤岛。
-  - Manifest weapon 即使无 params，也必须调用 canonical function；否则报 `manifest_weapon_not_called` P0。
-  - `HANDWRITE` 是合法豁免；`binding/mode: reference_only` 是视觉参考豁免；普通 `reference` 不豁免。
-  - 注释、字符串、函数定义、对象方法、class 方法不能冒充真实调用；注释/字符串里的“正确参数”不能掩盖真实参数漂移。
-  - 新增设计文档：`.hermes/designs/2026-06-21--execution-contract-audit.md`
-- ✅ **TDD + review + 部署验证**：
-  - 新增/扩展 `tests/test_quality_audit.py` 回归测试。
-  - full suite：556 passed / 1 skipped。
-  - 最终独立 reviewer：passed=true，security_concerns=[]，logic_errors=[]。
-  - 部署目录 md5 校验 + runtime smoke 通过。
-- ✅ **路径坑已处理**：
-  - Windows Python 中不能用 `/f/Hermes_windows/...` 当部署路径；会误建 `F:\f\Hermes_windows`。
-  - 已改用原生 `F:\Hermes_windows\...` 并删除误建空目录。
+- ✅ **NOEMA 模板产品化设计**：新增 `.hermes/designs/2026-06-23--noema-template-productization.md`，明确本轮做 Agent-managed template，不冒充一键 CLI 模板引擎。
+- ✅ **新增实施计划**：`.hermes/plans/2026-06-23_000000-noema-template-productization.md`。
+- ✅ **README 升级为用户入口**：说明适用/不适用场景、三档复用模式、scene map、固定 0.6.121 验收命令、props rule。
+- ✅ **新增 `TEMPLATE-USAGE.md`**：写明 copy 流程、11 场景映射、prop replacement map、programmatic prop recipes、stale prop audit。
+- ✅ **新增 `TEMPLATE-QA.md`**：沉淀 lint/validate/inspect/render/ffprobe、stale asset audit、contact sheet 降级视觉验证、PASS/WARN/FAIL 报告模板。
+- ✅ **扩展 `variables.json`**：从小样例升级为 schema seed/content contract，含 template_meta、brand、visual_identity、prop_strategy、scene_copy、asset_slots、validation。
+- ✅ **修模板 inspect 噪声**：在 11 个 `.scene-inner` wrapper 上标注 `data-layout-allow-occlusion/overlap`，把海报式 intentional layering 从 inspect error 洪流变成模板级约定；复跑 inspect 为 0 layout issues。
+- ✅ **完整媒体验证**：`npx hyperframes@0.6.121 render --output dist/noema-scroll-template.mp4` 成功，ffprobe 精确吻合 60s/1800 frames。
 
 ### 下次要做什么
 
-1. **按需 push 当前 main**：当前 `4ed4b6f` 是本地提交；如要共享给测试组/远端，需要执行 `git push` 并读回 `origin/main`。
-2. **测试组复测 P1**：重点验证 Manifest 声明武器但 HTML 未调用时是否报 `manifest_weapon_not_called` P0；HANDWRITE/reference_only 是否不误报；参数漂移是否能抓住。
-3. **视频模板用户端激活/使用路径产品化**：把 `aura-noema-scroll-video-template` 从金样板整理成可复用入口（README/命令/变量替换/复制模板/渲染流程）。
-4. **处理测试组 P2/P3**：P2 垃圾资产（Caveat.ttf 404、未引用 phone-thumb 图片）和 P3 arsenal 策略/方法论文档表述。
-5. **后续 Sprite Forge 实战验证**：爆炸/烟花（一次性粒子爆发）、速度线（漫画风格化图形）。
+1. **等待/读取独立 reviewer 回传**：若有 blocker，先修再复验；若通过，准备提交。
+2. **提交前最后检查**：`git diff` 确认不把 `.hermes/reports/`、`assets/` 既有现场误混入；必要时只 add 本轮 NOEMA/设计/计划/CONTEXT 文件。
+3. **按用户意图决定是否 commit**：建议 commit message：`[verified] feat: productize NOEMA scroll video template activation`。
+4. **后续产品线候选**：把 `variables.json` schema 接入真正生成器/CLI（`framepack template use noema`）作为下一阶段，不在本轮硬塞。
 
 ### 近期 commit 链
 
 ```
+ac9bf84 [verified] feat: align Framepack with HyperFrames 0.6.121 support window, CLI commands, and standalone hyperframes-cli skill
+cb50de9 handoff: record unreleased video template and execution audit work
 4ed4b6f [verified] fix: add execution contract audit for manifest weapon calls
 8647ed1 [verified] feat: add NOEMA scroll video template
 1a18b75 handoff: v0.14.2 GitHub Release 已正式发布
-52a2ab1 fix(sprite-forge): alpha erosion for glow-fringe cleanup on effect/spell sprites  ← v0.14.2 tag
-068b2f0 release: bump v0.14.1 → v0.14.2
-103b255 fix(sprite-forge): adaptive chroma key for off-magenta backgrounds
+52a2ab1 fix(sprite-forge): alpha erosion for glow-fringe cleanup  ← v0.14.2 tag
 ```
 
 ### 关键路径补充
 
-- NOEMA 视频模板金样板：`F:\hyperframes\aura-noema-scroll-video-template\`
-- 模板变量：`aura-noema-scroll-video-template\variables.json`
-- 模板视觉身份：`aura-noema-scroll-video-template\frame.md`
-- 模板生产 brief：`aura-noema-scroll-video-template\.hyperframes\expanded-prompt.md`
-- 模板 HTML：`aura-noema-scroll-video-template\index.html`
-- 本地资产清单：`aura-noema-scroll-video-template\assets\manifest.json`
-- 本地 GSAP：`aura-noema-scroll-video-template\assets\vendor\gsap-3.14.2.min.js`
-- Execution Contract Audit 设计：`.hermes\designs\2026-06-21--execution-contract-audit.md`
+- NOEMA 视频模板产品化入口：`F:\hyperframes\aura-noema-scroll-video-template\README.md`
+- NOEMA 复用说明：`F:\hyperframes\aura-noema-scroll-video-template\TEMPLATE-USAGE.md`
+- NOEMA QA 清单：`F:\hyperframes\aura-noema-scroll-video-template\TEMPLATE-QA.md`
+- NOEMA schema seed：`F:\hyperframes\aura-noema-scroll-video-template\variables.json`
+- 产品化设计：`F:\hyperframes\.hermes\designs\2026-06-23--noema-template-productization.md`
+- 产品化计划：`F:\hyperframes\.hermes\plans\2026-06-23_000000-noema-template-productization.md`
+- NOEMA gold sample render：`F:\hyperframes\aura-noema-scroll-video-template\dist\noema-scroll-template.mp4`
 
 ## 设计文档
 
 - `F:/hyperframes/.hermes/designs/2026-06-19--v014-weight-control-system.md` — 权重控制系统设计
 - `F:/hyperframes/.hermes/designs/2026-06-19--sprite-forge-integration.md` — Sprite Forge 集成设计
+- `F:/hyperframes/.hermes/designs/2026-06-21--execution-contract-audit.md` — Execution Contract Audit 设计
 
 ## 文件索引
 
@@ -83,6 +69,7 @@
 - 部署: `F:/Hermes_windows/plugins/framepack/`
 - 权重核心: `core/control_profile.py` + `core/restraint_audit.py`
 - Hook 穿透: `hooks/on_post_tool_call.py`（_build_weight_directive + _build_weight_consistency_report）
+- HyperFrames 兼容: `core/hyperframes_adapter.py`（命令分类）+ `core/hyperframes_support.py`（版本窗口）+ `core/environment_doctor.py`（doctor）+ `compat/hyperframes-support.json`（矩阵）
 - Sprite Forge: `skills/framepack-sprite-forge/`
 - 独立 skill: `F:/Hermes_windows/skills/software-development/framepack/SKILL.md`
 - 测试报告: `F:/hyperframes/framepack-e2e-test/reports/`
