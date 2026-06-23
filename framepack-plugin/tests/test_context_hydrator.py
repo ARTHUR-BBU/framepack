@@ -35,7 +35,8 @@ def _make_workbench(tmp_path: Path) -> Path:
     """Create a fake workbench root."""
     wb = tmp_path / "workbench"
     wb.mkdir()
-    (wb / "WORKBENCH.md").write_text("# Workbench\n", encoding="utf-8")
+    # WORKBENCH.md content doesn't match any stale Framepack patterns
+    (wb / "WORKBENCH.md").write_text("# Test Workbench\n\nNothing stale here.\n", encoding="utf-8")
     (wb / "cases").mkdir()
     return wb
 
@@ -195,8 +196,9 @@ class TestHydrateContext:
     def test_context_sync_current_after_hydrate(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)
         wb = _make_workbench(tmp_path)
+        # User content that doesn't match stale Framepack patterns
         (wb / "AGENTS.md").write_text(
-            "# Old\n<!-- version: 0.11.0 -->\n", encoding="utf-8"
+            "# My Workbench Rules\n\nJust my rules.\n", encoding="utf-8"
         )
         report = hydrate_context(wb, plugin)
         assert report.project_context_current
@@ -211,3 +213,95 @@ class TestHydrateContext:
         assert "# My Custom Rules" in content
         assert "Don't touch this." in content
         assert "FRAMEPACK MANAGED BLOCK" in content
+
+
+# ---------------------------------------------------------------------------
+# Stale body detection (managed block present but old body remains)
+# ---------------------------------------------------------------------------
+
+class TestStaleBodyDetection:
+    """Tests for detecting old Framepack guide body above managed block."""
+
+    def test_stale_body_detected_with_current_block(self, tmp_path):
+        """AGENTS.md has current managed block BUT body still says 0.11.0."""
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        from hooks.guardrails import build_guardrails_payload
+        payload = build_guardrails_payload(plugin)
+
+        old_body = (
+            "# Framepack Agent Guide\n\n"
+            "<!-- version: 0.11.0 — sync with plugin.yaml and README -->\n\n"
+            "Framepack is a Prompt Factory for HyperFrames.\n\n"
+            "## Product Spine\n\n用户模糊意图 → Framepack 创意引擎\n\n"
+        )
+        (wb / "AGENTS.md").write_text(
+            old_body + "\n" + payload.block, encoding="utf-8"
+        )
+        report = check_context_sync(wb, plugin)
+        assert not report.project_context_current
+        agents_status = [f for f in report.files if f.path.endswith("AGENTS.md")][0]
+        assert agents_status.action_needed == "replace_stale_body"
+
+    def test_stale_body_strips_old_guide(self, tmp_path):
+        """Hydrate should strip old Framepack guide body."""
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        from hooks.guardrails import build_guardrails_payload
+        payload = build_guardrails_payload(plugin)
+
+        old_body = (
+            "# Framepack Agent Guide\n\n"
+            "<!-- version: 0.11.0 — sync with plugin.yaml and README -->\n\n"
+            "Framepack is a Prompt Factory for HyperFrames.\n\n"
+            "## Product Spine\n\n用户模糊意图 → Framepack 创意引擎\n\n"
+        )
+        # User content BEFORE the old guide
+        user_content = "# My Test Workbench\n\nThis is my test bench.\n"
+        (wb / "AGENTS.md").write_text(
+            user_content + "\n" + old_body + "\n" + payload.block,
+            encoding="utf-8",
+        )
+
+        hydrate_context(wb, plugin)
+        content = (wb / "AGENTS.md").read_text(encoding="utf-8")
+
+        # Old guide content should be gone
+        assert "Prompt Factory" not in content
+        assert "0.11.0" not in content
+        assert "创意引擎" not in content
+        assert "Framepack Agent Guide" not in content
+        # User content should survive
+        assert "My Test Workbench" in content
+        assert "This is my test bench" in content
+        # Managed block should survive
+        assert "FRAMEPACK MANAGED BLOCK" in content
+        assert "0.15.0" in content
+
+
+# ---------------------------------------------------------------------------
+# WORKBENCH.md scanning
+# ---------------------------------------------------------------------------
+
+class TestWorkbenchMdScanning:
+    """Tests for WORKBENCH.md being included in context scan."""
+
+    def test_workbench_md_in_file_list(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        (wb / "WORKBENCH.md").write_text("# Workbench\n", encoding="utf-8")
+        report = check_context_sync(wb, plugin)
+        wb_files = [f for f in report.files if "WORKBENCH.md" in f.path]
+        assert len(wb_files) >= 1
+
+    def test_workbench_md_no_managed_block_flagged(self, tmp_path):
+        """WORKBENCH.md without managed block should be flagged for append."""
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        (wb / "WORKBENCH.md").write_text("# My Workbench\n", encoding="utf-8")
+        # Also add AGENTS.md so it's a valid workbench
+        (wb / "AGENTS.md").write_text("# agents\n", encoding="utf-8")
+        report = check_context_sync(wb, plugin)
+        wb_status = [f for f in report.files if "WORKBENCH.md" in f.path and f.exists][0]
+        # Should need a managed block appended
+        assert wb_status.action_needed in ("append_block", "none")
