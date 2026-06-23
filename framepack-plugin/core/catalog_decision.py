@@ -59,7 +59,7 @@ def suggest_components(intent: str, scene_count: int = 5) -> list[str]:
 
     Args:
         intent: User's video intent text.
-        scene_count: Planned number of scenes (affects suggestions).
+        scene_count: Planned number of scenes (reserved for future heuristics).
 
     Returns list of component names that match the intent.
     """
@@ -85,10 +85,14 @@ def validate_decision(decision: CatalogDecision) -> list[str]:
             "Either use components or explain why they're not needed."
         )
 
-    # Check for unknown component names
-    for comp in decision.used_components:
-        if comp not in CATALOG_COMPONENTS:
-            issues.append(f"Unknown catalog component: '{comp}'.")
+    # Check for unknown component names in both selected and waived lists.
+    for label, components in (
+        ("used", decision.used_components),
+        ("waived", decision.waived_components),
+    ):
+        for comp in components:
+            if comp not in CATALOG_COMPONENTS:
+                issues.append(f"Unknown {label} catalog component: '{comp}'.")
 
     return issues
 
@@ -102,7 +106,10 @@ def load_decision(path: Path | str) -> Optional[CatalogDecision]:
     if not path.is_file():
         return None
 
-    text = path.read_text(encoding="utf-8", errors="replace")
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
     used: list[str] = []
     waived: list[str] = []
     reason = ""

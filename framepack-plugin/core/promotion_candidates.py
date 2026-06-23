@@ -9,7 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from core.path_utils import read_json_or_none, to_posix_string
+from core.path_utils import markdown_table_cell, read_json_or_none, to_posix_string
+from core.render_artifacts import find_nonempty_render
 
 
 @dataclass(frozen=True)
@@ -23,17 +24,7 @@ class PromotionCandidate:
 
 def detect_successful_render(project_dir: str | Path) -> bool:
     """Return True if project has a non-empty mp4 render artifact."""
-    project = Path(project_dir)
-    renders = project / "renders"
-    if not renders.is_dir():
-        return False
-    for mp4 in renders.glob("*.mp4"):
-        try:
-            if mp4.stat().st_size > 0:
-                return True
-        except OSError:
-            continue
-    return False
+    return find_nonempty_render(project_dir) is not None
 
 
 def collect_promotion_candidates(project_dir: str | Path) -> list[PromotionCandidate]:
@@ -128,7 +119,10 @@ def write_promotion_report(project_dir: str | Path, candidates: list[PromotionCa
         lines.append("| kind | name | path | reason |")
         lines.append("|---|---|---|---|")
         for c in candidates:
-            lines.append(f"| {c.kind} | {c.name} | {c.path} | {c.reason} |")
+            lines.append(
+                f"| {markdown_table_cell(c.kind)} | {markdown_table_cell(c.name)} | "
+                f"{markdown_table_cell(c.path)} | {markdown_table_cell(c.reason)} |"
+            )
     else:
         lines.append("No candidates detected.")
     lines.append("")

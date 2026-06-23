@@ -28,6 +28,13 @@ class TestDeliverableBundle:
         bundle = check_bundle(tmp_path)
         assert bundle.has_render is True
 
+    def test_zero_byte_render_is_not_present(self, tmp_path):
+        renders = tmp_path / "renders"
+        renders.mkdir()
+        (renders / "video.mp4").write_bytes(b"")
+        bundle = check_bundle(tmp_path)
+        assert bundle.has_render is False
+
     def test_share_copy_present(self, tmp_path):
         (tmp_path / "share-copy.txt").write_text("Check this out!", encoding="utf-8")
         bundle = check_bundle(tmp_path)

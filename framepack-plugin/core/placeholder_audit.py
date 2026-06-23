@@ -11,9 +11,11 @@ visible so it can be fixed before delivery.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+
+from core.path_utils import markdown_table_cell
 
 
 @dataclass(frozen=True)
@@ -54,18 +56,6 @@ _PLACEHOLDER_STATUS = {
 _GENERIC_HYPE = {
     "NEXT LEVEL", "GAME CHANGER", "UNLEASHED", "NEXT GEN",
     "WORLD CLASS", "BEST IN CLASS",
-}
-
-# Unsupported claim words (need source to be legitimate)
-_UNSUPPORTED_CLAIM = {
-    "OFFICIAL", "CONFIRMED", "BREAKING", "EXCLUSIVE",
-}
-
-# Context mismatch: SaaS/business copy appearing in non-SaaS contexts
-# This is contextual — we flag it but at lower severity
-_SAAS_COPY = {
-    "ROI", "KPI", "MRR", "ARR", "PIPELINE", "ONBOARDING",
-    "DASHBOARD", "ANALYTICS", "SIGNATURE",
 }
 
 # Proper noun patterns that should NOT be flagged
@@ -218,7 +208,14 @@ def audit_project_placeholder_smell(
             html_path=None,
         )
 
-    html = html_path.read_text(encoding="utf-8", errors="replace")
+    try:
+        html = html_path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return PlaceholderAuditReport(
+            verdict="SKIP",
+            findings=[],
+            html_path=str(html_path),
+        )
     report = audit_placeholder_smell(html)
 
     # Attach path
@@ -254,7 +251,10 @@ def _render_audit_markdown(report: PlaceholderAuditReport) -> str:
         for f in report.findings:
             # Truncate context for readability
             ctx = f.context[:80] + "…" if len(f.context) > 80 else f.context
-            lines.append(f"| {f.word} | {f.code} | {f.severity} | {ctx} |")
+            lines.append(
+                f"| {markdown_table_cell(f.word)} | {markdown_table_cell(f.code)} | "
+                f"{markdown_table_cell(f.severity)} | {markdown_table_cell(ctx)} |"
+            )
     else:
         lines.append("No placeholder-smell patterns detected.")
     lines.append("")

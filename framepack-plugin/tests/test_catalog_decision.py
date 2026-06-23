@@ -68,6 +68,26 @@ class TestValidateDecision:
         issues = validate_decision(d)
         assert len(issues) == 0
 
+    def test_unknown_waived_component_is_reported(self, tmp_path):
+        d = CatalogDecision(
+            used_components=["kinetic-title"],
+            waived_components=["missing-component"],
+            reason_if_none_used="",
+        )
+        issues = validate_decision(d)
+        assert any("missing-component" in issue for issue in issues)
+
+    def test_load_decision_read_error_returns_none(self, tmp_path, monkeypatch):
+        p = tmp_path / ".framepack" / "catalog-decision.md"
+        p.parent.mkdir()
+        p.write_text("# Catalog", encoding="utf-8")
+
+        def explode(*args, **kwargs):
+            raise OSError("permission denied")
+
+        monkeypatch.setattr(type(p), "read_text", explode)
+        assert load_decision(p) is None
+
     def test_save_and_load(self, tmp_path):
         d = CatalogDecision(
             used_components=["kinetic-title", "data-card"],

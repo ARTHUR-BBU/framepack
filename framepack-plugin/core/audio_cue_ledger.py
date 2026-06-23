@@ -56,7 +56,7 @@ def load_ledger(path: Path | str) -> Optional[AudioCueLedger]:
             cue_bindings=bindings,
             analysis_method=data.get("analysis_method", ""),
         )
-    except (json.JSONDecodeError, KeyError, TypeError):
+    except (OSError, json.JSONDecodeError, KeyError, TypeError):
         return None
 
 

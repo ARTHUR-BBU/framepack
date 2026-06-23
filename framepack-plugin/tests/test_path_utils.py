@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from core.path_utils import read_json_or_none, to_posix_string
+from core.path_utils import markdown_table_cell, read_json_or_none, to_posix_string
 
 
 class TestPathUtils:
@@ -23,3 +23,6 @@ class TestPathUtils:
         path = tmp_path / "bad.json"
         path.write_text("not json", encoding="utf-8")
         assert read_json_or_none(path) is None
+
+    def test_markdown_table_cell_escapes_pipes_and_newlines(self):
+        assert markdown_table_cell("a | b\nc") == r"a \| b c"

@@ -44,7 +44,10 @@ def discover_cases(workbench_root: str | Path) -> list[Path]:
     cases = root / "cases"
     if not cases.is_dir():
         return []
-    return sorted([p for p in cases.iterdir() if p.is_dir()], key=lambda p: p.name)
+    try:
+        return sorted([p for p in cases.iterdir() if p.is_dir()], key=lambda p: p.name)
+    except OSError:
+        return []
 
 
 def _read(path: Path) -> str:

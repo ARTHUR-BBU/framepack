@@ -74,3 +74,15 @@ class TestCollectPromotionCandidates:
         text = path.read_text(encoding="utf-8")
         assert "case-template" in text
         assert "template" in text
+
+    def test_write_promotion_report_escapes_table_cells(self, tmp_path):
+        candidates = [PromotionCandidate(
+            kind="template",
+            name="case | template",
+            path="index.html",
+            reason="line1\nline2 | reason",
+        )]
+        path = write_promotion_report(tmp_path, candidates)
+        text = path.read_text(encoding="utf-8")
+        assert "case \\| template" in text
+        assert "line1 line2 \\| reason" in text

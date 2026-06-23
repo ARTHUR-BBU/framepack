@@ -9,6 +9,7 @@ from core.placeholder_audit import (
     PlaceholderAuditReport,
     audit_placeholder_smell,
     audit_project_placeholder_smell,
+    _render_audit_markdown,
 )
 
 
@@ -112,3 +113,28 @@ class TestAuditProjectPlaceholderSmell:
         assert report_path.is_file()
         content = report_path.read_text(encoding="utf-8")
         assert "LOAD" in content or "placeholder" in content.lower()
+
+    def test_html_read_error_returns_skip(self, tmp_path, monkeypatch):
+        html = tmp_path / "index.html"
+        html.write_text("<div>LOAD</div>", encoding="utf-8")
+
+        def explode(*args, **kwargs):
+            raise OSError("permission denied")
+
+        monkeypatch.setattr(type(html), "read_text", explode)
+        report = audit_project_placeholder_smell(tmp_path)
+        assert report.verdict == "SKIP"
+
+    def test_markdown_table_cells_are_escaped(self):
+        report = PlaceholderAuditReport(
+            verdict="LOW",
+            findings=[PlaceholderFinding(
+                word="LOAD | PUNCH",
+                code="internal_workflow_word",
+                context="line1\nline2 | more",
+            )],
+            total_finding_count=1,
+        )
+        md = _render_audit_markdown(report)
+        assert "LOAD \\| PUNCH" in md
+        assert "line1 line2 \\| more" in md

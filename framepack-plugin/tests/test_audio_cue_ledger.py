@@ -39,6 +39,17 @@ class TestAudioCueLedger:
         ledger = load_ledger(tmp_path / "nonexistent.json")
         assert ledger is None
 
+    def test_load_read_error_returns_none(self, tmp_path, monkeypatch):
+        p = tmp_path / ".framepack" / "audio-cues.json"
+        p.parent.mkdir(parents=True)
+        p.write_text("{}", encoding="utf-8")
+
+        def explode(*args, **kwargs):
+            raise OSError("permission denied")
+
+        monkeypatch.setattr(type(p), "read_text", explode)
+        assert load_ledger(p) is None
+
     def test_validate_ledger_valid(self, tmp_path):
         ledger = AudioCueLedger(
             track="bgm.mp3",

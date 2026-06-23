@@ -13,6 +13,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from core.render_artifacts import find_nonempty_render
+
 
 @dataclass(frozen=True)
 class DeliverableBundle:
@@ -49,15 +51,9 @@ def check_bundle(project_dir: str | Path) -> DeliverableBundle:
     project = Path(project_dir)
 
     # Render: look in renders/ for mp4
-    render_path = ""
-    has_render = False
-    renders_dir = project / "renders"
-    if renders_dir.is_dir():
-        for f in renders_dir.iterdir():
-            if f.suffix.lower() == ".mp4":
-                has_render = True
-                render_path = str(f)
-                break
+    render = find_nonempty_render(project)
+    has_render = render is not None
+    render_path = str(render) if render else ""
 
     # Share copy
     share_copy_path = project / "share-copy.txt"
@@ -83,12 +79,17 @@ def check_bundle(project_dir: str | Path) -> DeliverableBundle:
         project / "qa-frames-v2",
     ]
     for qa_dir in qa_dirs:
-        if qa_dir.is_dir():
-            images = [f for f in qa_dir.iterdir() if f.suffix.lower() in (".png", ".jpg", ".jpeg")]
-            if images:
-                has_qa_frames = True
-                qa_frames_dir = str(qa_dir)
-                break
+        try:
+            has_images = any(
+                f.suffix.lower() in (".png", ".jpg", ".jpeg")
+                for f in qa_dir.iterdir()
+            )
+        except OSError:
+            has_images = False
+        if has_images:
+            has_qa_frames = True
+            qa_frames_dir = str(qa_dir)
+            break
 
     return DeliverableBundle(
         has_render=has_render,

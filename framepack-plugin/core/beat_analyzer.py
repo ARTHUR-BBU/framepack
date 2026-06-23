@@ -98,22 +98,7 @@ def analyze_bgm(audio_path: str | Path, runner: Optional[AnalyzerRunner] = None)
     except Exception as exc:  # runner can be any external command wrapper
         return BeatAnalysisResult(status="ERROR", message=f"beat analyzer failed: {exc}")
 
-    result = parse_beat_json(payload, track=str(path), source="external-runner")
-    if result.ledger is not None:
-        result = BeatAnalysisResult(
-            status=result.status,
-            message=result.message,
-            ledger=AudioCueLedger(
-                track=result.ledger.track,
-                source=result.ledger.source,
-                strong_cues=result.ledger.strong_cues,
-                beat_grid=result.ledger.beat_grid,
-                cue_bindings=result.ledger.cue_bindings,
-                analysis_method="external-runner",
-            ),
-            confidence=result.confidence,
-        )
-    return result
+    return parse_beat_json(payload, track=str(path), source="external-runner")
 
 
 def _find_project_audio(project_dir: Path) -> Optional[Path]:
@@ -126,12 +111,15 @@ def _find_project_audio(project_dir: Path) -> Optional[Path]:
     for candidate in candidates:
         if candidate.is_file():
             return candidate
+    suffixes = (".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg")
     for root in (project_dir / "assets" / "audio", project_dir / "assets"):
-        if root.is_dir():
-            for suffix in ("*.mp3", "*.wav", "*.m4a", "*.aac", "*.flac", "*.ogg"):
-                found = sorted(root.glob(suffix))
-                if found:
-                    return found[0]
+        try:
+            entries = sorted(root.iterdir())
+        except OSError:
+            continue
+        for entry in entries:
+            if entry.is_file() and entry.suffix.lower() in suffixes:
+                return entry
     return None
 
 

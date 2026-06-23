@@ -18,3 +18,9 @@ def read_json_or_none(path: str | Path) -> Any | None:
         return json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return None
+
+
+def markdown_table_cell(value: object) -> str:
+    """Escape a markdown table cell by flattening newlines and pipes."""
+    text = str(value).replace("\r", " ").replace("\n", " ")
+    return text.replace("|", r"\|")
