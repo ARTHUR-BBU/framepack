@@ -93,7 +93,12 @@ class TestEmptyProjectGates:
 class TestGatesWithArtifacts:
     def test_asset_intake_present(self, tmp_path):
         (tmp_path / ".framepack").mkdir()
-        (tmp_path / ".framepack" / "asset-intake.md").write_text("# Intake", encoding="utf-8")
+        (tmp_path / ".framepack" / "asset-intake.md").write_text(
+            "# Asset Intake\n\n## Brand\n"
+            "- logo: assets/logo.png (ready)\n"
+            "- colors: primary=#1a1a2e accent=#c9a96e\n",
+            encoding="utf-8",
+        )
         r = check_asset_intake(tmp_path)
         assert r.status is GateStatus.GREEN
 
@@ -124,7 +129,10 @@ class TestGatesWithArtifacts:
     def test_studio_preview_present(self, tmp_path):
         (tmp_path / ".framepack").mkdir()
         (tmp_path / ".framepack" / "studio-preview.md").write_text(
-            "# Studio Preview\n- command: preview\n", encoding="utf-8"
+            "# Studio Preview\n"
+            "- command: npx hyperframes preview\n"
+            "- observations: title slams in cleanly, timing feels right\n",
+            encoding="utf-8"
         )
         r = check_studio_preview(tmp_path)
         assert r.status is GateStatus.GREEN
@@ -181,22 +189,25 @@ class TestBuildReadinessBoard:
     def test_full_project_green(self, tmp_path):
         fp = tmp_path / ".framepack"
         fp.mkdir()
-        (fp / "asset-intake.md").write_text("# ok", encoding="utf-8")
+        (fp / "asset-intake.md").write_text(
+            "# Asset Intake\n\n- logo: assets/logo.png\n- colors: primary=#1a1a2e\n", encoding="utf-8")
+        (fp / "director-inspect.md").write_text(
+            "# Director Inspect\n\n## Project intent\n"
+            "- video_type: brand_product_launch\n- audience: sports fans\n"
+            "- duration: 30s\n\n## User decision\n- provide_assets\n", encoding="utf-8")
         (fp / "script-lanes.md").write_text(
-            "## Selected lane\n- lane: A\n- user_confirmed: true\n", encoding="utf-8"
-        )
+            "## Selected lane\n- lane: A\n- user_confirmed: true\n", encoding="utf-8")
         (fp / "arsenal.json").write_text("{}", encoding="utf-8")
-        (fp / "catalog-decision.md").write_text("# ok", encoding="utf-8")
-        (fp / "studio-preview.md").write_text("- command: x\n", encoding="utf-8")
+        (fp / "catalog-decision.md").write_text("# Catalog Decision\n\n- used: kinetic-title\n", encoding="utf-8")
+        (fp / "studio-preview.md").write_text("- command: preview\n- observations: looks good\n", encoding="utf-8")
         (fp / "context-sync.md").write_text(
-            "- project_context_current: true\n", encoding="utf-8"
-        )
-        (fp / "handoff-manifest.md").write_text("# ok", encoding="utf-8")
-        (fp / "taste-audit.md").write_text("# ok", encoding="utf-8")
-        (tmp_path / "frame.md").write_text("# ok", encoding="utf-8")
+            "- project_context_current: true\n", encoding="utf-8")
+        (fp / "handoff-manifest.md").write_text("# Handoff\n\n- workflow: product-launch\n", encoding="utf-8")
+        (fp / "taste-audit.md").write_text("# Taste Audit\n\n- verdict: READY\n", encoding="utf-8")
+        (tmp_path / "frame.md").write_text("# Visual Identity\n\n- colors: primary=#1a1a2e\n", encoding="utf-8")
         hf = tmp_path / ".hyperframes"
         hf.mkdir()
-        (hf / "expanded-prompt.md").write_text("# ok", encoding="utf-8")
+        (hf / "expanded-prompt.md").write_text("# Story Bible\n\nReal creative direction here.", encoding="utf-8")
         board = build_readiness_board(tmp_path)
         assert board.overall is GateStatus.GREEN
         assert board.recommended_label == "standard_sample"
@@ -236,18 +247,25 @@ class TestRenderBoardSummary:
     def test_green_project(self, tmp_path):
         fp = tmp_path / ".framepack"
         fp.mkdir()
-        for f in ["asset-intake.md", "script-lanes.md", "arsenal.json",
-                   "catalog-decision.md", "studio-preview.md", "context-sync.md",
-                   "handoff-manifest.md", "taste-audit.md"]:
-            (fp / f).write_text("# ok\n", encoding="utf-8")
+        (fp / "asset-intake.md").write_text(
+            "# Asset Intake\n\n- logo: assets/logo.png\n- colors: primary=#1a1a2e\n", encoding="utf-8")
+        (fp / "director-inspect.md").write_text(
+            "# Director Inspect\n\n## Project intent\n"
+            "- video_type: brand_product_launch\n- audience: sports fans\n"
+            "- duration: 30s\n", encoding="utf-8")
         (fp / "script-lanes.md").write_text(
             "## Selected lane\n- lane: A\n- user_confirmed: true\n", encoding="utf-8")
+        (fp / "arsenal.json").write_text("{}", encoding="utf-8")
+        (fp / "catalog-decision.md").write_text("# Catalog\n\n- used: kinetic-title\n", encoding="utf-8")
+        (fp / "studio-preview.md").write_text("- command: preview\n- observations: good\n", encoding="utf-8")
         (fp / "context-sync.md").write_text(
             "- project_context_current: true\n", encoding="utf-8")
-        (tmp_path / "frame.md").write_text("ok", encoding="utf-8")
+        (fp / "handoff-manifest.md").write_text("# Handoff\n\n- workflow: launch\n", encoding="utf-8")
+        (fp / "taste-audit.md").write_text("# Taste Audit\n\n- verdict: READY\n", encoding="utf-8")
+        (tmp_path / "frame.md").write_text("# Visual Identity\n\n- colors: primary=#1a1a2e\n", encoding="utf-8")
         hf = tmp_path / ".hyperframes"
         hf.mkdir()
-        (hf / "expanded-prompt.md").write_text("ok", encoding="utf-8")
+        (hf / "expanded-prompt.md").write_text("# Story Bible\n\nReal creative direction.", encoding="utf-8")
         board = build_readiness_board(tmp_path)
         s = render_board_summary(board)
         assert "🟢" in s
