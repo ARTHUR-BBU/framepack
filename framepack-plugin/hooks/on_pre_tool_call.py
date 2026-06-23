@@ -141,7 +141,7 @@ def _is_pre_render_review_command(command: str) -> bool:
     """
     classification = classify_hyperframes_command(command)
     subcommand = classification.invocation.command if classification.invocation else None
-    if subcommand in {"preview", "play", "render", "publish", "present", "snapshot"}:
+    if subcommand in {"preview", "render", "publish", "present", "snapshot"}:
         return True
     if subcommand in {"cloud", "lambda", "cloudrun"} and re.search(r"\brender\b", command):
         return True

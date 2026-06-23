@@ -45,9 +45,6 @@ def test_classifies_commands_by_handoff_and_side_effect_policy():
     assert classify_hyperframes_command("npx hyperframes render index.html").category is CommandCategory.REQUIRES_HANDOFF
     assert classify_hyperframes_command("npx hyperframes inspect .").category is CommandCategory.REQUIRES_HANDOFF
     assert classify_hyperframes_command("npx hyperframes snapshot .").category is CommandCategory.REQUIRES_HANDOFF
-    assert classify_hyperframes_command("npx hyperframes validate").category is CommandCategory.REQUIRES_HANDOFF
-    assert classify_hyperframes_command("npx hyperframes layout").category is CommandCategory.REQUIRES_HANDOFF
-    assert classify_hyperframes_command("npx hyperframes play").category is CommandCategory.REQUIRES_HANDOFF
     assert classify_hyperframes_command("npx hyperframes present").category is CommandCategory.REQUIRES_HANDOFF
 
     assert classify_hyperframes_command("npx hyperframes info").category is CommandCategory.DISCOVERY
@@ -93,7 +90,6 @@ def test_side_effectful_commands_are_flagged_even_when_no_handoff_required():
         "render",
         "snapshot",
         "preview",
-        "play",
         "present",
         "cloudrun",
     ]:

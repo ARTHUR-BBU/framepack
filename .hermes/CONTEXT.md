@@ -10,10 +10,10 @@
 **阶段**: v0.15.0 release-prep — Framepack 全面转向 HyperFrames 0.7.3 Director Workbench
 **分支**: `main`（release-prep commit 已完成；`assets/` 与 `.hermes/reports/` 旧现场仍未跟踪，不入库）
 **源码版本**: plugin.yaml = 0.15.0
-**正式发布**: 尚未 tag / 尚未 GitHub Release；源码 release-prep commit = `7c44713`
+**正式发布**: 尚未 tag / 尚未 GitHub Release；release artifact 应指向 review-fix 后的最新功能 commit（见 git log 顶部），不要 tag 到旧的 `7c44713`。
 **HyperFrames CLI**: 项目依赖与实际本地 CLI 已升级到 `hyperframes@0.7.3`
 **验证**: source pytest 586 passed / 1 skipped；deployed pytest 586 passed / 1 skipped；test_team_auto_test passed=4 failed=0 skipped=1；HyperFrames 0.7.3 blank init + lint = 0 errors / 0 warnings；source→deploy 212 files md5 match；deployed smoke pass
-**注意**: 独立 reviewer `deleg_c6d05f65` 因 API 429 未返回有效结论；本次 commit 未使用 `[verified]` 前缀，避免冒充独立审查通过。
+**注意**: 已补人工独立 review；发现并修复一个黄灯：`hyperframes_adapter` 仍把 0.6 时代 `validate/layout/play` 当当前 0.7.3 命令表。现在由 unknown-command conservative fallback 兜底。
 
 ### 本轮做了什么
 
@@ -23,17 +23,19 @@
 - ✅ **Hook 接线**：`pre_tool_call` 在 preview/render/publish/cloud 这类用户可见生产表面注入 Pre-render Taste Audit；lint 仍只做技术检查，不触发口味审片。
 - ✅ **文案转向**：门脸文档不再把 Framepack 描述成旧版 Prompt Factory，而是明确“Framepack 管导演；HyperFrames 0.7.3 管制作”。
 - ✅ **标准部署**：完整同步 `framepack-plugin/` 到 `F:/Hermes_windows/plugins/framepack/`，排除缓存，逐文件 MD5 验证。
+- ✅ **Review fix**：移除 0.7.3 当前命令表中不存在的 `validate/layout/play` happy-path 断言；保留 unknown command 保守 handoff fallback。
 
 ### 下次要做什么
 
-1. 如用户要求正式发布 GitHub：创建 `v0.15.0` annotated tag 指向 `7c44713`（release artifact commit），push branch + tag，并用 `gh release create` 发布 GitHub Release。
-2. 发布后再次更新本交接台，明确 tag 指向 `7c44713`；后续 handoff commit 只是手台记录，不属于 release artifact。
-3. 若要补独立 reviewer，可在额度恢复后重新 dispatch；当前功能 commit 已由全量测试、部署测试、smoke 和静态扫描兜底。
+1. 如用户要求正式发布 GitHub：先读 `git log --oneline -5`，用最新的 review-fix 功能 commit 作为 `v0.15.0` tag 目标；不要 tag 到旧的 `7c44713`。
+2. push branch + tag，并用 `gh release create` 发布 GitHub Release。
+3. 发布后再次更新本交接台，明确 tag 指向哪个 commit；后续 handoff commit 只是手台记录，不属于 release artifact。
 
 ### 当前关键证据
 
 ```text
-commit                                                           → 7c44713 feat: upgrade Framepack for HyperFrames 0.7.3 director workflow
+base commit                                                       → 7c44713 feat: upgrade Framepack for HyperFrames 0.7.3 director workflow
+review fix                                                        → 移除旧 HyperFrames validate/layout/play 当前命令表残留
 ```
 
 ### 验证证据
@@ -46,6 +48,9 @@ npx hyperframes@0.7.3 --version                                  → 0.7.3
 npx hyperframes@0.7.3 init --example blank && lint               → 0 errors, 0 warnings
 source→deploy sync                                               → copied=212, md5_mismatches=0
 deployed runtime smoke                                           → deployed_smoke=pass version=0.15.0 hyperframes_supported=0.7.3
+targeted review-fix tests                                        → 31 passed, 1 skipped
+full source pytest after review fix                              → 586 passed, 1 skipped
+deployed command smoke after review fix                          → 19 passed; deployed_command_smoke=pass
 ```
 
 ## 设计文档
