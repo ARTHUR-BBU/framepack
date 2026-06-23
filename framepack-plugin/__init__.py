@@ -5,13 +5,29 @@ The Plugin watches the Agent Loop and activates domain knowledge on demand.
 """
 
 import logging
+import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 
+def _ensure_plugin_root_on_path() -> None:
+    """Make absolute plugin imports work when Hermes imports us by file path.
+
+    The plugin historically imports shared modules as ``core.*`` from hooks and
+    scripts. That works in tests with ``PYTHONPATH=<plugin root>``, but Hermes
+    loads deployed plugins by their ``__init__.py`` file path. In that mode the
+    package directory is not guaranteed to be on ``sys.path``, so hook import can
+    fail with ``No module named 'core'`` before skills finish registering.
+    """
+    plugin_root = str(Path(__file__).resolve().parent)
+    if plugin_root not in sys.path:
+        sys.path.insert(0, plugin_root)
+
+
 def register(ctx):
     """Plugin entry point. Called once at Hermes startup."""
+    _ensure_plugin_root_on_path()
     logger.info("Framepack v0.15.0 Plugin registering")
 
     # Register skills (knowledge layer)
