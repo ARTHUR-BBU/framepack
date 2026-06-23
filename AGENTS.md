@@ -1,33 +1,41 @@
 # Framepack Agent Guide
 
-<!-- version: 0.14.2 — sync with plugin.yaml and README -->
+<!-- version: 0.15.0 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
-Framepack is a **Hermes Agent Plugin** — a Prompt Factory for HyperFrames.
+Framepack is a **Hermes Agent Plugin** — the HyperFrames 0.7.3 Director Workbench.
 
 HyperFrames 是摄影棚（设备齐全）。Framepack 是导演（更懂用户）。
 
 **导演的活是分镜和创意方向，不是操纵摄影机。**
 
-## Product Spine
+## Product Spine — HyperFrames 0.7.3
 
 ```text
 用户模糊意图
     ↓
-Framepack 创意引擎
-    ├── Phase 1: 意图翻译 → frame.md（视觉身份）
-    └── Phase 2: 创意细化 → expanded-prompt.md（场景级分解）
+Framepack Intent Router（先分诊）
+    ├── product-launch-video / website-to-video / faceless-explainer
+    ├── pr-to-video / embedded-captions / graphic-overlays / motion-graphics
+    └── template reuse / reference extraction / general-video
     ↓
-HyperFrames 工具链接管
-    ├── 读 frame.md（视觉参数）
-    ├── 读 expanded-prompt.md（场景规划）
-    ├── Layout Before Animation → 写 HTML
-    ├── hyperframes lint → 验证
-    └── hyperframes render → 出片
+ask for assets + 共创确认
+    ↓
+frame.md（视觉身份） + expanded-prompt.md（Director Story Bible）
+    ↓
+Handoff Manifest（workflow、素材、约束、QA redlines）
+    ↓
+HyperFrames 0.7.3 official workflow + Studio preview
+    ↓
+Framepack Pre-render Taste Audit
+    ↓
+用户决定：revise / add assets / render anyway
+    ↓
+HyperFrames render / publish / cloud
 ```
 
-Framepack 的边界：到 expanded-prompt.md 为止。之后的 HTML 编写、结构验证、渲染，全部交给 HyperFrames。Framepack 可以在 HyperFrames 命令前吐出非阻断 Quality Audit 小票（arsenal/Manifest/参数漂移/data-hf-id/card-cascade 这类 lint 看不见的问题），但不负责改 HTML，也不替代 HyperFrames lint/validate/snapshot/render。
+Framepack 的边界：它管导演、分诊、素材意识、创意圣经、交接单和渲染前口味审片；HyperFrames 0.7.3 管官方 workflow、Studio、HTML/GSAP、lint、render、publish、catalog、media、cloud。Framepack advises; user decides。
 
 ## Trigger Framepack When
 
@@ -181,7 +189,7 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.14.2 hooks do seven things:
+v0.15.0 hooks do seven things for HyperFrames 0.7.3:
 
 ```text
 pre_tool_call:
@@ -264,7 +272,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.14.2 skills:
+Framepack v0.15.0 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|
@@ -341,12 +349,11 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 <!-- FRAMEPACK MANAGED BLOCK START -->
 ## Framepack Agent Workflow
 
-Framepack is installed as an agent-native video creative workbench for this project.
+Framepack v0.15.0 is the HyperFrames 0.7.3 Director Workbench.
 
-- Trigger Framepack for vague video requests, creative direction, or style matching.
-- Framepack flow: Phase 0 (Asset Intake → asset-intake.md) → Phase 1 (frame.md) → Phase 2 (expanded-prompt.md + Execution Manifest), then HyperFrames takes over.
-- **铁律：写 HTML 前先读 Execution Manifest。武器有就用，裸写 GSAP 只允许 HANDWRITE 场景。**
-- `.framepack/arsenal.json` 是武器收发室；`.framepack/asset-intake.md` 是素材清单（NEW v0.12）。
-- Start every HyperFrames project from the offline-safe baseline: `npx hyperframes init --example blank`; richer official registry examples/components are opportunistic, not guaranteed.
-- Framepack does NOT audit HTML. Use `npx hyperframes lint` for that.
+- Trigger Framepack for fuzzy video requests, creative direction, style matching, asset decisions, template reuse, and reference/template extraction.
+- Flow: Intent Router → ask for assets → frame.md + expanded-prompt.md as Director Story Bible → Handoff Manifest → HyperFrames 0.7.3 official workflow + Studio preview → Pre-render Taste Audit → user decides.
+- Framepack advises; user decides. Taste audit is report-first and never replaces HyperFrames lint/render/publish/cloud.
+- Framepack does NOT own HTML. HyperFrames owns HTML/GSAP, Studio, catalog, variables, media, render, publish, and cloud execution.
+- `.framepack/arsenal.json` remains the dynamic weapon ledger; HyperFrames catalog is the official component shelf. Use both deliberately.
 <!-- FRAMEPACK MANAGED BLOCK END -->

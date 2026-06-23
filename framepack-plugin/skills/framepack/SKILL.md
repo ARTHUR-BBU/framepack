@@ -1,7 +1,7 @@
 ---
 name: framepack
-description: "Framepack v0.14.2 — HyperFrames Prompt Factory. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens), Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
-version: 0.14.2
+description: "Framepack v0.15.0 — HyperFrames 0.7.3 Director Workbench. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens), Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
+version: 0.15.0
 author: 老田 + Hermes
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,7 +11,7 @@ metadata:
     related_skills: [hyperframes, hyperframes-cli, gsap]
 ---
 
-# Framepack v0.14.2 — HyperFrames Prompt Factory
+# Framepack v0.15.0 — HyperFrames 0.7.3 Director Workbench
 
 Framepack is a Hermes Agent Plugin that translates fuzzy video intent into
 precise creative briefs HyperFrames can render. It does two things and hands off.
@@ -38,6 +38,51 @@ HyperFrames 工具链接管
 
 **Framepack 的边界：到 expanded-prompt.md 为止。**
 之后的 HTML 编写、结构验证、渲染，全部交给 HyperFrames。
+
+## v0.15.0: Director Workbench for HyperFrames 0.7.3
+
+HyperFrames 0.7 已经长出自己的 `/hyperframes` workflow 入口、Studio preview、
+catalog、variables、media tools 和 cloud/render surface。Framepack 不再只是
+Prompt Factory，而是 HyperFrames 之上的导演工作台：
+
+```text
+User idea
+  ↓
+Framepack Intent Router
+  ↓
+ask for assets + co-create direction
+  ↓
+expanded-prompt.md as Director Story Bible
+  ↓
+Handoff Manifest
+  ↓
+HyperFrames official workflow
+  ↓
+Studio preview
+  ↓
+Framepack Pre-render Taste Audit
+  ↓
+User decides: revise / add assets / render anyway
+```
+
+Core rules:
+
+- **Intent Router first.** Decide whether the request belongs to product-launch-video,
+  website-to-video, faceless-explainer, pr-to-video, embedded-captions,
+  graphic-overlays, motion-graphics, general-video, template reuse, or reference extraction.
+- **ask for assets during co-creation.** Logo, screenshots, BGM, source video,
+  HTML/animation code, DESIGN.md, mood board, color palette, reference video, and proof assets
+  can radically change the final quality.
+- **Director Story Bible stays.** `expanded-prompt.md` is the rich user-readable director brief;
+  HyperFrames `STORYBOARD.md` is the production shot list. Do not shrink the brief into a thin storyboard.
+- **Handoff Manifest bridges the systems.** It tells HyperFrames which workflow to use,
+  what creative constraints matter, which assets are missing, and what QA red lines exist.
+- **Pre-render Taste Audit happens before final render.** After Studio preview, Framepack advises
+  what still feels undercooked. It never blocks.
+- **Framepack advises; user decides.** The user can revise, add assets, or render anyway.
+- **HyperFrames catalog + Framepack dynamic arsenal.** Official catalog items are stable props;
+  Framepack arsenal remains dynamic, user-expandable, and can absorb satisfying videos,
+  reference videos, dynamic webpages, custom HTML/JS, anime.js, GSAP, Three.js, and Lottie patterns.
 
 **⚠️ HyperFrames 是司机，Framepack 是副驾驶。** HyperFrames 自带完整的 Step 1→2→3
 流程，了解自己的铁律和 GSAP 合约。Framepack 不创建平行管线 —— 它在 HyperFrames
@@ -96,7 +141,7 @@ Framepack 现在不只会“发现环境不对”，还会把安装/升级拆成
 - `core/taste_audit.py` — semantic taste audit: checks fade-stack monotony, surprise operator count, kinetic grammar coherence, and manifest surprise semantics. Ignores empty `surprise: none` markers in Execution Manifests.
 - `core/taste_specimens.py` — curated taste reference specimens for luxury/emerging/editorial styles.
 - `skills/framepack-director/references/kinetic-taste-engine.md` — Director guide for taste-driven scene design.
-- HyperFrames 0.6.104 compatibility validated (blank smoke + golden case render).
+- HyperFrames 0.7.3 is the official supported target for this release (CLI version/help + source/deploy regression gates).
 - Environment doctor now probes project-local HyperFrames in `project_dir` cwd, not script cwd.
 
 ### v0.10.6 Production Hardening + Quality Audit

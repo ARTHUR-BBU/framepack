@@ -1,6 +1,6 @@
 """Pre-tool-call hook: verify Framepack handoff readiness before HyperFrames takes over.
 
-v0.14.2 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
+v0.15.0 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
 are written. HyperFrames handles HTML authoring, structural validation, and
 rendering. This hook remains report-first: it hydrates guardrails, reconciles
 the arsenal, and surfaces quality-beyond-lint warnings. It does not block
@@ -9,6 +9,7 @@ HyperFrames commands or replace HyperFrames lint/render/validate.
 
 import logging
 import os
+import re
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ from core.hyperframes_adapter import (
     strip_heredoc_bodies as _strip_heredoc_bodies,
 )
 from core.quality_audit import audit_project
+from core.pre_render_audit import audit_pre_render, build_pre_render_audit_message
 from core.timeline_manifest import parse_hyperframes_time_windows, sync_timeline_from_project
 
 
@@ -129,6 +131,37 @@ def _audit_quality_for_hyperframes(ctx, workdir: str) -> None:
         _safe_inject(ctx, f"🧪 **Framepack Quality Audit Warning**\n- quality_audit_error: {exc}", role="user")
 
 
+
+
+def _is_pre_render_review_command(command: str) -> bool:
+    """True for user-facing preview/render surfaces.
+
+    Framepack may advise here, but never blocks. Lint/validate/inspect remain
+    technical checks and should not trigger this taste audit.
+    """
+    classification = classify_hyperframes_command(command)
+    subcommand = classification.invocation.command if classification.invocation else None
+    if subcommand in {"preview", "play", "render", "publish", "present", "snapshot"}:
+        return True
+    if subcommand in {"cloud", "lambda", "cloudrun"} and re.search(r"\brender\b", command):
+        return True
+    return False
+
+
+def _audit_pre_render_for_hyperframes(ctx, workdir: str) -> None:
+    project_dir = Path(workdir)
+    if not (project_dir / "index.html").is_file():
+        return
+    try:
+        report = audit_pre_render(project_dir)
+        message = build_pre_render_audit_message(report)
+        if message:
+            _safe_inject(ctx, message, role="user")
+    except Exception as exc:
+        logger.warning("pre_tool_call pre-render audit failed: %s", exc)
+        _safe_inject(ctx, f"🎬 **Framepack Pre-render Audit Warning**\n- pre_render_audit_error: {exc}", role="user")
+
+
 def _remind_lint_json_if_needed(ctx, command: str) -> None:
     """When Agent runs `npx hyperframes lint` without --json, remind them
     to redirect structured output to .framepack/lint-output.json so the
@@ -196,6 +229,8 @@ def register(ctx):
         _audit_arsenal_for_hyperframes(ctx, workdir)
         _sync_timeline_for_hyperframes(ctx, workdir)
         _audit_quality_for_hyperframes(ctx, workdir)
+        if _is_pre_render_review_command(command_for_detection):
+            _audit_pre_render_for_hyperframes(ctx, workdir)
         _remind_lint_json_if_needed(ctx, command_for_detection)
 
         frame_md_path = os.path.join(workdir, "frame.md")
@@ -227,4 +262,4 @@ def register(ctx):
         logger.info("pre_tool_call: frame.md missing, handoff warning injected")
 
     ctx.register_hook("pre_tool_call", on_pre_tool_call)
-    logger.info("Framepack v0.14.2 pre_tool_call hook registered (handoff readiness + guardrail hydration + quality audit)")
+    logger.info("Framepack v0.15.0 pre_tool_call hook registered (handoff readiness + guardrail hydration + quality audit)")

@@ -27,6 +27,31 @@ HyperFrames 工具链接管
 
 Framepack 的边界：到 expanded-prompt.md 为止。之后的 HTML 编写、结构验证、渲染，全部交给 HyperFrames。
 
+## vNext Director Workbench spine
+
+HyperFrames 0.7 有自己的 workflow/Studio/catalog/render 系统。Framepack 的新边界不是抢方向盘，
+而是在 HyperFrames 之前和 preview 之后当导演：
+
+```text
+Intent Router
+    ↓
+ask for assets + 共创确认
+    ↓
+expanded-prompt.md = Director Story Bible
+    ↓
+Handoff Manifest
+    ↓
+HyperFrames workflow + Studio preview
+    ↓
+Pre-render Taste Audit
+    ↓
+Framepack advises; user decides
+```
+
+规则：Intent Router 先分诊；共创阶段必须主动 ask for assets；Director Story Bible 保持丰富导演稿；
+Handoff Manifest 传递 workflow、素材、约束和 QA redlines；Pre-render Taste Audit 只建议不阻拦，
+最终由用户选择 revise / add assets / render anyway。
+
 ## Trigger Framepack When
 
 - 用户说了个模糊的视频想法（"帮我做个品牌视频"、"做个活动推广"）

@@ -1,22 +1,7 @@
 name: framepack
-version: "0.14.2"
+version: "0.15.0"
 description: >-
-  Prompt Factory for HyperFrames. Translates fuzzy user intent into frame.md
-  (visual identity) and expanded-prompt.md (scene-level creative breakdown + Execution Manifest).
-  Framepack is the director who knows which lights to turn on — not the electrician who wires the studio.
-  v0.14.2 fixes: Sprite Forge adaptive chroma key — image-gen tools paint "magenta" as darker fuchsia (e.g. 230,45,183), hardcoded pure-magenta key caused 0% transparency / pipeline stall. New detect_background_color() samples actual background from image edges; remove_bg_magenta gains key_color param (backward-compatible). +10 tests (531->541).
-  v0.14.1 fixes: production hardening from multi-angle E2E testing (9 defects — weight injection decoupled from LLM quality check to prevent silent dropout, regex cross-line/cross-word match in handwrite ratio audit, caution_motion rendering & audit coverage, sprite QC report output & non-square cell scaling, cross-block-name migration guard, five-element metaphor clarified as guidance not mathematical constraint).
-  v0.14.0 adds: Five-Element Weight Control System (ControlProfile with creative_autonomy/restraint_force/atmosphere_density/motion_dynamism/weapon_reliance weights, Phase 0.5 试菜 flow, Hook nerve-pathway penetration, weight consistency audit at P2), caution_motion weighted motion system (forbidden_motion backward compat), Sprite Forge workshop (process_sprite.py chroma-key cutting + make_layout_guide.py layout reference + prompt rules knowledge base), Taste audit bridge to quality_audit (TASTE_SEVERITY_MAP).
-  v0.12.0 adds Arsenal expansion (anime.js + sprite sheet forge), Taste audit broadening (kinetic/fade/surprise/motif fixes), Parameter drift guard (param_guard.py + canonical snippets), Upstream Warning Bridge (lint --json classification into quality_audit). v0.11.1 adds Asset Intake (Phase 0): asset detector (PNG/JPG/SVG transparency), six-category asset checklist, asset-intake.md manifest generation, degradation branches by video type. v0.11.0 adds: Kinetic Taste Engine (taste audit, surprise
-  v0.10.6 adds: Production Hardening Patch (external font dependency audit, local font asset checks, low-visibility risk audit, finite-number guards, project-local proof path checks) on top of the Production Quality Layer.
-  v0.10.5 adds: Production Quality Layer (timeline manifest, proof frames/contact sheets, scene specs, fail-on severity gates) plus Arsenal Binding Contract.
-  v0.10.2 adds: Environment & Upgrade Manager (report-only doctor, safe skill install/overlay/upgrade managers, upgrade report).
-  v0.10.1 adds: HyperFrames Compatibility Adapter (command classification, capability snapshots, registry fallback, official-skill diff reports, upstream watcher script).
-  v0.10.0 adds: Arsenal Registry runtime (.framepack/arsenal.json creation, Execution Manifest reconciliation, builtin weapon catalog, trusted-source whitelist, HyperFrames preflight audit).
-  v0.9.4 adds: Replica Mode render integrity (root data-duration guardrail, VIDEO_DNA/content decomposition/TEMPLATE_BLUEPRINT contract, ambiguity ban).
-  v0.9.3 adds: test-team workflow hardening (clip-root animation ban with inner wrappers, text-split CSS contract fix, state.json future-only clarification).
-  v0.9.2 adds: Guardrail Hydrator (plugin-owned guardrails.md, project AGENTS.md managed block, hash-based drift repair, current-session injection).
-  v0.9.1 adds: HyperFrames Structure Bridge (time windows, structure checklist, resolveElement compat, AGENTS.md iron rule).
+  Framepack v0.15.0 is the HyperFrames 0.7.3 Director Workbench: it routes fuzzy video intent into the right HyperFrames workflow, asks for assets during co-creation, writes frame.md and expanded-prompt.md as the Director Story Bible, emits a Handoff Manifest for the official HyperFrames 0.7.3 workflow layer, and adds a non-blocking Pre-render Taste Audit after Studio preview. HyperFrames owns HTML, Studio, lint, render, publish, catalog, media, and cloud execution; Framepack owns creative direction, asset awareness, dynamic arsenal guidance, and user-decision checkpoints.
 author: Framepack Team
 license: MIT
 homepage: https://github.com/ARTHUR-BBU/framepack

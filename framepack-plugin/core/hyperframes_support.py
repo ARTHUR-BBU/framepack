@@ -58,7 +58,7 @@ def is_prerelease(version: str) -> bool:
 def same_soft_band(version: str, soft_max: str) -> bool:
     """Return whether ``version`` is in the declared soft compatibility band.
 
-    Currently supports patterns like ``0.6.x`` or exact major/minor/patch-ish
+    Currently supports patterns like ``0.7.x`` or exact major/minor/patch-ish
     strings. This stays deliberately small until real support metadata needs more.
     """
     version_tuple = parse_version_tuple(version)

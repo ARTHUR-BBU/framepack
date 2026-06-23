@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.15.0 — HyperFrames 0.7.3 Director Workbench (2026-06-23)
+
+Framepack fully pivots to HyperFrames 0.7.3 as the supported production target.
+
+### Director Workbench
+
+- **Intent Router** — routes fuzzy requests into HyperFrames 0.7.3 workflow families such as product launch, website-to-video, faceless explainer, PR-to-video, captions, graphic overlays, motion graphics, template reuse, reference extraction, and general video.
+- **Asset-first co-creation** — Framepack now explicitly asks for useful assets before creative expansion: logo, screenshots, BGM, source video, DESIGN.md, mood board, reference video, animation snippets, and proof points.
+- **Director Story Bible** — `expanded-prompt.md` is treated as the rich creative source of truth, while HyperFrames owns the production storyboard and HTML composition.
+- **Handoff Manifest** — captures workflow, creative constraints, missing assets, catalog/arsenal candidates, QA red lines, and user decision points for HyperFrames 0.7.3.
+- **Pre-render Taste Audit** — preview/render/publish/cloud surfaces get a non-blocking taste/product audit. Framepack advises; user decides.
+
+### Compatibility
+
+- **HyperFrames 0.7.3** — official supported and highest-tested target.
+- HyperFrames 0.6.x is no longer the active support target for v0.15.0.
+
+### Tests
+
+- Added Intent Router, Handoff Manifest, Pre-render Audit, pre-tool-call integration, and skill/guardrail contract tests.
+
 ## 0.12.0 — Five Directions Release (2026-06-18)
 
 Five development directions completed, tested end-to-end, and validated by independent test team.

@@ -1,54 +1,66 @@
 # Framepack
 
-> **HyperFrames 的 Prompt Factory。**
-> 把模糊的视频想法变成 HyperFrames 能渲染的精准创意简报。
+> **HyperFrames 0.7.3 导演工作台。**
+> Framepack 把模糊的视频想法，变成 HyperFrames 0.7.3 能正式执行的工作流：先分诊、问素材、写导演稿、清晰交接，再在渲染前做口味审片。
 
-Framepack 是一个 Hermes Agent 插件，挂载到 Agent 循环中。它只做两件事，做好：
+Framepack 是 Hermes Agent 插件。新版边界很明确：
 
-1. **frame.md** — 视觉身份（配色、字体、动效参数、氛围）
-2. **expanded-prompt.md** — 场景级创意分解（beat、节奏、转场）
+- **Framepack 管导演：** Intent Router、素材询问、`frame.md`、作为 Director Story Bible 的 `expanded-prompt.md`、Handoff Manifest、动态武器库建议、Pre-render Taste Audit。
+- **HyperFrames 管制作：** 官方 workflows、Studio preview、catalog、variables、media tools、HTML/GSAP composition、lint、render、publish、cloud。
 
-这两个文件写完，**HyperFrames 接管。** Framepack 停在 HyperFrames 开始的地方。
+比喻：HyperFrames 是专业厨房，Framepack 是主厨。主厨定菜单、看食材、出餐前尝味；厨房用自己的设备把菜做出来。
 
-## 比喻
-
-HyperFrames 是设备齐全的摄影棚。Framepack 是知道什么时候开哪盏灯的导演——不是给摄影棚布线的电工。
-
-## 工作流程
+## HyperFrames 0.7.3 工作流
 
 ```text
-用户："帮我做个珍珠品牌 30 秒视频"
-  │
-  ▼
-Framepack Phase 1：意图 → frame.md
-  "珍珠品牌" → Velvet Standard 风格 → frame.md
-  配色：深海蓝 + 珍珠金 + 丝绸黑
-  动效：calm, power2.out, 0.8-1.5s
-  用户确认视觉方向 ✓
-  │
-  ▼
-Framepack Phase 2：创意 → expanded-prompt.md
-  节奏：hook → PUNCH → breathe → CTA
-  4 个场景完整 beat、转场、动画动词
-  用户确认创意方向 ✓
-  │
-  ▼
-HyperFrames 接管：
-  hyperframes init --example blank
-  → 官方 registry 可用时再拉更丰富组件
-  → 读 frame.md + expanded-prompt.md
-  → 写 HTML + GSAP timeline
-  → hyperframes lint && render
-  │
-  ▼
-成片 🎬
+用户想法
+  ↓
+Framepack Intent Router
+  ├── product-launch-video
+  ├── website-to-video
+  ├── faceless-explainer
+  ├── pr-to-video
+  ├── embedded-captions
+  ├── graphic-overlays
+  ├── motion-graphics
+  ├── template reuse
+  └── reference/template extraction
+  ↓
+ask for assets + 共创确认
+  ↓
+frame.md = 视觉身份
+expanded-prompt.md = Director Story Bible
+  ↓
+Handoff Manifest
+  ↓
+HyperFrames 0.7.3 官方 workflow + Studio preview
+  ↓
+Framepack Pre-render Taste Audit
+  ↓
+用户决定：修改 / 补素材 / 继续 render anyway
+  ↓
+HyperFrames render / publish / cloud
 ```
+
+## Framepack 做什么
+
+- 先用 Intent Router 分诊，不盲写。
+- 主动问素材：logo、截图、BGM、源视频、DESIGN.md、mood board、品牌色、参考视频、HTML/动画代码、证明点。
+- 产出 `frame.md` 和 `.hyperframes/expanded-prompt.md`，作为创意源头。
+- 用 Handoff Manifest 把 workflow、素材缺口、创意约束、catalog/arsenal 候选、QA 红线交给 HyperFrames 0.7.3。
+- 在 Studio preview 后做 Pre-render Taste Audit：提醒模板味、旧素材残留、缺素材、审美漂移等问题。
+
+## Framepack 不做什么
+
+- 不写、不修、不接管 HyperFrames HTML。
+- 不替代 `hyperframes lint`、Studio preview、render、publish、cloud。
+- 不在 taste audit 阶段拦门。Framepack advises; user decides。
 
 ## 安装
 
 ```bash
 # 1. 克隆
-git clone https://github.com/ARTHUR-BBU/framepack --branch framepack-agent-platform --depth 1
+git clone https://github.com/ARTHUR-BBU/framepack --depth 1
 
 # 2. 复制到 Hermes 插件目录
 # Linux/macOS:
@@ -61,18 +73,18 @@ hermes plugins enable framepack
 
 # 4. 验证
 hermes plugins list
-# 你应该看到 `framepack` 状态为 **enabled**，版本为 **0.14.2**。
-
-# 5. 项目 AGENTS.md 由 Guardrail Hydrator 自动维护 managed block；不要手工覆盖项目自有规则。
+# 你应该看到 `framepack` 状态为 enabled，版本为 **0.15.0**。
 ```
+
+## 兼容性
+
+Framepack v0.15.0 正式支持 **HyperFrames 0.7.3**。
+
+- supported_min: `0.7.3`
+- supported_max_tested: `0.7.3`
+- supported band: `0.7.x`，更新版本必须先 probe 再信任
+- 低于 `0.7.3` 的版本需要先升级，再进入 Framepack 交接
 
 ## 许可
 
 MIT
-
----
-
-**v0.14.2** 修复 Sprite Forge 色键断流：生图工具画出的“magenta”常是偏暗洋红（如 `230,45,183` 而非 `255,0,255`），硬编码纯品红键控完全失效——0% 透明，管线断流。新增 `detect_background_color()` 从图像边缘采样实际背景色自适应键控，对所有生图工具健壮，向后兼容纯品红。+10 回归测试（531->541）。
-
-**v0.14.1** 是生产加固版。多角度端到端测试暴露 9 个瑕疵，本版全部修复：权重注入守卫（LLM 质检与权重插入解耦，避免质检跳过时权重静默丢失）、restraint 正则加固（handwrite 比例不再跨行误匹配、不再误抓 `obscene1:` 这类词首前缀）、caution_motion 渲染与审计覆盖、Sprite Forge QC 报告输出与非方形单元缩放、YAML 块名迁移守卫、五行 Weights docstring 明确"相生相克是创意方向隐喻而非数学约束"，另 +20 回归测试锁定修复（511→531）。
-

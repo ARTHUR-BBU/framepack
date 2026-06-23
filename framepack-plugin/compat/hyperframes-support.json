@@ -1,18 +1,19 @@
 {
-  "framepack_version": "0.14.2",
+  "framepack_version": "0.15.0",
   "hyperframes": {
-    "supported_min": "0.6.90",
-    "supported_max_tested": "0.6.121",
-    "soft_max": "0.6.x",
-    "hard_block_below": "0.6.80",
+    "supported_min": "0.7.3",
+    "supported_max_tested": "0.7.3",
+    "soft_max": "0.7.x",
+    "hard_block_below": "0.7.0",
     "unknown_newer_policy": "warn_and_probe",
-    "latest_supported_for_downgrade": "0.6.121",
+    "latest_supported_for_downgrade": "0.7.3",
     "required_smoke_tests": [
       "version",
       "root_help",
       "catalog_json_with_proxy_retry",
       "init_blank_in_isolated_temp_dir",
-      "lint_blank_project"
+      "lint_blank_project",
+      "preview_studio_blank_project"
     ],
     "known_good_commands": [
       "init",
@@ -46,7 +47,9 @@
       "remove-background",
       "auth",
       "feedback",
-      "telemetry"
+      "telemetry",
+      "storyboard",
+      "variables"
     ],
     "unknown_newer_actions": [
       "discovery_only_probe",

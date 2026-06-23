@@ -1,90 +1,95 @@
 # Framepack
 
-> **Prompt Factory for HyperFrames.**
-> Turns fuzzy video ideas into precise creative briefs HyperFrames can render.
+> **HyperFrames 0.7.3 Director Workbench.**
+> Framepack turns fuzzy video intent into a director-approved HyperFrames workflow: route the job, ask for assets, write the creative bible, hand off cleanly, then taste-audit before render.
 
-Framepack is a Hermes Agent Plugin that hooks into the agent loop. It does two
-things, and does them well:
+Framepack is a Hermes Agent Plugin for HyperFrames 0.7.3. The new boundary is clear:
 
-1. **frame.md** — visual identity (colors, fonts, motion tokens, atmosphere)
-2. **expanded-prompt.md** — scene-level creative breakdown (beats, rhythm, transitions)
+- **Framepack owns direction:** Intent Router, asset intake, `frame.md`, `expanded-prompt.md` as the Director Story Bible, Handoff Manifest, dynamic arsenal guidance, and Pre-render Taste Audit.
+- **HyperFrames owns production:** official workflows, Studio preview, catalog, variables, media tools, HTML/GSAP composition, lint, render, publish, and cloud execution.
 
-Once these two files are written, **HyperFrames takes over.** Framepack stops
-where HyperFrames starts. Clean boundary, zero overlap.
+Kitchen analogy: HyperFrames is the professional kitchen. Framepack is the chef who chooses the menu, checks ingredients, tastes the dish before service, and lets the kitchen cook with its own equipment.
 
-## The Metaphor
-
-HyperFrames is a fully-equipped film studio. Framepack is the director who
-knows which lights to turn on, which mood board to show — not the electrician
-who wires the studio.
-
-## How It Works
+## HyperFrames 0.7.3 workflow
 
 ```text
-User: "帮我做个珍珠品牌 30 秒视频"
-  │
-  ▼
-Framepack Phase 1: Intent → frame.md
-  "珍珠品牌" → Velvet Standard style → frame.md
-  Colors: deep navy + pearl gold + silk black
-  Motion: calm, power2.out, 0.8-1.5s
-  User confirms visual direction ✓
-  │
-  ▼
-Framepack Phase 2: Creative → expanded-prompt.md
-  Rhythm: hook → PUNCH → breathe → CTA
-  4 scenes with full beats, transitions, animation verbs
-  User confirms creative direction ✓
-  │
-  ▼
-HyperFrames takes over:
-  hyperframes init --example blank
-  → optionally pulls richer registry components when available
-  → reads frame.md + expanded-prompt.md
-  → writes HTML + GSAP timeline
-  → hyperframes lint && render
-  │
-  ▼
-Video 🎬
+User idea
+  ↓
+Framepack Intent Router
+  ├── product-launch-video
+  ├── website-to-video
+  ├── faceless-explainer
+  ├── pr-to-video
+  ├── embedded-captions
+  ├── graphic-overlays
+  ├── motion-graphics
+  ├── template reuse
+  └── reference/template extraction
+  ↓
+ask for assets + co-create direction
+  ↓
+frame.md = visual identity
+expanded-prompt.md = Director Story Bible
+  ↓
+Handoff Manifest
+  ↓
+HyperFrames 0.7.3 official workflow + Studio preview
+  ↓
+Framepack Pre-render Taste Audit
+  ↓
+User decides: revise / add assets / render anyway
+  ↓
+HyperFrames render / publish / cloud
 ```
 
-## Plugin Hooks (v0.14.2)
+## What Framepack does
+
+- Routes the request before writing anything.
+- Asks for useful assets: logo, screenshots, BGM, source video, DESIGN.md, mood board, brand palette, reference video, HTML/animation snippets, proof points.
+- Produces `frame.md` and `.hyperframes/expanded-prompt.md` as the creative source of truth.
+- Produces or references a Handoff Manifest so HyperFrames 0.7.3 knows the workflow, constraints, missing assets, candidate catalog/arsenal items, and QA red lines.
+- Runs report-first semantic checks that HyperFrames lint cannot see: stale template props, missing asset-intake, old domain leftovers, arsenal drift, and taste risks.
+
+## What Framepack does not do
+
+- It does not write, fix, or own HyperFrames HTML.
+- It does not replace `hyperframes lint`, Studio preview, render, publish, or cloud workflows.
+- It does not block render during taste audit. Framepack advises; user decides.
+
+## Plugin Hooks (v0.15.0)
 
 ```text
 pre_tool_call:
-  ├── classify HyperFrames command intent (handoff vs discovery/registry/media/cloud)
-  ├── handoff commands → Guardrail Hydrator + Arsenal preflight + Quality Audit summary + frame.md readiness warning
-  └── discovery/version/help/catalog commands → no handoff warning
+  ├── classify HyperFrames 0.7.3 command intent
+  ├── production commands → Guardrail Hydrator + Arsenal preflight + Timeline sync + Quality Audit
+  ├── preview/render/publish/cloud surfaces → Pre-render Taste Audit
+  └── discovery/catalog/media/scaffold commands → no handoff warning
 
 post_tool_call:
   ├── Framepack skill_view → Guardrail Hydrator sync + current-session injection
-  ├── frame.md write → LLM quality check (palette/typography/motion complete?)
-  └── expanded-prompt.md write → Arsenal reconcile + LLM quality check (beats/rhythm complete?)
+  ├── frame.md write → quality check + weight/control-profile pathway
+  ├── expanded-prompt.md write → Arsenal reconcile + Director Story Bible quality check
+  └── lint JSON output → upstream warning classification cache
 ```
 
-v0.10.6 adds the **Production Hardening Patch**: external font dependency audit, local font asset checks, low-visibility risk audit, finite-number guards, project-local proof path checks, and a bumped test-team auto script. v0.10.5 added the **Production Quality Layer**: timeline manifest sync, scene specs, proof-frame/contact-sheet workflow, fail-on severity gates, and a test-team auto script for repeatable acceptance. v0.10.4 adds the Arsenal Binding Contract: auto-created `.framepack/arsenal.json`, canonical weapon function metadata, and inline GSAP hints when a declared weapon is not actually called.
-
-**What Framepack does NOT do:**
-- ❌ Write, fix, render, or structurally validate HTML — that's HyperFrames (`lint` / `validate` / `snapshot` / `render`)
-- ✅ It may emit a non-blocking semantic Quality Audit report for issues lint cannot see
-- ❌ Manage 13 intermediate files — gone
-- ❌ Check data-width, data-height, window.__timelines — gone
-
-## Skills (5)
+## Skills
 
 | Skill | What |
 |---|---|
-| framepack-director | Intent → frame.md + expanded-prompt (the core engine) |
-| framepack-animation-library | 27 GSAP/anime.js weapons (dictionary for HTML phase) |
-| framepack-gsap | GSAP animation patterns (dictionary for HTML phase) |
-| framepack-arsenal | Weapon catalog management |
-| framepack-reference-miner | Reference video → DNA extraction |
+| framepack | Main Director Workbench guide |
+| framepack-director | Intent → frame.md + Director Story Bible |
+| framepack-animation-library | Dynamic arsenal and animation weapons |
+| framepack-gsap | HyperFrames-safe GSAP recipes |
+| framepack-arsenal | Weapon registry lifecycle |
+| framepack-reference-miner | Reference video/webpage → motion DNA/template extraction |
+| framepack-production-quality | Timeline/proof/semantic quality checks |
+| framepack-sprite-forge | Sprite-sheet and chroma-key workshop |
 
 ## Install
 
 ```bash
 # 1. Clone
-git clone https://github.com/ARTHUR-BBU/framepack --branch framepack-agent-platform --depth 1
+git clone https://github.com/ARTHUR-BBU/framepack --depth 1
 
 # 2. Copy to Hermes plugins
 # Linux/macOS:
@@ -97,32 +102,33 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` with status **enabled** and version **0.14.2**.
+# You should see `framepack` enabled with version **0.15.0**.
 ```
 
-**Framepack v0.14.2** fixes Sprite Forge chroma-key stall: image-generation tools paint "magenta" as a darker fuchsia (e.g. `230,45,183` instead of `255,0,255`), so the hardcoded pure-magenta key missed it entirely — 0% transparency, pipeline dead. New `detect_background_color()` samples the actual background from image edges and keys against that, making Sprite Forge robust across all generation tools while staying backward-compatible with pure magenta. +10 regression tests (531->541).
+## Compatibility
 
-**Framepack v0.14.1** is a production-hardening release. Multi-angle E2E testing surfaced 9 defects; this release fixes all of them: weight-injection guardrails (LLM quality-check decoupled from weight insertion so weight directives cannot silently drop when the LLM check skips), restraint-audit regex hardening (handwrite-ratio matcher no longer collapses across newlines or false-matches word prefixes like `obscene1:`), caution_motion rendering & audit coverage, Sprite Forge QC report emission & non-square cell scaling, cross-block-name migration guard for YAML blocks, five-element Weights docstring clarified so the 相生相克 metaphor is understood as creative-direction guidance (not a mathematical constraint), and +20 regression tests locking the fixes (511→531).
+Framepack v0.15.0 officially supports **HyperFrames 0.7.3**.
 
-Framepack v0.14.0 adds **Five-Element Weight Control System**: ControlProfile (creative_autonomy/restraint_force/atmosphere_density/motion_dynamism/weapon_reliance), Phase 0.5 试菜 flow, Hook nerve-pathway penetration (weight directives injected at frame.md and expanded-prompt.md checkpoints), weight consistency audit at P2 with explanation requirement, caution_motion weighted motion system (forbidden_motion backward compat). Also adds **Sprite Forge** workshop: process_sprite.py (chroma-key cutting), make_layout_guide.py (layout reference), prompt rules knowledge base. Framepack v0.12.0 adds Arsenal expansion (anime.js + sprite sheet forge), Taste audit broadening (kinetic/fade/surprise/motif fixes), Parameter drift guard (param_guard.py + canonical snippets), Upstream Warning Bridge (lint --json classification into quality_audit). Framepack v0.11.1 adds Asset Intake (Phase 0): asset detector (PNG/JPG/SVG transparency), six-category asset checklist, asset-intake.md manifest generation, degradation branches by video type. v0.11.0 adds **Kinetic Taste Engine**: semantic taste audit (fade-stack monotony, surprise density, kinetic grammar coherence), curated taste specimens, Director taste references, HyperFrames 0.6.104 compatibility, and environment doctor cwd fix. v0.10.6 added **Production Hardening Patch**: Google Fonts/runtime font dependency warnings, local `@font-face` asset checks, dark/low-visibility heuristics, NaN/Infinity rejection, project-local proof path checks, and the `scripts/test_team_v0106_auto_test.py` acceptance runner. v0.10.5 added **Production Quality Layer**: `.framepack/timeline-manifest.json`, scene-spec templates, proof frames/contact sheets, timeline/proof audit issues, `--sync-timeline`, and `--fail-on P0|P1|P2|P3`. v0.10.4 adds **Arsenal Binding Contract**: auto-created/synced `.framepack/arsenal.json`, canonical weapon function metadata, and clearer inline GSAP hints for manifest weapons that are declared but not called. v0.10.2 adds **Environment & Upgrade Manager**: report-only environment doctor, safe skill install manager, hardening overlay planner, three-way skill upgrade manager, and upgrade report generation. v0.10.1 includes **HyperFrames Compatibility Adapter**: Framepack now classifies HyperFrames commands by intent, stores `.framepack/hyperframes-capabilities.json`, treats official catalog/add as opportunistic rather than mandatory, falls back to the offline-safe `blank` baseline, and generates upstream skill-diff reports without blindly overwriting local hardening rules. v0.10.0 added Arsenal Registry runtime: `.framepack/arsenal.json` creation, Execution Manifest reconciliation, builtin weapon catalog, trusted-source whitelist, and non-blocking Arsenal preflight before handoff-consuming HyperFrames commands. v0.9.4 includes Replica Mode render-integrity hardening: root compositions must declare explicit `data-duration`, reverse-copy work requires `VIDEO_DNA.md`, `.hermes/content_decomposition.md`, and `TEMPLATE_BLUEPRINT.md` before HTML, and Replica handoff docs must remove ambiguous implementation language or mark explicit approved exceptions. Framepack automatically syncs the latest rules into each project's `AGENTS.md` managed block and injects the same rules into the current session.
+- supported_min: `0.7.3`
+- supported_max_tested: `0.7.3`
+- supported band: `0.7.x` with probe-before-trust for newer versions
+- versions below `0.7.3` require upgrade before Framepack handoff
 
-**Tip:** Run `hermes status` to find your actual HERMES_HOME path.
-
-## Test It
+## Test it
 
 In a Hermes chat, from any project directory:
 
-```
-"帮我做一个 30 秒的科技品牌发布会视频"
+```text
+帮我做一个 30 秒的科技品牌发布视频。你自己判断路线，但先问我要不要提供素材。
 ```
 
-Framepack will hydrate its managed guardrails block if needed, match a Visual Style (Swiss Pulse or Neon Grid),
-generate frame.md, then walk through creative expansion.
+Expected behavior: Framepack routes the request, asks for assets, builds the creative direction, hands off to HyperFrames 0.7.3, and gives a Pre-render Taste Audit before final render.
 
 ## Updating
 
 ```bash
-cd framepack && git pull
+cd framepack
+git pull
 cp -r framepack-plugin <hermes-home>/plugins/framepack
 # Restart Hermes
 ```

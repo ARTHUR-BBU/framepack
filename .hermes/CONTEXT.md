@@ -7,55 +7,40 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.14.2 正式发布后开发线（Unreleased）— NOEMA 模板产品化进行中/已完成实现验证，等待独立 reviewer 回传
-**分支**: `main`（与 `origin/main` 对齐；当前有未提交工作区改动）
-**源码版本**: plugin.yaml = 0.14.2（正式源码版本仍是 v0.14.2）
-**正式发布**: `v0.14.2` tag → `52a2ab1`（release artifact，以 tag 为准）
-**最新提交**: `ac9bf84` — `[verified] feat: align Framepack with HyperFrames 0.6.121 support window, CLI commands, and standalone hyperframes-cli skill`
-**本轮未提交改动**: NOEMA agent-managed template 产品化文档/schema/inspect 标注
-**HyperFrames CLI**: 产品化验收命令固定使用 `npx hyperframes@0.6.121`，避免 bare npx 漂到 0.7.x
-**验证**: variables.json JSON OK；lint 0 errors / 1 known GSAP Studio warning；inspect 0 layout issues；validate 0 errors / 225 contrast warnings；render + ffprobe 通过（60.000000s / 1920x1080 / 30fps / 1800 frames / 21025268 bytes）
-**注意**: 独立 reviewer `deleg_d8aa60b1` 已派发，最终提交前需读取回传结论；本轮尚未 commit/push
-**工作区**: `.hermes/CONTEXT.md`、NOEMA 模板文件、设计/计划文档有改动；`.hermes/reports/` 与 `assets/` 仍为既有未跟踪现场，保留不动
+**阶段**: v0.15.0 release-prep — Framepack 全面转向 HyperFrames 0.7.3 Director Workbench
+**分支**: `main`（本轮 staged release commit 待提交；`assets/` 与 `.hermes/reports/` 旧现场不入库）
+**源码版本**: plugin.yaml = 0.15.0
+**正式发布**: 尚未 tag / 尚未 GitHub Release；本轮完成源码 bump、部署同步、测试和 commit 准备
+**HyperFrames CLI**: 项目依赖与实际本地 CLI 已升级到 `hyperframes@0.7.3`
+**验证**: source pytest 586 passed / 1 skipped；deployed pytest 586 passed / 1 skipped；test_team_auto_test passed=4 failed=0 skipped=1；HyperFrames 0.7.3 blank init + lint = 0 errors / 0 warnings；source→deploy 212 files md5 match；deployed smoke pass
+**注意**: 独立 reviewer `deleg_c6d05f65` 已派发，提交前必须读取回传结论；若通过即可 commit，若有 blocker 先修再复验
 
-### 上次做了什么
+### 本轮做了什么
 
-- ✅ **NOEMA 模板产品化设计**：新增 `.hermes/designs/2026-06-23--noema-template-productization.md`，明确本轮做 Agent-managed template，不冒充一键 CLI 模板引擎。
-- ✅ **新增实施计划**：`.hermes/plans/2026-06-23_000000-noema-template-productization.md`。
-- ✅ **README 升级为用户入口**：说明适用/不适用场景、三档复用模式、scene map、固定 0.6.121 验收命令、props rule。
-- ✅ **新增 `TEMPLATE-USAGE.md`**：写明 copy 流程、11 场景映射、prop replacement map、programmatic prop recipes、stale prop audit。
-- ✅ **新增 `TEMPLATE-QA.md`**：沉淀 lint/validate/inspect/render/ffprobe、stale asset audit、contact sheet 降级视觉验证、PASS/WARN/FAIL 报告模板。
-- ✅ **扩展 `variables.json`**：从小样例升级为 schema seed/content contract，含 template_meta、brand、visual_identity、prop_strategy、scene_copy、asset_slots、validation。
-- ✅ **修模板 inspect 噪声**：在 11 个 `.scene-inner` wrapper 上标注 `data-layout-allow-occlusion/overlap`，把海报式 intentional layering 从 inspect error 洪流变成模板级约定；复跑 inspect 为 0 layout issues。
-- ✅ **完整媒体验证**：`npx hyperframes@0.6.121 render --output dist/noema-scroll-template.mp4` 成功，ffprobe 精确吻合 60s/1800 frames。
+- ✅ **版本升级**：Framepack 从 v0.14.2 升到 v0.15.0，README / 中文 README / AGENTS / plugin.yaml / skills / hooks / tests / templates / package pin 全面同步。
+- ✅ **HyperFrames 0.7.3 支持窗口**：`compat/hyperframes-support.json` 设为 supported_min=0.7.3、supported_max_tested=0.7.3、soft_max=0.7.x、hard_block_below=0.7.0。
+- ✅ **Director Workbench MVP**：新增 `core/intent_router.py`、`core/handoff_manifest.py`、`core/pre_render_audit.py`，覆盖分诊、交接单、渲染前口味审计。
+- ✅ **Hook 接线**：`pre_tool_call` 在 preview/render/publish/cloud 这类用户可见生产表面注入 Pre-render Taste Audit；lint 仍只做技术检查，不触发口味审片。
+- ✅ **文案转向**：门脸文档不再把 Framepack 描述成旧版 Prompt Factory，而是明确“Framepack 管导演；HyperFrames 0.7.3 管制作”。
+- ✅ **标准部署**：完整同步 `framepack-plugin/` 到 `F:/Hermes_windows/plugins/framepack/`，排除缓存，逐文件 MD5 验证。
 
 ### 下次要做什么
 
-1. **等待/读取独立 reviewer 回传**：若有 blocker，先修再复验；若通过，准备提交。
-2. **提交前最后检查**：`git diff` 确认不把 `.hermes/reports/`、`assets/` 既有现场误混入；必要时只 add 本轮 NOEMA/设计/计划/CONTEXT 文件。
-3. **按用户意图决定是否 commit**：建议 commit message：`[verified] feat: productize NOEMA scroll video template activation`。
-4. **后续产品线候选**：把 `variables.json` schema 接入真正生成器/CLI（`framepack template use noema`）作为下一阶段，不在本轮硬塞。
+1. 等独立 reviewer 回传：如果 `passed=true`，直接 commit；如果有 blocker，先修复并重跑 targeted + full + deploy smoke。
+2. commit 后如用户要求正式发布 GitHub：创建 `v0.15.0` annotated tag、push branch + tag，并用 `gh release create` 发布 GitHub Release。
+3. 发布后再次更新本交接台，明确 tag 指向 release commit；不要把 handoff commit 和 release artifact 混淆。
 
-### 近期 commit 链
+### 当前关键证据
 
+```text
+python -m pytest tests/ -q -o "addopts="                       → 586 passed, 1 skipped
+部署目录同命令                                                   → 586 passed, 1 skipped
+python scripts/test_team_auto_test.py --output-dir ...          → passed=4 failed=0 skipped=1
+npx hyperframes@0.7.3 --version                                  → 0.7.3
+npx hyperframes@0.7.3 init --example blank && lint               → 0 errors, 0 warnings
+source→deploy sync                                               → copied=212, md5_mismatches=0
+deployed runtime smoke                                           → deployed_smoke=pass version=0.15.0 hyperframes_supported=0.7.3
 ```
-ac9bf84 [verified] feat: align Framepack with HyperFrames 0.6.121 support window, CLI commands, and standalone hyperframes-cli skill
-cb50de9 handoff: record unreleased video template and execution audit work
-4ed4b6f [verified] fix: add execution contract audit for manifest weapon calls
-8647ed1 [verified] feat: add NOEMA scroll video template
-1a18b75 handoff: v0.14.2 GitHub Release 已正式发布
-52a2ab1 fix(sprite-forge): alpha erosion for glow-fringe cleanup  ← v0.14.2 tag
-```
-
-### 关键路径补充
-
-- NOEMA 视频模板产品化入口：`F:\hyperframes\aura-noema-scroll-video-template\README.md`
-- NOEMA 复用说明：`F:\hyperframes\aura-noema-scroll-video-template\TEMPLATE-USAGE.md`
-- NOEMA QA 清单：`F:\hyperframes\aura-noema-scroll-video-template\TEMPLATE-QA.md`
-- NOEMA schema seed：`F:\hyperframes\aura-noema-scroll-video-template\variables.json`
-- 产品化设计：`F:\hyperframes\.hermes\designs\2026-06-23--noema-template-productization.md`
-- 产品化计划：`F:\hyperframes\.hermes\plans\2026-06-23_000000-noema-template-productization.md`
-- NOEMA gold sample render：`F:\hyperframes\aura-noema-scroll-video-template\dist\noema-scroll-template.mp4`
 
 ## 设计文档
 

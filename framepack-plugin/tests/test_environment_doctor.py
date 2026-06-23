@@ -24,11 +24,11 @@ class FakeRunner:
 
 def support_window():
     return HyperFramesSupportWindow(
-        supported_min="0.6.90",
-        supported_max_tested="0.6.121",
-        soft_max="0.6.x",
-        hard_block_below="0.6.80",
-        latest_supported_for_downgrade="0.6.121",
+        supported_min="0.7.3",
+        supported_max_tested="0.7.3",
+        soft_max="0.7.x",
+        hard_block_below="0.7.0",
+        latest_supported_for_downgrade="0.7.3",
     )
 
 
@@ -64,7 +64,7 @@ def test_missing_hyperframes_skills_are_reported_without_blocking_discovery(tmp_
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.97",
+            ("hyperframes", "--version"): "0.7.3",
         },
     )
     doctor = EnvironmentDoctor(
@@ -94,7 +94,7 @@ def test_supported_cli_and_skills_are_ready(tmp_path):
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.97",
+            ("hyperframes", "--version"): "0.7.3",
         },
     )
     doctor = EnvironmentDoctor(
@@ -122,7 +122,7 @@ def test_latest_tested_cli_is_ready_without_guarded_smoke(tmp_path):
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.121",
+            ("hyperframes", "--version"): "0.7.3",
         },
     )
     doctor = EnvironmentDoctor(
@@ -152,7 +152,7 @@ def test_skills_are_found_recursively_from_hermes_skills_root(tmp_path):
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.97",
+            ("hyperframes", "--version"): "0.7.3",
         },
     )
     doctor = EnvironmentDoctor(
@@ -169,7 +169,7 @@ def test_skills_are_found_recursively_from_hermes_skills_root(tmp_path):
 
 
 def test_nested_cli_reference_does_not_satisfy_standalone_hyperframes_cli_skill(tmp_path):
-    """0.6.121 ships a standalone hyperframes-cli skill; a folded reference is stale."""
+    """HyperFrames 0.7.3 ships a standalone hyperframes-cli skill; a folded reference is stale."""
     skills_root = tmp_path / "skills" / "software-development"
     for name in ["hyperframes", "gsap"]:
         skill_dir = skills_root / name
@@ -184,7 +184,7 @@ def test_nested_cli_reference_does_not_satisfy_standalone_hyperframes_cli_skill(
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.97",
+            ("hyperframes", "--version"): "0.7.3",
         },
     )
     doctor = EnvironmentDoctor(
@@ -217,7 +217,7 @@ def test_skill_nested_under_another_skill_does_not_count_as_standalone(tmp_path)
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.121",
+            ("hyperframes", "--version"): "0.7.3",
         },
     )
     doctor = EnvironmentDoctor(
@@ -244,7 +244,7 @@ def test_newer_same_band_cli_requires_blank_smoke_before_handoff(tmp_path):
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.122",
+            ("hyperframes", "--version"): "0.7.4",
         },
     )
     doctor = EnvironmentDoctor(
@@ -267,7 +267,7 @@ def test_doctor_uses_installed_hyperframes_command_not_npx_latest(tmp_path):
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.97",
+            ("hyperframes", "--version"): "0.7.3",
         },
     )
     doctor = EnvironmentDoctor(
@@ -290,7 +290,7 @@ def test_doctor_falls_back_to_npx_no_install_without_installing_latest(tmp_path)
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("npx", "--no-install", "hyperframes", "--version"): "0.6.104",
+            ("npx", "--no-install", "hyperframes", "--version"): "0.7.3",
         },
         failures={
             ("hyperframes", "--version"): "not on PATH",
@@ -306,7 +306,7 @@ def test_doctor_falls_back_to_npx_no_install_without_installing_latest(tmp_path)
     report = doctor.run()
 
     assert report.hyperframes_cli.installed is True
-    assert report.hyperframes_cli.version == "0.6.104"
+    assert report.hyperframes_cli.version == "0.7.3"
     called = [args for args, _env in runner.calls]
     assert ("npx", "--no-install", "hyperframes", "--version") in called
     assert ("npx", "--yes", "hyperframes@latest", "--version") not in called
@@ -345,7 +345,7 @@ def test_report_serializes_to_json_safe_dict(tmp_path):
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.6.97",
+            ("hyperframes", "--version"): "0.7.3",
         },
     )
     doctor = EnvironmentDoctor(
