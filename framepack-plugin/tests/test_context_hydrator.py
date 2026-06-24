@@ -9,6 +9,7 @@ from core.context_hydrator import (
     ContextSyncReport,
     check_context_sync,
     hydrate_context,
+    ensure_workbench_root_agents,
     find_workbench_root,
     collect_context_files,
 )
@@ -169,6 +170,72 @@ class TestCheckContextSync:
 # ---------------------------------------------------------------------------
 
 class TestHydrateContext:
+    def test_ensure_workbench_root_agents_creates_missing_root_agents_from_case(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        root_agents = wb / "AGENTS.md"
+        root_agents.unlink(missing_ok=True)
+        case = wb / "cases" / "video-01"
+        case.mkdir()
+
+        result = ensure_workbench_root_agents(case, plugin)
+
+        assert result is not None
+        assert result.changed is True
+        assert result.action == "created"
+        content = root_agents.read_text(encoding="utf-8")
+        assert "FRAMEPACK MANAGED BLOCK" in content
+        assert "0.15.0" in content
+
+    def test_ensure_workbench_root_agents_noops_when_current(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        from hooks.guardrails import build_guardrails_payload
+        payload = build_guardrails_payload(plugin)
+        root_agents = wb / "AGENTS.md"
+        root_agents.write_text("# User rules\n\n" + payload.block, encoding="utf-8")
+        before = root_agents.read_text(encoding="utf-8")
+
+        result = ensure_workbench_root_agents(wb, plugin)
+
+        assert result is not None
+        assert result.changed is False
+        assert root_agents.read_text(encoding="utf-8") == before
+
+    def test_ensure_workbench_root_agents_updates_stale_block_preserving_user_content(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        stale_plugin = tmp_path / "_stale_plugin"
+        stale_plugin.mkdir()
+        (stale_plugin / "plugin.yaml").write_text(
+            'name: framepack\nversion: "0.14.0"\n', encoding="utf-8"
+        )
+        (stale_plugin / "guardrails.md").write_text("# Old Guardrails\n", encoding="utf-8")
+        from hooks.guardrails import build_guardrails_payload
+        stale_payload = build_guardrails_payload(stale_plugin)
+        root_agents = wb / "AGENTS.md"
+        root_agents.write_text(
+            "# User rules before\n\n"
+            "Keep this paragraph.\n\n"
+            f"{stale_payload.block}"
+            "\n# User rules after\n\n"
+            "Keep this footer.\n",
+            encoding="utf-8",
+        )
+
+        result = ensure_workbench_root_agents(wb, plugin)
+        content = root_agents.read_text(encoding="utf-8")
+
+        assert result is not None
+        assert result.changed is True
+        assert result.action == "updated"
+        assert "version=0.15.0" in content
+        assert "version=0.14.0" not in content
+        assert "# User rules before" in content
+        assert "Keep this paragraph." in content
+        assert "# User rules after" in content
+        assert "Keep this footer." in content
+
     def test_appends_managed_block_to_stale(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)
         wb = _make_workbench(tmp_path)

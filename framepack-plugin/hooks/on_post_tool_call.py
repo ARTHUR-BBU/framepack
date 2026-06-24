@@ -23,6 +23,7 @@ from core.arsenal_registry import sync_arsenal_from_project, ArsenalWarning
 from core.control_profile import ControlProfile
 from core.restraint_audit import audit_weight_consistency
 from core.shell_utils import resolve_effective_workdir
+from core.context_hydrator import ensure_workbench_root_agents
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,19 @@ def _safe_inject(ctx, message: str, role: str = "user") -> bool:
     except Exception as e:
         logger.warning("Failed to inject message (role=%s): %s", role, e)
         return False
+
+
+def _ensure_workbench_root_context(ctx, project_dir: str | Path, reason: str) -> None:
+    """Best-effort workbench-root AGENTS.md managed-block sync."""
+    try:
+        ensure_workbench_root_agents(
+            project_dir,
+            Path(__file__).resolve().parent.parent,
+            ctx=ctx,
+            reason=reason,
+        )
+    except Exception as exc:
+        logger.debug("workbench root context sync skipped: %s", exc)
 
 
 # ── Skill loading ──
@@ -533,7 +547,9 @@ def register(ctx):
         if tool_name == "skill_view":
             skill_name = args.get("name", "")
             if _is_framepack_skill_name(skill_name):
-                hydrate_guardrails(ctx, project_dir=os.getcwd(), reason=f"skill_view:{skill_name}")
+                project_dir = os.getcwd()
+                hydrate_guardrails(ctx, project_dir=project_dir, reason=f"skill_view:{skill_name}")
+                _ensure_workbench_root_context(ctx, project_dir, reason=f"skill_view:{skill_name}")
             return
 
         # ── Lint cache bridge: detect terminal lint commands ──
@@ -550,10 +566,14 @@ def register(ctx):
         file_path = args.get("path", "")
 
         if _is_frame_md(file_path):
-            hydrate_guardrails(ctx, project_dir=_project_dir_for_framepack_file(file_path), reason="frame.md write")
+            project_dir = _project_dir_for_framepack_file(file_path)
+            hydrate_guardrails(ctx, project_dir=project_dir, reason="frame.md write")
+            _ensure_workbench_root_context(ctx, project_dir, reason="frame.md write")
             _handle_frame_md(ctx, file_path)
         elif _is_expanded_prompt(file_path):
-            hydrate_guardrails(ctx, project_dir=_project_dir_for_framepack_file(file_path), reason="expanded-prompt write")
+            project_dir = _project_dir_for_framepack_file(file_path)
+            hydrate_guardrails(ctx, project_dir=project_dir, reason="expanded-prompt write")
+            _ensure_workbench_root_context(ctx, project_dir, reason="expanded-prompt write")
             _handle_expanded_prompt(ctx, file_path)
         elif _is_asset_intake(file_path):
             _handle_asset_intake(ctx, file_path)

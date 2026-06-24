@@ -27,6 +27,7 @@ from core.quality_audit import audit_project
 from core.pre_render_audit import audit_pre_render, build_pre_render_audit_message
 from core.timeline_manifest import parse_hyperframes_time_windows, sync_timeline_from_project
 from core.render_readiness import build_readiness_board, render_board_summary, render_board_markdown, GateStatus
+from core.context_hydrator import ensure_workbench_root_agents
 
 
 def _invokes_hyperframes_command(command: str) -> bool:
@@ -41,6 +42,19 @@ def _is_hyperframes_noop_command(command: str) -> bool:
         CommandCategory.REGISTRY,
         CommandCategory.MEDIA_PREPROCESS,
     }
+
+
+def _ensure_workbench_root_context(ctx, project_dir: str | Path, reason: str) -> None:
+    """Best-effort workbench-root AGENTS.md managed-block sync."""
+    try:
+        ensure_workbench_root_agents(
+            project_dir,
+            Path(__file__).resolve().parent.parent,
+            ctx=ctx,
+            reason=reason,
+        )
+    except Exception as exc:
+        logger.debug("workbench root context sync skipped: %s", exc)
 
 
 def _audit_arsenal_for_hyperframes(ctx, workdir: str) -> None:
@@ -260,6 +274,7 @@ def register(ctx):
             return
 
         hydrate_guardrails(ctx, project_dir=workdir, reason="hyperframes command")
+        _ensure_workbench_root_context(ctx, workdir, reason="hyperframes command")
         _audit_arsenal_for_hyperframes(ctx, workdir)
         _sync_timeline_for_hyperframes(ctx, workdir)
         _audit_quality_for_hyperframes(ctx, workdir)

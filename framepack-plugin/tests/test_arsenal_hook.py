@@ -96,6 +96,23 @@ def test_hyperframes_command_warns_when_manifest_weapon_missing_from_registry(tm
     assert "ghost-fx" in injected
 
 
+def test_hyperframes_command_from_case_creates_workbench_root_agents(tmp_path):
+    workbench = tmp_path / "workbench"
+    cases = workbench / "cases"
+    case = cases / "video-01"
+    case.mkdir(parents=True)
+    (workbench / "WORKBENCH.md").write_text("# Workbench\n", encoding="utf-8")
+    (case / "frame.md").write_text("ok", encoding="utf-8")
+
+    ctx = MagicMock()
+    hook = _pre_hook(ctx)
+    hook(tool_name="terminal", args={"command": "npx hyperframes lint", "workdir": str(case)})
+
+    root_agents = workbench / "AGENTS.md"
+    assert root_agents.is_file()
+    assert "FRAMEPACK MANAGED BLOCK" in root_agents.read_text(encoding="utf-8")
+
+
 @pytest.mark.parametrize(
     "command",
     [

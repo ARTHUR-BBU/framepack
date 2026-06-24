@@ -272,6 +272,25 @@ def _strip_stale_body(file_path: Path) -> bool:
     return True
 
 
+def ensure_workbench_root_agents(
+    project_dir: Path | str,
+    plugin_dir: Path | str,
+    ctx=None,
+    reason: str = "workbench root context",
+) -> Optional[GuardrailsSyncResult]:
+    """Ensure the workbench root AGENTS.md has the current Framepack block.
+
+    This is intentionally narrower than hydrate_context(): it does not scan or
+    report the whole workbench and it does not touch WORKBENCH.md/CLAUDE.md.
+    It only creates or updates the FRAMEPACK MANAGED BLOCK in the workbench
+    root AGENTS.md, preserving all user content outside that block.
+    """
+    workbench_root = find_workbench_root(project_dir)
+    if workbench_root is None:
+        return None
+    return sync_project_agents(workbench_root, plugin_dir, ctx=ctx, reason=reason)
+
+
 def hydrate_context(
     workbench_root: Path | str,
     plugin_dir: Path | str,
