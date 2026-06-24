@@ -7,50 +7,53 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.15.0 release-prep — Framepack 全面转向 HyperFrames 0.7.3 Director Workbench
-**分支**: `main`（release-prep commit 已完成；`assets/` 与 `.hermes/reports/` 旧现场仍未跟踪，不入库）
-**源码版本**: plugin.yaml = 0.15.0
-**正式发布**: 尚未 tag / 尚未 GitHub Release；release artifact 应指向 review-fix 后的最新功能 commit（见 git log 顶部），不要 tag 到旧的 `7c44713`。
-**HyperFrames CLI**: 项目依赖与实际本地 CLI 已升级到 `hyperframes@0.7.3`
-**验证**: source pytest 586 passed / 1 skipped；deployed pytest 586 passed / 1 skipped；test_team_auto_test passed=4 failed=0 skipped=1；HyperFrames 0.7.3 blank init + lint = 0 errors / 0 warnings；source→deploy 212 files md5 match；deployed smoke pass
-**注意**: 已补人工独立 review；发现并修复一个黄灯：`hyperframes_adapter` 仍把 0.6 时代 `validate/layout/play` 当当前 0.7.3 命令表。现在由 unknown-command conservative fallback 兜底。
+**阶段**: v0.15.0 已正式发布；main 继续包含 post-release hardening；准备切 TUI 新 session
+**分支**: `main`（HEAD = origin/main = `9b882e3`；`.hermes/reports/` 与 `assets/` 仍是旧未跟踪现场，不入库）
+**源码版本**: `framepack-plugin/plugin.yaml = 0.15.0`
+**正式发布**: GitHub Release `v0.15.0` 已发布；tag 固定指向 `4e6eead`，后续 handoff/follow-up commit 不属于 release artifact。
+**HyperFrames CLI**: 项目依赖与本地 CLI 支持窗口为 `hyperframes@0.7.3`
+**验证**: 最新 Framepack full plugin suite `769 passed`；部署目录 MD5 同步；真实 `F:/Framepack-01-test` root AGENTS 保养为 noop/MD5 不变；Hermes GBK subprocess 热修测试 `18 passed, 1 skipped`。
+**注意**: 当前 Hermes 进程尚未吃到最后的 GBK 热修；开 TUI 前请真正退出旧 CLI 进程后重新启动 Hermes，不是 `/new` 或 `/reset`。
 
 ### 本轮做了什么
 
-- ✅ **版本升级**：Framepack 从 v0.14.2 升到 v0.15.0，README / 中文 README / AGENTS / plugin.yaml / skills / hooks / tests / templates / package pin 全面同步。
-- ✅ **HyperFrames 0.7.3 支持窗口**：`compat/hyperframes-support.json` 设为 supported_min=0.7.3、supported_max_tested=0.7.3、soft_max=0.7.x、hard_block_below=0.7.0。
-- ✅ **Director Workbench MVP**：新增 `core/intent_router.py`、`core/handoff_manifest.py`、`core/pre_render_audit.py`，覆盖分诊、交接单、渲染前口味审计。
-- ✅ **Hook 接线**：`pre_tool_call` 在 preview/render/publish/cloud 这类用户可见生产表面注入 Pre-render Taste Audit；lint 仍只做技术检查，不触发口味审片。
-- ✅ **文案转向**：门脸文档不再把 Framepack 描述成旧版 Prompt Factory，而是明确“Framepack 管导演；HyperFrames 0.7.3 管制作”。
-- ✅ **标准部署**：完整同步 `framepack-plugin/` 到 `F:/Hermes_windows/plugins/framepack/`，排除缓存，逐文件 MD5 验证。
-- ✅ **Review fix**：移除 0.7.3 当前命令表中不存在的 `validate/layout/play` happy-path 断言；保留 unknown command 保守 handoff fallback。
+- ✅ **Framepack v0.15.0 正式发布**：完成 GitHub Release；release tag 仍固定在 `4e6eead`。
+- ✅ **P0/P1/P2 Director Workbench 主脊梁落地**：readiness gates、placeholder audit、tone/rhythm presets、audio cue ledger、catalog decision、deliverable bundle、beat analyzer、catalog discovery、promotion candidates、cross-case mining。
+- ✅ **post-release simplify follow-up**：`ed0401b refactor: address simplify reviewer follow-ups`，补 OSError 护栏、非空 render helper、markdown 表格 escape、waived component 校验、beat analyzer 瘦身等；main 已推，不改 tag。
+- ✅ **workbench root AGENTS 自动保养缺口已补**：`9b882e3 [verified] fix: maintain workbench root Framepack context block`。Framepack 被召唤时会维护 workbench 根 `AGENTS.md` 的 `FRAMEPACK MANAGED BLOCK`；没变化不写；没文件就创建；用户内容不动。main 已推。
+- ✅ **真实测试项目验证**：`F:/Framepack-01-test` 当前 root `AGENTS.md` 已健康；ensure 结果 `action=noop`，MD5 前后不变。
+- ✅ **Hermes Windows GBK readerthread 错误已热修**：在 `F:/Hermes_windows/hermes-agent/hermes_bootstrap.py` 增加 Windows-only subprocess text defaults 保险丝：`text=True` 且未显式指定时自动补 `encoding="utf-8", errors="replace"`；显式 call-site 不覆盖；POSIX 不受影响。
+- ✅ **Hermes skill 已补坑位说明**：`hermes-agent` skill 的 Windows quirk 增加 subprocess `_readerthread` / GBK `UnicodeDecodeError` 说明。
 
 ### 下次要做什么
 
-1. 如用户要求正式发布 GitHub：先读 `git log --oneline -5`，用最新的 review-fix 功能 commit 作为 `v0.15.0` tag 目标；不要 tag 到旧的 `7c44713`。
-2. push branch + tag，并用 `gh release create` 发布 GitHub Release。
-3. 发布后再次更新本交接台，明确 tag 指向哪个 commit；后续 handoff commit 只是手台记录，不属于 release artifact。
+1. **开 TUI 第一刀**：重启 Hermes 进程后启动 TUI；新 session 先读本文件，再跑 `cd F:/hyperframes && git status --short`。
+2. **如果继续 Framepack 开发**：从 `main@9b882e3` 开始；不要移动 `v0.15.0` tag；`.hermes/reports/` 与 `assets/` 未跟踪现场继续不要误提交。
+3. **如果处理 Hermes GBK 热修**：注意 `F:/Hermes_windows/hermes-agent` 是 active source 但当前 git 状态显示全仓未跟踪（像源码拷贝/非正常 git clone），不要按普通 repo 直接 `git add .`。只核验/迁移这两个改动文件：`hermes_bootstrap.py`、`tests/test_hermes_bootstrap.py`。
+4. **如果 GBK 报错还出现**：先确认新入口是否 import 了 `hermes_bootstrap`；再用坏字节 smoke 复测，不要追杀 400+ 个 subprocess call-site。
 
 ### 当前关键证据
 
 ```text
-base commit                                                       → 7c44713 feat: upgrade Framepack for HyperFrames 0.7.3 director workflow
-review fix                                                        → 移除旧 HyperFrames validate/layout/play 当前命令表残留
+Framepack main HEAD / origin/main              → 9b882e3 [verified] fix: maintain workbench root Framepack context block
+post-release simplify follow-up                → ed0401b refactor: address simplify reviewer follow-ups
+v0.15.0 tag deref                               → 4e6eead (release artifact，不移动)
+Hermes active source                            → F:/Hermes_windows/hermes-agent
+Hermes GBK hotfix files                         → hermes_bootstrap.py; tests/test_hermes_bootstrap.py
 ```
 
 ### 验证证据
 
 ```text
-python -m pytest tests/ -q -o "addopts="                       → 586 passed, 1 skipped
-部署目录同命令                                                   → 586 passed, 1 skipped
-python scripts/test_team_auto_test.py --output-dir ...          → passed=4 failed=0 skipped=1
-npx hyperframes@0.7.3 --version                                  → 0.7.3
-npx hyperframes@0.7.3 init --example blank && lint               → 0 errors, 0 warnings
-source→deploy sync                                               → copied=212, md5_mismatches=0
-deployed runtime smoke                                           → deployed_smoke=pass version=0.15.0 hyperframes_supported=0.7.3
-targeted review-fix tests                                        → 31 passed, 1 skipped
-full source pytest after review fix                              → 586 passed, 1 skipped
-deployed command smoke after review fix                          → 19 passed; deployed_command_smoke=pass
+Framepack targeted hook/context tests           → 47 passed
+Framepack full plugin suite after root upkeep   → 769 passed
+Framepack static scan / AST review              → no findings
+Framepack deploy sync                           → 5/5 MD5 matched; deployed smoke passed
+F:/Framepack-01-test ensure                     → action=noop; changed=False; before_md5 == after_md5
+Hermes RED reproduction                         → readerthread UnicodeDecodeError reproduced in failing test before fix
+Hermes bootstrap tests after fix                → 18 passed, 1 skipped
+Hermes bad-byte subprocess smoke                → stdout 'hello-�-world', no readerthread crash
+Hermes entry smoke                              → `hermes --version`, `hermes --help`, `hermes chat --help` OK
 ```
 
 ## 设计文档
