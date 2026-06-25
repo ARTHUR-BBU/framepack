@@ -59,3 +59,29 @@ def test_manifest_defaults_preserve_asset_intake_and_user_choices():
     assert manifest["asset_intake"]["likely_assets"] == route.likely_assets
     assert manifest["asset_intake"]["user_choices"] == route.user_choices
     assert manifest["asset_intake"]["missing_assets_are_advisory"] is True
+
+
+def test_manifest_declares_director_acceptance_contract():
+    route = route_intent("30s football transfer reveal video with recurring devil-ball motif")
+    manifest = build_handoff_manifest(route)
+
+    contract = manifest["director_acceptance"]
+    assert contract["hero_frames_required"] is True
+    assert contract["minimum_hero_frames"] == 3
+    assert contract["must_read_required"] is True
+    assert contract["reject_if_required"] is True
+    reject_text = "\n".join(contract["default_reject_if"]).lower()
+    assert "occlud" in reject_text
+    assert "identity layer" in reject_text
+    assert "motif" in reject_text
+    assert "waived" in reject_text
+
+
+def test_manifest_director_acceptance_reject_list_is_not_shared():
+    route = route_intent("product promo")
+    first = build_handoff_manifest(route)
+    second = build_handoff_manifest(route)
+
+    first["director_acceptance"]["default_reject_if"].append("mutated")
+
+    assert "mutated" not in second["director_acceptance"]["default_reject_if"]

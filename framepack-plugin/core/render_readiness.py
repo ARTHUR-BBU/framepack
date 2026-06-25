@@ -64,6 +64,39 @@ def _has_field(text: str, field_name: str) -> bool:
     return bool(re.search(pattern, text, re.MULTILINE | re.IGNORECASE))
 
 
+def _has_any(text: str, patterns: list[str]) -> bool:
+    return any(re.search(pattern, text, re.IGNORECASE | re.MULTILINE) for pattern in patterns)
+
+
+def _director_acceptance_state(text: str) -> str:
+    """Return missing / partial / complete for hero-frame acceptance evidence."""
+    has_hero_frame = _has_any(
+        text,
+        [
+            r"\bhero[-_\s]?frames?(?:_required)?\b",
+            r"\bproof[-_\s]?frames?(?:_required)?\b",
+            r"\bminimum[-_\s]?hero[-_\s]?frames\b",
+            r"关键帧",
+            r"验收帧",
+        ],
+    )
+    has_must_read = _has_any(text, [r"\bmust[-_\s]?read(?:_required)?\b", r"必须读出", r"必须成立"])
+    has_reject_if = _has_any(
+        text,
+        [
+            r"\breject[-_\s]?if(?:_required)?\b",
+            r"\bdefault[-_\s]?reject[-_\s]?if\b",
+            r"拒绝条件",
+            r"不通过",
+        ],
+    )
+    if not has_hero_frame:
+        return "missing"
+    if has_must_read and has_reject_if:
+        return "complete"
+    return "partial"
+
+
 # Marker strings from scaffolder templates — if these dominate the file,
 # it's still a placeholder, not filled-in content.
 _PLACEHOLDER_MARKERS = [
@@ -351,6 +384,41 @@ def check_handoff_manifest(project_dir: Path) -> GateResult:
     )
 
 
+def check_director_acceptance(project_dir: Path) -> GateResult:
+    """Check whether final proof frames have must-read / reject-if criteria."""
+    texts: list[str] = []
+    for rel in (
+        ".framepack/handoff-manifest.md",
+        ".framepack/taste-audit.md",
+        ".hyperframes/expanded-prompt.md",
+    ):
+        path = project_dir / rel
+        if path.is_file():
+            texts.append(_read(path))
+
+    state = _director_acceptance_state("\n".join(texts))
+    if state == "missing":
+        return GateResult(
+            name="Director Acceptance",
+            status=GateStatus.RED,
+            evidence="missing hero/proof frame acceptance contract",
+            risk="render may be technically valid but final visual acceptance is undefined",
+        )
+    if state == "partial":
+        return GateResult(
+            name="Director Acceptance",
+            status=GateStatus.YELLOW,
+            evidence="hero/proof frames mentioned without complete must_read + reject_if criteria",
+            risk="reject criteria incomplete; draft may pass while final still needs revision",
+        )
+    return GateResult(
+        name="Director Acceptance",
+        status=GateStatus.GREEN,
+        evidence="hero/proof frames include must_read + reject_if criteria",
+        risk="",
+    )
+
+
 def check_taste_audit(project_dir: Path) -> GateResult:
     path = project_dir / ".framepack" / "taste-audit.md"
     if not path.is_file():
@@ -409,6 +477,7 @@ GATE_NAMES_IN_ORDER = [
     "Visual Identity",
     "Story Bible",
     "Handoff Manifest",
+    "Director Acceptance",
     "Arsenal Binding",
     "Catalog Decision",
     "Studio Preview",
@@ -423,6 +492,7 @@ _GATE_CHECKERS = {
     "Visual Identity": check_frame_md,
     "Story Bible": check_story_bible,
     "Handoff Manifest": check_handoff_manifest,
+    "Director Acceptance": check_director_acceptance,
     "Arsenal Binding": check_arsenal,
     "Catalog Decision": check_catalog_decision,
     "Studio Preview": check_studio_preview,
@@ -439,9 +509,27 @@ def build_readiness_board(project_dir: str | Path) -> ReadinessBoard:
         checker = _GATE_CHECKERS[name]
         gates.append(checker(project))
 
+    # Native Gate Engine gates are evaluated after legacy gates during the
+    # migration. Import lazily to avoid circular imports while this module still
+    # owns the public dataclasses and legacy checkers.
+    try:
+        from core.gates.registry import evaluate_native_gates
+
+        gates.extend(evaluate_native_gates(project))
+    except Exception as exc:  # pragma: no cover - defensive advisory fallback
+        gates.append(GateResult(
+            name="Gate Engine",
+            status=GateStatus.YELLOW,
+            evidence=f"native gate evaluation failed: {exc}",
+            risk="new director-intent gates could not be evaluated",
+        ))
+
     if any(g.status is GateStatus.RED for g in gates):
         overall = GateStatus.RED
         label = "draft"
+    elif any(g.name == "Director Acceptance" and g.status is GateStatus.YELLOW for g in gates):
+        overall = GateStatus.YELLOW
+        label = "revision_required"
     elif any(g.status is GateStatus.YELLOW for g in gates):
         overall = GateStatus.YELLOW
         label = "provisional"
@@ -467,6 +555,15 @@ _STATUS_EMOJI = {
     GateStatus.RED: "🔴",
 }
 
+_DIRECTOR_INTENT_GATE_NAMES = {
+    "Source Extraction",
+    "Storyboard Preview",
+    "Audio Cue Ledger",
+    "Scene Continuity",
+    "Control Profile",
+    "Asset Depth",
+}
+
 
 def render_board_markdown(board: ReadinessBoard) -> str:
     lines = [
@@ -478,6 +575,19 @@ def render_board_markdown(board: ReadinessBoard) -> str:
     for g in board.gates:
         emoji = _STATUS_EMOJI.get(g.status, "⬜")
         lines.append(f"| {g.name} | {emoji} {g.status.value} | {g.evidence} | {g.risk} |")
+
+    director_gates = [g for g in board.gates if g.name in _DIRECTOR_INTENT_GATE_NAMES]
+    if director_gates:
+        lines.extend([
+            "",
+            "## Director Intent Gates",
+            "",
+            "| Gate | Status | Evidence | Risk |",
+            "|---|---|---|---|",
+        ])
+        for g in director_gates:
+            emoji = _STATUS_EMOJI.get(g.status, "⬜")
+            lines.append(f"| {g.name} | {emoji} {g.status.value} | {g.evidence} | {g.risk} |")
 
     lines.extend([
         "",
@@ -501,8 +611,12 @@ def render_board_summary(board: ReadinessBoard) -> str:
     for g in board.gates:
         counts[g.status] = counts.get(g.status, 0) + 1
     emoji = _STATUS_EMOJI.get(board.overall, "⬜")
+    risky = [g for g in board.gates if g.status is not GateStatus.GREEN]
+    risky.sort(key=lambda g: (_gate_priority(g.status), 0 if g.name in _DIRECTOR_INTENT_GATE_NAMES else 1))
+    top_risks = "; ".join(g.name for g in risky[:3]) or "none"
     return (
         f"{emoji} **Framepack Readiness — {board.overall.value}** "
         f"(label: {board.recommended_label}) | "
-        f"🔴 {counts[GateStatus.RED]} · 🟡 {counts[GateStatus.YELLOW]} · 🟢 {counts[GateStatus.GREEN]}"
+        f"🔴 {counts[GateStatus.RED]} · 🟡 {counts[GateStatus.YELLOW]} · 🟢 {counts[GateStatus.GREEN]} | "
+        f"Top risks: {top_risks}"
     )

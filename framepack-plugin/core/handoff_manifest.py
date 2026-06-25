@@ -21,6 +21,19 @@ DEFAULT_USER_DECISION_POINTS = [
     "before render",
 ]
 
+DEFAULT_DIRECTOR_ACCEPTANCE = {
+    "hero_frames_required": True,
+    "minimum_hero_frames": 3,
+    "must_read_required": True,
+    "reject_if_required": True,
+    "default_reject_if": [
+        "primary subject face or logo is unintentionally occluded",
+        "more than two identity layers compete in a reveal frame",
+        "recurring motif is present but unreadable at proof timestamps",
+        "contrast/overflow/media warnings are waived without rationale",
+    ],
+}
+
 
 def _list(value: Iterable[str] | None) -> list[str]:
     return [str(item) for item in (value or []) if str(item).strip()]
@@ -70,6 +83,10 @@ def build_handoff_manifest(
         },
         "catalog_candidates": _list(catalog_candidates),
         "framepack_arsenal_candidates": _list(framepack_arsenal_candidates),
+        "director_acceptance": {
+            **DEFAULT_DIRECTOR_ACCEPTANCE,
+            "default_reject_if": list(DEFAULT_DIRECTOR_ACCEPTANCE["default_reject_if"]),
+        },
         "qa_redlines": list(DEFAULT_QA_REDLINES),
         "user_decision_points": list(DEFAULT_USER_DECISION_POINTS),
     }

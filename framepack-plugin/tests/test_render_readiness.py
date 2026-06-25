@@ -17,6 +17,7 @@ from core.render_readiness import (
     check_arsenal,
     check_studio_preview,
     check_context_sync,
+    check_director_acceptance,
 )
 
 
@@ -84,6 +85,10 @@ class TestEmptyProjectGates:
     def test_context_sync_missing(self, tmp_path):
         r = check_context_sync(tmp_path)
         assert r.status is GateStatus.YELLOW  # yellow, not red
+
+    def test_director_acceptance_missing(self, tmp_path):
+        r = check_director_acceptance(tmp_path)
+        assert r.status is GateStatus.RED
 
 
 # ---------------------------------------------------------------------------
@@ -153,6 +158,37 @@ class TestGatesWithArtifacts:
         r = check_context_sync(tmp_path)
         assert r.status is GateStatus.GREEN
 
+    def test_director_acceptance_yellow_when_hero_frames_lack_reject_criteria(self, tmp_path):
+        (tmp_path / ".hyperframes").mkdir()
+        (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+            "# Story Bible\n\nHero frame 14.8s: identity reveal should read clearly.\n",
+            encoding="utf-8",
+        )
+        r = check_director_acceptance(tmp_path)
+        assert r.status is GateStatus.YELLOW
+        assert "reject" in r.risk.lower()
+
+    def test_director_acceptance_green_with_must_read_and_reject_if(self, tmp_path):
+        (tmp_path / ".hyperframes").mkdir()
+        (tmp_path / ".hyperframes" / "expanded-prompt.md").write_text(
+            "# Story Bible\n\n"
+            "Hero frame 14.8s\n"
+            "must_read: identity shed reveal and final kit dominance\n"
+            "reject_if: sprite overlaps face or recurring motif becomes unreadable\n",
+            encoding="utf-8",
+        )
+        r = check_director_acceptance(tmp_path)
+        assert r.status is GateStatus.GREEN
+
+    def test_director_acceptance_green_with_generated_handoff_contract_fields(self, tmp_path):
+        (tmp_path / ".framepack").mkdir()
+        (tmp_path / ".framepack" / "handoff-manifest.md").write_text(
+            '"director_acceptance": {"hero_frames_required": true, "minimum_hero_frames": 3, "must_read_required": true, "reject_if_required": true, "default_reject_if": ["occluded"]}',
+            encoding="utf-8",
+        )
+        r = check_director_acceptance(tmp_path)
+        assert r.status is GateStatus.GREEN
+
 
 # ---------------------------------------------------------------------------
 # Board builder
@@ -207,10 +243,39 @@ class TestBuildReadinessBoard:
         (tmp_path / "frame.md").write_text("# Visual Identity\n\n- colors: primary=#1a1a2e\n", encoding="utf-8")
         hf = tmp_path / ".hyperframes"
         hf.mkdir()
-        (hf / "expanded-prompt.md").write_text("# Story Bible\n\nReal creative direction here.", encoding="utf-8")
+        (hf / "expanded-prompt.md").write_text(
+            "# Story Bible\n\nReal creative direction here.\n"
+            "Hero frame 14.8s\n"
+            "must_read: identity reveal is readable\n"
+            "reject_if: subject face is occluded or motif is unreadable\n",
+            encoding="utf-8",
+        )
         board = build_readiness_board(tmp_path)
         assert board.overall is GateStatus.GREEN
         assert board.recommended_label == "standard_sample"
+
+    def test_yellow_director_acceptance_recommends_revision_required_when_no_red_gates(self, tmp_path):
+        fp = tmp_path / ".framepack"
+        fp.mkdir()
+        (fp / "asset-intake.md").write_text(
+            "# Asset Intake\n\n- logo: assets/logo.png\n- colors: primary=#1a1a2e\n", encoding="utf-8")
+        (fp / "director-inspect.md").write_text(
+            "# Director Inspect\n\n## Project intent\n- video_type: brand_product_launch\n- audience: fans\n- duration: 30s\n", encoding="utf-8")
+        (fp / "script-lanes.md").write_text("## Selected lane\n- lane: A\n- user_confirmed: true\n", encoding="utf-8")
+        (fp / "arsenal.json").write_text("{}", encoding="utf-8")
+        (fp / "catalog-decision.md").write_text("# Catalog\n\n- used: kinetic-title\n", encoding="utf-8")
+        (fp / "studio-preview.md").write_text("- command: preview\n- observations: proof frame needs review\n", encoding="utf-8")
+        (fp / "context-sync.md").write_text("- project_context_current: true\n", encoding="utf-8")
+        (fp / "handoff-manifest.md").write_text("# Handoff\n\n- workflow: launch\n", encoding="utf-8")
+        (fp / "taste-audit.md").write_text("# Taste Audit\n\n- verdict: REVISION_REQUIRED\n", encoding="utf-8")
+        (tmp_path / "frame.md").write_text("# Visual Identity\n\n- colors: primary=#1a1a2e\n", encoding="utf-8")
+        hf = tmp_path / ".hyperframes"
+        hf.mkdir()
+        (hf / "expanded-prompt.md").write_text("# Story Bible\n\nHero frame 14.8s: identity reveal.\n", encoding="utf-8")
+
+        board = build_readiness_board(tmp_path)
+        assert board.overall is GateStatus.YELLOW
+        assert board.recommended_label == "revision_required"
 
 
 # ---------------------------------------------------------------------------
@@ -265,7 +330,13 @@ class TestRenderBoardSummary:
         (tmp_path / "frame.md").write_text("# Visual Identity\n\n- colors: primary=#1a1a2e\n", encoding="utf-8")
         hf = tmp_path / ".hyperframes"
         hf.mkdir()
-        (hf / "expanded-prompt.md").write_text("# Story Bible\n\nReal creative direction.", encoding="utf-8")
+        (hf / "expanded-prompt.md").write_text(
+            "# Story Bible\n\nReal creative direction.\n"
+            "Hero frame 14.8s\n"
+            "must_read: identity reveal is readable\n"
+            "reject_if: subject face is occluded or motif is unreadable\n",
+            encoding="utf-8",
+        )
         board = build_readiness_board(tmp_path)
         s = render_board_summary(board)
         assert "🟢" in s

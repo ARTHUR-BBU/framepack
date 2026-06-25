@@ -53,6 +53,44 @@ def _is_brand_or_product(text: str) -> bool:
     return bool(re.search(r"brand|product|launch|promo|saas|品牌|产品|发布|推广", text, re.I))
 
 
+def _has_director_acceptance_contract(text: str) -> bool:
+    has_hero_frame = bool(
+        re.search(r"\b(?:hero|proof)[-_\s]?frames?(?:_required)?\b|\bminimum[-_\s]?hero[-_\s]?frames\b|关键帧|验收帧", text, re.I)
+    )
+    has_must_read = bool(re.search(r"\bmust[-_\s]?read(?:_required)?\b|必须读出|必须成立", text, re.I))
+    has_reject_if = bool(
+        re.search(r"\breject[-_\s]?if(?:_required)?\b|\bdefault[-_\s]?reject[-_\s]?if\b|拒绝条件|不通过", text, re.I)
+    )
+    return has_hero_frame and has_must_read and has_reject_if
+
+
+def _mentions_asset_roles(text: str) -> bool:
+    return bool(
+        re.search(
+            r"(^|\n)\s*(roles?|asset_roles)\s*:|\b(visual_subject|brand_mark|motion_footage|placeholder|legal_sensitive)\b|版权|商标|占位",
+            text,
+            re.I,
+        )
+    )
+
+
+def _has_asset_entries(text: str) -> bool:
+    return bool(re.search(r"\bassets?\b|\.(?:png|jpe?g|svg|mp4|mov|webm|mp3|wav)\b", text, re.I))
+
+
+def _mentions_motion_footage(text: str) -> bool:
+    return bool(re.search(r"\b(motion_footage|footage|video|highlight)\b|\.(?:mp4|mov|webm)\b", text, re.I))
+
+
+def _mentions_motion_quality_evidence(text: str) -> bool:
+    evidence_re = re.compile(r"\b(keyframe|gop|ffprobe|encoding|codec|re-?encode|transcode)\b|重编码|编码", re.I)
+    negative_re = re.compile(r"\b(not run|not checked|unchecked|missing|pending|todo|unknown|waived)\b|未检查|未运行|未执行|待检查|未知", re.I)
+    for line in text.splitlines():
+        if evidence_re.search(line) and not negative_re.search(line):
+            return True
+    return False
+
+
 def audit_pre_render(project_dir: str | Path) -> PreRenderAuditReport:
     project = Path(project_dir)
     findings: list[PreRenderFinding] = []
@@ -94,6 +132,43 @@ def audit_pre_render(project_dir: str | Path) -> PreRenderAuditReport:
         )
 
     combined = "\n".join([expanded, asset_intake])
+    director_contract_text = "\n".join(
+        [
+            expanded,
+            _read(project / ".framepack" / "handoff-manifest.md"),
+            _read(project / ".framepack" / "taste-audit.md"),
+        ]
+    )
+    if expanded_path.is_file() and not _has_director_acceptance_contract(director_contract_text):
+        findings.append(
+            PreRenderFinding(
+                severity="P1",
+                code="missing_hero_frame_acceptance_contract",
+                message="No hero/proof frame acceptance contract with must_read + reject_if criteria is recorded.",
+                suggestion="Add proof timestamps with what must read clearly and what rejects final approval (occlusion, motif readability, contrast/overflow waivers).",
+            )
+        )
+
+    if asset_intake and _has_asset_entries(asset_intake) and not _mentions_asset_roles(asset_intake):
+        findings.append(
+            PreRenderFinding(
+                severity="P2",
+                code="asset_roles_missing",
+                message="Asset intake lists materials but does not classify their production roles.",
+                suggestion="Classify assets as visual_subject, brand_mark, motion_footage, audio, placeholder, or legal-sensitive so the handoff knows what each asset must do.",
+            )
+        )
+
+    if asset_intake and _mentions_motion_footage(asset_intake) and not _mentions_motion_quality_evidence(asset_intake):
+        findings.append(
+            PreRenderFinding(
+                severity="P2",
+                code="motion_footage_quality_unrecorded",
+                message="Motion footage is listed without encoding/keyframe/re-encode evidence.",
+                suggestion="Run or record ffprobe/keyframe/codec checks before final render, and re-encode footage with sparse keyframes when needed.",
+            )
+        )
+
     if _is_brand_or_product(expanded) and not _mentions_audio(combined):
         findings.append(
             PreRenderFinding(
