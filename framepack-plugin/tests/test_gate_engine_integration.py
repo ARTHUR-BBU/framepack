@@ -74,3 +74,32 @@ def test_render_board_markdown_groups_native_gate_section(tmp_path: Path):
 
     assert "## Director Intent Gates" in markdown
     assert "Source Extraction" in markdown
+
+
+def test_render_board_markdown_does_not_duplicate_director_gates_in_main_table(tmp_path: Path):
+    fp = tmp_path / ".framepack"
+    fp.mkdir(parents=True)
+    fp.joinpath("handoff-manifest.md").write_text(
+        "# Handoff Manifest\n- source_inputs:\n  - url: https://example.com/story\n",
+        encoding="utf-8",
+    )
+
+    board = build_readiness_board(tmp_path)
+    markdown = render_board_markdown(board)
+
+    assert markdown.count("| Source Extraction |") == 1
+
+
+def test_native_gate_failure_advisory_includes_traceback(monkeypatch, tmp_path: Path):
+    import core.gates.registry as registry
+
+    def broken_native_gates(project: Path):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(registry, "evaluate_native_gates", broken_native_gates)
+
+    board = build_readiness_board(tmp_path)
+    gate = next(g for g in board.gates if g.name == "Gate Engine")
+
+    assert "RuntimeError: boom" in gate.evidence
+    assert "Traceback" in gate.evidence

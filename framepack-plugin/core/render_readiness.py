@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import re
+import traceback
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -517,10 +518,11 @@ def build_readiness_board(project_dir: str | Path) -> ReadinessBoard:
 
         gates.extend(evaluate_native_gates(project))
     except Exception as exc:  # pragma: no cover - defensive advisory fallback
+        tb = traceback.format_exc(limit=4).strip().replace("\n", " | ")
         gates.append(GateResult(
             name="Gate Engine",
             status=GateStatus.YELLOW,
-            evidence=f"native gate evaluation failed: {exc}",
+            evidence=f"native gate evaluation failed: {exc}; {tb}",
             risk="new director-intent gates could not be evaluated",
         ))
 
@@ -573,6 +575,8 @@ def render_board_markdown(board: ReadinessBoard) -> str:
         "|---|---|---|---|",
     ]
     for g in board.gates:
+        if g.name in _DIRECTOR_INTENT_GATE_NAMES:
+            continue
         emoji = _STATUS_EMOJI.get(g.status, "⬜")
         lines.append(f"| {g.name} | {emoji} {g.status.value} | {g.evidence} | {g.risk} |")
 

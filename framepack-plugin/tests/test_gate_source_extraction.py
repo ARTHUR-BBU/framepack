@@ -47,6 +47,29 @@ def test_source_extraction_green_when_extraction_contract_is_complete(tmp_path: 
     assert result.status is GateStatus.GREEN
 
 
+def test_source_extraction_yellow_when_multiline_field_is_empty_not_next_field(tmp_path: Path):
+    fp = _fp(tmp_path)
+    fp.joinpath("handoff-manifest.md").write_text(
+        "# Handoff Manifest\n- source_inputs:\n  - url: https://example.com/story\n",
+        encoding="utf-8",
+    )
+    fp.joinpath("source-intake.md").write_text(
+        """# Source Intake
+- extraction_method: web_extract
+- source_summary: A product launch page for a bicycle light.
+- narrative_type: product launch
+- must_preserve_points:
+- unrelated_next_field: should not satisfy must_preserve_points
+""",
+        encoding="utf-8",
+    )
+
+    result = check_source_extraction(tmp_path)
+
+    assert result.status is GateStatus.YELLOW
+    assert "must_preserve_points" in result.evidence
+
+
 def test_source_extraction_yellow_when_extraction_failed_with_reason(tmp_path: Path):
     fp = _fp(tmp_path)
     fp.joinpath("handoff-manifest.md").write_text(

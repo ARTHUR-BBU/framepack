@@ -62,6 +62,36 @@ Payoff
     assert result.status is GateStatus.GREEN
 
 
+def test_storyboard_preview_yellow_when_multiline_field_is_empty_not_next_section(tmp_path: Path):
+    _expanded(tmp_path, """# Story Bible
+## Scene 1
+Hook
+## Scene 2
+Payoff
+""")
+    _fp(tmp_path).joinpath("storyboard-preview.md").write_text(
+        """# Storyboard Preview
+- scene_count: 2
+- user_confirmed: true
+- recurring_motifs:
+### Scene 1
+- Visual: macro pearl
+- Feel: quiet
+- Key: glint
+### Scene 2
+- Visual: reveal
+- Feel: confident
+- Key: CTA
+""",
+        encoding="utf-8",
+    )
+
+    result = check_storyboard_preview(tmp_path)
+
+    assert result.status is GateStatus.YELLOW
+    assert "recurring_motifs" in result.evidence
+
+
 def test_storyboard_preview_yellow_when_not_user_confirmed(tmp_path: Path):
     _expanded(tmp_path, """# Story Bible
 ## Scene 1

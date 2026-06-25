@@ -33,7 +33,26 @@ def _has_source_url(project_dir: Path) -> bool:
 
 
 def _has_filled_field(text: str, field: str) -> bool:
-    return bool(re.search(rf"[-*]\s*{re.escape(field)}\s*:\s*\S", text, re.IGNORECASE))
+    field_re = re.compile(rf"^(?P<indent>\s*)[-*]\s*{re.escape(field)}\s*:\s*(?P<value>.*)$", re.IGNORECASE)
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        match = field_re.match(line)
+        if not match:
+            continue
+        if match.group("value").strip():
+            return True
+        parent_indent = len(match.group("indent"))
+        for child in lines[index + 1:]:
+            stripped = child.strip()
+            if not stripped:
+                continue
+            child_indent = len(child) - len(child.lstrip())
+            if child_indent <= parent_indent:
+                return False
+            if stripped.startswith(("-", "*")) and len(stripped) > 1:
+                return True
+        return False
+    return False
 
 
 def check_source_extraction(project_dir: str | Path) -> GateResult | None:
