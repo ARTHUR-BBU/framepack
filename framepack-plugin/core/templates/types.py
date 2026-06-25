@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
+
+_TEMPLATE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+_REFERENCE_ARTIFACTS = (
+    "source/VIDEO_DNA.md",
+    "source/TEMPLATE_BLUEPRINT.md",
+    "source/content_decomposition.md",
+)
 
 
 @dataclass(frozen=True)
@@ -36,9 +44,14 @@ class TemplateCard:
     params: tuple[str, ...]
     path: str
     not_suitable_for: tuple[str, ...] = ()
+    schema_version: str = "1.0"
+    kind: str = "template_suite"
+    source: str = "template_bundle"
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "schema_version": self.schema_version,
+            "kind": self.kind,
             "id": self.id,
             "name": self.name,
             "description": self.description,
@@ -46,6 +59,7 @@ class TemplateCard:
             "not_suitable_for": list(self.not_suitable_for),
             "params": list(self.params),
             "path": self.path,
+            "source": self.source,
         }
 
 
@@ -129,6 +143,10 @@ def _as_tuple(value: str | list[str] | None) -> tuple[str, ...]:
     return tuple(str(item) for item in value if str(item))
 
 
+def _valid_template_id(template_id: str) -> bool:
+    return bool(_TEMPLATE_ID_RE.fullmatch(template_id)) and ".." not in template_id
+
+
 def load_template_card(template_dir: str | Path) -> TemplateCard | None:
     """Load TEMPLATE_CARD.md frontmatter into a TemplateCard, if present."""
     root = Path(template_dir)
@@ -147,6 +165,9 @@ def load_template_card(template_dir: str | Path) -> TemplateCard | None:
         not_suitable_for=_as_tuple(data.get("not_suitable_for")),
         params=_as_tuple(data.get("params")),
         path=_to_posix(root),
+        schema_version=str(data.get("schema_version") or "1.0"),
+        kind=str(data.get("kind") or "template_suite"),
+        source=str(data.get("source") or "template_bundle"),
     )
 
 
@@ -169,6 +190,21 @@ def inspect_template_bundle(template_dir: str | Path) -> TemplateInspectReport:
             issues=tuple(issues),
             summary={"issue_count": len(issues)},
         )
+
+    if not _valid_template_id(card.id):
+        issues.append(TemplateIssue(
+            "ERROR",
+            "invalid_template_id",
+            "Template id must use only letters, numbers, dots, underscores, or hyphens and must not contain '..'.",
+            _to_posix(root / "TEMPLATE_CARD.md"),
+        ))
+    if card.kind != "template_suite":
+        issues.append(TemplateIssue(
+            "ERROR",
+            "invalid_template_kind",
+            "Template bundles must declare kind: template_suite.",
+            _to_posix(root / "TEMPLATE_CARD.md"),
+        ))
 
     required_docs = [
         ("PARAMS.md", "missing_params_doc", "PARAMS.md should describe exposed parameters and required inputs."),
@@ -198,14 +234,19 @@ def inspect_template_bundle(template_dir: str | Path) -> TemplateInspectReport:
             _to_posix(root),
         ))
 
+    reference_artifacts = [artifact for artifact in _REFERENCE_ARTIFACTS if (root / artifact).is_file()]
     has_error = any(issue.severity == "ERROR" for issue in issues)
     has_warning = any(issue.severity == "WARNING" for issue in issues)
     status = "incomplete" if has_error else "draft" if has_warning else "complete"
     summary = {
+        "schema_version": card.schema_version,
+        "kind": card.kind,
         "id": card.id,
         "name": card.name,
         "params": list(card.params),
         "suitable_for": list(card.suitable_for),
+        "reference_artifacts_present": bool(reference_artifacts),
+        "reference_artifacts": reference_artifacts,
         "issue_count": len(issues),
     }
     return TemplateInspectReport(

@@ -23,6 +23,26 @@ def card(tmp_path, template_id="miara-style-template") -> TemplateCard:
     )
 
 
+def make_source(tmp_path):
+    source = tmp_path / "source-case"
+    source.mkdir()
+    (source / "index.html").write_text("<div>source</div>", encoding="utf-8")
+    (source / "hyperframes.json").write_text("{}", encoding="utf-8")
+    (source / "package.json").write_text("{}", encoding="utf-8")
+    (source / "assets").mkdir()
+    (source / "assets" / "logo.png").write_bytes(b"png")
+    (source / "renders").mkdir()
+    (source / "renders" / "final.mp4").write_bytes(b"mp4")
+    (source / "snapshots").mkdir()
+    (source / "snapshots" / "hero.png").write_bytes(b"png")
+    (source / "VIDEO_DNA.md").write_text("# DNA", encoding="utf-8")
+    (source / "TEMPLATE_BLUEPRINT.md").write_text("# Blueprint", encoding="utf-8")
+    hermes = source / ".hermes"
+    hermes.mkdir()
+    (hermes / "content_decomposition.md").write_text("# Content", encoding="utf-8")
+    return source
+
+
 def test_scaffold_template_bundle_writes_standard_files(tmp_path):
     target = tmp_path / "templates" / "miara-style-template"
 
@@ -63,22 +83,7 @@ def test_scaffold_can_overwrite_when_explicit(tmp_path):
 
 
 def test_package_template_source_copies_selected_project_files(tmp_path):
-    source = tmp_path / "source-case"
-    source.mkdir()
-    (source / "index.html").write_text("<div>source</div>", encoding="utf-8")
-    (source / "hyperframes.json").write_text("{}", encoding="utf-8")
-    (source / "package.json").write_text("{}", encoding="utf-8")
-    (source / "assets").mkdir()
-    (source / "assets" / "logo.png").write_bytes(b"png")
-    (source / "renders").mkdir()
-    (source / "renders" / "final.mp4").write_bytes(b"mp4")
-    (source / "snapshots").mkdir()
-    (source / "snapshots" / "hero.png").write_bytes(b"png")
-    (source / "VIDEO_DNA.md").write_text("# DNA", encoding="utf-8")
-    (source / "TEMPLATE_BLUEPRINT.md").write_text("# Blueprint", encoding="utf-8")
-    hermes = source / ".hermes"
-    hermes.mkdir()
-    (hermes / "content_decomposition.md").write_text("# Content", encoding="utf-8")
+    source = make_source(tmp_path)
 
     target = tmp_path / "template"
     package_template_source(source, target, card(target))
@@ -93,8 +98,49 @@ def test_package_template_source_copies_selected_project_files(tmp_path):
     source_notes = (target / "SOURCE_NOTES.md").read_text(encoding="utf-8")
     assert "source-case" in source_notes
     assert "reference video" in source_notes.lower()
+    report = inspect_template_bundle(target)
+    assert report.summary["reference_artifacts_present"] is True
+    assert report.summary["reference_artifacts"] == [
+        "source/VIDEO_DNA.md",
+        "source/TEMPLATE_BLUEPRINT.md",
+        "source/content_decomposition.md",
+    ]
 
 
 def test_package_requires_existing_source(tmp_path):
     with pytest.raises(FileNotFoundError):
         package_template_source(tmp_path / "missing", tmp_path / "target", card(tmp_path / "target"))
+
+
+def test_package_rejects_target_inside_source(tmp_path):
+    source = make_source(tmp_path)
+
+    with pytest.raises(ValueError, match="target_dir must not be inside source_dir"):
+        package_template_source(source, source / "templates" / "bad", card(source / "templates" / "bad"))
+
+
+@pytest.mark.skipif(not hasattr(__import__("os"), "symlink"), reason="symlink unavailable")
+def test_package_skips_symlinked_source_files(tmp_path):
+    source = make_source(tmp_path)
+    outside = tmp_path / "outside-private.txt"
+    outside.write_text("do-not-copy", encoding="utf-8")
+    link = source / "assets" / "external.txt"
+    link.symlink_to(outside)
+
+    target = tmp_path / "template"
+    package_template_source(source, target, card(target))
+
+    assert not (target / "assets" / "external.txt").exists()
+
+
+def test_package_preflights_existing_asset_without_partial_template_writes(tmp_path):
+    source = make_source(tmp_path)
+    target = tmp_path / "template"
+    (target / "assets").mkdir(parents=True)
+    (target / "assets" / "logo.png").write_bytes(b"keep")
+
+    with pytest.raises(FileExistsError):
+        package_template_source(source, target, card(target))
+
+    assert (target / "assets" / "logo.png").read_bytes() == b"keep"
+    assert not (target / "TEMPLATE_CARD.md").exists()

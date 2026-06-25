@@ -100,3 +100,47 @@ params:
     assert report.card is not None
     assert report.summary["id"] == "complete-template"
     assert report.summary["params"] == ["brand_name"]
+
+
+def test_template_card_exposes_schema_and_template_suite_kind(tmp_path):
+    write_card(tmp_path, """---
+id: complete-template
+kind: template_suite
+schema_version: "1.0"
+name: Complete Template
+description: Complete enough for template list and use workflow
+suitable_for:
+  - product launch
+params:
+  - brand_name
+---
+# Complete
+""")
+
+    card = load_template_card(tmp_path)
+
+    assert card is not None
+    assert card.to_dict()["schema_version"] == "1.0"
+    assert card.to_dict()["kind"] == "template_suite"
+
+
+def test_inspect_flags_invalid_template_id(tmp_path):
+    write_card(tmp_path, """---
+id: ../bad
+name: Bad Template
+description: Bad id
+suitable_for:
+  - product launch
+params:
+  - brief
+---
+# Bad
+""")
+    (tmp_path / "PARAMS.md").write_text("# Params", encoding="utf-8")
+    (tmp_path / "TEMPLATE_GUIDE.md").write_text("# Guide", encoding="utf-8")
+    (tmp_path / "template.params.example.json").write_text('{"brief":""}', encoding="utf-8")
+
+    report = inspect_template_bundle(tmp_path)
+
+    assert report.status == "incomplete"
+    assert any(issue.code == "invalid_template_id" for issue in report.issues)

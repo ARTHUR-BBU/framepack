@@ -10,9 +10,12 @@ def render_template_card(card: TemplateCard) -> str:
     not_suitable = "\n".join(f"  - {item}" for item in card.not_suitable_for)
     params = "\n".join(f"  - {item}" for item in card.params)
     return f"""---
+schema_version: {card.schema_version}
+kind: {card.kind}
 id: {card.id}
 name: {card.name}
 description: {card.description}
+source: {card.source}
 suitable_for:
 {suitable or '  - general video'}
 not_suitable_for:
