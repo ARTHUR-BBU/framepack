@@ -238,3 +238,42 @@ def test_recommend_missing_project_exits_2(tmp_path):
 
     assert result.returncode == 2
     assert "not found" in result.stderr.lower()
+
+
+def test_menu_outputs_user_readable_template_menu(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    template = tmp_path / "templates" / "demo"
+    run_cli(
+        "scaffold",
+        str(template),
+        "--id", "demo",
+        "--name", "Demo Template",
+        "--description", "A demo template",
+        "--suitable-for", "product launch",
+        "--param", "brand_name",
+    )
+    assert run_cli("register", str(template), "--project", str(project)).returncode == 0
+
+    result = run_cli("menu", "--project", str(project), "--intent", "帮我做产品发布视频")
+
+    assert result.returncode == 0, result.stderr
+    assert "Framepack template menu" in result.stdout
+    assert "Demo Template" in result.stdout
+    assert "score=2" in result.stdout
+    assert "framepack_template.py select demo" in result.stdout
+
+
+def test_install_builtin_from_cli_copies_and_registers_template(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+
+    result = run_cli("install-builtin", "miara-style-template", "--project", str(project), "--format", "json")
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["template_id"] == "miara-style-template"
+    assert data["entry"]["source"] == "builtin"
+    assert (project / ".framepack" / "templates" / "miara-style-template" / "TEMPLATE_CARD.md").is_file()
+    arsenal = json.loads((project / ".framepack" / "arsenal.json").read_text(encoding="utf-8"))
+    assert arsenal["weapons"]["miara-style-template"]["source"] == "builtin"

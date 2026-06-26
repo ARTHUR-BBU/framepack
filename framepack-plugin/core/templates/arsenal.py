@@ -133,13 +133,13 @@ def _template_hash(template_dir: Path) -> str:
     return f"sha256:{digest.hexdigest()}"
 
 
-def _registration_entry(card: TemplateCard, template_dir: Path, project_dir: Path) -> dict:
+def _registration_entry(card: TemplateCard, template_dir: Path, project_dir: Path, *, source: str = "local") -> dict:
     now = _now()
     template_path = _display_path(template_dir, project_dir)
     return {
         "id": card.id,
         "kind": "template_suite",
-        "source": "local",
+        "source": source,
         "status": "active",
         "path": template_path,
         "template_card": f"{template_path}/TEMPLATE_CARD.md",
@@ -159,6 +159,7 @@ def register_template_bundle(
     template_dir: str | Path,
     *,
     plugin_version: str = DEFAULT_PLUGIN_VERSION,
+    source: str = "local",
 ) -> TemplateArsenalResult:
     """Register a complete/draft template bundle as a template_suite weapon."""
     project = Path(project_dir)
@@ -177,7 +178,7 @@ def register_template_bundle(
     data = load_arsenal(arsenal_path)
     data.setdefault("weapons", {})
 
-    entry = _registration_entry(report.card, template, project)
+    entry = _registration_entry(report.card, template, project, source=source)
     existing = data["weapons"].get(report.card.id)
     if existing and existing.get("registered_at"):
         entry["registered_at"] = existing["registered_at"]
@@ -323,7 +324,63 @@ def recommend_templates(project_dir: str | Path, user_intent: str) -> list[dict]
                 "excluded_tags": excluded,
                 "params": list(template.get("params", [])),
                 "path": template.get("path", ""),
+                "suitable_for": suitable_raw,
             }
         )
     recommendations.sort(key=lambda item: (-item["score"], item["template_id"].lower()))
     return recommendations
+
+
+def format_template_menu(project_dir: str | Path, user_intent: str | None = None, *, limit: int = 3) -> str:
+    """Render a human-facing template menu for Agent/user co-creation."""
+    if user_intent:
+        items = recommend_templates(project_dir, user_intent)
+    else:
+        items = [
+            {
+                "template_id": item.get("id", ""),
+                "template_name": item.get("name", item.get("id", "")),
+                "description": item.get("description", ""),
+                "score": 0,
+                "matched_tags": [],
+                "excluded_tags": [],
+                "params": list(item.get("params", [])),
+                "path": item.get("path", ""),
+                "suitable_for": list(item.get("suitable_for", [])),
+            }
+            for item in list_registered_templates(project_dir)
+        ]
+    if not items:
+        return "\n".join(
+            [
+                "📋 Framepack template menu",
+                "",
+                "No registered templates found for this project.",
+                "Next step: framepack_template.py install-builtin miara-style-template --project <project>",
+                "",
+            ]
+        )
+
+    lines = ["📋 Framepack template menu", ""]
+    for item in items[: max(1, limit)]:
+        marker = "★" if item.get("score", 0) > 0 else " "
+        lines.append(
+            f"{marker} {item.get('template_name') or item.get('template_id')} "
+            f"({item.get('template_id')}) — score={item.get('score', 0)}"
+        )
+        if item.get("description"):
+            lines.append(f"  {item['description']}")
+        suitable = item.get("suitable_for") or item.get("matched_tags") or []
+        if suitable:
+            lines.append(f"  适合: {', '.join(suitable)}")
+        if item.get("params"):
+            lines.append(f"  参数: {', '.join(item['params'])}")
+        if item.get("matched_tags"):
+            lines.append(f"  为什么推荐: matched {', '.join(item['matched_tags'])}")
+        if item.get("excluded_tags"):
+            lines.append(f"  注意: excluded {', '.join(item['excluded_tags'])}")
+        lines.append("")
+    first_id = items[0].get("template_id")
+    lines.append(f"下一步: framepack_template.py select {first_id} --project <project> --brief \"...\"")
+    lines.append("")
+    return "\n".join(lines)

@@ -742,20 +742,32 @@ The project's `.framepack/arsenal.json` is the inventory of registered
 `template_suite` weapons. Each template declares `suitable_for`,
 `not_suitable_for`, `params`, and a bundle hash.
 
+If the project has no registered templates yet, install the built-in starter
+bundle first:
+
+```bash
+python scripts/framepack_template.py install-builtin miara-style-template --project <project_dir>
+```
+
 CLI helpers (run from `framepack-plugin/`):
 
 ```bash
-# List all registered template suites
+# Agent/user-facing menu — preferred default for template-reuse conversations
+python scripts/framepack_template.py menu --project <project_dir> \
+    --intent "帮我做一个产品发布品牌视频"
+
+# List all registered template suites as machine-readable inventory
 python scripts/framepack_template.py registered --project <project_dir>
 
-# Score templates against the user's intent
+# Score templates against the user's intent as JSON
 python scripts/framepack_template.py recommend --project <project_dir> \
     --intent "帮我做一个产品发布品牌视频" --format json
 ```
 
-`recommend_templates()` returns a scored list: `+2` per `suitable_for` tag
-matched, `-3` per `not_suitable_for` tag matched. Use this to show the user
-**2-3 best-fit templates** in plain language (not the raw JSON):
+`menu` is the front-of-house experience: show it directly to the user or
+summarize it in plain language. `recommend_templates()` returns a scored list:
+`+2` per `suitable_for` tag matched, `-3` per `not_suitable_for` tag matched.
+Use this to show the user **2-3 best-fit templates** in plain language:
 
 ```
 📋 我找到 2 个匹配你需求的模板：

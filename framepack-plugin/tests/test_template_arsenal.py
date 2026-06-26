@@ -7,11 +7,13 @@ import json
 import pytest
 
 from core.templates.arsenal import (
+    format_template_menu,
     list_registered_templates,
     recommend_templates,
     register_template_bundle,
     select_template,
 )
+from core.templates.builtin import install_builtin_template, list_builtin_templates
 from core.templates.scaffold import scaffold_template_bundle
 from core.templates.types import TemplateCard
 
@@ -234,3 +236,70 @@ def test_recommend_templates_returns_empty_when_no_templates_registered(tmp_path
     recommendations = recommend_templates(project, "anything")
 
     assert recommendations == []
+
+
+def test_format_template_menu_renders_recommendation_reasons(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    template_dir = make_template(tmp_path, "demo-template")
+    register_template_bundle(project, template_dir)
+
+    menu = format_template_menu(project, user_intent="帮我做产品发布品牌讲解视频")
+
+    assert "Framepack template menu" in menu
+    assert "Demo Template" in menu
+    assert "demo-template" in menu
+    assert "score=4" in menu
+    assert "product launch" in menu
+    assert "brand explainer" in menu
+    assert "framepack_template.py select demo-template" in menu
+
+
+def test_format_template_menu_handles_empty_project(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+
+    menu = format_template_menu(project, user_intent="产品发布")
+
+    assert "No registered templates" in menu
+    assert "install-builtin miara-style-template" in menu
+
+
+def test_install_builtin_miara_template_copies_bundle_and_registers(tmp_path):
+    builtin_root = tmp_path / "builtin" / "templates"
+    make_template(tmp_path / "builtin", "miara-style-template")
+    project = tmp_path / "project"
+    project.mkdir()
+
+    result = install_builtin_template(project, "miara-style-template", builtin_root=builtin_root)
+
+    installed = project / ".framepack" / "templates" / "miara-style-template"
+    arsenal = read_arsenal(project)
+    assert installed.is_dir()
+    assert (installed / "TEMPLATE_CARD.md").is_file()
+    assert result["template_id"] == "miara-style-template"
+    assert result["installed_path"].endswith(".framepack/templates/miara-style-template")
+    assert arsenal["weapons"]["miara-style-template"]["kind"] == "template_suite"
+    assert arsenal["weapons"]["miara-style-template"]["source"] == "builtin"
+
+
+def test_install_builtin_template_is_idempotent(tmp_path):
+    builtin_root = tmp_path / "builtin" / "templates"
+    make_template(tmp_path / "builtin", "miara-style-template")
+    project = tmp_path / "project"
+    project.mkdir()
+
+    first = install_builtin_template(project, "miara-style-template", builtin_root=builtin_root)
+    second = install_builtin_template(project, "miara-style-template", builtin_root=builtin_root)
+
+    assert first["changed"] is True
+    assert second["changed"] is False
+
+
+def test_list_builtin_templates_includes_miara_when_bundle_exists(tmp_path):
+    builtin_root = tmp_path / "builtin" / "templates"
+    make_template(tmp_path / "builtin", "miara-style-template")
+
+    templates = list_builtin_templates(builtin_root=builtin_root)
+
+    assert [item["id"] for item in templates] == ["miara-style-template"]

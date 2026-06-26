@@ -17,7 +17,8 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from core.templates.arsenal import list_registered_templates, recommend_templates, register_template_bundle, select_template
+from core.templates.arsenal import format_template_menu, list_registered_templates, recommend_templates, register_template_bundle, select_template
+from core.templates.builtin import install_builtin_template, list_builtin_templates
 from core.templates.productize import package_template_source
 from core.templates.registry import discover_templates
 from core.templates.scaffold import scaffold_template_bundle
@@ -197,6 +198,39 @@ def _cmd_recommend(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_menu(args: argparse.Namespace) -> int:
+    project = Path(args.project)
+    if not project.is_dir():
+        print(f"project not found: {project}", file=sys.stderr)
+        return 2
+    print(format_template_menu(project, user_intent=args.intent, limit=args.limit), end="")
+    return 0
+
+
+def _cmd_install_builtin(args: argparse.Namespace) -> int:
+    project = Path(args.project)
+    if not project.is_dir():
+        print(f"project not found: {project}", file=sys.stderr)
+        return 2
+    result = install_builtin_template(project, args.template_id)
+    if args.format == "json":
+        _print_json(result)
+    else:
+        print(f"installed built-in template: {result['template_id']}")
+        print(f"path: {result['installed_path']}")
+    return 0
+
+
+def _cmd_builtins(args: argparse.Namespace) -> int:
+    templates = list_builtin_templates()
+    if args.format == "json":
+        _print_json({"templates": templates})
+    else:
+        for template in templates:
+            print(f"{template['id']}\t{template.get('description', '')}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Framepack template bundle CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -250,6 +284,22 @@ def build_parser() -> argparse.ArgumentParser:
     recommend_parser.add_argument("--intent", required=True)
     recommend_parser.add_argument("--format", choices=("text", "json"), default="text")
     recommend_parser.set_defaults(func=_cmd_recommend)
+
+    menu_parser = subparsers.add_parser("menu", help="print a user-facing template menu")
+    menu_parser.add_argument("--project", required=True)
+    menu_parser.add_argument("--intent")
+    menu_parser.add_argument("--limit", type=int, default=3)
+    menu_parser.set_defaults(func=_cmd_menu)
+
+    install_builtin_parser = subparsers.add_parser("install-builtin", help="install a built-in template bundle into a project")
+    install_builtin_parser.add_argument("template_id")
+    install_builtin_parser.add_argument("--project", required=True)
+    install_builtin_parser.add_argument("--format", choices=("text", "json"), default="text")
+    install_builtin_parser.set_defaults(func=_cmd_install_builtin)
+
+    builtins_parser = subparsers.add_parser("builtins", help="list built-in template bundles")
+    builtins_parser.add_argument("--format", choices=("text", "json"), default="text")
+    builtins_parser.set_defaults(func=_cmd_builtins)
     return parser
 
 

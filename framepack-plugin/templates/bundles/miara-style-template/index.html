@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en"
+  data-composition-variables='[
+    {"id":"brand_name","type":"string","label":"Brand Name","default":"MIARA"},
+    {"id":"brand_tagline","type":"string","label":"Brand Tagline","default":"TENCENT DESIGN"},
+    {"id":"bg_top_color","type":"color","label":"Gradient Top","default":"#3D0E1A"},
+    {"id":"bg_bottom_color","type":"color","label":"Gradient Bottom","default":"#E8742C"},
+    {"id":"accent_color","type":"color","label":"Accent","default":"#F7C948"},
+    {"id":"mascot_color","type":"color","label":"Mascot Body Color","default":"#0A0A0F"},
+    {"id":"s1_headline","type":"string","label":"S1 Intro Word","default":"Introducing"},
+    {"id":"s2_panel1_title","type":"string","label":"Panel 1 Title","default":"Remembers"},
+    {"id":"s2_panel1_desc","type":"string","label":"Panel 1 Desc","default":"Your assets, taste and methodology"},
+    {"id":"s2_panel2_title","type":"string","label":"Panel 2 Title","default":"Organizes"},
+    {"id":"s2_panel2_desc","type":"string","label":"Panel 2 Desc","default":"One-click asset library"},
+    {"id":"s2_panel3_title","type":"string","label":"Panel 3 Title","default":"Generates"},
+    {"id":"s2_panel3_desc","type":"string","label":"Panel 3 Desc","default":"Full creative on demand"},
+    {"id":"s3_thesis","type":"string","label":"Thesis","default":"Learns how you create"},
+    {"id":"s4_metric1_label","type":"string","label":"Metric 1 Label","default":"Performance"},
+    {"id":"s4_metric1_value","type":"string","label":"Metric 1 Value","default":"94%"},
+    {"id":"s4_metric2_label","type":"string","label":"Metric 2 Label","default":"Uptime"},
+    {"id":"s4_metric2_value","type":"string","label":"Metric 2 Value","default":"99.9%"},
+    {"id":"s5_slogan_line1","type":"string","label":"Slogan Line 1","default":"Made for creators."},
+    {"id":"s5_slogan_line2","type":"string","label":"Slogan Line 2","default":"Built for the work that matters."}
+  ]'
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/vendor/gsap-3.14.2.min.js"></script>
+    <style>
+      @font-face { font-family:'Anton';src:url('assets/fonts/anton.woff2') format('woff2');font-weight:700;font-display:swap; }
+      @font-face { font-family:'Inter';src:url('assets/fonts/inter.woff2') format('woff2');font-weight:400 800;font-display:swap; }
+      * { box-sizing:border-box;margin:0;padding:0; }
+      html,body { width:1920px;height:1080px;overflow:hidden; }
+      body { font-family:'Inter',sans-serif;color:#fff; }
+
+      #main { position:relative;width:1920px;height:1080px;overflow:hidden; }
+
+      /* === DNA: 永久渐变背景 === */
+      .perm-gradient { position:absolute;inset:0;z-index:0; }
+      .vignette { position:absolute;inset:0;z-index:95;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 45%,rgba(0,0,0,0.45) 100%);pointer-events:none; }
+
+      .clip { position:absolute;inset:0;z-index:10; }
+      .scene-inner { position:absolute;inset:0;width:100%;height:100%;overflow:hidden; }
+
+      /* === DNA: Glass Panel === */
+      .glass-panel {
+        position:absolute;border-radius:16px;
+        background:rgba(12,12,16,0.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+        box-shadow:0 20px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.06);
+      }
+
+      /* === DNA: 文字 === */
+      .hero-display { font-family:'Inter',sans-serif;font-weight:800;font-size:128px;letter-spacing:-3px;line-height:1.0;text-shadow:0 0 40px rgba(255,255,255,0.12); }
+      .hero-brand { font-family:'Anton',sans-serif;font-weight:700;font-size:180px;letter-spacing:4px;line-height:0.92;text-shadow:0 0 50px rgba(255,255,255,0.15); }
+      .body-text { font-family:'Inter',sans-serif;font-weight:400;font-size:28px;line-height:1.4;color:rgba(255,255,255,0.88); }
+      .micro-label { font-family:'Inter',sans-serif;font-size:16px;font-weight:800;letter-spacing:5px;text-transform:uppercase;color:rgba(255,255,255,0.65); }
+      .depth-blur-text { position:absolute;font-family:'Inter',sans-serif;font-weight:800;font-size:96px;letter-spacing:-2px;color:rgba(255,255,255,0.12);filter:blur(18px);z-index:1; }
+
+      /* === DNA: 黑色宠物形变系统（真实 sprite + 常态裁切帧） === */
+      .mascot-world { position:absolute;width:132px;height:132px;z-index:60;pointer-events:none; }
+      .mascot-shell { position:absolute;inset:0; }
+      .mascot-trail-group { position:absolute;inset:0;z-index:1;pointer-events:none; }
+      .mascot-trail {
+        position:absolute;left:58px;top:62px;height:12px;width:0;border-radius:999px;
+        transform-origin:right center;opacity:0;
+      }
+      .mascot-trail.back {
+        height:18px;filter:blur(7px);
+        background:linear-gradient(90deg, rgba(10,10,15,0) 0%, rgba(22,16,22,0.10) 28%, rgba(33,19,33,0.42) 100%);
+      }
+      .mascot-trail.mid {
+        height:12px;filter:blur(3px);
+        background:linear-gradient(90deg, rgba(10,10,15,0) 0%, rgba(18,12,20,0.14) 24%, rgba(14,10,18,0.68) 100%);
+      }
+      .mascot-trail.front {
+        height:7px;filter:blur(0.8px);
+        background:linear-gradient(90deg, rgba(10,10,15,0) 0%, rgba(10,10,15,0.16) 20%, rgba(8,8,12,0.92) 100%);
+      }
+      .mascot-tail-spark {
+        position:absolute;left:108px;top:62px;width:22px;height:22px;border-radius:50%;opacity:0;z-index:2;
+        background:radial-gradient(circle, rgba(255,214,122,0.24) 0%, rgba(255,214,122,0.08) 45%, rgba(255,214,122,0) 75%);
+        filter:blur(3px);
+      }
+      .mascot-frame, .mascot-transform {
+        position:absolute;inset:0;background-repeat:no-repeat;background-position:center;background-size:contain;
+        z-index:3;opacity:0;
+      }
+      .mascot-frame {
+        background-image:url('assets/mascot/frames-v2/mascot-00.png');
+        filter:drop-shadow(0 10px 22px rgba(0,0,0,0.28));
+      }
+      .mascot-transform {
+        width:256px;height:256px;left:-62px;top:-62px;
+        background-image:none;
+        background-repeat:no-repeat;background-position:center;background-size:contain;
+        image-rendering:auto;transform:scale(0.62);transform-origin:center center;
+        filter:drop-shadow(0 12px 28px rgba(0,0,0,0.28));
+      }
+      .mascot-pop-glow {
+        position:absolute;left:24px;top:24px;width:84px;height:84px;border-radius:50%;z-index:2;opacity:0;
+        background:radial-gradient(circle, rgba(255,214,122,0.42) 0%, rgba(255,214,122,0.16) 35%, rgba(255,214,122,0) 72%);
+        filter:blur(6px);
+      }
+
+      /* === DNA: 进度条 === */
+      .metric-bar-bg { position:absolute;height:6px;width:100%;border-radius:3px;background:rgba(255,255,255,0.1);overflow:hidden; }
+      .metric-bar-fill { height:100%;border-radius:3px;background:linear-gradient(90deg, var(--accent), rgba(255,255,255,0.6));transform-origin:left center;transform:scaleX(0); }
+      .accent-text { color:var(--accent); }
+    </style>
+  </head>
+  <body>
+  <div id="main" data-composition-id="main" data-start="0" data-duration="30" data-width="1920" data-height="1080">
+    <div id="perm-bg" class="perm-gradient" style="position:absolute;inset:0;z-index:0;"></div>
+    <div class="vignette"></div>
+
+    <!-- 宠物全局容器（跨场景存在） -->
+    <div id="mascot" class="mascot-world" style="left:1400px;top:200px;opacity:0;">
+      <div class="mascot-trail-group">
+        <div class="mascot-trail back" id="mascot-trail-back"></div>
+        <div class="mascot-trail mid" id="mascot-trail-mid"></div>
+        <div class="mascot-trail front" id="mascot-trail-front"></div>
+        <div class="mascot-tail-spark" id="mascot-tail-spark"></div>
+      </div>
+      <div class="mascot-pop-glow" id="mascot-pop-glow"></div>
+      <div class="mascot-shell">
+        <div class="mascot-frame" id="mascot-frame"></div>
+        <div class="mascot-transform" id="mascot-transform"></div>
+      </div>
+    </div>
+
+    <!-- ======== SCENE 1: 品牌名 (0-5s) ======== -->
+    <div id="s1" class="clip" data-start="0" data-duration="5" data-track-index="1">
+      <div id="s1-inner" class="scene-inner" data-layout-allow-overlap>
+        <div id="s1-intro" class="hero-display" style="position:absolute;left:50%;top:28%;transform:translateX(-50%);opacity:0;"></div>
+        <div id="s1-brand" class="hero-brand" style="position:absolute;left:50%;top:40%;transform:translateX(-50%) scale(0.5);opacity:0;"></div>
+        <div id="s1-tagline" class="micro-label" style="position:absolute;left:50%;top:62%;transform:translateX(-50%);opacity:0;"></div>
+      </div>
+    </div>
+
+    <!-- ======== SCENE 2: 功能面板 (5-12s) ======== -->
+    <div id="s2" class="clip" data-start="5" data-duration="7" data-track-index="1">
+      <div id="s2-inner" class="scene-inner" data-layout-allow-overflow>
+        <div id="s2-panel1" class="glass-panel" style="left:120px;top:220px;width:500px;height:260px;padding:36px 40px;opacity:0;transform:perspective(800px) rotateY(5deg);">
+          <div id="s2-p1-title" class="hero-display" style="font-size:48px;margin-bottom:12px;"></div>
+          <div id="s2-p1-desc" class="body-text" style="font-size:22px;"></div>
+        </div>
+        <div id="s2-panel2" class="glass-panel" style="left:700px;top:340px;width:500px;height:260px;padding:36px 40px;opacity:0;transform:perspective(800px) rotateY(-3deg);">
+          <div id="s2-p2-title" class="hero-display" style="font-size:48px;margin-bottom:12px;"></div>
+          <div id="s2-p2-desc" class="body-text" style="font-size:22px;"></div>
+        </div>
+        <div id="s2-panel3" class="glass-panel" style="left:1280px;top:220px;width:500px;height:260px;padding:36px 40px;opacity:0;transform:perspective(800px) rotateY(8deg);">
+          <div id="s2-p3-title" class="hero-display" style="font-size:48px;margin-bottom:12px;"></div>
+          <div id="s2-p3-desc" class="body-text" style="font-size:22px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== SCENE 3: 全屏命题 (12-16s) ======== -->
+    <div id="s3" class="clip" data-start="12" data-duration="4" data-track-index="1">
+      <div id="s3-inner" class="scene-inner" data-layout-allow-overlap>
+        <div id="s3-depth" class="depth-blur-text" style="left:50%;top:38%;transform:translateX(-50%);opacity:0;">not just what you like</div>
+        <div id="s3-thesis" class="hero-display" style="position:absolute;left:50%;top:42%;transform:translateX(-50%);opacity:0;text-align:center;width:90%;"></div>
+      </div>
+    </div>
+
+    <!-- ======== SCENE 4: System Proof (16-22s) ======== -->
+    <div id="s4" class="clip" data-start="16" data-duration="6" data-track-index="1">
+      <div id="s4-inner" class="scene-inner" data-layout-allow-overflow>
+        <div id="s4-mockup" class="glass-panel" style="left:120px;top:160px;width:680px;height:580px;opacity:0;transform:perspective(800px) rotateY(6deg);">
+          <div class="micro-label" style="position:absolute;top:24px;left:32px;">LIVE SYSTEM</div>
+          <div style="position:absolute;top:80px;left:32px;right:32px;bottom:32px;display:flex;flex-direction:column;justify-content:center;gap:36px;">
+            <div>
+              <div id="s4-m1-label" class="body-text" style="font-size:18px;margin-bottom:8px;"></div>
+              <div class="metric-bar-bg"><div id="s4-m1-bar" class="metric-bar-fill"></div></div>
+              <div id="s4-m1-val" class="hero-display accent-text" style="font-size:42px;margin-top:4px;"></div>
+            </div>
+            <div>
+              <div id="s4-m2-label" class="body-text" style="font-size:18px;margin-bottom:8px;"></div>
+              <div class="metric-bar-bg"><div id="s4-m2-bar" class="metric-bar-fill"></div></div>
+              <div id="s4-m2-val" class="hero-display accent-text" style="font-size:42px;margin-top:4px;"></div>
+            </div>
+          </div>
+        </div>
+        <div id="s4-info" class="glass-panel" style="left:880px;top:220px;width:840px;height:440px;opacity:0;padding:40px;transform:perspective(800px) rotateY(-5deg);">
+          <div class="micro-label" style="margin-bottom:16px;">SYSTEM PROOF</div>
+          <div id="s4-proof-title" class="hero-display" style="font-size:56px;margin-bottom:24px;">Real output.<br/>Real speed.</div>
+          <div class="body-text" style="font-size:22px;color:rgba(255,255,255,0.7);">From brief to delivery in minutes. Every asset organized, every preference remembered.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== SCENE 5: Slogan + Seal (22-30s) ======== -->
+    <div id="s5" class="clip" data-start="22" data-duration="8" data-track-index="1">
+      <div id="s5-inner" class="scene-inner" data-layout-allow-overlap>
+        <div id="s5-slogan1" class="hero-display" style="position:absolute;left:50%;top:34%;transform:translateX(-50%);opacity:0;text-align:center;"></div>
+        <div id="s5-slogan2" class="hero-display" style="position:absolute;left:50%;top:46%;transform:translateX(-50%);opacity:0;text-align:center;"></div>
+        <div id="s5-brand-final" class="hero-brand" style="position:absolute;left:50%;top:60%;transform:translateX(-50%) scale(0.8);opacity:0;"></div>
+      </div>
+    </div>
+
+    <script>
+      // === 参数读取 ===
+      var V = window.__hyperframes ? window.__hyperframes.getVariables() : {};
+      var vars = {
+        brand_name: V.brand_name || 'MIARA',
+        brand_tagline: V.brand_tagline || 'TENCENT DESIGN',
+        bg_top_color: V.bg_top_color || '#3D0E1A',
+        bg_bottom_color: V.bg_bottom_color || '#E8742C',
+        accent_color: V.accent_color || '#F7C948',
+        mascot_color: V.mascot_color || '#0A0A0F',
+        s1_headline: V.s1_headline || 'Introducing',
+        s2_panel1_title: V.s2_panel1_title || 'Remembers',
+        s2_panel1_desc: V.s2_panel1_desc || 'Your assets, taste and methodology',
+        s2_panel2_title: V.s2_panel2_title || 'Organizes',
+        s2_panel2_desc: V.s2_panel2_desc || 'One-click asset library',
+        s2_panel3_title: V.s2_panel3_title || 'Generates',
+        s2_panel3_desc: V.s2_panel3_desc || 'Full creative on demand',
+        s3_thesis: V.s3_thesis || 'Learns how you create',
+        s4_metric1_label: V.s4_metric1_label || 'Performance',
+        s4_metric1_value: V.s4_metric1_value || '94%',
+        s4_metric2_label: V.s4_metric2_label || 'Uptime',
+        s4_metric2_value: V.s4_metric2_value || '99.9%',
+        s5_slogan_line1: V.s5_slogan_line1 || 'Made for creators.',
+        s5_slogan_line2: V.s5_slogan_line2 || 'Built for the work that matters.'
+      };
+
+      // === DOM 注入 ===
+      document.getElementById('perm-bg').style.background = 'linear-gradient(180deg, ' + vars.bg_top_color + ' 0%, ' + vars.bg_bottom_color + ' 100%)';
+      document.documentElement.style.setProperty('--accent', vars.accent_color);
+      document.documentElement.style.setProperty('--mascot-color', vars.mascot_color);
+
+      document.getElementById('s1-intro').textContent = vars.s1_headline;
+      document.getElementById('s1-brand').textContent = vars.brand_name;
+      document.getElementById('s1-tagline').textContent = vars.brand_tagline;
+      document.getElementById('s2-p1-title').textContent = vars.s2_panel1_title;
+      document.getElementById('s2-p1-desc').textContent = vars.s2_panel1_desc;
+      document.getElementById('s2-p2-title').textContent = vars.s2_panel2_title;
+      document.getElementById('s2-p2-desc').textContent = vars.s2_panel2_desc;
+      document.getElementById('s2-p3-title').textContent = vars.s2_panel3_title;
+      document.getElementById('s2-p3-desc').textContent = vars.s2_panel3_desc;
+      document.getElementById('s3-thesis').textContent = vars.s3_thesis;
+      document.getElementById('s4-m1-label').textContent = vars.s4_metric1_label;
+      document.getElementById('s4-m1-val').textContent = vars.s4_metric1_value;
+      document.getElementById('s4-m2-label').textContent = vars.s4_metric2_label;
+      document.getElementById('s4-m2-val').textContent = vars.s4_metric2_value;
+      document.getElementById('s5-slogan1').textContent = vars.s5_slogan_line1;
+      document.getElementById('s5-slogan2').textContent = vars.s5_slogan_line2;
+      document.getElementById('s5-brand-final').textContent = vars.brand_name;
+
+      // === 宠物形变系统（sprite 版） ===
+      var mascot = document.getElementById('mascot');
+      var trailBack = document.getElementById('mascot-trail-back');
+      var trailMid = document.getElementById('mascot-trail-mid');
+      var trailFront = document.getElementById('mascot-trail-front');
+      var tailSpark = document.getElementById('mascot-tail-spark');
+      var mascotFrame = document.getElementById('mascot-frame');
+      var mascotTransform = document.getElementById('mascot-transform');
+      var mascotGlow = document.getElementById('mascot-pop-glow');
+      var SPRITE_TOTAL = 24;
+      var SPRITE_FRAMES = Array.from({ length: SPRITE_TOTAL }, function(_, i) {
+        return 'assets/mascot/frames-v2/mascot-' + String(i).padStart(2, '0') + '.png';
+      });
+
+      function setSpriteFrame(index) {
+        var safe = Math.max(0, Math.min(SPRITE_TOTAL - 1, Math.round(index)));
+        mascotTransform.style.backgroundImage = 'url("' + SPRITE_FRAMES[safe] + '")';
+      }
+
+      function showBlob(tl, position, opts) {
+        opts = opts || {};
+        tl.set('#mascot-frame', { opacity: opts.opacity == null ? 1 : opts.opacity, scale: opts.scale || 1 }, position);
+        tl.set('#mascot-transform', { opacity: 0 }, position);
+      }
+
+      function showTransform(tl, position, opts) {
+        opts = opts || {};
+        tl.set('#mascot-frame', { opacity: 0 }, position);
+        tl.set('#mascot-transform', { opacity: opts.opacity == null ? 1 : opts.opacity, scale: opts.scale || 0.62 }, position);
+      }
+
+      function pulseGlow(tl, position, dur) {
+        tl.fromTo('#mascot-pop-glow',
+          { opacity: 0, scale: 0.4 },
+          { opacity: 1, scale: 1.15, duration: dur * 0.45, ease: 'power2.out' },
+          position
+        );
+        tl.to('#mascot-pop-glow', { opacity: 0, scale: 1.45, duration: dur * 0.55, ease: 'power2.in' }, position + dur * 0.45);
+      }
+
+      function spriteBurst(tl, position, dur, fromFrame, toFrame) {
+        var state = { frame: fromFrame };
+        showTransform(tl, position);
+        tl.set({}, {}, position); // keep timing explicit
+        tl.to(state, {
+          frame: toFrame,
+          duration: dur,
+          ease: 'steps(' + Math.max(1, (toFrame - fromFrame + 1)) + ')',
+          onStart: function () { setSpriteFrame(fromFrame); },
+          onUpdate: function () { setSpriteFrame(state.frame); }
+        }, position);
+      }
+
+      function trailBurst(tl, position, dur, width, opacity) {
+        tl.fromTo('#mascot-trail-back',
+          { opacity: 0, width: 0, scaleY: 0.6, x: 0 },
+          { opacity: opacity * 0.45, width: width * 1.6, scaleY: 1.2, x: -8, duration: dur * 0.34, ease: 'power2.out' },
+          position
+        );
+        tl.to('#mascot-trail-back', { opacity: 0, width: Math.max(18, width * 0.7), scaleY: 0.8, x: -18, duration: dur * 0.66, ease: 'power2.inOut' }, position + dur * 0.34);
+
+        tl.fromTo('#mascot-trail-mid',
+          { opacity: 0, width: 0, scaleY: 0.7, x: 0 },
+          { opacity: opacity * 0.8, width: width * 1.08, scaleY: 1.0, x: -4, duration: dur * 0.36, ease: 'power2.out' },
+          position + dur * 0.04
+        );
+        tl.to('#mascot-trail-mid', { opacity: 0, width: Math.max(14, width * 0.46), scaleY: 0.82, x: -10, duration: dur * 0.64, ease: 'power2.inOut' }, position + dur * 0.36);
+
+        tl.fromTo('#mascot-trail-front',
+          { opacity: 0, width: 0, scaleY: 0.85, x: 0 },
+          { opacity: opacity, width: width * 0.86, scaleY: 1.0, x: -2, duration: dur * 0.38, ease: 'power2.out' },
+          position + dur * 0.08
+        );
+        tl.to('#mascot-trail-front', { opacity: 0, width: Math.max(10, width * 0.28), scaleY: 0.9, x: -6, duration: dur * 0.62, ease: 'power2.inOut' }, position + dur * 0.38);
+
+        tl.fromTo('#mascot-tail-spark',
+          { opacity: 0, scale: 0.4, x: 0, y: 0 },
+          { opacity: Math.min(0.75, opacity * 0.9), scale: 1.0, x: 4, y: -2, duration: dur * 0.28, ease: 'power2.out' },
+          position + dur * 0.1
+        );
+        tl.to('#mascot-tail-spark', { opacity: 0, scale: 1.35, x: -3, y: 2, duration: dur * 0.72, ease: 'power2.in' }, position + dur * 0.28);
+      }
+
+      // === 时间线 ===
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true, defaults: { overwrite: 'auto' } });
+
+      // 永久背景 push-in
+      tl.to('#perm-bg', { scale: 1.06, duration: 28, ease: 'sine.inOut' }, 0);
+
+      // === Scene 1: 品牌 + 宠物飞入 + 1秒变身 (0-5s) ===
+      tl.to('#s1-intro', { opacity: 1, duration: 0.8, ease: 'power2.out' }, 0.3);
+      showBlob(tl, 0.38, { opacity: 1, scale: 0.88 });
+      tl.set('#mascot', { opacity: 1, left: 1505, top: 176, scaleX: 1, scaleY: 1 }, 0.38);
+      tl.to('#mascot', { left: 1010, top: 292, duration: 0.48, ease: 'power1.out' }, 0.38);
+      trailBurst(tl, 0.42, 0.52, 78, 0.82);
+      tl.to('#mascot', { left: 740, top: 432, duration: 0.34, ease: 'power1.inOut' }, 0.86);
+      trailBurst(tl, 0.86, 0.36, 58, 0.58);
+
+      // 品牌名在飞行后半段抬起
+      tl.fromTo('#s1-brand', { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.0, ease: 'back.out(1.3)' }, 1.0);
+      tl.fromTo('#s1-tagline', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 2.2);
+
+      // DNA: 第一幕 1 秒 sprite 变身，然后回到常态绒球
+      pulseGlow(tl, 1.22, 0.9);
+      spriteBurst(tl, 1.22, 0.96, 0, 23);
+      tl.to('#mascot', { left: 670, top: 458, scaleX: 1.04, scaleY: 0.96, duration: 0.96, ease: 'none' }, 1.22);
+      showBlob(tl, 2.2, { opacity: 1, scale: 0.92 });
+      tl.fromTo('#mascot-frame', { scaleX: 1.18, scaleY: 0.84 }, { scaleX: 1, scaleY: 1, duration: 0.28, ease: 'back.out(1.4)' }, 2.2);
+
+      // 变身后重新缩回常态绒球，继续飞去下一场景
+      tl.to('#mascot', { left: 1160, top: 612, duration: 0.78, ease: 'power2.inOut' }, 2.48);
+      trailBurst(tl, 2.5, 0.5, 52, 0.52);
+      tl.to('#mascot', { left: 1460, top: 702, opacity: 0, duration: 0.34, ease: 'power2.in' }, 3.22);
+
+      // === Scene 2: 面板 slide-in + 宠物串联 (5-12s) ===
+      // DNA: glass panel horizontal slide-in with 3D perspective
+      tl.fromTo('#s2-panel1', { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 5.2);
+      tl.fromTo('#s2-panel2', { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 5.5);
+      tl.fromTo('#s2-panel3', { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 5.8);
+
+      // 面板内容 blur-to-focus
+      tl.fromTo(['#s2-p1-title', '#s2-p1-desc'], { filter: 'blur(8px)', opacity: 0.5 }, { filter: 'blur(0px)', opacity: 1, duration: 0.5, stagger: 0.1 }, 5.6);
+      tl.fromTo(['#s2-p2-title', '#s2-p2-desc'], { filter: 'blur(8px)', opacity: 0.5 }, { filter: 'blur(0px)', opacity: 1, duration: 0.5, stagger: 0.1 }, 5.9);
+      tl.fromTo(['#s2-p3-title', '#s2-p3-desc'], { filter: 'blur(8px)', opacity: 0.5 }, { filter: 'blur(0px)', opacity: 1, duration: 0.5, stagger: 0.1 }, 6.2);
+
+      // DNA: 宠物在面板间以常态绒球游走串联
+      showBlob(tl, 5.3, { opacity: 1, scale: 0.76 });
+      tl.set('#mascot', { opacity: 1, left: 184, top: 246, scaleX: 1, scaleY: 1 }, 5.3);
+      trailBurst(tl, 5.3, 0.36, 34, 0.34);
+      tl.to('#mascot', { left: 792, top: 364, duration: 1.5, ease: 'sine.inOut' }, 5.3); // 飘向面板2
+      tl.fromTo('#mascot-frame', { scaleX: 1.08, scaleY: 0.92 }, { scaleX: 0.96, scaleY: 1.04, duration: 0.75, repeat: 1, yoyo: true, ease: 'sine.inOut' }, 5.3);
+      trailBurst(tl, 6.95, 0.3, 28, 0.26);
+      tl.to('#mascot', { left: 1422, top: 252, duration: 1.45, ease: 'sine.inOut' }, 7.0); // 飘向面板3
+      tl.fromTo('#mascot-frame', { scaleX: 1.08, scaleY: 0.92 }, { scaleX: 0.96, scaleY: 1.04, duration: 0.72, repeat: 1, yoyo: true, ease: 'sine.inOut' }, 7.0);
+      // 宠物离开
+      trailBurst(tl, 8.62, 0.28, 26, 0.22);
+      tl.to('#mascot', { left: 1710, top: 492, opacity: 0, duration: 0.58, ease: 'power2.in' }, 9.4);
+
+      // === Scene 3: 全屏命题 + 宠物 (12-16s) ===
+      tl.to('#s3-depth', { opacity: 1, duration: 0.8, ease: 'power2.out' }, 12.2);
+      tl.fromTo('#s3-thesis', { filter: 'blur(20px)', opacity: 0, scale: 0.95 }, { filter: 'blur(0px)', opacity: 1, scale: 1, duration: 1.2, ease: 'power3.out' }, 12.4);
+
+      // 宠物在文字下方以常态绒球慢速漂移
+      showBlob(tl, 12.5, { opacity: 0.78, scale: 0.72 });
+      tl.set('#mascot', { opacity: 0.78, left: 604, top: 704 }, 12.5);
+      tl.to('#mascot', { left: 1196, top: 722, duration: 3.0, ease: 'sine.inOut' }, 12.5);
+      trailBurst(tl, 12.5, 0.48, 22, 0.18);
+      tl.fromTo('#mascot-frame', { scaleX: 1.06, scaleY: 0.94 }, { scaleX: 0.98, scaleY: 1.02, duration: 1.0, repeat: 1, yoyo: true, ease: 'sine.inOut' }, 12.5);
+
+      // === Scene 4: System Proof + 宠物跳跃 (16-22s) ===
+      tl.fromTo('#s4-mockup', { x: -80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: 'power3.out' }, 16.2);
+      tl.fromTo('#s4-info', { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: 'power3.out' }, 16.4);
+      tl.to('#s4-m1-bar', { scaleX: 0.94, duration: 1.0, ease: 'power2.out' }, 17.0);
+      tl.to('#s4-m2-bar', { scaleX: 0.999, duration: 1.0, ease: 'power2.out' }, 17.3);
+
+      // 宠物跳上面板，但保持“常态绒球主体”，不再常驻角色态
+      showBlob(tl, 17.46, { opacity: 1, scale: 0.78 });
+      tl.set('#mascot', { opacity: 1, left: 346, top: 506 }, 17.46);
+      trailBurst(tl, 17.46, 0.26, 24, 0.2);
+      tl.to('#mascot', { top: 306, left: 404, duration: 0.34, ease: 'power2.out' }, 17.46); // 跳上去
+      tl.fromTo('#mascot-frame', { scaleX: 1.14, scaleY: 0.84 }, { scaleX: 0.92, scaleY: 1.08, duration: 0.2, ease: 'power2.out' }, 17.46);
+      tl.to('#mascot', { top: 346, left: 440, duration: 0.22, ease: 'bounce.out' }, 17.8); // 落回
+      tl.fromTo('#mascot-frame', { scaleX: 0.88, scaleY: 1.14 }, { scaleX: 1, scaleY: 1, duration: 0.24, ease: 'back.out(1.6)' }, 17.8);
+      tl.to('#mascot', { opacity: 0, left: 1700, top: 210, duration: 0.52, ease: 'power2.in' }, 19.46);
+
+      // === Scene 5: Slogan + Logo Seal + 宠物回归 (22-30s) ===
+      tl.fromTo('#s5-slogan1', { y: 40, opacity: 0, filter: 'blur(10px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.9, ease: 'power3.out' }, 22.3);
+      tl.fromTo('#s5-slogan2', { y: 40, opacity: 0, filter: 'blur(10px)' }, { y: 0, opacity: 1, filter: 'blur(0px)', duration: 0.9, ease: 'power3.out' }, 22.7);
+      tl.fromTo('#s5-brand-final', { scale: 0.8, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.0, ease: 'back.out(1.2)' }, 23.8);
+
+      // DNA: 宠物飞回，但回到最终仍是“第一帧常态球”主导
+      showBlob(tl, 24.5, { opacity: 1, scale: 0.86 });
+      tl.set('#mascot', { opacity: 1, left: 96, top: 502 }, 24.5);
+      trailBurst(tl, 24.5, 0.4, 62, 0.58);
+      tl.to('#mascot', { left: 1292, top: 302, duration: 1.0, ease: 'power1.inOut' }, 24.5); // 飞回
+      tl.fromTo('#mascot-frame', { scaleX: 1.12, scaleY: 0.88 }, { scaleX: 0.94, scaleY: 1.06, duration: 0.5, repeat: 1, yoyo: true, ease: 'sine.inOut' }, 24.5);
+      tl.to('#mascot', { y: -8, duration: 1.5, repeat: 3, yoyo: true, ease: 'sine.inOut' }, 25.8);
+
+      window.__timelines['main'] = tl;
+    </script>
+  </div>
+  </body>
+</html>

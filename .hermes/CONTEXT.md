@@ -7,46 +7,42 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.16.0 release-prep 完成；准备 tag + GitHub Release + push。
-**分支**: `main`（待提交：version bump 0.15.0→0.16.0 全量同步 + 真实样例全链路 smoke 验证 + recommend/UX 补全；release tag 尚未创建）
-**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`
-**正式发布**: GitHub Release `v0.15.0` 已发布（tag 固定 `4e6eead`）；v0.16.0 尚未 tag/release。
+**阶段**: v0.16.0 已发布；main post-release 开发线新增“内置模板菜单体验”功能，准备提交/推送。
+**分支**: `main`（本轮待提交：template menu CLI + built-in miara template installer + bundled miara template）
+**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（本轮不 bump 版本、不移动 v0.16.0 tag）
 **HyperFrames CLI**: 项目依赖与本地 CLI 支持窗口为 `hyperframes@0.7.3`
-**验证**: full plugin suite `868 passed`；version-sync test GREEN；worktree security scan `0 findings`；部署目录 27 files MD5 matched；真实样例全链路 smoke 8/8 GREEN。
-**工作区**: 本地生成目录 `.hermes/backups/`、`.hermes/reports/`、`assets/` 已在 `.gitignore` 中，保留磁盘但不入库。
+**验证**: template targeted `52 passed`；focused reviewer-mode `30 passed`；full plugin suite `875 passed`；deployed smoke 通过；安全扫描 `0 findings`；bundle inspect complete、issue_count=0、mp4_count=0、old_version_hits=0；部署目录同步 72 files MD5 matched。
+**子代理**: 已派 `deleg_44fb2a18` 做独立测试；超过等待窗口未返回，已执行主模型 reviewer-mode fallback。若异步返回 blocker，需补 follow-up commit，不改已发布 tag。
 
 ### 本轮做了什么
 
-- ✅ **真实样例全链路 smoke**：F:/Framepack-01-test/cases/miara-style-template 走了 inspect → package → register → registered → recommend → select 全链路，8/8 GREEN。recommend 对 "产品发布品牌讲解视频" 命中 score=4（product launch + brand explainer）。
-- ✅ **Template recommend 匹配 + CLI + director skill template-reuse flow** 已提交推送（a6c0b83）。
-- ✅ **version bump 0.15.0 → 0.16.0 全量同步**：plugin.yaml、__init__.py、hooks、core constants、scripts、compat、templates、全部 8 个 skill frontmatter、README/AGENTS、test_deploy_manifest.py assertions、test fixtures — 共 24+ 文件 bumped；flattened v0150→v0160。
-- ✅ **部署目录全量同步**：27 files MD5 matched；deployed plugin.yaml = 0.16.0。
-- ✅ **独立 active skill 同步**：`F:/Hermes_windows/skills/software-development/framepack/SKILL.md` 也同步到 0.16.0。
+- ✅ 新增用户可读模板菜单：`format_template_menu(project, intent)` + CLI `framepack_template.py menu --project <dir> --intent "..."`。
+- ✅ 新增内置模板安装：`core/templates/builtin.py` + CLI `install-builtin miara-style-template --project <dir>`。
+- ✅ 新增内置 Miara 模板 bundle：`framepack-plugin/templates/bundles/miara-style-template/`，包含 HTML、local fonts/vendor JS、mascot frames、snapshots；明确不包含 render mp4，也不包含旧工作台 source provenance（避免 0.15.0 版本漂移）。
+- ✅ Director skill 的 Template-Reuse Flow 补上 `install-builtin` 和 `menu`，Agent 命中 `framepack-template-reuse` 后能先装模板、再展示菜单。
+- ✅ 真实 smoke：temp project install-builtin → menu → recommend → select，top=miara-style-template，score=4，selection evidence 写入，mp4_count=0。
 
-### 下次要做什么
+### 老田实测命令
 
-1. **等 glm-5-turbo 子代理回来** → 如果无 blocker，做 commit + annotated tag `v0.16.0` + GitHub Release + push。
-2. **如果有 blocker** → 按 TDD 修复后重跑验证再发。
+```bash
+cd F:/hyperframes/framepack-plugin
+python scripts/framepack_template.py install-builtin miara-style-template --project <测试项目目录>
+python scripts/framepack_template.py menu --project <测试项目目录> --intent "帮我做一个产品发布品牌讲解视频"
+python scripts/framepack_template.py select miara-style-template --project <测试项目目录> --brief "..." --param brand_name=Miara
+```
 
 ### 当前关键证据
 
 ```text
-v0.15.0 release tag deref                        → 4e6eead (不移动)
-当前源码版本                                     → plugin.yaml = 0.16.0
-真实样例                                         → F:/Framepack-01-test/cases/miara-style-template
-部署目录                                         → F:/Hermes_windows/plugins/framepack/ (27 files MD5 matched)
-```
-
-### 验证证据
-
-```text
-Full Framepack plugin suite                      → 868 passed
-Version-sync test (test_deploy_manifest)         → 5 passed (GREEN)
-Worktree added-line security scan                → 0 findings
-Real sample full-chain smoke                     → 8/8 GREEN
-Deploy sync                                      → 27/27 MD5 matched
-Real sample recommend                            → miara-style-template score=4, matched=[product launch, brand explainer]
-Real sample select                               → missing_params=[tagline], selection evidence written
+Template targeted tests                         → 52 passed
+Focused reviewer-mode tests                      → 30 passed
+Full Framepack plugin suite                      → 875 passed
+Builtin bundle inspect                           → complete, issue_count=0
+Builtin bundle mp4 scan                          → 0
+Builtin bundle old-version scan                  → 0
+Smoke top recommendation                         → miara-style-template score=4
+Deploy sync                                      → 72 files MD5 matched
+Deployed smoke                                   → source=builtin, top=miara-style-template, score=4, mp4_count=0, old_version_hits=0
 ```
 
 ## 设计文档
