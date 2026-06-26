@@ -28,6 +28,8 @@ test-team-reports/
 .hermes/backups/
 .hermes/reports/
 assets/
+!framepack-plugin/templates/bundles/*/assets/
+!framepack-plugin/templates/bundles/*/assets/**
 
 # Environment
 .env
