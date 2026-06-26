@@ -50,7 +50,11 @@ def _add_card_args(parser: argparse.ArgumentParser) -> None:
 
 
 def _cmd_inspect(args: argparse.Namespace) -> int:
-    report = inspect_template_bundle(args.template_dir)
+    template_dir = Path(args.template_dir)
+    if not template_dir.is_dir():
+        print(f"template_dir not found: {template_dir}", file=sys.stderr)
+        return 2
+    report = inspect_template_bundle(template_dir)
     if args.format == "json":
         _print_json(report.to_dict())
     else:
@@ -62,6 +66,10 @@ def _cmd_inspect(args: argparse.Namespace) -> int:
 
 
 def _cmd_list(args: argparse.Namespace) -> int:
+    missing_roots = [str(root) for root in args.root if not Path(root).is_dir()]
+    if missing_roots:
+        print(f"root not found: {missing_roots[0]}", file=sys.stderr)
+        return 2
     reports = discover_templates(args.root, include_incomplete=args.include_incomplete)
     if args.format == "json":
         _print_json({"templates": [report.to_dict() for report in reports]})

@@ -144,3 +144,16 @@ def test_package_preflights_existing_asset_without_partial_template_writes(tmp_p
 
     assert (target / "assets" / "logo.png").read_bytes() == b"keep"
     assert not (target / "TEMPLATE_CARD.md").exists()
+
+
+def test_package_preflights_directory_at_file_destination_without_partial_writes(tmp_path):
+    source = make_source(tmp_path)
+    target = tmp_path / "template"
+    (target / "index.html").mkdir(parents=True)
+
+    with pytest.raises(FileExistsError):
+        package_template_source(source, target, card(target))
+
+    assert (target / "index.html").is_dir()
+    assert not (target / "TEMPLATE_CARD.md").exists()
+    assert not (target / "TEMPLATE_GUIDE.md").exists()

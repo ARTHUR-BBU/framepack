@@ -98,12 +98,9 @@ def _preflight_package(source: Path, target: Path, *, overwrite: bool) -> tuple[
     managed_targets.append(target / "SOURCE_NOTES.md")
     managed_targets.extend(destination for _, destination in planned_files)
 
-    if not overwrite:
-        for destination in managed_targets:
-            if destination.exists() and destination.is_file():
-                raise FileExistsError(str(destination))
-            if destination.exists() and not destination.is_dir() and not destination.is_file():
-                raise FileExistsError(str(destination))
+    for destination in managed_targets:
+        if destination.exists() and (not overwrite or destination.is_dir() or not destination.is_file()):
+            raise FileExistsError(str(destination))
 
     return planned_files, copied_reference
 

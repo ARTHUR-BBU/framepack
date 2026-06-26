@@ -105,3 +105,17 @@ def test_invalid_package_source_exits_2(tmp_path):
 
     assert result.returncode == 2
     assert "not found" in result.stderr.lower() or "no such" in result.stderr.lower()
+
+
+def test_inspect_missing_path_exits_2(tmp_path):
+    result = run_cli("inspect", str(tmp_path / "missing"), "--format", "json")
+
+    assert result.returncode == 2
+    assert "not found" in result.stderr.lower()
+
+
+def test_list_missing_root_exits_2(tmp_path):
+    result = run_cli("list", "--root", str(tmp_path / "missing"), "--format", "json")
+
+    assert result.returncode == 2
+    assert "not found" in result.stderr.lower()
