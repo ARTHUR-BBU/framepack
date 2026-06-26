@@ -8,6 +8,7 @@ import pytest
 
 from core.templates.arsenal import (
     list_registered_templates,
+    recommend_templates,
     register_template_bundle,
     select_template,
 )
@@ -160,3 +161,76 @@ def test_select_missing_template_raises_without_writing_selection(tmp_path):
         select_template(project, "missing-template")
 
     assert not (project / ".framepack" / "template-selection.md").exists()
+
+
+def test_recommend_templates_scores_by_suitable_for_overlap(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+
+    def add(template_id, suitable_for, not_suitable_for=()):
+        template_dir = tmp_path / "templates" / template_id
+        scaffold_template_bundle(
+            template_dir,
+            TemplateCard(
+                id=template_id,
+                name=template_id.replace("-", " ").title(),
+                description=f"{template_id} template",
+                suitable_for=suitable_for,
+                not_suitable_for=not_suitable_for,
+                params=("brand_name",),
+                path=str(template_dir).replace("\\", "/"),
+            ),
+        )
+        register_template_bundle(project, template_dir)
+
+    add("lux-template", ("product launch", "brand explainer"))
+    add("edu-template", ("educational", "explainer"))
+    add("social-template", ("social teaser",))
+
+    recommendations = recommend_templates(project, "帮我做一个产品发布品牌视频")
+
+    assert recommendations
+    assert recommendations[0]["template_id"] == "lux-template"
+    assert recommendations[0]["matched_tags"] == ["product launch"]
+    assert recommendations[0]["score"] > 0
+    assert recommendations[-1]["score"] == 0
+
+
+def test_recommend_templates_penalizes_not_suitable_match(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+
+    def add(template_id, suitable_for, not_suitable_for=()):
+        template_dir = tmp_path / "templates" / template_id
+        scaffold_template_bundle(
+            template_dir,
+            TemplateCard(
+                id=template_id,
+                name=template_id.replace("-", " ").title(),
+                description=f"{template_id} template",
+                suitable_for=suitable_for,
+                not_suitable_for=not_suitable_for,
+                params=("brand_name",),
+                path=str(template_dir).replace("\\", "/"),
+            ),
+        )
+        register_template_bundle(project, template_dir)
+
+    add("good", ("product launch",))
+    add("bad", ("product launch",), not_suitable_for=("legal report",))
+
+    recommendations = recommend_templates(project, "product launch for a legal report")
+
+    good = next(item for item in recommendations if item["template_id"] == "good")
+    bad = next(item for item in recommendations if item["template_id"] == "bad")
+    assert good["score"] > bad["score"]
+    assert "legal report" in bad["excluded_tags"]
+
+
+def test_recommend_templates_returns_empty_when_no_templates_registered(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+
+    recommendations = recommend_templates(project, "anything")
+
+    assert recommendations == []

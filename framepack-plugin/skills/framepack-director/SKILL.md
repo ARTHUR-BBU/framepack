@@ -726,3 +726,89 @@ This is optional — named Visual Styles cover 80% of cases without a picker.
 - ❌ Let Agent write bare GSAP when a weapon exists — Execution Manifest is the firewall
 
 Framepack stops at expanded-prompt.md + Execution Manifest. HyperFrames starts from there.
+
+## Template-Reuse Flow (when Intent Router returns `framepack-template-reuse`)
+
+When the Intent Router classifies a request as template reuse ("用模板做视频",
+"use template", "复用模板"), Framepack's job changes: instead of inventing a
+fresh creative direction, it helps the user **choose a registered template**
+and then **co-creates within the template's parameters**. The standard Phase
+1/2 outputs (frame.md + expanded-prompt.md) still come out — but they're
+steered by the selected template.
+
+### Step T0: List and recommend registered templates
+
+The project's `.framepack/arsenal.json` is the inventory of registered
+`template_suite` weapons. Each template declares `suitable_for`,
+`not_suitable_for`, `params`, and a bundle hash.
+
+CLI helpers (run from `framepack-plugin/`):
+
+```bash
+# List all registered template suites
+python scripts/framepack_template.py registered --project <project_dir>
+
+# Score templates against the user's intent
+python scripts/framepack_template.py recommend --project <project_dir> \
+    --intent "帮我做一个产品发布品牌视频" --format json
+```
+
+`recommend_templates()` returns a scored list: `+2` per `suitable_for` tag
+matched, `-3` per `not_suitable_for` tag matched. Use this to show the user
+**2-3 best-fit templates** in plain language (not the raw JSON):
+
+```
+📋 我找到 2 个匹配你需求的模板：
+
+★ Miara Style Template (score=4)
+  适合：产品发布、品牌讲解
+  参数：brand_name, tagline, accent_color
+
+  Noema Social Teaser (score=2)
+  适合：社交媒体
+  参数：product_name, hook_text
+```
+
+### Step T1: User selects a template
+
+Let the user pick. Once chosen, write the selection evidence:
+
+```bash
+python scripts/framepack_template.py select <template_id> \
+    --project <project_dir> \
+    --brief "用户的创意 brief" \
+    --param brand_name=Acme \
+    --asset assets/logo.png \
+    --format json
+```
+
+This writes `.framepack/template-selection.md` recording the chosen template,
+the brief, provided params, assets, and a **missing-params checklist**. The
+missing params become your co-creation questions.
+
+### Step T2: Collect missing params and assets
+
+Ask the user for every missing param from the selection report. Treat this
+exactly like Phase 0 Asset Intake — but scoped to the template's declared
+slots, not the full six-category checklist.
+
+### Step T3: Standard Phase 1 + 2, steered by the template
+
+Now run the normal Phase 1 (frame.md) and Phase 2 (expanded-prompt.md)
+flow, but:
+- Use the template's visual identity / source HTML as the **reference baseline**
+  for colors, typography, and motion — don't reinvent from scratch.
+- The Execution Manifest weapons should prefer the template's proven weapons.
+- If the user wants to **break the template** (different style, extra scenes),
+  that's a creative decision — record it in the handoff, don't block.
+
+### Step T4: Handoff to HyperFrames
+
+The handoff is the same as any other video: frame.md + expanded-prompt.md +
+Execution Manifest. The only addition is that `.framepack/template-selection.md`
+and the template's `source/` artifacts are evidence of provenance.
+
+**Template reuse is NOT a second factory.** It's the same factory with a
+pre-loaded recipe. The same audits, the same HyperFrames flow, the same
+user-decides philosophy.
+

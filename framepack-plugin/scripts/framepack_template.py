@@ -17,7 +17,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
-from core.templates.arsenal import list_registered_templates, register_template_bundle, select_template
+from core.templates.arsenal import list_registered_templates, recommend_templates, register_template_bundle, select_template
 from core.templates.productize import package_template_source
 from core.templates.registry import discover_templates
 from core.templates.scaffold import scaffold_template_bundle
@@ -174,6 +174,29 @@ def _cmd_select(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_recommend(args: argparse.Namespace) -> int:
+    project = Path(args.project)
+    if not project.is_dir():
+        print(f"project not found: {project}", file=sys.stderr)
+        return 2
+    recommendations = recommend_templates(project, args.intent)
+    if args.format == "json":
+        _print_json({"recommendations": recommendations})
+    else:
+        if not recommendations:
+            print("no registered templates found")
+            return 0
+        for item in recommendations:
+            score = item["score"]
+            tag = "★" if score > 0 else " "
+            print(f"{tag} {item['template_id']}\tscore={score}\t{item['description']}")
+            if item["matched_tags"]:
+                print(f"    matched: {', '.join(item['matched_tags'])}")
+            if item["excluded_tags"]:
+                print(f"    excluded: {', '.join(item['excluded_tags'])}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Framepack template bundle CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -221,6 +244,12 @@ def build_parser() -> argparse.ArgumentParser:
     select_parser.add_argument("--asset", action="append", default=[])
     select_parser.add_argument("--format", choices=("text", "json"), default="text")
     select_parser.set_defaults(func=_cmd_select)
+
+    recommend_parser = subparsers.add_parser("recommend", help="recommend registered templates for a user intent")
+    recommend_parser.add_argument("--project", required=True)
+    recommend_parser.add_argument("--intent", required=True)
+    recommend_parser.add_argument("--format", choices=("text", "json"), default="text")
+    recommend_parser.set_defaults(func=_cmd_recommend)
     return parser
 
 

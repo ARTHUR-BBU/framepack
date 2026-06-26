@@ -208,3 +208,33 @@ def test_select_missing_template_exits_2(tmp_path):
 
     assert result.returncode == 2
     assert "missing" in result.stderr
+
+
+def test_recommend_returns_scored_templates_from_cli(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    template = tmp_path / "templates" / "demo"
+    run_cli(
+        "scaffold",
+        str(template),
+        "--id", "demo",
+        "--name", "Demo Template",
+        "--description", "A demo template",
+        "--suitable-for", "product launch",
+        "--param", "brand_name",
+    )
+    assert run_cli("register", str(template), "--project", str(project)).returncode == 0
+
+    result = run_cli("recommend", "--project", str(project), "--intent", "帮我做产品发布视频", "--format", "json")
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["recommendations"][0]["template_id"] == "demo"
+    assert data["recommendations"][0]["score"] > 0
+
+
+def test_recommend_missing_project_exits_2(tmp_path):
+    result = run_cli("recommend", "--project", str(tmp_path / "missing"), "--intent", "anything", "--format", "json")
+
+    assert result.returncode == 2
+    assert "not found" in result.stderr.lower()

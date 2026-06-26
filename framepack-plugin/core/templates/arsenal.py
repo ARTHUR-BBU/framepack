@@ -7,11 +7,88 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
-from typing import Mapping, Sequence
+from typing import Iterable, Mapping, Sequence
 
 from core.arsenal_registry import DEFAULT_PLUGIN_VERSION, _atomic_write_json, ensure_arsenal, load_arsenal
 
 from .types import TemplateCard, inspect_template_bundle
+
+_INTENT_TAG_ALIASES = {
+    "产品发布": "product launch",
+    "产品广告": "product launch",
+    "新品发布": "product launch",
+    "推广": "product launch",
+    "品牌视频": "brand video",
+    "品牌讲解": "brand explainer",
+    "品牌故事": "brand explainer",
+    "科普": "educational",
+    "教育": "educational",
+    "社交媒体": "social teaser",
+    "动效": "motion graphic",
+    "字幕": "caption",
+    "法律报告": "legal report",
+    "legal report": "legal report",
+    "legal-report": "legal report",
+}
+
+
+def _match_intent_tags(user_intent: str, candidates: Iterable[str]) -> list[str]:
+    """Return canonical tags detected in user_intent from a candidate set.
+
+    Candidates are template-declared tags (suitable_for / not_suitable_for).
+    Matching tries, in order, for each candidate:
+      1. the raw candidate text (ASCII substring match)
+      2. the alias-normalized canonical form
+      3. any CJK alias that maps to that canonical form (reverse alias lookup)
+    Longest-first ordering + span-claim prevents CJK short-tag false positives
+    like "品牌" matching inside "品牌视频".
+    """
+    lowered = (user_intent or "").lower()
+    raw_candidates = [str(candidate).strip() for candidate in candidates if str(candidate).strip()]
+    canonicals = []
+    for raw in raw_candidates:
+        canonicals.append(_INTENT_TAG_ALIASES.get(raw.lower(), raw.lower()))
+    # Build reverse alias lookup: canonical -> list of source texts
+    reverse_aliases: dict[str, list[str]] = {}
+    for source, canonical in _INTENT_TAG_ALIASES.items():
+        reverse_aliases.setdefault(canonical.lower(), []).append(source.lower())
+    for raw in raw_candidates:
+        reverse_aliases.setdefault(raw.lower(), []).append(raw.lower())
+
+    consumed_spans: list[tuple[int, int]] = []
+
+    def _claim(value: str) -> bool:
+        start = 0
+        while True:
+            index = lowered.find(value, start)
+            if index == -1:
+                return False
+            span = (index, index + len(value))
+            if any(not (span[1] <= existing[0] or span[0] >= existing[1]) for existing in consumed_spans):
+                start = index + 1
+                continue
+            consumed_spans.append(span)
+            return True
+
+    # Order probes longest-first so longer CJK aliases win over shorter ones.
+    probes_by_canonical: dict[str, list[str]] = {}
+    for raw, canonical in zip(raw_candidates, canonicals):
+        probes = probes_by_canonical.setdefault(canonical, [])
+        probes.extend(reverse_aliases.get(canonical, []))
+        probes.append(raw.lower())
+        probes.append(canonical)
+    for canonical in probes_by_canonical:
+        probes_by_canonical[canonical] = sorted(set(probes_by_canonical[canonical]), key=len, reverse=True)
+
+    matched: list[str] = []
+    for canonical in canonicals:
+        if canonical in matched:
+            continue
+        for probe in probes_by_canonical.get(canonical, []):
+            if _claim(probe):
+                matched.append(canonical)
+                break
+    return matched
 
 
 @dataclass(frozen=True)
@@ -209,3 +286,44 @@ def select_template(
         "missing_params": missing_params,
         "entry": entry,
     }
+
+
+def recommend_templates(project_dir: str | Path, user_intent: str) -> list[dict]:
+    """Score registered template_suite weapons by fit against user intent.
+
+    The match is tag-overlap based: each registered template declares
+    ``suitable_for`` and ``not_suitable_for`` tags. We normalize both the
+    template tags and the user intent into canonical tags, then score:
+
+    - +2 per suitable_for tag matched
+    - -3 per not_suitable_for tag matched (hard penalty; misfit matters)
+    - templates with the same score stay sorted by id
+
+    Returns a list of recommendation dicts sorted by score desc. Templates
+    with negative net score are still returned (score can be negative) so the
+    caller can show "this template is a stretch because X" if it wants.
+    """
+    templates = list_registered_templates(project_dir)
+    if not templates:
+        return []
+    recommendations: list[dict] = []
+    for template in templates:
+        suitable_raw = list(template.get("suitable_for", []))
+        not_suitable_raw = list(template.get("not_suitable_for", []))
+        matched = _match_intent_tags(user_intent, suitable_raw)
+        excluded = _match_intent_tags(user_intent, not_suitable_raw)
+        score = 2 * len(matched) - 3 * len(excluded)
+        recommendations.append(
+            {
+                "template_id": template.get("id", ""),
+                "template_name": template.get("name", template.get("id", "")),
+                "description": template.get("description", ""),
+                "score": score,
+                "matched_tags": matched,
+                "excluded_tags": excluded,
+                "params": list(template.get("params", [])),
+                "path": template.get("path", ""),
+            }
+        )
+    recommendations.sort(key=lambda item: (-item["score"], item["template_id"].lower()))
+    return recommendations
