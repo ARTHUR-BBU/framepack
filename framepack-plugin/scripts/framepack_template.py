@@ -17,6 +17,7 @@ PLUGIN_ROOT = Path(__file__).resolve().parent.parent
 if str(PLUGIN_ROOT) not in sys.path:
     sys.path.insert(0, str(PLUGIN_ROOT))
 
+from core.templates.arsenal import list_registered_templates, register_template_bundle, select_template
 from core.templates.productize import package_template_source
 from core.templates.registry import discover_templates
 from core.templates.scaffold import scaffold_template_bundle
@@ -37,6 +38,19 @@ def _card_from_args(args: argparse.Namespace, target: Path) -> TemplateCard:
 
 def _print_json(payload: object) -> None:
     print(json.dumps(payload, ensure_ascii=False, indent=2))
+
+
+def _parse_param_pairs(values: Sequence[str]) -> dict[str, str]:
+    params: dict[str, str] = {}
+    for value in values:
+        if "=" not in value:
+            raise ValueError(f"parameter must be key=value: {value}")
+        key, parsed_value = value.split("=", 1)
+        key = key.strip()
+        if not key:
+            raise ValueError(f"parameter key is empty: {value}")
+        params[key] = parsed_value
+    return params
 
 
 def _add_card_args(parser: argparse.ArgumentParser) -> None:
@@ -108,6 +122,58 @@ def _cmd_package(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_register(args: argparse.Namespace) -> int:
+    project = Path(args.project)
+    if not project.is_dir():
+        print(f"project not found: {project}", file=sys.stderr)
+        return 2
+    template_dir = Path(args.template_dir)
+    if not template_dir.is_dir():
+        print(f"template_dir not found: {template_dir}", file=sys.stderr)
+        return 2
+    result = register_template_bundle(project, template_dir)
+    if args.format == "json":
+        _print_json(result.to_dict())
+    else:
+        print(f"registered template bundle: {result.entry['id']}")
+    return 0
+
+
+def _cmd_registered(args: argparse.Namespace) -> int:
+    project = Path(args.project)
+    if not project.is_dir():
+        print(f"project not found: {project}", file=sys.stderr)
+        return 2
+    templates = list_registered_templates(project)
+    if args.format == "json":
+        _print_json({"templates": templates})
+    else:
+        for template in templates:
+            print(f"{template.get('id')}\t{template.get('description', '')}")
+    return 0
+
+
+def _cmd_select(args: argparse.Namespace) -> int:
+    project = Path(args.project)
+    if not project.is_dir():
+        print(f"project not found: {project}", file=sys.stderr)
+        return 2
+    result = select_template(
+        project,
+        args.template_id,
+        brief=args.brief,
+        params=_parse_param_pairs(args.param or []),
+        assets=tuple(args.asset or ()),
+    )
+    if args.format == "json":
+        _print_json(result)
+    else:
+        print(f"selected template: {result['template_id']}")
+        if result["missing_params"]:
+            print("missing params: " + ", ".join(result["missing_params"]))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Framepack template bundle CLI")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -135,6 +201,26 @@ def build_parser() -> argparse.ArgumentParser:
     package_parser.add_argument("--format", choices=("text", "json"), default="text")
     _add_card_args(package_parser)
     package_parser.set_defaults(func=_cmd_package)
+
+    register_parser = subparsers.add_parser("register", help="register a template bundle into project arsenal")
+    register_parser.add_argument("template_dir")
+    register_parser.add_argument("--project", required=True)
+    register_parser.add_argument("--format", choices=("text", "json"), default="text")
+    register_parser.set_defaults(func=_cmd_register)
+
+    registered_parser = subparsers.add_parser("registered", help="list registered template_suite weapons")
+    registered_parser.add_argument("--project", required=True)
+    registered_parser.add_argument("--format", choices=("text", "json"), default="text")
+    registered_parser.set_defaults(func=_cmd_registered)
+
+    select_parser = subparsers.add_parser("select", help="select a registered template for co-creation")
+    select_parser.add_argument("template_id")
+    select_parser.add_argument("--project", required=True)
+    select_parser.add_argument("--brief")
+    select_parser.add_argument("--param", action="append", default=[])
+    select_parser.add_argument("--asset", action="append", default=[])
+    select_parser.add_argument("--format", choices=("text", "json"), default="text")
+    select_parser.set_defaults(func=_cmd_select)
     return parser
 
 
@@ -143,7 +229,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return int(args.func(args))
-    except (FileExistsError, FileNotFoundError, NotADirectoryError, ValueError) as exc:
+    except (FileExistsError, FileNotFoundError, KeyError, NotADirectoryError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 2
 

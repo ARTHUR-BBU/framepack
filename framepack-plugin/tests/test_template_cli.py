@@ -119,3 +119,92 @@ def test_list_missing_root_exits_2(tmp_path):
 
     assert result.returncode == 2
     assert "not found" in result.stderr.lower()
+
+
+def test_register_template_adds_arsenal_entry_from_cli(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    template = tmp_path / "templates" / "demo"
+    scaffold = run_cli(
+        "scaffold",
+        str(template),
+        "--id", "demo",
+        "--name", "Demo Template",
+        "--description", "A demo template",
+        "--suitable-for", "product launch",
+        "--param", "brand_name",
+    )
+    assert scaffold.returncode == 0, scaffold.stderr
+
+    result = run_cli("register", str(template), "--project", str(project), "--format", "json")
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["entry"]["id"] == "demo"
+    assert data["entry"]["kind"] == "template_suite"
+    assert data["entry"]["hash"].startswith("sha256:")
+    arsenal = json.loads((project / ".framepack" / "arsenal.json").read_text(encoding="utf-8"))
+    assert arsenal["weapons"]["demo"]["kind"] == "template_suite"
+
+
+def test_registered_lists_template_suites_from_cli(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    template = tmp_path / "templates" / "demo"
+    run_cli(
+        "scaffold",
+        str(template),
+        "--id", "demo",
+        "--name", "Demo Template",
+        "--description", "A demo template",
+    )
+    assert run_cli("register", str(template), "--project", str(project)).returncode == 0
+
+    result = run_cli("registered", "--project", str(project), "--format", "json")
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert [item["id"] for item in data["templates"]] == ["demo"]
+
+
+def test_select_template_writes_selection_from_cli(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    template = tmp_path / "templates" / "demo"
+    run_cli(
+        "scaffold",
+        str(template),
+        "--id", "demo",
+        "--name", "Demo Template",
+        "--description", "A demo template",
+        "--param", "brand_name",
+        "--param", "tagline",
+    )
+    assert run_cli("register", str(template), "--project", str(project)).returncode == 0
+
+    result = run_cli(
+        "select",
+        "demo",
+        "--project", str(project),
+        "--brief", "Launch Acme",
+        "--param", "brand_name=Acme",
+        "--asset", "assets/logo.png",
+        "--format", "json",
+    )
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["missing_params"] == ["tagline"]
+    text = (project / ".framepack" / "template-selection.md").read_text(encoding="utf-8")
+    assert "Launch Acme" in text
+    assert "brand_name: Acme" in text
+
+
+def test_select_missing_template_exits_2(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+
+    result = run_cli("select", "missing", "--project", str(project), "--format", "json")
+
+    assert result.returncode == 2
+    assert "missing" in result.stderr
