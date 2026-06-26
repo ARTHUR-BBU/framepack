@@ -7,50 +7,46 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.16.0 已发布；post-release 修复“Template Menu First 入口提醒未进入 AGENTS managed block / 同版本 guardrails hash 漂移不触发 hydrate”的问题。
-**分支/worktree**: `fix/template-entry-reminder` at `F:/hyperframes-worktrees/template-entry-reminder`，准备合并回 main。
-**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（本轮不 bump 版本、不移动 v0.16.0 tag）
-**部署状态**: 已同步 active plugin `F:/Hermes_windows/plugins/framepack/`，6 files MD5 matched。
-**测试工作台**: 已用 deployed hydrator 刷新 `F:/Framepack-01-test`，修复前 `stale_count=8`，修复后 `project_context_current=true`、`stale_files=none`；根目录和 case AGENTS 都包含 `v0.16 Template Menu First`。
+**阶段**: v0.16.0 已发布；post-release 模板入口 / AGENTS 更新场景 / Kanban 验收流程已闭环。
+**分支**: `main` == `origin/main`
+**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（本轮 post-release 修复不 bump、不移动 v0.16.0 tag）
+**最后提交**: `92138f1 fix: hydrate template menu entrypoint`
+**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步关键文件并通过 deployed smoke。
+**测试工作台**: `F:/Framepack-01-test` 已刷新到新 guardrails hash；`project_context_current=true`、`stale_files=none`。
 
-### 本轮根因
+### 上次做了什么
 
-- 旧问题不是单纯 Director skill 文案不够，而是入口层级缺失：v0.16 模板菜单流程只进了 Director skill，没有进 `guardrails.md` / AGENTS managed block。
-- 更深 bug：`context_hydrator.check_context_sync()` 只比较 managed block 的 `version`，不比较 guardrails hash/content；同为 `0.16.0` 时新增入口提醒不会刷新旧 AGENTS。
+- ✅ 发布后补齐 `v0.16 Template Menu First` 入口：`guardrails.md` + repo `AGENTS.md` managed block 都写入“模板/模版/视频模板/参考模板/内置模板 → 先走 Template Arsenal 菜单，不只搜历史 mp4/case”。
+- ✅ 修复 `intent_router.py`：`视频模版给我参考吗`、`内置模板`、`模板起步` 等人话表达路由到 `framepack-template-reuse`，且 `framepack_role` 包含 `template menu first`；“提炼成可复用模板”仍优先 `framepack-reference-extraction`。
+- ✅ 修复 `context_hydrator.py` 根因：同版本 `0.16.0` 但 managed block hash/content 不一致也会标 stale 并 `update_block`，避免旧工作台因版本号相同错过新入口提醒。
+- ✅ 用 deployed hydrator 刷新测试工作台：修复前 `stale_count=8`，修复后 `stale_count=0`；root/case `AGENTS.md` 均包含 `v0.16 Template Menu First`。
+- ✅ 主模型 + 子代理验证完成：targeted 43 passed、full plugin suite 881 passed、deployed targeted 43 passed、security scan 0、子代理 `deleg_7b8919d3` PASS。
+- ✅ 试跑 Hermes Kanban 测试组 board `framepack-update-acceptance`：4 张卡全部 done（新用户 doorplate、旧工作台 hydration、模板入口 routing、synthesis）。
+- ✅ 新增本地正式 skill `framepack-update-acceptance-kanban`（路径 `F:/Hermes_windows/skills/devops/framepack-update-acceptance-kanban/SKILL.md`），用于以后“跑 Framepack 更新验收”。
 
-### 已完成修复
-
-- ✅ `guardrails.md` 新增 `v0.16 Template Menu First` 门口招牌：模板/模版/视频模板/参考模板/内置模板/模板起步 → 先 builtins/install-builtin/menu/recommend/select，历史 case/mp4 只能做参考片。
-- ✅ `intent_router.py` 扩展模板表达：`视频模版给我参考吗`、`内置模板`、`模板起步` 等路由到 `framepack-template-reuse`，framepack_role 明确 `template menu first`。
-- ✅ `context_hydrator.py` 增加 same-version hash/content drift 检测：同版本但 managed block 内容不同也标 stale，并 `update_block`。
-- ✅ repo `AGENTS.md` managed block 已刷新，包含 Template Menu First。
-- ✅ deployed plugin 已刷新，deployed tests/smoke 通过。
-- ✅ 测试工作台 root/case AGENTS 已刷新到新 hash。
-
-### 验证证据
+### 当前关键证据
 
 ```text
-RED tests before fix:
-- guardrails Template Menu First contract failed
-- intent router human template phrases failed
-- same-version changed guardrails hash was not stale
-
-GREEN after fix:
-- targeted contract/router/hydrator        → 43 passed
-- full Framepack plugin suite              → 881 passed
-- deployed targeted suite                  → 43 passed
-- deployed route smoke                     → framepack-template-reuse, role_has_menu=True
-- deployed guardrails payload smoke         → block_has_menu=True, block_has_cli=True
-- workbench hydrate smoke                  → before stale_count=8; after stale_count=0
-- added-line security scan                 → 0 findings
-- git diff --check                         → clean
+git: main == origin/main, HEAD=92138f1
+Framepack tests: 881 passed
+Deployed focused tests: 43 passed
+Workbench context: current=true, stale_files=0
+Kanban board: framepack-update-acceptance → done=4, blocked=0, running=0
+New skill validation: exists=True, frontmatter_ok=True, chars=12049
 ```
 
-### 下一步
+### 注意点 / 坑位
 
-1. 等 `deleg_7b8919d3` 独立 review/test 回来。
-2. 若无 blocker：commit → merge/cherry-pick 到 main → push。
-3. 若有 blocker：补 RED regression → fix → targeted/full/deployed/workbench verify → follow-up commit。
+- Kanban 试跑证明模式可用，但当前机器只有 `default` profile，且 `glm-5.1` 并发 worker 会撞 Z.ai/GLM HTTP 429。两个 worker 是“验收已 PASS，但 final comment/complete 阶段 429 崩溃”，已按日志证据人工恢复。
+- 以后正式 Framepack 更新验收建议：加载 `kanban` + `framepack-update-acceptance-kanban`，先 `hermes profile list` / `hermes kanban assignees`，若只有 default 则 `dispatch --max 1`，或配置专用 tester/reviewer/synthesizer profiles。
+- `framepack-update-acceptance-kanban` 是 user-local skill，已写入 `F:/Hermes_windows/skills/...`，不在 Framepack repo 里；当前 session 可 `skill_view` 读到。
+- 本轮不移动 v0.16.0 tag；post-release 修复在 `main` HEAD。测试组如问“正式版本”需区分：源码版本仍 `0.16.0`，post-release 修复 commit 是 `92138f1`。
+
+### 下次要做什么
+
+1. 如继续 GLM5.1 的“Framepack v0.16 发布视频”dogfood，先确认它现在会被 `Template Menu First` 触发：用户问“有没有视频模版参考”时必须先跑 builtins/install-builtin/menu/recommend/select，而不是只搜历史 mp4。
+2. 为 Kanban 测试组配置专用 profiles（建议 `framepack-tester-fast` / `framepack-reviewer` / `framepack-synthesizer`），或默认低并发 `--max 1`。
+3. 下一次 Framepack 更新/发版后，直接用 `framepack-update-acceptance-kanban` skill 创建/运行 acceptance board，不再临时派散兵。
 
 ## 设计文档
 
