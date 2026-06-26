@@ -134,6 +134,47 @@ class TestCheckContextSync:
         assert report.project_context_current
         assert len(report.stale_files) == 0
 
+    def test_same_version_but_changed_guardrails_hash_is_stale(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        old_plugin = tmp_path / "_old_same_version_plugin"
+        old_plugin.mkdir()
+        (old_plugin / "plugin.yaml").write_text(
+            'name: framepack\nversion: "0.16.0"\n', encoding="utf-8"
+        )
+        (old_plugin / "guardrails.md").write_text("# Guardrails\n\nold doorplate\n", encoding="utf-8")
+        from hooks.guardrails import build_guardrails_payload
+        old_payload = build_guardrails_payload(old_plugin)
+        (wb / "AGENTS.md").write_text(old_payload.block, encoding="utf-8")
+
+        report = check_context_sync(wb, plugin)
+        agents_status = [f for f in report.files if f.path.endswith("AGENTS.md") and "workbench" in f.path][0]
+
+        assert not report.project_context_current
+        assert agents_status.detected_version == "0.16.0"
+        assert agents_status.is_stale is True
+        assert agents_status.action_needed == "update_block"
+
+    def test_hydrate_updates_same_version_changed_guardrails_hash(self, tmp_path):
+        plugin = _make_plugin_dir(tmp_path)
+        wb = _make_workbench(tmp_path)
+        old_plugin = tmp_path / "_old_same_version_plugin"
+        old_plugin.mkdir()
+        (old_plugin / "plugin.yaml").write_text(
+            'name: framepack\nversion: "0.16.0"\n', encoding="utf-8"
+        )
+        (old_plugin / "guardrails.md").write_text("# Guardrails\n\nold doorplate\n", encoding="utf-8")
+        from hooks.guardrails import build_guardrails_payload
+        old_payload = build_guardrails_payload(old_plugin)
+        (wb / "AGENTS.md").write_text(old_payload.block, encoding="utf-8")
+
+        final = hydrate_context(wb, plugin)
+        content = (wb / "AGENTS.md").read_text(encoding="utf-8")
+
+        assert final.project_context_current
+        assert "old doorplate" not in content
+        assert "rule one" in content
+
     def test_missing_file_not_stale(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)
         wb = _make_workbench(tmp_path)

@@ -65,6 +65,19 @@ def test_routes_template_reuse_path_for_noema():
     assert "template variables" in route.likely_assets
 
 
+def test_routes_template_menu_when_user_asks_for_video_template_reference():
+    route = route_intent("方向B确定，30秒发布视频。你有视频模版给我参考吗？")
+    assert route.workflow == "framepack-template-reuse"
+    assert route.confidence == "high"
+    assert "template menu" in route.framepack_role.lower()
+
+
+def test_routes_template_menu_for_builtin_template_starter_request():
+    route = route_intent("有没有内置模板？给我一个模板起步")
+    assert route.workflow == "framepack-template-reuse"
+    assert "template menu" in route.framepack_role.lower()
+
+
 def test_routes_reference_extraction_path():
     route = route_intent("参考这个动态网页/视频，把它提炼成可复用模板")
     assert route.workflow == "framepack-reference-extraction"

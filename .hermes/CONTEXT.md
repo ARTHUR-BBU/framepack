@@ -7,43 +7,50 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.16.0 已发布；main post-release 开发线新增“内置模板菜单体验”功能，准备提交/推送。
-**分支**: `main`（本轮待提交：template menu CLI + built-in miara template installer + bundled miara template）
+**阶段**: v0.16.0 已发布；post-release 修复“Template Menu First 入口提醒未进入 AGENTS managed block / 同版本 guardrails hash 漂移不触发 hydrate”的问题。
+**分支/worktree**: `fix/template-entry-reminder` at `F:/hyperframes-worktrees/template-entry-reminder`，准备合并回 main。
 **源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（本轮不 bump 版本、不移动 v0.16.0 tag）
-**HyperFrames CLI**: 项目依赖与本地 CLI 支持窗口为 `hyperframes@0.7.3`
-**验证**: template targeted `52 passed`；focused reviewer-mode `30 passed`；full plugin suite `875 passed`；deployed smoke 通过；安全扫描 `0 findings`；bundle inspect complete、issue_count=0、mp4_count=0、old_version_hits=0；部署目录同步 72 files MD5 matched。
-**子代理**: 已派 `deleg_44fb2a18` 做独立测试；超过等待窗口未返回，已执行主模型 reviewer-mode fallback。若异步返回 blocker，需补 follow-up commit，不改已发布 tag。
+**部署状态**: 已同步 active plugin `F:/Hermes_windows/plugins/framepack/`，6 files MD5 matched。
+**测试工作台**: 已用 deployed hydrator 刷新 `F:/Framepack-01-test`，修复前 `stale_count=8`，修复后 `project_context_current=true`、`stale_files=none`；根目录和 case AGENTS 都包含 `v0.16 Template Menu First`。
 
-### 本轮做了什么
+### 本轮根因
 
-- ✅ 新增用户可读模板菜单：`format_template_menu(project, intent)` + CLI `framepack_template.py menu --project <dir> --intent "..."`。
-- ✅ 新增内置模板安装：`core/templates/builtin.py` + CLI `install-builtin miara-style-template --project <dir>`。
-- ✅ 新增内置 Miara 模板 bundle：`framepack-plugin/templates/bundles/miara-style-template/`，包含 HTML、local fonts/vendor JS、mascot frames、snapshots；明确不包含 render mp4，也不包含旧工作台 source provenance（避免 0.15.0 版本漂移）。
-- ✅ Director skill 的 Template-Reuse Flow 补上 `install-builtin` 和 `menu`，Agent 命中 `framepack-template-reuse` 后能先装模板、再展示菜单。
-- ✅ 真实 smoke：temp project install-builtin → menu → recommend → select，top=miara-style-template，score=4，selection evidence 写入，mp4_count=0。
+- 旧问题不是单纯 Director skill 文案不够，而是入口层级缺失：v0.16 模板菜单流程只进了 Director skill，没有进 `guardrails.md` / AGENTS managed block。
+- 更深 bug：`context_hydrator.check_context_sync()` 只比较 managed block 的 `version`，不比较 guardrails hash/content；同为 `0.16.0` 时新增入口提醒不会刷新旧 AGENTS。
 
-### 老田实测命令
+### 已完成修复
 
-```bash
-cd F:/hyperframes/framepack-plugin
-python scripts/framepack_template.py install-builtin miara-style-template --project <测试项目目录>
-python scripts/framepack_template.py menu --project <测试项目目录> --intent "帮我做一个产品发布品牌讲解视频"
-python scripts/framepack_template.py select miara-style-template --project <测试项目目录> --brief "..." --param brand_name=Miara
-```
+- ✅ `guardrails.md` 新增 `v0.16 Template Menu First` 门口招牌：模板/模版/视频模板/参考模板/内置模板/模板起步 → 先 builtins/install-builtin/menu/recommend/select，历史 case/mp4 只能做参考片。
+- ✅ `intent_router.py` 扩展模板表达：`视频模版给我参考吗`、`内置模板`、`模板起步` 等路由到 `framepack-template-reuse`，framepack_role 明确 `template menu first`。
+- ✅ `context_hydrator.py` 增加 same-version hash/content drift 检测：同版本但 managed block 内容不同也标 stale，并 `update_block`。
+- ✅ repo `AGENTS.md` managed block 已刷新，包含 Template Menu First。
+- ✅ deployed plugin 已刷新，deployed tests/smoke 通过。
+- ✅ 测试工作台 root/case AGENTS 已刷新到新 hash。
 
-### 当前关键证据
+### 验证证据
 
 ```text
-Template targeted tests                         → 52 passed
-Focused reviewer-mode tests                      → 30 passed
-Full Framepack plugin suite                      → 875 passed
-Builtin bundle inspect                           → complete, issue_count=0
-Builtin bundle mp4 scan                          → 0
-Builtin bundle old-version scan                  → 0
-Smoke top recommendation                         → miara-style-template score=4
-Deploy sync                                      → 72 files MD5 matched
-Deployed smoke                                   → source=builtin, top=miara-style-template, score=4, mp4_count=0, old_version_hits=0
+RED tests before fix:
+- guardrails Template Menu First contract failed
+- intent router human template phrases failed
+- same-version changed guardrails hash was not stale
+
+GREEN after fix:
+- targeted contract/router/hydrator        → 43 passed
+- full Framepack plugin suite              → 881 passed
+- deployed targeted suite                  → 43 passed
+- deployed route smoke                     → framepack-template-reuse, role_has_menu=True
+- deployed guardrails payload smoke         → block_has_menu=True, block_has_cli=True
+- workbench hydrate smoke                  → before stale_count=8; after stale_count=0
+- added-line security scan                 → 0 findings
+- git diff --check                         → clean
 ```
+
+### 下一步
+
+1. 等 `deleg_7b8919d3` 独立 review/test 回来。
+2. 若无 blocker：commit → merge/cherry-pick 到 main → push。
+3. 若有 blocker：补 RED regression → fix → targeted/full/deployed/workbench verify → follow-up commit。
 
 ## 设计文档
 

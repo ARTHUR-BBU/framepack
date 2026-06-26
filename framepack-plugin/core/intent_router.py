@@ -82,15 +82,37 @@ def route_intent(user_text: str | None) -> IntentRoute:
             handoff_risks=["reference may be visually strong but legally or technically unsuitable"],
         )
 
-    if _contains_any(lowered, ("noema", "template reuse", "use template", "复用模板", "模板")):
+    if _contains_any(
+        lowered,
+        (
+            "noema",
+            "template reuse",
+            "use template",
+            "复用模板",
+            "模板",
+            "模版",
+            "视频模板",
+            "视频模版",
+            "参考模板",
+            "参考模版",
+            "模板参考",
+            "模版参考",
+            "内置模板",
+            "内置模版",
+            "模板起步",
+            "模版起步",
+            "找个模板",
+            "找个模版",
+        ),
+    ):
         return _route(
             workflow="framepack-template-reuse",
             confidence="high",
-            reason="request explicitly asks to reuse an existing template",
-            framepack_role="template remapping, asset intake, Director Story Bible, taste QA",
+            reason="request asks for a template/menu/reuse path instead of only historical case references",
+            framepack_role="template menu first, template recommendation, template selection, asset intake, Director Story Bible, taste QA",
             hyperframes_role="render validated template composition after edits",
             likely_assets=["template variables", "brand assets", "replacement props", "CTA copy"],
-            handoff_risks=["text-only reuse can leave the old domain visible"],
+            handoff_risks=["searching only historical case/mp4 references can skip the v0.16 Template Arsenal menu"],
         )
 
     if re.search(r"github\.com/.+/(pull|commit)/|\bpr\s*#?\d+\b|pull request", lowered):

@@ -21,6 +21,7 @@ from hooks.guardrails import (
     BLOCK_RE,
     build_guardrails_payload,
     sync_project_agents,
+    _managed_block_matches,
     GuardrailsPayload,
     GuardrailsSyncResult,
 )
@@ -139,17 +140,21 @@ def _check_one_file(
     if is_workbench or is_hyperframes_claude:
         # For these files, only stale body matters, not missing managed block
         version_stale = False
+        block_stale = False
         is_stale = stale_body
     else:
-        # For AGENTS.md / Framepack-created CLAUDE.md, both version and stale body matter
+        # For AGENTS.md / Framepack-created CLAUDE.md, both version, block digest,
+        # and stale body matter. Version-only checks miss same-version guardrail
+        # updates (for example v0.16.0 Template Menu First landing after release).
         version_stale = detected != plugin_payload.version
-        is_stale = version_stale or stale_body
+        block_stale = bool(has_block and block_match and not _managed_block_matches(block_match, plugin_payload))
+        is_stale = version_stale or block_stale or stale_body
 
     if stale_body and (not version_stale or is_workbench or is_hyperframes_claude):
         action = "replace_stale_body"
     elif not has_block and not is_workbench and not is_hyperframes_claude:
         action = "append_block"
-    elif version_stale:
+    elif version_stale or block_stale:
         action = "update_block"
     else:
         action = "none"

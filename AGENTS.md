@@ -346,7 +346,7 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 - 创意阶段与用户共创，不需要用户看 expanded-prompt.md 全文
 - **开发项目专属**：改 PLUGIN 文件必须同步部署，改 AGENTS.md 必须确认测试目录不需要同样改动
 
-<!-- FRAMEPACK MANAGED BLOCK START version=0.16.0 hash=sha256:662c05bac7b0995a5093992b97e2d230e1379bd9f80262e8d2d9436f7252becd source=plugin -->
+<!-- FRAMEPACK MANAGED BLOCK START version=0.16.0 hash=sha256:db6bc55ac349bc913f57e31303d551f4838d57c387d109061f44f721e1ddd254 source=plugin -->
 # Framepack Guardrails
 
 Framepack is a **Hermes Agent Plugin** — a Prompt Factory for HyperFrames.
@@ -400,6 +400,25 @@ Framepack advises; user decides
 规则：Intent Router 先分诊；共创阶段必须主动 ask for assets；Director Story Bible 保持丰富导演稿；
 Handoff Manifest 传递 workflow、素材、约束和 QA redlines；Pre-render Taste Audit 只建议不阻拦，
 最终由用户选择 revise / add assets / render anyway。
+
+## v0.16 Template Menu First
+
+当用户提到“模板 / 模版 / 参考模板 / 视频模板 / 用模板做 / 找个模板 / 内置模板 / 有没有模板参考”时，
+不要只去搜历史 case、mp4 或 frame.md。先端出 Template Arsenal 的菜单：
+
+```bash
+python scripts/framepack_template.py builtins --format json
+python scripts/framepack_template.py install-builtin miara-style-template --project <project_dir>
+python scripts/framepack_template.py menu --project <project_dir> --intent "<用户原话>"
+python scripts/framepack_template.py recommend --project <project_dir> --intent "<用户原话>" --format json
+python scripts/framepack_template.py select <template_id> --project <project_dir> --brief "..."
+```
+
+规则：
+1. 项目没有已注册 template_suite 时，先安装内置 `miara-style-template`。
+2. `menu` / `recommend` 是前厅点菜；用户选中后必须 `select` 写 `.framepack/template-selection.md`。
+3. 历史 case/mp4 只能作为参考片，不能替代模板菜单。
+4. 模板选择后再进入标准 Framepack 共创：素材收集 → frame.md → expanded-prompt.md → HyperFrames。
 
 ## Trigger Framepack When
 
@@ -621,4 +640,3 @@ Framepack skills:
 
 Framepack 的 skill 教"想什么"，HyperFrames 的 skill 教"怎么写"。两者不重复。
 <!-- FRAMEPACK MANAGED BLOCK END -->
-

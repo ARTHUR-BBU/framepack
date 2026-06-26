@@ -52,6 +52,25 @@ Framepack advises; user decides
 Handoff Manifest 传递 workflow、素材、约束和 QA redlines；Pre-render Taste Audit 只建议不阻拦，
 最终由用户选择 revise / add assets / render anyway。
 
+## v0.16 Template Menu First
+
+当用户提到“模板 / 模版 / 参考模板 / 视频模板 / 用模板做 / 找个模板 / 内置模板 / 有没有模板参考”时，
+不要只去搜历史 case、mp4 或 frame.md。先端出 Template Arsenal 的菜单：
+
+```bash
+python scripts/framepack_template.py builtins --format json
+python scripts/framepack_template.py install-builtin miara-style-template --project <project_dir>
+python scripts/framepack_template.py menu --project <project_dir> --intent "<用户原话>"
+python scripts/framepack_template.py recommend --project <project_dir> --intent "<用户原话>" --format json
+python scripts/framepack_template.py select <template_id> --project <project_dir> --brief "..."
+```
+
+规则：
+1. 项目没有已注册 template_suite 时，先安装内置 `miara-style-template`。
+2. `menu` / `recommend` 是前厅点菜；用户选中后必须 `select` 写 `.framepack/template-selection.md`。
+3. 历史 case/mp4 只能作为参考片，不能替代模板菜单。
+4. 模板选择后再进入标准 Framepack 共创：素材收集 → frame.md → expanded-prompt.md → HyperFrames。
+
 ## Trigger Framepack When
 
 - 用户说了个模糊的视频想法（"帮我做个品牌视频"、"做个活动推广"）
