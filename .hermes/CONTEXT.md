@@ -7,53 +7,54 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.15.0 已正式发布；main 继续包含 post-release hardening；准备切 TUI 新 session
-**分支**: `main`（HEAD = origin/main = `9b882e3`；`.hermes/reports/` 与 `assets/` 仍是旧未跟踪现场，不入库）
-**源码版本**: `framepack-plugin/plugin.yaml = 0.15.0`
-**正式发布**: GitHub Release `v0.15.0` 已发布；tag 固定指向 `4e6eead`，后续 handoff/follow-up commit 不属于 release artifact。
+**阶段**: v0.15.0 已正式发布；main 处于 post-release / Unreleased 开发线，Template Arsenal MVP + Gate Engine 已落地并本地验证，尚未推远端。
+**分支**: `main`（功能/整理 HEAD = `9036460 chore: refresh Framepack guardrails context`；本 CONTEXT 提交是 handoff-only；本地相对 `origin/main` ahead，需 push 才到远端）
+**源码版本**: `framepack-plugin/plugin.yaml = 0.15.0`（正式源码版本未 bump；以下是 Unreleased 开发成果）
+**正式发布**: GitHub Release `v0.15.0` 已发布；tag 固定指向 `4e6eead`，后续 commits 不属于 release artifact，除非另行发新版。
 **HyperFrames CLI**: 项目依赖与本地 CLI 支持窗口为 `hyperframes@0.7.3`
-**验证**: 最新 Framepack full plugin suite `769 passed`；部署目录 MD5 同步；真实 `F:/Framepack-01-test` root AGENTS 保养为 noop/MD5 不变；Hermes GBK subprocess 热修测试 `18 passed, 1 skipped`。
-**注意**: 当前 Hermes 进程尚未吃到最后的 GBK 热修；开 TUI 前请真正退出旧 CLI 进程后重新启动 Hermes，不是 `/new` 或 `/reset`。
+**验证**: 最新 full plugin suite `852 passed`；Template Arsenal targeted suite `29 passed`；新增/变更 plugin 文件已同步到 `F:/Hermes_windows/plugins/framepack/` 并 MD5 匹配；deployed parent-conflict smoke 通过。
+**工作区**: 代码/docs 已提交；`.hermes/backups/`、`.hermes/reports/`、`assets/` 是本地生成/旧现场，已加入 `.gitignore`，保留在磁盘但不入库。
 
 ### 本轮做了什么
 
-- ✅ **Framepack v0.15.0 正式发布**：完成 GitHub Release；release tag 仍固定在 `4e6eead`。
-- ✅ **P0/P1/P2 Director Workbench 主脊梁落地**：readiness gates、placeholder audit、tone/rhythm presets、audio cue ledger、catalog decision、deliverable bundle、beat analyzer、catalog discovery、promotion candidates、cross-case mining。
-- ✅ **post-release simplify follow-up**：`ed0401b refactor: address simplify reviewer follow-ups`，补 OSError 护栏、非空 render helper、markdown 表格 escape、waived component 校验、beat analyzer 瘦身等；main 已推，不改 tag。
-- ✅ **workbench root AGENTS 自动保养缺口已补**：`9b882e3 [verified] fix: maintain workbench root Framepack context block`。Framepack 被召唤时会维护 workbench 根 `AGENTS.md` 的 `FRAMEPACK MANAGED BLOCK`；没变化不写；没文件就创建；用户内容不动。main 已推。
-- ✅ **真实测试项目验证**：`F:/Framepack-01-test` 当前 root `AGENTS.md` 已健康；ensure 结果 `action=noop`，MD5 前后不变。
-- ✅ **Hermes Windows GBK readerthread 错误已热修**：在 `F:/Hermes_windows/hermes-agent/hermes_bootstrap.py` 增加 Windows-only subprocess text defaults 保险丝：`text=True` 且未显式指定时自动补 `encoding="utf-8", errors="replace"`；显式 call-site 不覆盖；POSIX 不受影响。
-- ✅ **Hermes skill 已补坑位说明**：`hermes-agent` skill 的 Windows quirk 增加 subprocess `_readerthread` / GBK `UnicodeDecodeError` 说明。
+- ✅ **Gate Engine 开发线已落地**：`d6b3e61 feat: add Framepack gate engine` + `fc1f83a fix: tighten Framepack gate readiness output`。
+- ✅ **Template Arsenal MVP 已落地**：`ff4c42b feat: add Framepack template arsenal MVP`，新增 `core/templates/` 与 `scripts/framepack_template.py`，支持 template card inspect/list/scaffold/package。
+- ✅ **Template productization hardening 已完成**：`8b039cb fix: harden template bundle productization`，补 source/target 防护、symlink skip、selected-copy 与 reference artifacts 保留。
+- ✅ **独立 reviewer 两轮 blocker 已修**：`c78b0b7 fix: address template arsenal review blockers` + `2cb466d fix: preflight template package parent conflicts`。CLI missing path 现在 exit 2；package 预检会在写入前拦截 planned file/parent dir 冲突，不留半成品。
+- ✅ **Framepack guardrails managed block 已刷新**：`9036460 chore: refresh Framepack guardrails context`，AGENTS.md 的 managed block 带 version/hash/source；本地生成现场加入 `.gitignore`，避免误提交报告/素材/备份。
+- ✅ **部署目录同步已核验**：Template Arsenal changed files 拷贝到 `F:/Hermes_windows/plugins/framepack/`；MD5 匹配；deployed smoke 确认 parent conflict 抛 `FileExistsError` 且不写 `TEMPLATE_CARD.md`。
 
 ### 下次要做什么
 
-1. **开 TUI 第一刀**：重启 Hermes 进程后启动 TUI；新 session 先读本文件，再跑 `cd F:/hyperframes && git status --short`。
-2. **如果继续 Framepack 开发**：从 `main@9b882e3` 开始；不要移动 `v0.15.0` tag；`.hermes/reports/` 与 `assets/` 未跟踪现场继续不要误提交。
-3. **如果处理 Hermes GBK 热修**：注意 `F:/Hermes_windows/hermes-agent` 是 active source 但当前 git 状态显示全仓未跟踪（像源码拷贝/非正常 git clone），不要按普通 repo 直接 `git add .`。只核验/迁移这两个改动文件：`hermes_bootstrap.py`、`tests/test_hermes_bootstrap.py`。
-4. **如果 GBK 报错还出现**：先确认新入口是否 import 了 `hermes_bootstrap`；再用坏字节 smoke 复测，不要追杀 400+ 个 subprocess call-site。
+1. **先决定是否 push**：当前 `main` 本地 ahead origin（包含 Gate Engine、Template Arsenal、reviewer fixes、guardrails refresh、handoff）。若要共享给其他 agent/机器，执行 `git push origin main`。
+2. **如果继续 Template Arsenal**：下一层建议做 `arsenal.json` 注册桥（template_suite weapon registration），再做 Template Use UX（列表 → 选模板 → 参数/素材共创 → 标准 frame.md/expanded-prompt.md）。
+3. **如果准备发新版**：不要移动 `v0.15.0` tag；先做 version bump 设计/计划，区分 “0.15.0 release artifact” 与 “Unreleased commits”。
+4. **如果继续 housekeeping**：保持 `.hermes/reports/` 与 `assets/` 不入库；它们已经被 `.gitignore` 忽略，除非明确要产品化为正式样例资产。
 
 ### 当前关键证据
 
 ```text
-Framepack main HEAD / origin/main              → 9b882e3 [verified] fix: maintain workbench root Framepack context block
-post-release simplify follow-up                → ed0401b refactor: address simplify reviewer follow-ups
-v0.15.0 tag deref                               → 4e6eead (release artifact，不移动)
-Hermes active source                            → F:/Hermes_windows/hermes-agent
-Hermes GBK hotfix files                         → hermes_bootstrap.py; tests/test_hermes_bootstrap.py
+正式 release tag deref                         → 4e6eead (v0.15.0 artifact，不移动)
+当前功能/整理 HEAD                            → 9036460 chore: refresh Framepack guardrails context
+Template Arsenal MVP                           → ff4c42b feat: add Framepack template arsenal MVP
+Template Arsenal hardening                     → 8b039cb fix: harden template bundle productization
+Reviewer blocker fixes                         → c78b0b7; 2cb466d
+部署目录                                       → F:/Hermes_windows/plugins/framepack/
+真实样例                                       → F:/Framepack-01-test/cases/miara-style-template
 ```
 
 ### 验证证据
 
 ```text
-Framepack targeted hook/context tests           → 47 passed
-Framepack full plugin suite after root upkeep   → 769 passed
-Framepack static scan / AST review              → no findings
-Framepack deploy sync                           → 5/5 MD5 matched; deployed smoke passed
-F:/Framepack-01-test ensure                     → action=noop; changed=False; before_md5 == after_md5
-Hermes RED reproduction                         → readerthread UnicodeDecodeError reproduced in failing test before fix
-Hermes bootstrap tests after fix                → 18 passed, 1 skipped
-Hermes bad-byte subprocess smoke                → stdout 'hello-�-world', no readerthread crash
-Hermes entry smoke                              → `hermes --version`, `hermes --help`, `hermes chat --help` OK
+Template Arsenal targeted suite                → 29 passed
+Full Framepack plugin suite                     → 852 passed
+Added-line security scan                        → 0 findings
+Real sample inspect                             → exit 0; status=incomplete; issue=missing_template_card
+Missing inspect/list path contract              → exit 2
+Temp package smoke                              → status=complete; issue_count=0
+Deploy sync                                     → MD5 matched for changed plugin files
+Deployed parent-conflict smoke                  → FileExistsError; TEMPLATE_CARD.md not created
+AGENTS/.gitignore housekeeping verification      → tests/test_template_*.py 29 passed; generated local dirs ignored
 ```
 
 ## 设计文档
