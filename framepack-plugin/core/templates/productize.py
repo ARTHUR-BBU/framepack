@@ -98,6 +98,19 @@ def _preflight_package(source: Path, target: Path, *, overwrite: bool) -> tuple[
     managed_targets.append(target / "SOURCE_NOTES.md")
     managed_targets.extend(destination for _, destination in planned_files)
 
+    required_dirs = {target, target / "assets", target / "renders", target / "snapshots"}
+    for destination in managed_targets:
+        parent = destination.parent
+        while parent != target.parent:
+            required_dirs.add(parent)
+            if parent == target:
+                break
+            parent = parent.parent
+
+    for directory in required_dirs:
+        if directory.exists() and not directory.is_dir():
+            raise FileExistsError(str(directory))
+
     for destination in managed_targets:
         if destination.exists() and (not overwrite or destination.is_dir() or not destination.is_file()):
             raise FileExistsError(str(destination))

@@ -157,3 +157,31 @@ def test_package_preflights_directory_at_file_destination_without_partial_writes
     assert (target / "index.html").is_dir()
     assert not (target / "TEMPLATE_CARD.md").exists()
     assert not (target / "TEMPLATE_GUIDE.md").exists()
+
+
+def test_package_preflights_file_at_required_directory_without_partial_writes(tmp_path):
+    source = make_source(tmp_path)
+    target = tmp_path / "template"
+    target.mkdir()
+    (target / "assets").write_text("blocks asset directory", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        package_template_source(source, target, card(target))
+
+    assert (target / "assets").is_file()
+    assert not (target / "TEMPLATE_CARD.md").exists()
+    assert not (target / "TEMPLATE_GUIDE.md").exists()
+
+
+def test_package_preflights_file_at_reference_source_directory_without_partial_writes(tmp_path):
+    source = make_source(tmp_path)
+    target = tmp_path / "template"
+    target.mkdir()
+    (target / "source").write_text("blocks reference artifact directory", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        package_template_source(source, target, card(target))
+
+    assert (target / "source").is_file()
+    assert not (target / "TEMPLATE_CARD.md").exists()
+    assert not (target / "TEMPLATE_GUIDE.md").exists()
