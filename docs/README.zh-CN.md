@@ -73,12 +73,12 @@ hermes plugins enable framepack
 
 # 4. 验证
 hermes plugins list
-# 你应该看到 `framepack` 状态为 enabled，版本为 **0.15.0**。
+# 你应该看到 `framepack` 状态为 enabled，版本为 **0.16.0**。
 ```
 
 ## 兼容性
 
-Framepack v0.15.0 正式支持 **HyperFrames 0.7.3**。
+Framepack v0.16.0 正式支持 **HyperFrames 0.7.3**。
 
 - supported_min: `0.7.3`
 - supported_max_tested: `0.7.3`

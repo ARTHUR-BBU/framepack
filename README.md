@@ -56,7 +56,7 @@ HyperFrames render / publish / cloud
 - It does not replace `hyperframes lint`, Studio preview, render, publish, or cloud workflows.
 - It does not block render during taste audit. Framepack advises; user decides.
 
-## Plugin Hooks (v0.15.0)
+## Plugin Hooks (v0.16.0)
 
 ```text
 pre_tool_call:
@@ -102,12 +102,12 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` enabled with version **0.15.0**.
+# You should see `framepack` enabled with version **0.16.0**.
 ```
 
 ## Compatibility
 
-Framepack v0.15.0 officially supports **HyperFrames 0.7.3**.
+Framepack v0.16.0 officially supports **HyperFrames 0.7.3**.
 
 - supported_min: `0.7.3`
 - supported_max_tested: `0.7.3`

@@ -2,7 +2,7 @@
 name: framepack-animation-library
 title: "Framepack 武器库 · 完整速查手册"
 description: "一站式武器参考 — Agent 一次加载获取全部 24 件武器的参数签名+代码骨架。写 HTML 前必读。"
-version: 0.15.0
+version: 0.16.0
 linked_files:
   parts/references/text-split-enter.js: "文字分裂进场"
   parts/references/elastic-scale-enter.js: "弹性缩放"

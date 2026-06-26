@@ -20,7 +20,7 @@ def _make_plugin_dir(tmp_path: Path) -> Path:
     plugin = tmp_path / "_plugin"
     plugin.mkdir()
     (plugin / "plugin.yaml").write_text(
-        'name: framepack\nversion: "0.15.0"\n', encoding="utf-8"
+        'name: framepack\nversion: "0.16.0"\n', encoding="utf-8"
     )
     (plugin / "guardrails.md").write_text("# Guardrails\n", encoding="utf-8")
     return plugin
@@ -53,7 +53,7 @@ class TestScaffoldCase:
         scaffold_case(wb, "video-01", plugin)
         agents = (wb / "cases" / "video-01" / "AGENTS.md").read_text(encoding="utf-8")
         assert "FRAMEPACK MANAGED BLOCK" in agents
-        assert "0.15.0" in agents
+        assert "0.16.0" in agents
 
     def test_creates_package_json_with_pinned_version(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)

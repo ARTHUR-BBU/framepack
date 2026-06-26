@@ -7,7 +7,7 @@ generates a context-sync.md report.
 
 This solves the problem where test workbench files like
 F:/Framepack-01-test/AGENTS.md still say "version: 0.11.0" while the
-deployed plugin is v0.15.0.
+deployed plugin is v0.16.0.
 """
 
 from __future__ import annotations

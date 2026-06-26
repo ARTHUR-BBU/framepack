@@ -1,6 +1,6 @@
 """Pre-tool-call hook: verify Framepack handoff readiness before HyperFrames takes over.
 
-v0.15.0 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
+v0.16.0 philosophy: Framepack's job is done once frame.md + expanded-prompt.md
 are written. HyperFrames handles HTML authoring, structural validation, and
 rendering. This hook remains report-first: it hydrates guardrails, reconciles
 the arsenal, and surfaces quality-beyond-lint warnings. It does not block
@@ -312,4 +312,4 @@ def register(ctx):
         logger.info("pre_tool_call: frame.md missing, handoff warning injected")
 
     ctx.register_hook("pre_tool_call", on_pre_tool_call)
-    logger.info("Framepack v0.15.0 pre_tool_call hook registered (handoff readiness + guardrail hydration + quality audit)")
+    logger.info("Framepack v0.16.0 pre_tool_call hook registered (handoff readiness + guardrail hydration + quality audit)")
