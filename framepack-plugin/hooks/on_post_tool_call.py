@@ -24,6 +24,10 @@ from core.control_profile import ControlProfile
 from core.restraint_audit import audit_weight_consistency
 from core.shell_utils import resolve_effective_workdir
 from core.context_hydrator import ensure_workbench_root_agents
+from core.gates.control_profile import check_control_profile_consistency
+from core.gates.scene_continuity import check_scene_continuity
+from core.gates.storyboard_preview import check_storyboard_preview
+from core.pipeline_progress import detect_pipeline_stage, write_progress_file
 
 logger = logging.getLogger(__name__)
 
@@ -445,6 +449,37 @@ def _project_dir_for_framepack_file(file_path: str) -> str:
     return str(path.parent)
 
 
+def _run_pipeline_gates_and_update(ctx, project_dir, gate_funcs) -> None:
+    """Run gate functions for a pipeline stage, then update progress.md.
+
+    gate_funcs: list of import-path strings (e.g.
+    "core.gates.control_profile.check_control_profile_consistency") resolved
+    lazily so patch targets in tests are honored.
+
+    Advisory: gate exceptions and progress-write failures are swallowed —
+    they never break the creative flow.
+    """
+    import importlib
+
+    results = []
+    for func_path in gate_funcs:
+        module_name, _, attr = func_path.rpartition(".")
+        try:
+            mod = importlib.import_module(module_name)
+            func = getattr(mod, attr)
+            result = func(project_dir)
+            if result is not None:
+                results.append(result)
+        except Exception as exc:
+            logger.warning("pipeline gate %s failed: %s", func_path, exc)
+
+    try:
+        progress = detect_pipeline_stage(project_dir, gate_results=results)
+        write_progress_file(project_dir, progress)
+    except Exception as exc:
+        logger.warning("pipeline progress update failed: %s", exc)
+
+
 def _is_framepack_skill_name(name: str) -> bool:
     return name in {
         "framepack",
@@ -648,6 +683,14 @@ def _handle_frame_md(ctx, file_path: str) -> None:
     _safe_inject(ctx, message, role="user")
     logger.info("frame.md advice injected")
 
+    # ── Pipeline gate + progress (accompanying check, not just at render) ──
+    project_dir = _project_dir_for_framepack_file(file_path)
+    _run_pipeline_gates_and_update(
+        ctx,
+        project_dir,
+        ["core.gates.control_profile.check_control_profile_consistency"],
+    )
+
 
 def _build_weight_consistency_report(frame_md_content: str,
                                       expanded_prompt: str) -> str | None:
@@ -724,3 +767,14 @@ def _handle_expanded_prompt(ctx, file_path: str) -> None:
     message = _build_expanded_prompt_advice(analysis)
     _safe_inject(ctx, message, role="user")
     logger.info("expanded-prompt advice injected")
+
+    # ── Pipeline gate + progress (accompanying check, not just at render) ──
+    project_dir = _project_dir_for_framepack_file(file_path)
+    _run_pipeline_gates_and_update(
+        ctx,
+        project_dir,
+        [
+            "core.gates.scene_continuity.check_scene_continuity",
+            "core.gates.storyboard_preview.check_storyboard_preview",
+        ],
+    )
