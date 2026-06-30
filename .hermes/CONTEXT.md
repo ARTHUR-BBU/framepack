@@ -7,54 +7,56 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.16.0 已发布；post-release 模板入口 / AGENTS 更新场景 / Kanban 验收流程已闭环。
-**分支**: `main` == `origin/main`
-**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（本轮 post-release 修复不 bump、不移动 v0.16.0 tag）
-**最后提交**: `1c0e937 handoff: record template entrypoint and kanban acceptance`
-**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步关键文件并通过 deployed smoke（plugin.yaml 源码/部署 md5 一致 = `d2bae8846f3b70200c2ecb40ec32e5a6`）。
-**测试工作台**: `F:/Framepack-01-test` 已刷新到新 guardrails hash；`project_context_current=true`、`stale_files=none`。
+**阶段**: v0.16.0；HyperFrames 兼容窗口已从 0.7.3 提升到 0.7.21（绿区升级，零代码适配）。Pipeline Visibility 设计文档已落盘待实现。
+**分支**: `main` 领先 `origin/main` 1 commit（56fb214 docs sync + 待提交的 HF 升级）
+**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`
+**HyperFrames 窗口**: `supported_min=0.7.3` `supported_max_tested=0.7.21` `soft_max=0.7.x` `hard_block_below=0.7.0` `latest_supported_for_downgrade=0.7.21`
+**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步（8 实现文件 + 4 测试文件 md5 一致）；deployed smoke 39 passed。
+**测试工作台**: `F:/Framepack-01-test`（guardrails hash 未变，无需重 hydrate）
 
 ### 上次做了什么
 
-- ✅ 发布后补齐 `v0.16 Template Menu First` 入口：`guardrails.md` + repo `AGENTS.md` managed block 都写入"模板/模版/视频模板/参考模板/内置模板 → 先走 Template Arsenal 菜单，不只搜历史 mp4/case"。
-- ✅ 修复 `intent_router.py`：`视频模版给我参考吗`、`内置模板`、`模板起步` 等人话表达路由到 `framepack-template-reuse`，且 `framepack_role` 包含 `template menu first`；"提炼成可复用模板"仍优先 `framepack-reference-extraction`。
-- ✅ 修复 `context_hydrator.py` 根因：同版本 `0.16.0` 但 managed block hash/content 不一致也会标 stale 并 `update_block`，避免旧工作台因版本号相同错过新入口提醒。
-- ✅ 用 deployed hydrator 刷新测试工作台：修复前 `stale_count=8`，修复后 `stale_count=0`；root/case `AGENTS.md` 均包含 `v0.16 Template Menu First`。
-- ✅ 主模型 + 子代理验证完成：targeted 43 passed、full plugin suite 881 passed、deployed targeted 43 passed、security scan 0、子代理 `deleg_7b8919d3` PASS。
-- ✅ 试跑 Hermes Kanban 测试组 board `framepack-update-acceptance`：4 张卡全部 done（新用户 doorplate、旧工作台 hydration、模板入口 routing、synthesis）。
-- ✅ 新增本地正式 skill `framepack-update-acceptance-kanban`（路径 `F:/Hermes_windows/skills/devops/framepack-update-acceptance-kanban/SKILL.md`），用于以后"跑 Framepack 更新验收"。
-- ✅ 提交 `1c0e937` 把本轮模板入口修复 + Kanban 验收成果固化进交接台（上一版交接台漏记此 commit，本版补正）。
+- ✅ **HyperFrames compat reconnaissance（A 路）**：
+  - npm latest = 0.7.21（一周内 0.7.3→0.7.21 共 18 个版本），0.7.20 修了 video/audio render-correctness bug（id-less media 渲染空白），0.7.21 加了 `crossorigin` on media 的 lint error。
+  - **判定绿区**：Framepack 源码 + 测试工作台实际产出 HTML 对 `crossorigin` 零命中；0.7.20 的 data-hf-id fix 与 Framepack 铁律（禁手写 data-hf-id）天然不冲突。适配清单 = 空。
+  - 升级 `supported_max_tested` / `latest_supported_for_downgrade` → 0.7.21；`supported_min` 保持 0.7.3（最低支持线不变）。
+  - 全量同步 12 处版本引用：compat json / case_scaffolder 默认值 / environment_doctor docstring / plugin.yaml / SKILL.md ×4 / miara-style package.json ×4 / TEMPLATE_GUIDE.md / hermes_patches.template.json ×2。
+  - TDD：3 个测试文件的 window mock + 2 个版本断言（0.7.4→0.7.22 保持 newer_same_band 语义；recommend_downgrade_to 0.7.3→0.7.21）+ case_scaffolder 默认值断言。
+  - 881 passed 零回归；deployed targeted 39 passed。
+- ✅ **Pipeline Visibility 设计文档（B 路）**：`F:/hyperframes/.hermes/designs/2026-06-30--pipeline-visibility.md`。
+  - 根因核实：7 个 gate 函数已存在且有测试，但运行时只在 `on_pre_tool_call` render 前调用 1 次；`on_post_tool_call` 对 frame.md / expanded-prompt 零命中——验证是"终审不是伴随"。
+  - 三决策方向已定（贴合 simplify）：① 伴随式 gate 接 post_tool_call（不造新状态机）② 单文件 `.framepack/progress.md` 状态牌（不搞双通道）③ 模板 required_params 前置（不造 schema 引擎）。
 
 ### 当前关键证据
 
 ```text
-git: main == origin/main, HEAD=1c0e937
-plugin.yaml source/deployed md5: d2bae8846f3b70200c2ecb40ec32e5a6 (match)
+git: main ahead of origin/main by 1 (待 commit HF 升级)
+HF npm latest: 0.7.21 | Framepack tested window: 0.7.3–0.7.21
 Framepack tests: 881 passed
-Deployed focused tests: 43 passed
-Workbench context: current=true, stale_files=0
-Kanban board: framepack-update-acceptance → done=4, blocked=0, running=0
-New skill validation: exists=True, frontmatter_ok=True, chars=12049
+Deployed targeted: 39 passed
+crossorigin 命中: plugin 源码 0 处, 测试工作台产出 HTML 0 处
+Pipeline Visibility 设计: .hermes/designs/2026-06-30--pipeline-visibility.md (待实现)
 ```
 
 ### 注意点 / 坑位
 
-- Kanban 试跑证明模式可用，但当前机器只有 `default` profile，且 `glm-5.1` 并发 worker 会撞 Z.ai/GLM HTTP 429。两个 worker 是"验收已 PASS，但 final comment/complete 阶段 429 崩溃"，已按日志证据人工恢复。
-- 以后正式 Framepack 更新验收建议：加载 `kanban` + `framepack-update-acceptance-kanban`，先 `hermes profile list` / `hermes kanban assignees`，若只有 default 则 `dispatch --max 1`，或配置专用 tester/reviewer/synthesizer profiles。
-- `framepack-update-acceptance-kanban` 是 user-local skill，已写入 `F:/Hermes_windows/skills/...`，不在 Framepack repo 里；当前 session 可 `skill_view` 读到。
-- 本轮不移动 v0.16.0 tag；post-release 修复在 `main` HEAD。测试组如问"正式版本"需区分：源码版本仍 `0.16.0`，post-release 修复 commit 是 `1c0e937`。
+- 本轮 HF 升级是 post-release 配置/文案修正，不 bump plugin 版本号（仍 0.16.0），不移动 v0.16.0 tag。
+- compat recon 子代理 `deleg_ed9aac24` 在 puppeteer smoke 阶段 600s 超时——决策不需要那部分（crossorigin 命中检查 + release notes 已够定绿区），未重派。
+- Pipeline Visibility 实现时注意：gate 异常要降级不阻断（advisory）；progress.md 写入失败要静默（不因状态牌坏了卡创作）。
+- `test_newer_patch_in_same_soft_band` 的版本号从 0.7.4 改成 0.7.22——以后再升 max_tested 时这个测试版本号要跟着换。
 
 ### 下次要做什么
 
-1. 如继续 GLM5.1 的"Framepack v0.16 发布视频"dogfood，先确认它现在会被 `Template Menu First` 触发：用户问"有没有视频模版参考"时必须先跑 builtins/install-builtin/menu/recommend/select，而不是只搜历史 mp4。
-2. 为 Kanban 测试组配置专用 profiles（建议 `framepack-tester-fast` / `framepack-reviewer` / `framepack-synthesizer`），或默认低并发 `--max 1`。
-3. 下一次 Framepack 更新/发版后，直接用 `framepack-update-acceptance-kanban` skill 创建/运行 acceptance board，不再临时派散兵。
+1. **实现 Pipeline Visibility**（B 路，设计文档已就绪）：按 `plan` skill 出实现计划 → TDD `core/pipeline_progress.py` → post_tool_call 路由 → 模板 required_params → 全量回归 → 部署同步。
+2. 用升级后的 0.7.21 窗口跑一次端到端 dogfood（miara-style-template），确认实际 render 链路无回归。
+3. 为 Kanban 测试组配置专用 profiles（延续上一轮的 429 坑位）。
 
 ## 设计文档
 
 - `F:/hyperframes/.hermes/designs/2026-06-19--v014-weight-control-system.md` — 权重控制系统设计
 - `F:/hyperframes/.hermes/designs/2026-06-19--sprite-forge-integration.md` — Sprite Forge 集成设计
 - `F:/hyperframes/.hermes/designs/2026-06-21--execution-contract-audit.md` — Execution Contract Audit 设计
+- `F:/hyperframes/.hermes/designs/2026-06-30--pipeline-visibility.md` — 伴随式 Gate + 用户状态牌（待实现）
 
 ## 文件索引
 
@@ -62,8 +64,9 @@ New skill validation: exists=True, frontmatter_ok=True, chars=12049
 - 部署: `F:/Hermes_windows/plugins/framepack/`
 - 权重核心: `core/control_profile.py` + `core/restraint_audit.py`
 - Hook 穿透: `hooks/on_post_tool_call.py`（_build_weight_directive + _build_weight_consistency_report）
-- HyperFrames 兼容: `core/hyperframes_adapter.py`（命令分类）+ `core/hyperframes_support.py`（版本窗口）+ `core/environment_doctor.py`（doctor）+ `compat/hyperframes-support.json`（矩阵）
-- Sprite Forge: `skills/framepack-sprite-forge/`
+- HyperFrames 兼容: `core/hyperframes_adapter.py` + `core/hyperframes_support.py` + `core/environment_doctor.py` + `compat/hyperframes-support.json`
+- Gate 引擎: `core/gates/registry.py`（evaluate_native_gates）+ `core/render_readiness.py`（build_readiness_board）
+- 模板: `core/templates/` + `templates/bundles/miara-style-template/`
 - 独立 skill: `F:/Hermes_windows/skills/software-development/framepack/SKILL.md`
 - 测试报告: `F:/hyperframes/framepack-e2e-test/reports/`
 
@@ -71,5 +74,5 @@ New skill validation: exists=True, frontmatter_ok=True, chars=12049
 
 - TDD: RED → GREEN → 全量回归 → 部署同步(md5) → git commit
 - 部署同步必须用 content hash（md5），不能只比 file size
-- 改完 PLUGIN 文件必须同步到 `F:/Hermes_windows/plugins/framepack/`
+- 改完 PLUGIN 文件必须同步到 `F:/Hermes_windows/plugins/framepack/`（包括测试文件）
 - 修复 skill 用到问题应 patch skill_manage

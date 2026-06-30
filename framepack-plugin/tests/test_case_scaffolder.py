@@ -58,17 +58,17 @@ class TestScaffoldCase:
     def test_creates_package_json_with_pinned_version(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)
         wb = _make_workbench(tmp_path)
-        scaffold_case(wb, "video-01", plugin, hyperframes_version="0.7.3")
+        scaffold_case(wb, "video-01", plugin, hyperframes_version="0.7.21")
         pkg = json.loads((wb / "cases" / "video-01" / "package.json").read_text(encoding="utf-8"))
-        assert "0.7.3" in pkg["scripts"]["render"]
-        assert "0.7.3" in pkg["scripts"]["lint"]
+        assert "0.7.21" in pkg["scripts"]["render"]
+        assert "0.7.21" in pkg["scripts"]["lint"]
 
     def test_creates_hyperframes_json(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)
         wb = _make_workbench(tmp_path)
         scaffold_case(wb, "video-01", plugin)
         hf = json.loads((wb / "cases" / "video-01" / "hyperframes.json").read_text(encoding="utf-8"))
-        assert hf["version"] == "0.7.3"
+        assert hf["version"] == "0.7.21"
 
     def test_creates_frame_md(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)

@@ -25,10 +25,10 @@ class FakeRunner:
 def support_window():
     return HyperFramesSupportWindow(
         supported_min="0.7.3",
-        supported_max_tested="0.7.3",
+        supported_max_tested="0.7.21",
         soft_max="0.7.x",
         hard_block_below="0.7.0",
-        latest_supported_for_downgrade="0.7.3",
+        latest_supported_for_downgrade="0.7.21",
     )
 
 
@@ -244,7 +244,7 @@ def test_newer_same_band_cli_requires_blank_smoke_before_handoff(tmp_path):
             ("node", "--version"): "v22.11.0",
             ("npm", "--version"): "10.9.0",
             ("npx", "--version"): "10.9.0",
-            ("hyperframes", "--version"): "0.7.4",
+            ("hyperframes", "--version"): "0.7.22",
         },
     )
     doctor = EnvironmentDoctor(

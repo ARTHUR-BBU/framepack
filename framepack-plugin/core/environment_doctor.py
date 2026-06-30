@@ -203,7 +203,7 @@ class EnvironmentDoctor:
         Hermes skills can be stored either directly under the provided skills
         directory or one category below it (for example
         ``skills/software-development/hyperframes-cli/SKILL.md``). References
-        nested inside another skill do not count: upstream HyperFrames 0.7.3
+        nested inside another skill do not count: upstream HyperFrames 0.7.21
         ships ``hyperframes-cli`` as its own skill, and Framepack expects
         ``skill_view('hyperframes-cli')`` to work.
         """

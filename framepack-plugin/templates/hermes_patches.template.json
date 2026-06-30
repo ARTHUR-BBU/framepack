@@ -1,7 +1,7 @@
 {
   "version": 1,
   "last_known_hermes_version": null,
-  "last_known_hyperframes_version": "0.7.3",
+  "last_known_hyperframes_version": "0.7.21",
   "patches": [
     {
       "id": "skills_tool_file_path",
@@ -14,7 +14,7 @@
   "upstream_features": [
     {
       "id": "studio_edit_suppress_flag",
-      "hyperframes_version": "0.7.3",
+      "hyperframes_version": "0.7.21",
       "warning_code": "gsap_studio_edit_blocked",
       "status": "open",
       "request": "Add --suppress or per-element suppress attribute for Studio editability warnings",

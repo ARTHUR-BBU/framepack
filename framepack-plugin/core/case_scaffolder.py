@@ -93,7 +93,7 @@ def scaffold_case(
     workbench_root: Path | str,
     case_slug: str,
     plugin_dir: Path | str,
-    hyperframes_version: str = "0.7.3",
+    hyperframes_version: str = "0.7.21",
     create_claude_md: bool = False,
 ) -> ScaffoldResult:
     """Create a standard Framepack video case directory.

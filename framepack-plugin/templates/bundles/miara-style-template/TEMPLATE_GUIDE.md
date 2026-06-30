@@ -105,13 +105,13 @@ cases/miara-style-template/
 
 ```bash
 cd cases/miara-style-template
-npx --yes hyperframes@0.7.3 render --quality draft --output renders/my-video.mp4
+npx --yes hyperframes@0.7.21 render --quality draft --output renders/my-video.mp4
 ```
 
 ### 方式 2：通过参数覆盖渲染
 
 ```bash
-npx --yes hyperframes@0.7.3 render \
+npx --yes hyperframes@0.7.21 render \
   --variables '{"brand_name":"NEXUS","bg_top_color":"#0A0E27","bg_bottom_color":"#1A4FFF","accent_color":"#00FFB3","s1_headline":"Announcing","s5_slogan_line1":"Build beyond.","s5_slogan_line2":"Ship at the speed of thought."}' \
   --output renders/nexus-brand.mp4
 ```
@@ -131,13 +131,13 @@ npx --yes hyperframes@0.7.3 render \
   "s2_panel3_title": "Scales"
 }
 
-npx --yes hyperframes@0.7.3 render --variables-file vars-nexus.json --output renders/nexus.mp4
+npx --yes hyperframes@0.7.21 render --variables-file vars-nexus.json --output renders/nexus.mp4
 ```
 
 ### 方式 4：Dev 预览
 
 ```bash
-npx --yes hyperframes@0.7.3 preview
+npx --yes hyperframes@0.7.21 preview
 ```
 
 ---

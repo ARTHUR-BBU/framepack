@@ -8,10 +8,10 @@ from core.hyperframes_support import (
 def window() -> HyperFramesSupportWindow:
     return HyperFramesSupportWindow(
         supported_min="0.7.3",
-        supported_max_tested="0.7.3",
+        supported_max_tested="0.7.21",
         soft_max="0.7.x",
         hard_block_below="0.7.0",
-        latest_supported_for_downgrade="0.7.3",
+        latest_supported_for_downgrade="0.7.21",
     )
 
 
@@ -54,7 +54,7 @@ def test_hard_too_old_version_blocks_handoff():
 
 
 def test_newer_patch_in_same_soft_band_requires_smoke_before_guarded_handoff():
-    before_smoke = classify_hyperframes_version("0.7.4", window())
+    before_smoke = classify_hyperframes_version("0.7.22", window())
 
     assert before_smoke.status == "newer_same_band"
     assert before_smoke.allow_discovery is True
@@ -62,7 +62,7 @@ def test_newer_patch_in_same_soft_band_requires_smoke_before_guarded_handoff():
     assert before_smoke.requires_smoke is True
     assert before_smoke.guarded_mode is True
 
-    after_smoke = classify_hyperframes_version("0.7.4", window(), smoke_passed=True)
+    after_smoke = classify_hyperframes_version("0.7.22", window(), smoke_passed=True)
 
     assert after_smoke.status == "newer_same_band"
     assert after_smoke.allow_handoff is True
@@ -84,7 +84,7 @@ def test_unknown_newer_minor_or_major_uses_discovery_only_until_smoke_passes():
     assert failed_smoke.status == "unknown_newer"
     assert failed_smoke.allow_handoff is False
     assert failed_smoke.block_reason == "compatibility_smoke_failed"
-    assert failed_smoke.recommend_downgrade_to == "0.7.3"
+    assert failed_smoke.recommend_downgrade_to == "0.7.21"
 
     passed_smoke = classify_hyperframes_version("0.8.0", window(), smoke_passed=True)
 
