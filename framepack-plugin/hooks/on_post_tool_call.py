@@ -135,6 +135,11 @@ def _is_asset_intake(file_path: str) -> bool:
     return os.path.basename(file_path) == "asset-intake.md"
 
 
+def _is_template_selection(file_path: str) -> bool:
+    """template-selection.md — written after `framepack_template select`."""
+    return os.path.basename(file_path) == "template-selection.md"
+
+
 def _handle_asset_intake(ctx, file_path: str):
     """Validate asset-intake.md structure and inject lightweight TUI feedback."""
     path = Path(file_path) if os.path.isabs(file_path) else Path(os.getcwd()) / file_path
@@ -171,6 +176,37 @@ def _handle_asset_intake(ctx, file_path: str):
 
     ctx.inject_message("\n".join(parts), role="assistant")
     logger.info("asset-intake.md advice injected")
+
+
+def _handle_template_param_card(ctx, file_path: str) -> None:
+    """After template select, inject param card so Agent gathers required fields first.
+
+    Parses a 'params:' line from template-selection.md. If no params declared,
+    this is a no-op (backward compatible with templates that don't declare params).
+    """
+    try:
+        content = _read_file_safe(file_path)
+        params_match = re.search(r"^params:\s*(.+)$", content, re.MULTILINE)
+        if not params_match:
+            return  # no params declared → nothing to inject
+        param_list = [p.strip() for p in params_match.group(1).split(",") if p.strip()]
+        if not param_list:
+            return
+
+        lines = [
+            "📋 **Framepack — 模板参数卡**",
+            "",
+            "选定模板后，先确认这些必填参数再继续共创：",
+            "",
+        ]
+        for p in param_list:
+            lines.append(f"- {p}")
+        lines.append("")
+        lines.append("把这些参数确认清楚，避免后面临时补字段。")
+        _safe_inject(ctx, "\n".join(lines), role="assistant")
+        logger.info("template param card injected (%d params)", len(param_list))
+    except Exception as exc:
+        logger.warning("template param card injection failed: %s", exc)
 
 
 def _is_expanded_prompt(file_path: str) -> bool:
@@ -612,6 +648,8 @@ def register(ctx):
             _handle_expanded_prompt(ctx, file_path)
         elif _is_asset_intake(file_path):
             _handle_asset_intake(ctx, file_path)
+        elif _is_template_selection(file_path):
+            _handle_template_param_card(ctx, file_path)
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
     logger.info("Framepack v0.16.0 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration + lint cache bridge)")

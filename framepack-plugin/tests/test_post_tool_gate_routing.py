@@ -117,3 +117,44 @@ def test_progress_file_failure_is_silent():
             )
     finally:
         shutil.rmtree(d)
+
+
+def test_template_selection_write_injects_param_card():
+    """Writing template-selection.md triggers param card injection."""
+    d = Path(tempfile.mkdtemp())
+    fp = d / ".framepack"
+    fp.mkdir()
+    (fp / "template-selection.md").write_text(
+        "# Template: miara-style-template\nparams: brand_name, tagline, cta\n",
+        encoding="utf-8",
+    )
+    try:
+        from hooks.on_post_tool_call import _handle_template_param_card
+
+        ctx = MagicMock()
+        ctx.inject_message = MagicMock()
+        _handle_template_param_card(ctx, str(fp / "template-selection.md"))
+        assert ctx.inject_message.called, "param card should be injected"
+        injected = ctx.inject_message.call_args[0][0]
+        assert "brand_name" in injected or "参数" in injected
+    finally:
+        shutil.rmtree(d)
+
+
+def test_template_selection_without_params_is_noop():
+    """If template-selection.md has no params line, no injection (backward compat)."""
+    d = Path(tempfile.mkdtemp())
+    fp = d / ".framepack"
+    fp.mkdir()
+    (fp / "template-selection.md").write_text(
+        "# Template: plain\n\nNo params here.\n", encoding="utf-8"
+    )
+    try:
+        from hooks.on_post_tool_call import _handle_template_param_card
+
+        ctx = MagicMock()
+        ctx.inject_message = MagicMock()
+        _handle_template_param_card(ctx, str(fp / "template-selection.md"))
+        assert not ctx.inject_message.called, "no params → no injection"
+    finally:
+        shutil.rmtree(d)
