@@ -119,6 +119,87 @@ def test_progress_file_failure_is_silent():
         shutil.rmtree(d)
 
 
+def test_asset_intake_write_runs_asset_depth_and_writes_progress():
+    """Writing asset-intake.md updates non-template progress immediately."""
+    d = Path(tempfile.mkdtemp())
+    fp = d / ".framepack"
+    fp.mkdir()
+    (fp / "asset-intake.md").write_text("brand:\n  logo: logo.png\n", encoding="utf-8")
+    try:
+        from hooks.on_post_tool_call import _handle_asset_intake
+        from core.render_readiness import GateResult, GateStatus
+
+        ctx = MagicMock()
+        ctx.inject_message = MagicMock()
+        fake_gate = GateResult(
+            name="Asset Depth", status=GateStatus.GREEN, evidence="ok"
+        )
+        with patch("core.gates.asset_intake.check_asset_depth", return_value=fake_gate) as mock_gate:
+            _handle_asset_intake(ctx, str(fp / "asset-intake.md"))
+            assert mock_gate.called
+        assert (fp / "progress.md").is_file()
+        md = (fp / "progress.md").read_text(encoding="utf-8")
+        assert "素材准备" in md
+        assert "asset-intake.md" in md
+    finally:
+        shutil.rmtree(d)
+
+
+def test_project_dir_for_framepack_files_resolves_project_root():
+    """Files under .framepack should resolve to the project root, not .framepack."""
+    from hooks.on_post_tool_call import _project_dir_for_framepack_file
+
+    d = Path(tempfile.mkdtemp())
+    fp = d / ".framepack"
+    fp.mkdir()
+    try:
+        assert _project_dir_for_framepack_file(str(fp / "asset-intake.md")) == str(d)
+        assert _project_dir_for_framepack_file(str(fp / "template-selection.md")) == str(d)
+    finally:
+        shutil.rmtree(d)
+
+
+def test_asset_intake_without_template_injects_non_template_completeness_card():
+    """Non-template asset intake gets a cold/warm-start creation checklist."""
+    d = Path(tempfile.mkdtemp())
+    fp = d / ".framepack"
+    fp.mkdir()
+    (fp / "asset-intake.md").write_text("brand:\n  logo: logo.png\n", encoding="utf-8")
+    try:
+        from hooks.on_post_tool_call import _handle_asset_intake
+
+        ctx = MagicMock()
+        ctx.inject_message = MagicMock()
+        _handle_asset_intake(ctx, str(fp / "asset-intake.md"))
+        injected = "\n---\n".join(call.args[0] for call in ctx.inject_message.call_args_list)
+        assert "创作小票" in injected
+        assert "时长" in injected
+        assert "画幅" in injected
+        assert "风格" in injected
+        assert "CTA" in injected
+    finally:
+        shutil.rmtree(d)
+
+
+def test_asset_intake_with_template_does_not_inject_non_template_card():
+    """Template projects keep using the template param card path."""
+    d = Path(tempfile.mkdtemp())
+    fp = d / ".framepack"
+    fp.mkdir()
+    (fp / "asset-intake.md").write_text("brand:\n  logo: logo.png\n", encoding="utf-8")
+    (fp / "template-selection.md").write_text("# Template\nparams: brand_name\n", encoding="utf-8")
+    try:
+        from hooks.on_post_tool_call import _handle_asset_intake
+
+        ctx = MagicMock()
+        ctx.inject_message = MagicMock()
+        _handle_asset_intake(ctx, str(fp / "asset-intake.md"))
+        injected = "\n---\n".join(call.args[0] for call in ctx.inject_message.call_args_list)
+        assert "创作小票" not in injected
+    finally:
+        shutil.rmtree(d)
+
+
 def test_template_selection_write_injects_param_card():
     """Writing template-selection.md triggers param card injection."""
     d = Path(tempfile.mkdtemp())

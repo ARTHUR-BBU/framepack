@@ -12,23 +12,25 @@ from pathlib import Path
 
 
 class PipelineStage(IntEnum):
-    """Ordered pipeline stages. Value = progress depth."""
+    """Official HyperFrames-aligned pipeline stages. Value = progress depth."""
 
-    TEMPLATE_SELECTED = 0
-    PARAMS_FILLED = 1
-    FRAME_MD = 2
-    EXPANDED_PROMPT = 3
-    HTML_GENERATED = 4
-    RENDER_READY = 5
+    INTAKE = 0
+    DESIGN = 1
+    SCRIPT = 2
+    STORYBOARD = 3
+    TIMING = 4
+    BUILD = 5
+    VALIDATE = 6
 
 
 _STAGE_LABELS = {
-    PipelineStage.TEMPLATE_SELECTED: "已选模板",
-    PipelineStage.PARAMS_FILLED: "已填参数",
-    PipelineStage.FRAME_MD: "已出视觉稿",
-    PipelineStage.EXPANDED_PROMPT: "已出分镜",
-    PipelineStage.HTML_GENERATED: "可预览",
-    PipelineStage.RENDER_READY: "可渲染",
+    PipelineStage.INTAKE: "素材准备",
+    PipelineStage.DESIGN: "视觉身份",
+    PipelineStage.SCRIPT: "文案脚本",
+    PipelineStage.STORYBOARD: "分镜导演稿",
+    PipelineStage.TIMING: "配音/节奏",
+    PipelineStage.BUILD: "制作中",
+    PipelineStage.VALIDATE: "验片交付",
 }
 
 
@@ -37,6 +39,7 @@ class PipelineProgress:
     """Snapshot of project pipeline state."""
 
     current_stage: PipelineStage
+    has_asset_intake: bool
     has_template_selection: bool
     has_frame_md: bool
     has_expanded_prompt: bool
@@ -52,24 +55,24 @@ def detect_pipeline_stage(
     project = Path(project_dir)
     gate_results = gate_results or []
 
+    has_asset_intake = (project / ".framepack" / "asset-intake.md").is_file()
     has_template_selection = (project / ".framepack" / "template-selection.md").is_file()
     has_frame_md = (project / "frame.md").is_file()
     has_expanded_prompt = (project / ".hyperframes" / "expanded-prompt.md").is_file()
     has_index_html = (project / "index.html").is_file()
 
     if has_index_html:
-        stage = PipelineStage.HTML_GENERATED
+        stage = PipelineStage.BUILD
     elif has_expanded_prompt:
-        stage = PipelineStage.EXPANDED_PROMPT
+        stage = PipelineStage.STORYBOARD
     elif has_frame_md:
-        stage = PipelineStage.FRAME_MD
-    elif has_template_selection:
-        stage = PipelineStage.TEMPLATE_SELECTED
+        stage = PipelineStage.DESIGN
     else:
-        stage = PipelineStage.TEMPLATE_SELECTED  # empty project = start
+        stage = PipelineStage.INTAKE
 
     return PipelineProgress(
         current_stage=stage,
+        has_asset_intake=has_asset_intake,
         has_template_selection=has_template_selection,
         has_frame_md=has_frame_md,
         has_expanded_prompt=has_expanded_prompt,
@@ -78,29 +81,39 @@ def detect_pipeline_stage(
     )
 
 
+def _stage_evidence(progress: PipelineProgress, stage: PipelineStage) -> str:
+    """Return artifact evidence for a progress stage."""
+    if stage == PipelineStage.INTAKE:
+        evidence = []
+        if progress.has_asset_intake:
+            evidence.append("asset-intake.md")
+        if progress.has_template_selection:
+            evidence.append("template-selection.md")
+        return " / ".join(evidence)
+    if stage == PipelineStage.DESIGN and progress.has_frame_md:
+        return "frame.md"
+    if stage == PipelineStage.STORYBOARD and progress.has_expanded_prompt:
+        return "expanded-prompt.md"
+    if stage == PipelineStage.BUILD and progress.has_index_html:
+        return "index.html"
+    if stage == PipelineStage.VALIDATE:
+        return "render readiness"
+    return ""
+
+
 def render_progress_markdown(progress: PipelineProgress) -> str:
     """Render a user-facing progress markdown."""
     lines = ["# 项目进度", ""]
     reached = progress.current_stage.value
 
-    # Evidence: which artifact file backs each reached stage
-    _stage_evidence = {
-        PipelineStage.TEMPLATE_SELECTED: "template-selection.md",
-        PipelineStage.PARAMS_FILLED: "template params",
-        PipelineStage.FRAME_MD: "frame.md",
-        PipelineStage.EXPANDED_PROMPT: "expanded-prompt.md",
-        PipelineStage.HTML_GENERATED: "index.html",
-        PipelineStage.RENDER_READY: "render readiness",
-    }
-
     for stage in PipelineStage:
         label = _STAGE_LABELS[stage]
+        evidence = _stage_evidence(progress, stage)
+        evidence_suffix = f"（{evidence}）" if evidence else ""
         if stage.value < reached:
-            evidence = _stage_evidence.get(stage, "")
-            lines.append(f"- ✅ {label}" + (f"（{evidence}）" if evidence else ""))
+            lines.append(f"- ✅ {label}{evidence_suffix}")
         elif stage.value == reached:
-            evidence = _stage_evidence.get(stage, "")
-            lines.append(f"- 🔄 {label} ← 当前" + (f"（{evidence}）" if evidence else ""))
+            lines.append(f"- 🔄 {label} ← 当前{evidence_suffix}")
         else:
             lines.append(f"- ⬜ {label}")
 

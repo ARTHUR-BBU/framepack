@@ -177,6 +177,17 @@ def _handle_asset_intake(ctx, file_path: str):
     ctx.inject_message("\n".join(parts), role="assistant")
     logger.info("asset-intake.md advice injected")
 
+    if not _has_template_selection_for(file_path):
+        _safe_inject(ctx, _build_non_template_completeness_card(), role="assistant")
+        logger.info("non-template completeness card injected")
+
+    project_dir = _project_dir_for_framepack_file(file_path)
+    _run_pipeline_gates_and_update(
+        ctx,
+        project_dir,
+        ["core.gates.asset_intake.check_asset_depth"],
+    )
+
 
 def _handle_template_param_card(ctx, file_path: str) -> None:
     """After template select, inject param card so Agent gathers required fields first.
@@ -207,6 +218,30 @@ def _handle_template_param_card(ctx, file_path: str) -> None:
         logger.info("template param card injected (%d params)", len(param_list))
     except Exception as exc:
         logger.warning("template param card injection failed: %s", exc)
+
+
+def _has_template_selection_for(file_path: str) -> bool:
+    """Return True when the current project already has a template selection."""
+    project = Path(_project_dir_for_framepack_file(file_path))
+    return (project / ".framepack" / "template-selection.md").is_file()
+
+
+def _build_non_template_completeness_card() -> str:
+    """Build a lightweight cold/warm-start checklist for non-template projects."""
+    return "\n".join([
+        "📋 **Framepack — 非模板创作小票**",
+        "",
+        "当前入口：非模板 / cold-start 或 warm-start。进入 frame.md 前，请确认：",
+        "",
+        "- 时长：例如 15s / 30s / 60s",
+        "- 画幅：16:9 / 9:16 / 1:1",
+        "- 风格/情绪：calm / medium / high，或具体视觉参考",
+        "- 关键元素：logo / 产品图 / 人物 / 数据 / CTA",
+        "- 音频：BGM / TTS / 无旁白 / 声画 hit",
+        "- 输出目标：预览 / 官网 Hero / 发布会大屏 / 社媒投放",
+        "",
+        "有真实素材就优先用真实素材；不要直接脑补品牌资产。",
+    ])
 
 
 def _is_expanded_prompt(file_path: str) -> bool:
@@ -481,6 +516,8 @@ def _project_dir_for_framepack_file(file_path: str) -> str:
     if not path.is_absolute():
         path = Path(os.getcwd()) / path
     if path.name == "expanded-prompt.md" and path.parent.name == ".hyperframes":
+        return str(path.parent.parent)
+    if path.name in {"asset-intake.md", "template-selection.md"} and path.parent.name == ".framepack":
         return str(path.parent.parent)
     return str(path.parent)
 

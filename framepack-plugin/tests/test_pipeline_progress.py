@@ -16,18 +16,38 @@ def _make_project() -> Path:
     return Path(tempfile.mkdtemp())
 
 
-def test_empty_project_starts_at_template_stage():
+def test_empty_project_starts_at_intake_not_template_stage():
     d = _make_project()
     try:
         result = detect_pipeline_stage(d)
-        assert result.current_stage == PipelineStage.TEMPLATE_SELECTED
+        assert result.current_stage == PipelineStage.INTAKE
+        assert result.has_asset_intake is False
         assert result.has_template_selection is False
-        assert result.has_frame_md is False
+        md = render_progress_markdown(result)
+        assert "素材准备" in md
+        assert "已选模板" not in md
     finally:
         shutil.rmtree(d)
 
 
-def test_template_selection_detected():
+def test_asset_intake_detected_as_intake_stage():
+    d = _make_project()
+    try:
+        fp = d / ".framepack"
+        fp.mkdir()
+        (fp / "asset-intake.md").write_text("brand:\n  logo: logo.png\n", encoding="utf-8")
+        result = detect_pipeline_stage(d)
+        assert result.current_stage == PipelineStage.INTAKE
+        assert result.has_asset_intake is True
+        md = render_progress_markdown(result)
+        assert "素材准备" in md
+        assert "asset-intake.md" in md
+        assert "已选模板" not in md
+    finally:
+        shutil.rmtree(d)
+
+
+def test_template_selection_is_intake_evidence_not_stage_spine():
     d = _make_project()
     try:
         fp = d / ".framepack"
@@ -35,23 +55,30 @@ def test_template_selection_detected():
         (fp / "template-selection.md").write_text("# selected", encoding="utf-8")
         result = detect_pipeline_stage(d)
         assert result.has_template_selection is True
-        assert result.current_stage.value >= PipelineStage.TEMPLATE_SELECTED.value
+        assert result.current_stage == PipelineStage.INTAKE
+        md = render_progress_markdown(result)
+        assert "素材准备" in md
+        assert "template-selection.md" in md
+        assert "已选模板" not in md
     finally:
         shutil.rmtree(d)
 
 
-def test_frame_md_detected():
+def test_frame_md_detected_as_design_stage():
     d = _make_project()
     try:
         (d / "frame.md").write_text("# frame", encoding="utf-8")
         result = detect_pipeline_stage(d)
         assert result.has_frame_md is True
-        assert result.current_stage.value >= PipelineStage.FRAME_MD.value
+        assert result.current_stage == PipelineStage.DESIGN
+        md = render_progress_markdown(result)
+        assert "视觉身份" in md
+        assert "frame.md" in md
     finally:
         shutil.rmtree(d)
 
 
-def test_expanded_prompt_detected():
+def test_expanded_prompt_detected_as_storyboard_stage():
     d = _make_project()
     try:
         (d / "frame.md").write_text("# frame", encoding="utf-8")
@@ -60,12 +87,15 @@ def test_expanded_prompt_detected():
         (exp / "expanded-prompt.md").write_text("# expanded", encoding="utf-8")
         result = detect_pipeline_stage(d)
         assert result.has_expanded_prompt is True
-        assert result.current_stage.value >= PipelineStage.EXPANDED_PROMPT.value
+        assert result.current_stage == PipelineStage.STORYBOARD
+        md = render_progress_markdown(result)
+        assert "分镜导演稿" in md
+        assert "expanded-prompt.md" in md
     finally:
         shutil.rmtree(d)
 
 
-def test_index_html_detected():
+def test_index_html_detected_as_build_stage():
     d = _make_project()
     try:
         (d / "frame.md").write_text("# f", encoding="utf-8")
@@ -74,20 +104,28 @@ def test_index_html_detected():
         (d / "index.html").write_text("<html></html>", encoding="utf-8")
         result = detect_pipeline_stage(d)
         assert result.has_index_html is True
-        assert result.current_stage.value >= PipelineStage.HTML_GENERATED.value
+        assert result.current_stage == PipelineStage.BUILD
+        md = render_progress_markdown(result)
+        assert "制作中" in md
+        assert "index.html" in md
     finally:
         shutil.rmtree(d)
 
 
-def test_render_progress_markdown_has_all_stages():
+def test_render_progress_markdown_has_official_pipeline_stages():
     d = _make_project()
     try:
         (d / "frame.md").write_text("# f", encoding="utf-8")
         result = detect_pipeline_stage(d)
         md = render_progress_markdown(result)
-        assert "已选模板" in md
-        assert "已出视觉稿" in md
-        assert "frame.md" in md
+        assert "素材准备" in md
+        assert "视觉身份" in md
+        assert "文案脚本" in md
+        assert "分镜导演稿" in md
+        assert "配音/节奏" in md
+        assert "制作中" in md
+        assert "验片交付" in md
+        assert "已选模板" not in md
     finally:
         shutil.rmtree(d)
 

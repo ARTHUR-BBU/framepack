@@ -70,6 +70,11 @@ Core rules:
 - **Intent Router first.** Decide whether the request belongs to product-launch-video,
   website-to-video, faceless-explainer, pr-to-video, embedded-captions,
   graphic-overlays, motion-graphics, general-video, template reuse, or reference extraction.
+- **Non-template and template are both first-class.** Template reuse is a “套餐” path, not the
+  default mental model. For fuzzy ideas, URLs, PDFs, CSVs, transcripts, repos, brand assets,
+  or reference videos, run the non-template “私厨点菜” path: route intent → gather real context
+  → shape design/script/storyboard/audio → then hand off. Do not make `template-selection.md`
+  the pipeline skeleton. Detailed guidance: `references/non-template-first-pipeline-alignment.md`.
 - **ask for assets during co-creation.** Logo, screenshots, BGM, source video,
   HTML/animation code, DESIGN.md, mood board, color palette, reference video, and proof assets
   can radically change the final quality.
