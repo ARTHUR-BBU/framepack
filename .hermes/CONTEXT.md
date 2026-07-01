@@ -8,7 +8,7 @@
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
 **阶段**: v0.16.0 post-release；HyperFrames 0.7.21 官方材料已落库；Pipeline Visibility 已完成非模板优先校准，并完成模板/非模板隔离 dogfood smoke。
-**分支**: `main` 领先 `origin/main`（未 push；本轮最新功能提交 `1391c32`，handoff commit 后会再 +1）
+**分支**: `main` 领先 `origin/main`（未 push；具体 ahead 数以 live `git status --branch --short` 为准；本轮最新功能提交 `1391c32`）
 **源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（未 bump；本轮是 Unreleased 开发成果）
 **HyperFrames 窗口**: `0.7.3 – 0.7.21`（supported_min 不变）
 **最后功能提交**: `1391c32` (`fix: update template selection progress`)
