@@ -7,57 +7,56 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.16.0；HF 窗口升 0.7.21（绿区）；Pipeline Visibility 已实现（3 commits，TDD，零回归）。
-**分支**: `main` 领先 `origin/main`（未 push）
-**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`
+**阶段**: v0.16.0 post-release；HyperFrames 0.7.21 官方材料已落库；Pipeline Visibility 已完成非模板优先校准（模板/非模板双入口一等公民）。
+**分支**: `main` 领先 `origin/main`（未 push；feature commit 后 ahead 7，handoff commit 后会 +1）
+**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（未 bump；本轮是 Unreleased 开发成果）
 **HyperFrames 窗口**: `0.7.3 – 0.7.21`（supported_min 不变）
-**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步（含 pipeline_progress + 测试）；deployed 894 passed；三处 SKILL.md md5 一致。
-**测试工作台**: `F:/Framepack-01-test`（guardrails hash 未变，无需重 hydrate）
+**最后功能提交**: `60112be` (`feat: align pipeline progress with non-template flow`)
+**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步；独立 skill `F:/Hermes_windows/skills/software-development/framepack/` 已同步；关键 8 文件 md5 全一致。
+**测试**: 源码 `899 passed in 17.72s`；部署目录 `899 passed in 18.28s`；targeted `18 passed`；`git diff --check` clean；严格 secret scan clean。
 
 ### 上次做了什么
 
-**A 路 — HF 升级（绿区，已完成）**：
-- 0.7.3 → 0.7.21（18 版本侦察）；crossorigin 零命中 + data-hf-id fix 与铁律不冲突 → 零适配。
-- 12 处版本引用同步；881→881 passed；deployed 39 passed。commit `264336f`。
-- 修复 SKILL.md 第三副本（独立 skill）漂移，被 `test_deployed_bare_framepack_skill_alias_is_present_and_synced` 抓到。
-
-**B 路 — Pipeline Visibility（已完成，3 commits）**：
-- 根因核实：7 个 gate 函数已存在但有测试覆盖，运行时只在 `on_pre_tool_call` render 前调用 1 次 → "终审不是伴随"。
-- 设计文档 `.hermes/designs/2026-06-30--pipeline-visibility.md`；实现计划 `.hermes/plans/2026-06-30_220000-pipeline-visibility.md`。
-- Task 1 `84e2c6f` — `core/pipeline_progress.py`：PipelineStage 枚举（6 阶段）+ detect_pipeline_stage + render_progress_markdown + write_progress_file。7 测试。
-- Task 2 `1412bae` — `_run_pipeline_gates_and_update` 接进 `_handle_frame_md` / `_handle_expanded_prompt`：写完 frame.md → control_profile gate；写完 expanded-prompt → scene_continuity + storyboard gate。lazy importlib 解析（兼容 test patch）。gate 异常 + progress 写失败均静默降级。4 测试。
-- Task 3 `f9679ed` — `_handle_template_param_card`：select 后注入必填参数卡（解析 template-selection.md 的 `params:` 行）。无 params 行 → no-op（向后兼容）。2 测试。
-- 全程 TDD：每个 Task 都先写失败测试看 RED，再写实现看 GREEN。894 passed 零回归。
+- ✅ 摸底排查：确认旧 `pipeline_progress.py` 是模板轴（空项目/模板选择都落到“已选模板”心智），`asset-intake.md` 只 inject 素材检查、不写 progress。
+- ✅ 官方材料落库：`hyperframes.heygen.com` Prompting / Pipeline / Common Mistakes / 4K / HDR / HTML-in-Canvas / Keyframes / llms.txt 存到 `.hermes/research/hyperframes-0.7.21-official/`。
+- ✅ 设计与计划：新增 `.hermes/designs/2026-07-01--official-prompt-pipeline-alignment.md` 与 `.hermes/plans/2026-07-01_203809-non-template-pipeline-alignment.md`。
+- ✅ 代码校准：将 progress spine 从模板轴改为官方 pipeline 轴：素材准备 → 视觉身份 → 文案脚本 → 分镜导演稿 → 配音/节奏 → 制作中 → 验片交付。
+- ✅ 非模板入口补齐：`.framepack/asset-intake.md` 写入后现在会跑 `core.gates.asset_intake.check_asset_depth` 并写 `.framepack/progress.md`；非模板项目会注入“创作小票”（时长/画幅/风格/关键元素/音频/输出目标）。
+- ✅ 模板入口保留但降级为 evidence：`template-selection.md` 仍会触发模板参数卡；但不再定义全局 pipeline skeleton。
+- ✅ skill 规则沉淀：`framepack` skill 新增“非模板与模板一等公民”规则，并新增 `references/non-template-first-pipeline-alignment.md`；三副本 md5 已同步。
+- ✅ TDD + simplify/code-review：先 RED 后 GREEN；静态安全扫描 clean；未引入复杂状态机，仍是文件证据检测 + 伴随式 gates。
 
 ### 当前关键证据
 
 ```text
-git: main ahead of origin/main (未 push，5 commits since 92138f1)
-HF window: 0.7.3 – 0.7.21 (green zone, zero adaptation)
-Framepack tests: 894 passed (源码)
-Deployed tests: 894 passed (md5 一致)
-Pipeline Visibility: implemented + deployed
-  - core/pipeline_progress.py (新)
-  - hooks/on_post_tool_call.py (+3 路由: frame.md gate, expanded-prompt gate, template param card)
-  - tests: test_pipeline_progress.py (7) + test_post_tool_gate_routing.py (6)
+feature commit: 60112be feat: align pipeline progress with non-template flow
+source targeted: 18 passed in 0.24s
+source full: 899 passed in 17.72s
+deployed full: 899 passed in 18.28s
+md5 sync: pipeline_progress / on_post_tool_call / two tests / SKILL.md / non-template reference all OK
+git diff --check: clean
+strict secret scan: clean
 ```
 
 ### 注意点 / 坑位
 
-- 本轮 HF 升级 + Pipeline Visibility 都是 post-release，不 bump plugin 版本号（仍 0.16.0），不移动 v0.16.0 tag。
-- `_run_pipeline_gates_and_update` 用 lazy importlib 解析 gate 函数路径——这是为了让 `unittest.mock.patch` 能拦截。改 gate 路径时要同步改调用点的字符串。
-- gate 只在 LLM 质检成功路径跑（`_handle_frame_md` / `_handle_expanded_prompt` 的 `analysis is None → return` 之后）。如果 LLM 挂了 gate 不跑、progress 不更新——可接受（LLM 挂是异常态），但如果要"LLM 挂也照样跑 gate"，需要把 gate 调用移到 return 之前。
-- Pipeline Visibility 的 6 阶段判定靠"检测文件存在"，不是显式状态机。没有 RENDER_READY 的独立判定（它复用 render readiness board 的全绿判定，但 progress.md 不直接跑那个——progress 只到 HTML_GENERATED 阶段，RENDER_READY 靠 pre_tool_call 的 readiness board）。
+- 本轮不 bump `plugin.yaml`，不移动 v0.16.0 tag；这是 post-release / Unreleased 开发成果。
+- `PipelineStage.SCRIPT` 与 `PipelineStage.TIMING` 目前是官方 pipeline 轴上的用户可见阶段，但没有独立 artifact detector；它们通过整体进度位置表达，不要误读成已有单独文件。
+- 非模板“创作小票”只在没有 `.framepack/template-selection.md` 时注入；模板项目继续走模板参数卡。
+- `asset-intake.md` 的项目根解析已修：`.framepack/asset-intake.md` / `.framepack/template-selection.md` 都回到 project root，不再误写到 `.framepack/.framepack/progress.md`。
+- 简化原则：没有新增 schema engine / 状态机 / 数据库；仍是 artifact evidence + existing gates。
 
 ### 下次要做什么
 
-1. 用升级后的 0.7.21 窗口 + Pipeline Visibility 跑一次端到端 dogfood（miara-style-template），确认：实际写 frame.md 后 progress.md 自动生成、gate 结果可见、参数卡弹出。
-2. 验收测试：用 `framepack-update-acceptance-kanban` skill 跑一轮 acceptance board（覆盖新用户冷启动 + 旧项目更新 + Pipeline Visibility 感知）。
-3. 为 Kanban 测试组配置专用 profiles（延续 429 坑位）。
-4. 考虑：LLM 挂时 gate 也跑（把 gate 调用移到 return 之前）——看 dogfood 是否暴露这个需求。
+1. 用新非模板轴跑一次端到端 dogfood：模糊想法/URL/素材 → asset-intake → frame.md → expanded-prompt，确认 progress.md 和创作小票真实可用。
+2. 用模板项目复测：template-selection → 模板参数卡仍触发，且 progress.md 显示“素材准备（template-selection.md）”而不是“已选模板”。
+3. 若 dogfood 发现 Script/Timing 阶段容易误解，再决定是否增加轻量 evidence detector（不要先造系统）。
 
 ## 设计文档
 
+- `F:/hyperframes/.hermes/designs/2026-07-01--official-prompt-pipeline-alignment.md` — 官方 Prompt/Pipeline + 模板/非模板双入口校准（已实现）
+- `F:/hyperframes/.hermes/plans/2026-07-01_203809-non-template-pipeline-alignment.md` — 非模板优先 Pipeline Alignment TDD 计划（已完成）
+- `F:/hyperframes/.hermes/research/hyperframes-0.7.21-official/` — HyperFrames 0.7.21 官方资料本地镜像
 - `F:/hyperframes/.hermes/designs/2026-06-30--pipeline-visibility.md` — 伴随式 Gate + 用户状态牌（已实现）
 - `F:/hyperframes/.hermes/plans/2026-06-30_220000-pipeline-visibility.md` — 实现计划（已完成）
 - `F:/hyperframes/.hermes/designs/2026-06-19--v014-weight-control-system.md` — 权重控制系统设计
