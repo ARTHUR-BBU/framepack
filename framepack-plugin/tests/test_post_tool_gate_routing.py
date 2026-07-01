@@ -222,6 +222,46 @@ def test_template_selection_write_injects_param_card():
         shutil.rmtree(d)
 
 
+def test_template_selection_hook_writes_progress_file():
+    """Template selection should update progress just like non-template intake."""
+    d = Path(tempfile.mkdtemp())
+    fp = d / ".framepack"
+    fp.mkdir()
+    selection = fp / "template-selection.md"
+    selection.write_text(
+        "# Template: miara-style-template\nparams: brand_name, tagline, cta\n",
+        encoding="utf-8",
+    )
+    try:
+        from hooks.on_post_tool_call import register
+
+        ctx = MagicMock()
+        registered = {}
+
+        def register_hook(name, handler):
+            registered[name] = handler
+
+        ctx.register_hook.side_effect = register_hook
+        ctx.inject_message = MagicMock()
+
+        register(ctx)
+        registered["post_tool_call"](
+            tool_name="write_file",
+            args={"path": str(selection)},
+            result="ok",
+        )
+
+        assert ctx.inject_message.called, "param card should still be injected"
+        progress = fp / "progress.md"
+        assert progress.is_file(), "template selection should write progress.md"
+        md = progress.read_text(encoding="utf-8")
+        assert "素材准备" in md
+        assert "template-selection.md" in md
+        assert "已选模板" not in md
+    finally:
+        shutil.rmtree(d)
+
+
 def test_template_selection_without_params_is_noop():
     """If template-selection.md has no params line, no injection (backward compat)."""
     d = Path(tempfile.mkdtemp())

@@ -686,7 +686,9 @@ def register(ctx):
         elif _is_asset_intake(file_path):
             _handle_asset_intake(ctx, file_path)
         elif _is_template_selection(file_path):
+            project_dir = _project_dir_for_framepack_file(file_path)
             _handle_template_param_card(ctx, file_path)
+            _run_pipeline_gates_and_update(ctx, project_dir, [])
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
     logger.info("Framepack v0.16.0 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration + lint cache bridge)")
