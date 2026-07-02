@@ -250,3 +250,22 @@ PY"""
 
     ctx.inject_message.assert_not_called()
     assert not (tmp_path / ".framepack" / "arsenal.json").exists()
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "npx --yes hyperframes@0.7.24 validate --json",
+        "npx --yes hyperframes@0.7.24 present",
+        "npx --yes hyperframes@0.7.24 beats audio.mp3",
+        "npx --yes hyperframes@0.7.24 cloud render .",
+        "npx --yes hyperframes@0.7.24 cloudrun deploy .",
+        "npx --yes hyperframes@0.7.24 remove-background input.mp4",
+    ],
+)
+def test_hyperframes_0_7_24_command_surface_has_explicit_classification(command):
+    from core.hyperframes_adapter import classify_hyperframes_command
+
+    classification = classify_hyperframes_command(command)
+
+    assert not classification.notes
+    assert classification.category.value != "not_hyperframes"
