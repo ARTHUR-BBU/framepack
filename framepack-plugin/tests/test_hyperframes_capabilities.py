@@ -18,7 +18,18 @@ def test_capability_map_contains_website_capture_catalog_and_skills_pack():
     assert "capture" in ids
     assert "catalog" in ids
     assert "official-skills-pack" in ids
+    assert "music-to-video" in ids
+    assert "talking-head-recut" in ids
+    assert "slideshow" in ids
     assert data["skills_pack"]["install"] == "npx skills add heygen-com/hyperframes"
+
+
+def test_capability_map_records_observed_0_7_24_skill_pack():
+    data = capability_map()
+    observed = set(data["skills_pack"]["observed_0_7_24_skills"])
+
+    assert len(observed) >= 20
+    assert {"hyperframes-animation", "hyperframes-registry", "music-to-video", "website-to-video"} <= observed
 
 
 def test_capability_markdown_mentions_framepack_boundary():

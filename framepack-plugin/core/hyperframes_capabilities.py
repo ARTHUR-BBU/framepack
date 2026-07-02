@@ -14,6 +14,28 @@ from typing import Any
 SUPPORTED_WINDOW = "0.7.3-0.7.21"
 RECON_TARGET = "0.7.24"
 SKILLS_PACK_INSTALL = "npx skills add heygen-com/hyperframes"
+OBSERVED_0_7_24_SKILLS = [
+    "embedded-captions",
+    "faceless-explainer",
+    "general-video",
+    "hyperframes",
+    "hyperframes-animation",
+    "hyperframes-cli",
+    "hyperframes-core",
+    "hyperframes-creative",
+    "hyperframes-keyframes",
+    "hyperframes-media",
+    "hyperframes-registry",
+    "media-use",
+    "motion-graphics",
+    "music-to-video",
+    "pr-to-video",
+    "product-launch-video",
+    "remotion-to-hyperframes",
+    "slideshow",
+    "talking-head-recut",
+    "website-to-video",
+]
 
 _CAPABILITIES: list[dict[str, Any]] = [
     {
@@ -78,11 +100,39 @@ _CAPABILITIES: list[dict[str, Any]] = [
         "framepack_role": "prepare narrative spine, rhythm, and source truth constraints",
     },
     {
+        "id": "general-video",
+        "kind": "workflow",
+        "triggers": ["general video", "custom composition", "brand reel", "montage", "通用视频"],
+        "hyperframes_owner": "official general-video workflow",
+        "framepack_role": "use when no narrower official workflow fits; still provide director bible and QA redlines",
+    },
+    {
+        "id": "music-to-video",
+        "kind": "workflow",
+        "triggers": ["music video", "BGM-driven", "audio reactive", "音乐视频", "卡点"],
+        "hyperframes_owner": "official music-to-video workflow",
+        "framepack_role": "decide rhythm/story and require cue evidence; let HyperFrames handle media workflow",
+    },
+    {
         "id": "pr-to-video",
         "kind": "workflow",
         "triggers": ["pull request", "PR", "changelog", "release video"],
         "hyperframes_owner": "official pr-to-video workflow",
         "framepack_role": "select audience and story angle from code/change facts",
+    },
+    {
+        "id": "talking-head-recut",
+        "kind": "workflow",
+        "triggers": ["talking head", "interview", "podcast", "lower thirds", "overlay", "访谈", "口播"],
+        "hyperframes_owner": "official talking-head-recut workflow",
+        "framepack_role": "choose packaging angle and graphic-overlay taste; do not alter source footage semantics",
+    },
+    {
+        "id": "slideshow",
+        "kind": "workflow",
+        "triggers": ["deck", "slides", "presentation", "slideshow", "PPT", "演示"],
+        "hyperframes_owner": "official slideshow workflow",
+        "framepack_role": "shape sequence and acceptance criteria; leave deck rendering mechanics to HyperFrames",
     },
     {
         "id": "lambda-render",
@@ -104,7 +154,7 @@ def capability_map() -> dict[str, Any]:
         "hyperframes_supported_window": SUPPORTED_WINDOW,
         "hyperframes_recon_target": RECON_TARGET,
         "principle": "Framepack decides; HyperFrames executes; do not rebuild official capabilities first.",
-        "skills_pack": {"install": SKILLS_PACK_INSTALL},
+        "skills_pack": {"install": SKILLS_PACK_INSTALL, "observed_0_7_24_skills": list(OBSERVED_0_7_24_SKILLS)},
         "capabilities": list(_CAPABILITIES),
     }
 
