@@ -36,11 +36,12 @@ Product reveal.
     board = build_readiness_board(tmp_path)
     names = [gate.name for gate in board.gates]
 
-    assert names[-6:] == [
+    assert names[-7:] == [
         "Source Extraction",
         "Storyboard Preview",
         "Audio Cue Ledger",
         "Scene Continuity",
+        "HyperFrames Capability Alignment",
         "Control Profile",
         "Asset Depth",
     ]

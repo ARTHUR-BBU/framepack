@@ -138,6 +138,23 @@ CATALOG_DECISION_TEMPLATE = """# HyperFrames Catalog Decision
 - reason_if_none_used:
 """
 
+
+HYPERFRAMES_CAPABILITY_ALIGNMENT_TEMPLATE = """# HyperFrames Capability Alignment
+
+## Trigger signals
+- website/url:
+- catalog/registry:
+- official skills pack:
+- logo/sponsor/parallax pattern:
+
+## Decisions
+- used:
+- waived:
+
+## Notes
+- preferred_order: HyperFrames official capability -> project component -> Framepack arsenal -> handwrite
+"""
+
 STUDIO_PREVIEW_TEMPLATE = """# Studio Preview Evidence
 
 ## Preview command
@@ -261,6 +278,7 @@ CONTEXT_SYNC_TEMPLATE = """# Framepack Context Sync
 ALL_TEMPLATES = {
     "director-inspect.md": DIRECTOR_INSPECT_TEMPLATE,
     "script-lanes.md": SCRIPT_LANES_TEMPLATE,
+    "hyperframes-capability-alignment.md": HYPERFRAMES_CAPABILITY_ALIGNMENT_TEMPLATE,
     "asset-intake.md": ASSET_INTAKE_TEMPLATE,
     "handoff-manifest.md": HANDOFF_MANIFEST_TEMPLATE,
     "source-intake.md": SOURCE_INTAKE_TEMPLATE,

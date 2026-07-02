@@ -60,9 +60,84 @@ def test_sync_timeline_from_expanded_prompt_time_windows(tmp_path):
     assert result.action == "synced"
     assert data["project"]["duration"] == 10.5
     assert data["scenes"] == [
-        {"id": "scene_01", "start": 0.0, "duration": 4.0, "track_index": 0, "status": "draft", "proofs": []},
-        {"id": "scene_02", "start": 4.0, "duration": 6.5, "track_index": 0, "status": "draft", "proofs": []},
+        {
+            "id": "scene_01",
+            "start": 0.0,
+            "duration": 4.0,
+            "track_index": 0,
+            "status": "draft",
+            "proofs": [],
+            "continuity": {"outgoing_seed": "", "incoming_match": "", "boundary_proofs": []},
+        },
+        {
+            "id": "scene_02",
+            "start": 4.0,
+            "duration": 6.5,
+            "track_index": 0,
+            "status": "draft",
+            "proofs": [],
+            "continuity": {"outgoing_seed": "", "incoming_match": "", "boundary_proofs": []},
+        },
     ]
+    assert data["proofs"]["required"] == [
+        {
+            "type": "boundary",
+            "from": "scene_01",
+            "to": "scene_02",
+            "time": 4.0,
+            "label": "scene_01_to_scene_02_boundary",
+            "required": True,
+        }
+    ]
+
+
+def test_sync_timeline_preserves_existing_boundary_proofs(tmp_path):
+    framepack = tmp_path / ".framepack"
+    framepack.mkdir()
+    timeline_path = framepack / "timeline-manifest.json"
+    timeline_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0.0",
+                "kind": "framepack_timeline_manifest",
+                "project": {"name": tmp_path.name},
+                "scenes": [
+                    {
+                        "id": "scene_01",
+                        "start": 0.0,
+                        "duration": 4.0,
+                        "track_index": 0,
+                        "status": "draft",
+                        "proofs": [],
+                        "continuity": {"boundary_proofs": ["handoff visible at 4.0s"]},
+                    }
+                ],
+                "proofs": {
+                    "directory": ".framepack/proofs",
+                    "contact_sheet": ".framepack/proofs/contact-sheet.jpg",
+                    "required": [],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    hyperframes = tmp_path / ".hyperframes"
+    hyperframes.mkdir()
+    (hyperframes / "expanded-prompt.md").write_text(
+        """## HyperFrames Time Windows
+| Scene | Start | Duration | Track |
+|---|---:|---:|---:|
+| scene_01 | 0 | 4 | 0 |
+| scene_02 | 4 | 4 | 0 |
+""",
+        encoding="utf-8",
+    )
+
+    sync_timeline_from_project(tmp_path, plugin_version="0.10.5-dev")
+    data = json.loads(timeline_path.read_text(encoding="utf-8"))
+
+    assert data["scenes"][0]["continuity"]["boundary_proofs"] == ["handoff visible at 4.0s"]
+    assert len(data["proofs"]["required"]) == 1
 
 
 def test_parse_hyperframes_time_windows_supports_compact_lines():

@@ -296,6 +296,33 @@ def ensure_workbench_root_agents(
     return sync_project_agents(workbench_root, plugin_dir, ctx=ctx, reason=reason)
 
 
+def _case_dirs_with_context_files(workbench_root: Path) -> list[Path]:
+    cases_dir = workbench_root / "cases"
+    if not cases_dir.is_dir():
+        return []
+    result: list[Path] = []
+    for case_dir in sorted(cases_dir.iterdir()):
+        if not case_dir.is_dir():
+            continue
+        if (case_dir / "AGENTS.md").is_file() or (case_dir / "CLAUDE.md").is_file():
+            result.append(case_dir)
+    return result
+
+
+def _write_case_context_sync_reports(workbench_root: Path, report: ContextSyncReport) -> None:
+    base = _render_context_sync_markdown(report).rstrip()
+    for case_dir in _case_dirs_with_context_files(workbench_root):
+        fp_dir = case_dir / ".framepack"
+        fp_dir.mkdir(parents=True, exist_ok=True)
+        case_report = (
+            base
+            + "\n## Case receipt\n"
+            + "- scope: case\n"
+            + f"- case_dir: {case_dir}\n"
+        )
+        (fp_dir / "context-sync.md").write_text(case_report, encoding="utf-8", newline="\n")
+
+
 def hydrate_context(
     workbench_root: Path | str,
     plugin_dir: Path | str,
@@ -331,6 +358,7 @@ def hydrate_context(
     report_path.write_text(
         _render_context_sync_markdown(final), encoding="utf-8", newline="\n"
     )
+    _write_case_context_sync_reports(workbench_root, final)
 
     return final
 

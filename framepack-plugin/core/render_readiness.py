@@ -65,6 +65,12 @@ def _has_field(text: str, field_name: str) -> bool:
     return bool(re.search(pattern, text, re.MULTILINE | re.IGNORECASE))
 
 
+def _field_value(text: str, field_name: str) -> str:
+    pattern = rf"^\s*[-*]?\s*{re.escape(field_name)}\s*:\s*(?P<value>\S.*)$"
+    match = re.search(pattern, text, re.MULTILINE | re.IGNORECASE)
+    return match.group("value").strip() if match else ""
+
+
 def _has_any(text: str, patterns: list[str]) -> bool:
     return any(re.search(pattern, text, re.IGNORECASE | re.MULTILINE) for pattern in patterns)
 
@@ -191,18 +197,32 @@ def check_script_lanes(project_dir: Path) -> GateResult:
             risk="placeholder-smell risk; narrative direction undefined",
         )
     text = _read(path)
-    if not _has_section(text, "Selected lane"):
+    if not _has_section(text, "Selected lane") or not _field_value(text, "lane"):
         return GateResult(
             name="Script Lanes",
             status=GateStatus.YELLOW,
             evidence=".framepack/script-lanes.md exists but no lane selected",
             risk="lanes drafted but no commitment",
         )
-    if _has_field(text, "user_confirmed") and "true" in text.lower():
+    if re.search(r"user_confirmed\s*:\s*true", text, re.IGNORECASE):
         return GateResult(
             name="Script Lanes",
             status=GateStatus.GREEN,
             evidence=".framepack/script-lanes.md (lane selected + confirmed)",
+            risk="",
+        )
+    if re.search(r"director_decision\s*:\s*true", text, re.IGNORECASE) and _field_value(text, "decision_reason"):
+        return GateResult(
+            name="Script Lanes",
+            status=GateStatus.GREEN,
+            evidence=".framepack/script-lanes.md (lane selected + director decision recorded)",
+            risk="",
+        )
+    if _field_value(text, "waiver_reason"):
+        return GateResult(
+            name="Script Lanes",
+            status=GateStatus.GREEN,
+            evidence=".framepack/script-lanes.md (lane selected + waiver recorded)",
             risk="",
         )
     return GateResult(

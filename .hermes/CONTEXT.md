@@ -7,13 +7,13 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.16.0 post-release；HyperFrames 0.7.21 官方材料已落库；Pipeline Visibility 已完成非模板优先校准，并完成模板/非模板隔离 dogfood smoke。
-**分支**: `main` 领先 `origin/main`（未 push；具体 ahead 数以 live `git status --branch --short` 为准；本轮最新功能提交 `1391c32`）
-**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（未 bump；本轮是 Unreleased 开发成果）
-**HyperFrames 窗口**: `0.7.3 – 0.7.21`（supported_min 不变）
-**最后功能提交**: `1391c32` (`fix: update template selection progress`)
-**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步；独立 skill `F:/Hermes_windows/skills/software-development/framepack/` 已同步；最新 hook/test md5 一致。
-**测试**: 源码 `900 passed in 20.55s`；部署目录 `900 passed in 20.42s`；targeted `19 passed`；dogfood smoke 通过；`git diff --check` clean；严格 secret scan clean。
+**阶段**: v0.16.0 post-release / Unreleased；非模板 dogfood 报告 YELLOW 后，已完成 Script/Timing 证据、boundary proof scaffold、case-level context sync、HyperFrames Capability Radar 的开发部署。
+**分支**: `main` 领先 `origin/main`（未 push；具体 ahead 数以 live `git status --branch --short` 为准）。
+**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（未 bump；本轮是 Unreleased 开发成果）。
+**HyperFrames 窗口**: production support 仍为 `0.7.3 – 0.7.21`；新增 capability radar 记录 recon target `0.7.24`，不直接升级生产 pin。
+**最新开发提交**: 当前 HEAD（`feat: add Framepack capability alignment gates`；具体 hash 以 `git log -1` 为准）。
+**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步；独立 skill `F:/Hermes_windows/skills/software-development/framepack/` 已同步；关键文件 md5 一致。
+**测试**: 源码 `908 passed in 24.75s`；部署目录 `908 passed in 20.12s`；targeted yellow-gates `41 passed`；capability CLI smoke OK；temp dogfood smoke shows Context Sync GREEN and remaining evidence-only yellows visible。
 
 ### 上次做了什么
 
@@ -26,6 +26,10 @@
 - ✅ dogfood smoke：新增 `.hermes/dogfood/non_template_template_pipeline_smoke.py`，用部署插件真实 hook 跑非模板 asset-intake → frame.md → expanded-prompt，以及模板 template-selection → 参数卡 → progress。
 - ✅ skill 规则沉淀：`framepack` skill 新增“非模板与模板一等公民”规则，并新增 `references/non-template-first-pipeline-alignment.md`；三副本 md5 已同步。
 - ✅ TDD + simplify/code-review：先 RED 后 GREEN；静态安全扫描 clean；未引入复杂状态机，仍是文件证据检测 + 伴随式 gates。
+- ✅ dogfood 黄灯闭环：Script Lanes 支持 `director_decision: true` + `decision_reason` 作为自主导演证据；不再伪造 user confirmation。
+- ✅ Scene Continuity 证据货架：timeline sync 现在为每个 scene scaffold `continuity`，并在 `proofs.required` 自动登记 scene boundary proof 位；没有真实 proof 仍保持 yellow，不造假。
+- ✅ Context Sync 卫生修复：workbench hydrate 同步写 case-level `.framepack/context-sync.md` receipt，case readiness 可直接读到 GREEN。
+- ✅ HyperFrames Capability Radar：新增 `core/hyperframes_capabilities.py` + `scripts/framepack_hyperframes_capabilities.py`，并新增 `HyperFrames Capability Alignment` gate；遇到 URL/website/capture/registry/logo wall/sponsor/parallax/skills-pack 信号，会要求记录 used/waived，避免 Framepack 重造 HyperFrames 官方能力。
 
 ### 当前关键证据
 
@@ -33,8 +37,8 @@
 feature commit: 60112be feat: align pipeline progress with non-template flow
 follow-up commit: 1391c32 fix: update template selection progress
 source targeted: 19 passed in 0.25s
-source full: 900 passed in 20.55s
-deployed full: 900 passed in 20.42s
+source full: 908 passed in 24.75s
+deployed full: 908 passed in 20.12s
 dogfood: python .hermes/dogfood/non_template_template_pipeline_smoke.py → all checks True
 md5 sync: on_post_tool_call.py + test_post_tool_gate_routing.py OK
 git diff --check: clean
@@ -44,7 +48,9 @@ strict secret scan: clean
 ### 注意点 / 坑位
 
 - 本轮不 bump `plugin.yaml`，不移动 v0.16.0 tag；这是 post-release / Unreleased 开发成果。
-- `PipelineStage.SCRIPT` 与 `PipelineStage.TIMING` 目前是官方 pipeline 轴上的用户可见阶段，但没有独立 artifact detector；它们通过整体进度位置表达，不要误读成已有单独文件。
+- `Script Lanes` 现在支持用户确认、导演自主决策、waiver 三种 green 证据；但没有真实确认/决策/豁免时仍应 yellow。
+- `Scene Continuity` 会 scaffold boundary proof 位，但不会自动 green；必须有真实 boundary_proofs 才算证据闭环。
+- HyperFrames Capability Alignment 是路由雷达，不是安装器；发现官方能力信号后要求记录 used/waived，不自动安装 latest 或 skills pack。
 - 非模板“创作小票”只在没有 `.framepack/template-selection.md` 时注入；模板项目继续走模板参数卡。
 - `asset-intake.md` / `template-selection.md` 的项目根解析已修：都回到 project root，不再误写到 `.framepack/.framepack/progress.md`。
 - 简化原则：没有新增 schema engine / 状态机 / 数据库；仍是 artifact evidence + existing gates。
@@ -53,14 +59,17 @@ strict secret scan: clean
 ### 下次要做什么
 
 1. 如果要发版：走 Framepack release/version bump 流程，把 Unreleased 成果整理进正式版本号、README、plugin.yaml、changelog 和部署包。
-2. 继续真实项目 dogfood：用一个完整非模板创意案从素材到 Studio 预览，观察 Script/Timing 两个阶段是否需要轻量 evidence detector。
-3. 如需推远端：先确认是否要 push 当前 `main` ahead commits。
+2. 继续真实项目 dogfood：要求填写 `.framepack/hyperframes-capability-alignment.md` 的 used/waived，专门观察 Framepack 是否正确调用 website-to-video/capture/catalog/skills-pack，而不是重造轮子。
+3. 后续 recon：单独跑 HyperFrames 0.7.24 compatibility reconnaissance，再决定是否扩大 support window。
+4. 如需推远端：先确认是否要 push 当前 `main` ahead commits。
 
 ## 设计文档
 
 - `F:/hyperframes/.hermes/designs/2026-07-01--official-prompt-pipeline-alignment.md` — 官方 Prompt/Pipeline + 模板/非模板双入口校准（已实现）
 - `F:/hyperframes/.hermes/plans/2026-07-01_203809-non-template-pipeline-alignment.md` — 非模板优先 Pipeline Alignment TDD 计划（已完成）
 - `F:/hyperframes/.hermes/research/hyperframes-0.7.21-official/` — HyperFrames 0.7.21 官方资料本地镜像
+- `F:/hyperframes/.hermes/designs/2026-07-02--dogfood-yellow-gates-and-capability-radar.md` — 非模板 dogfood 黄灯修复 + HyperFrames Capability Radar 设计（已实现）
+- `F:/hyperframes/.hermes/plans/2026-07-02_092009-non-template-dogfood-next-steps.md` — 测试报告后续执行计划
 - `.hermes/dogfood/non_template_template_pipeline_smoke.py` — 部署插件 dogfood smoke（非模板 + 模板双入口）
 - `F:/hyperframes/.hermes/designs/2026-06-30--pipeline-visibility.md` — 伴随式 Gate + 用户状态牌（已实现）
 - `F:/hyperframes/.hermes/plans/2026-06-30_220000-pipeline-visibility.md` — 实现计划（已完成）

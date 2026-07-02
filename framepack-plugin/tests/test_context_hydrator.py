@@ -413,3 +413,20 @@ class TestWorkbenchMdScanning:
         wb_status = [f for f in report.files if "WORKBENCH.md" in f.path and f.exists][0]
         # Should need a managed block appended
         assert wb_status.action_needed in ("append_block", "none")
+
+
+def test_hydrate_writes_case_level_context_sync_receipt(tmp_path):
+    plugin = _make_plugin_dir(tmp_path)
+    wb = _make_workbench(tmp_path)
+    case = wb / "cases" / "video-01"
+    case.mkdir(parents=True)
+    (case / "AGENTS.md").write_text("# Case rules\n", encoding="utf-8")
+
+    hydrate_context(wb, plugin)
+
+    sync_md = case / ".framepack" / "context-sync.md"
+    assert sync_md.is_file()
+    content = sync_md.read_text(encoding="utf-8")
+    assert "scope: case" in content
+    assert "video-01" in content
+    assert "project_context_current: true" in content

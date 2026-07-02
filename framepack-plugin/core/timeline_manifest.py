@@ -147,6 +147,10 @@ def ensure_timeline(project_dir: Path, plugin_version: str = DEFAULT_PLUGIN_VERS
         return TimelineSyncResult(False, "error", path, [], error=str(exc))
 
 
+def _empty_continuity() -> dict[str, Any]:
+    return {"outgoing_seed": "", "incoming_match": "", "boundary_proofs": []}
+
+
 def _scene_dict(scene_id: str, start: float, duration: float, track_index: int | None = None) -> dict[str, Any]:
     scene: dict[str, Any] = {
         "id": scene_id,
@@ -155,6 +159,7 @@ def _scene_dict(scene_id: str, start: float, duration: float, track_index: int |
         "track_index": track_index,
         "status": "draft",
         "proofs": [],
+        "continuity": _empty_continuity(),
     }
     return scene
 
@@ -291,14 +296,79 @@ def _merge_scenes(existing: list[dict[str, Any]], discovered: list[dict[str, Any
                 changed = True
         merged.setdefault("status", "draft")
         merged.setdefault("proofs", [])
+        continuity = merged.get("continuity")
+        if not isinstance(continuity, dict):
+            continuity = {}
+            changed = True
+        for key, value in _empty_continuity().items():
+            if key not in continuity:
+                continuity[key] = list(value) if isinstance(value, list) else value
+                changed = True
+        merged["continuity"] = continuity
         by_id[scene_id] = merged
-    return [by_id[scene_id] for scene_id in order if scene_id in by_id], warnings, changed
+    merged_list = [by_id[scene_id] for scene_id in order if scene_id in by_id]
+    for scene in merged_list:
+        continuity = scene.get("continuity")
+        if not isinstance(continuity, dict):
+            scene["continuity"] = _empty_continuity()
+            changed = True
+            continue
+        for key, value in _empty_continuity().items():
+            if key not in continuity:
+                continuity[key] = list(value) if isinstance(value, list) else value
+                changed = True
+    return merged_list, warnings, changed
 
 
 def _timeline_duration(scenes: list[dict[str, Any]]) -> float | None:
     if not scenes:
         return None
     return max(_scene_end(scene) for scene in scenes)
+
+
+def _boundary_required_proofs(scenes: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    ordered = sorted(scenes, key=lambda item: float(item.get("start", 0)))
+    proofs: list[dict[str, Any]] = []
+    for left, right in zip(ordered, ordered[1:]):
+        left_id = str(left.get("id", "")).strip()
+        right_id = str(right.get("id", "")).strip()
+        if not left_id or not right_id:
+            continue
+        proofs.append({
+            "type": "boundary",
+            "from": left_id,
+            "to": right_id,
+            "time": float(right.get("start", _scene_end(left))),
+            "label": f"{left_id}_to_{right_id}_boundary",
+            "required": True,
+        })
+    return proofs
+
+
+def _sync_required_boundary_proofs(data: dict[str, Any], scenes: list[dict[str, Any]]) -> bool:
+    proofs_root = data.setdefault("proofs", {})
+    if not isinstance(proofs_root, dict):
+        data["proofs"] = proofs_root = {"directory": ".framepack/proofs", "contact_sheet": ".framepack/proofs/contact-sheet.jpg", "required": []}
+    proofs_root.setdefault("directory", ".framepack/proofs")
+    proofs_root.setdefault("contact_sheet", ".framepack/proofs/contact-sheet.jpg")
+    existing = proofs_root.get("required")
+    if not isinstance(existing, list):
+        existing = []
+    by_key = {
+        (item.get("type"), item.get("from"), item.get("to")): item
+        for item in existing
+        if isinstance(item, dict)
+    }
+    changed = False
+    for proof in _boundary_required_proofs(scenes):
+        key = (proof["type"], proof["from"], proof["to"])
+        if key not in by_key:
+            existing.append(proof)
+            changed = True
+    if proofs_root.get("required") != existing:
+        proofs_root["required"] = existing
+        changed = True
+    return changed
 
 
 def sync_timeline_from_project(project_dir: Path, plugin_version: str = DEFAULT_PLUGIN_VERSION) -> TimelineSyncResult:
@@ -324,6 +394,8 @@ def sync_timeline_from_project(project_dir: Path, plugin_version: str = DEFAULT_
         data = load_timeline(path)
         merged_scenes, merge_warnings, scenes_changed = _merge_scenes(data.get("scenes", []), discovered)
         data["scenes"] = merged_scenes
+        if _sync_required_boundary_proofs(data, merged_scenes):
+            scenes_changed = True
         duration = _timeline_duration(merged_scenes)
         if duration is not None and data.setdefault("project", {}).get("duration") != duration:
             data["project"]["duration"] = duration
