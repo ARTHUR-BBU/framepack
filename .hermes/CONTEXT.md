@@ -7,13 +7,13 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.16.0 post-release / Unreleased；非模板 dogfood 报告 YELLOW 后，已完成 Script/Timing 证据、boundary proof scaffold、case-level context sync、HyperFrames Capability Radar 的开发部署。
-**分支**: `main` 领先 `origin/main`（未 push；具体 ahead 数以 live `git status --branch --short` 为准）。
-**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（未 bump；本轮是 Unreleased 开发成果）。
-**HyperFrames 窗口**: production support 仍为 `0.7.3 – 0.7.21`；新增 capability radar 记录 recon target `0.7.24`，不直接升级生产 pin。
-**最新开发提交**: 当前 HEAD（`feat: add Framepack capability alignment gates`；具体 hash 以 `git log -1` 为准）。
-**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步；独立 skill `F:/Hermes_windows/skills/software-development/framepack/` 已同步；关键文件 md5 一致。
-**测试**: 源码 `908 passed in 24.75s`；部署目录 `908 passed in 20.12s`；targeted yellow-gates `41 passed`；capability CLI smoke OK；temp dogfood smoke shows Context Sync GREEN and remaining evidence-only yellows visible。
+**阶段**: v0.16.0 post-release / Unreleased；HyperFrames 0.7.24 recon 完成（YELLOW），golden lint debt 已定位，hook classification 已补 validate，Framepack capability radar 已更新全部 0.7.24 skills pack。
+**分支**: `main` 领先 `origin/main` 14 个提交（未 push）。
+**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（未 bump）。
+**HyperFrames 窗口**: production support 仍为 `0.7.3 – 0.7.21`；recon target `0.7.24` 判定 YELLOW。
+**最新开发提交**: `adebafa` (`fix: classify HyperFrames validate command`)。
+**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步；独立 skill 已同步；md5 全绿。
+**测试**: 源码 `915 passed in 18.95s`；部署目录 `915 passed in 18.12s`；md5 sync OK。
 
 ### 上次做了什么
 
@@ -30,6 +30,10 @@
 - ✅ Scene Continuity 证据货架：timeline sync 现在为每个 scene scaffold `continuity`，并在 `proofs.required` 自动登记 scene boundary proof 位；没有真实 proof 仍保持 yellow，不造假。
 - ✅ Context Sync 卫生修复：workbench hydrate 同步写 case-level `.framepack/context-sync.md` receipt，case readiness 可直接读到 GREEN。
 - ✅ HyperFrames Capability Radar：新增 `core/hyperframes_capabilities.py` + `scripts/framepack_hyperframes_capabilities.py`，并新增 `HyperFrames Capability Alignment` gate；遇到 URL/website/capture/registry/logo wall/sponsor/parallax/skills-pack 信号，会要求记录 used/waived，避免 Framepack 重造 HyperFrames 官方能力。
+- ✅ HyperFrames 0.7.24 recon：blank smoke 全链路通过（lint/validate/inspect/render/ffprobe 0 error）；catalog JSON 可解析但 stderr 有 registry timeout skip；doctor ok=false（缺 Docker + whisper-cpp + MusicGen，均为 optional）。
+- ✅ Golden project recon：aura-noema 模板 render 成功（60s/1800frames/1920x1080/30fps）；lint 0.7.24 新增 2 个 `gsap_css_transform_conflict` error（loader-scanline / loader-strip），是 lint 规则升级暴露的模板旧债，非渲染阻断。
+- ✅ Hook classification 补 `validate`：0.7.24 命令面全覆盖（32 个命令全部显式分类，0 unknown fallback）。
+- ✅ Capability radar 更新：新增 music-to-video / talking-head-recut / slideshow / general-video；记录 20 个 0.7.24 observed skills。
 
 ### 当前关键证据
 
@@ -37,8 +41,8 @@
 feature commit: 60112be feat: align pipeline progress with non-template flow
 follow-up commit: 1391c32 fix: update template selection progress
 source targeted: 19 passed in 0.25s
-source full: 908 passed in 24.75s
-deployed full: 908 passed in 20.12s
+source full: 915 passed in 18.95s
+deployed full: 915 passed in 18.12s
 dogfood: python .hermes/dogfood/non_template_template_pipeline_smoke.py → all checks True
 md5 sync: on_post_tool_call.py + test_post_tool_gate_routing.py OK
 git diff --check: clean
@@ -51,6 +55,8 @@ strict secret scan: clean
 - `Script Lanes` 现在支持用户确认、导演自主决策、waiver 三种 green 证据；但没有真实确认/决策/豁免时仍应 yellow。
 - `Scene Continuity` 会 scaffold boundary proof 位，但不会自动 green；必须有真实 boundary_proofs 才算证据闭环。
 - HyperFrames Capability Alignment 是路由雷达，不是安装器；发现官方能力信号后要求记录 used/waived，不自动安装 latest 或 skills pack。
+- HyperFrames 0.7.24 判定 YELLOW：runtime 可用，但 doctor 缺 Docker/whisper-cpp/MusicGen（optional），catalog stderr 有 timeout skip，golden template 有 2 个 gsap_css_transform_conflict lint error（旧债）；不升生产窗口。
+- `validate` 命令必须走 requires_handoff 分类；0.7.24 之前 Framepack 漏分类，已修。
 - 非模板“创作小票”只在没有 `.framepack/template-selection.md` 时注入；模板项目继续走模板参数卡。
 - `asset-intake.md` / `template-selection.md` 的项目根解析已修：都回到 project root，不再误写到 `.framepack/.framepack/progress.md`。
 - 简化原则：没有新增 schema engine / 状态机 / 数据库；仍是 artifact evidence + existing gates。
@@ -59,9 +65,9 @@ strict secret scan: clean
 ### 下次要做什么
 
 1. 如果要发版：走 Framepack release/version bump 流程，把 Unreleased 成果整理进正式版本号、README、plugin.yaml、changelog 和部署包。
-2. 继续真实项目 dogfood：要求填写 `.framepack/hyperframes-capability-alignment.md` 的 used/waived，专门观察 Framepack 是否正确调用 website-to-video/capture/catalog/skills-pack，而不是重造轮子。
-3. 后续 recon：单独跑 HyperFrames 0.7.24 compatibility reconnaissance，再决定是否扩大 support window。
-4. 如需推远端：先确认是否要 push 当前 `main` ahead commits。
+2. HyperFrames 0.7.24 recon 已完成（YELLOW）；如需升生产窗口，需先修 golden template 的 gsap_css_transform_conflict lint debt。
+3. 继续真实项目 dogfood：要求填写 `.framepack/hyperframes-capability-alignment.md` 的 used/waived，专门观察 Framepack 是否正确调用 website-to-video/capture/catalog/skills-pack，而不是重造轮子。
+4. 如需推远端：先确认是否要 push 当前 `main` ahead 14 commits。
 
 ## 设计文档
 
