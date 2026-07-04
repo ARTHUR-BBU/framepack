@@ -170,6 +170,40 @@ def _pytest_failure_summary(stdout: str, stderr: str) -> str:
     return " | ".join(selected)[-800:]
 
 
+def _select_test_python() -> str:
+    """Find a Python executable that can import pytest.
+
+    Hermes CLI may run inside its own venv, and that venv intentionally may not
+    include dev/test dependencies. Smoke tests should use a project/system Python
+    with pytest rather than failing with "No module named pytest".
+    """
+    candidates: list[str] = []
+    env_python = os.environ.get("FRAMEPACK_TEST_PYTHON")
+    if env_python:
+        candidates.append(env_python)
+    path_python = shutil.which("python")
+    if path_python:
+        candidates.append(path_python)
+    candidates.append(sys.executable)
+
+    seen: set[str] = set()
+    for candidate in candidates:
+        if not candidate or candidate in seen:
+            continue
+        seen.add(candidate)
+        try:
+            probe = subprocess.run(
+                [candidate, "-c", "import pytest"],
+                capture_output=True, text=True, timeout=15,
+                encoding="utf-8", errors="replace",
+            )
+            if probe.returncode == 0:
+                return candidate
+        except Exception:
+            continue
+    return sys.executable
+
+
 def run_update(
     skip_smoke: bool = False,
     workbench: str | None = None,
@@ -218,8 +252,9 @@ def run_update(
     # Step 5: Smoke test
     if not skip_smoke and not report_only:
         try:
+            test_python = _select_test_python()
             result = subprocess.run(
-                [sys.executable, "-m", "pytest", str(_DEPLOYED_DIR / "tests"),
+                [test_python, "-m", "pytest", str(_DEPLOYED_DIR / "tests"),
                  "-q", "-o", "addopts=", "-x"],
                 capture_output=True, text=True, timeout=120,
                 encoding="utf-8", errors="replace",

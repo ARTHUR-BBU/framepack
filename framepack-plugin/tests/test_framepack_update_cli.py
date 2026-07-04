@@ -83,9 +83,28 @@ def test_smoke_failure_detail_includes_failure_summary(monkeypatch):
 
     monkeypatch.setattr(framepack_update.subprocess, "run", fake_run)
     monkeypatch.setattr(framepack_update, "_sync_files", lambda *args, **kwargs: ([], []))
+    monkeypatch.setattr(framepack_update, "_select_test_python", lambda: "python-with-pytest")
 
     report = framepack_update.run_update(skip_smoke=False, report_only=False)
     smoke = [s for s in report.steps if s.name == "smoke"][0]
 
     assert smoke.status == "error"
     assert "FAILED tests/test_example.py::test_bad" in smoke.detail
+
+
+def test_select_test_python_skips_python_without_pytest(monkeypatch):
+    """Smoke should not blindly use Hermes venv python when it lacks pytest."""
+    sys.path.insert(0, str(PLUGIN_ROOT / "scripts"))
+    import framepack_update
+
+    monkeypatch.setenv("FRAMEPACK_TEST_PYTHON", "bad-python")
+    monkeypatch.setattr(framepack_update.shutil, "which", lambda name: "good-python" if name == "python" else None)
+
+    def fake_run(cmd, **kwargs):
+        exe = cmd[0]
+        return Mock(returncode=0 if exe == "good-python" else 1, stdout="", stderr="No module named pytest")
+
+    monkeypatch.setattr(framepack_update.subprocess, "run", fake_run)
+    monkeypatch.setattr(framepack_update.sys, "executable", "hermes-venv-python")
+
+    assert framepack_update._select_test_python() == "good-python"
