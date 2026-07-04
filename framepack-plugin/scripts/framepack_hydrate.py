@@ -91,7 +91,7 @@ def run_hydrate(workbench: str, dry_run: bool = False) -> HydrateReport:
         files.append(HydrateFileResult(
             path=fs.path,
             action=action,
-            detail=f"detected_version={fs.detected_version}",
+            detail=f"detected_version={fs.detected_version}, current={fs.detected_version == payload.version}",
         ))
         key = action if action in counts else "error"
         counts[key] = counts.get(key, 0) + 1
@@ -127,7 +127,8 @@ def main() -> int:
             if rel.startswith(report.workbench):
                 rel = rel[len(report.workbench):].lstrip("\\/")
             marker = "✅" if f.action in ("updated", "inserted") else "—"
-            print(f"  {marker} {rel} → {f.action}")
+            version_tag = f" [{f.detail}]" if f.detail else ""
+            print(f"  {marker} {rel} → {f.action}{version_tag}")
         print()
         s = report.summary
         print(f"Summary: {s.get('updated', 0)} updated, {s.get('inserted', 0)} inserted, "
