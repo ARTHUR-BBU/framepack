@@ -55,33 +55,48 @@ def _register_cli_commands(ctx):
 
     plugin_root = _Path(__file__).resolve().parent
 
-    def _hydrate_handler(raw_args: str) -> str:
+    def _hydrate_handler(args) -> str:
         import subprocess
         script = plugin_root / "scripts" / "framepack_hydrate.py"
-        args = raw_args.strip().split() if raw_args else []
-        result = subprocess.run(
-            [_sys.executable, str(script)] + args,
-            capture_output=True, text=True, timeout=60,
-        )
+        cmd = [_sys.executable, str(script)]
+        if getattr(args, "dry_run", False):
+            cmd.append("--dry-run")
+        fmt = getattr(args, "format", "text")
+        if fmt:
+            cmd += ["--format", fmt]
+        workbench = getattr(args, "workbench", "")
+        if workbench:
+            cmd.append(workbench)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         return result.stdout or result.stderr
 
-    def _update_handler(raw_args: str) -> str:
+    def _update_handler(args) -> str:
         import subprocess
         script = plugin_root / "scripts" / "framepack_update.py"
-        args = raw_args.strip().split() if raw_args else []
-        result = subprocess.run(
-            [_sys.executable, str(script)] + args,
-            capture_output=True, text=True, timeout=300,
-        )
+        cmd = [_sys.executable, str(script)]
+        if getattr(args, "skip_smoke", False):
+            cmd.append("--skip-smoke")
+        workbench = getattr(args, "workbench", None)
+        if workbench:
+            cmd += ["--workbench", workbench]
+        if getattr(args, "report_only", False):
+            cmd.append("--report-only")
+        fmt = getattr(args, "format", "text")
+        if fmt:
+            cmd += ["--format", fmt]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
         return result.stdout or result.stderr
 
     try:
+        def _hydrate_setup(sub):
+            sub.add_argument("workbench", help="Path to workbench root")
+            sub.add_argument("--dry-run", action="store_true")
+            sub.add_argument("--format", choices=["text", "json"], default="text")
+
         ctx.register_cli_command(
             name="framepack-hydrate",
             help="Push latest Framepack guardrails to workbench AGENTS.md files",
-            setup_fn=lambda sub: sub.add_argument("workbench", help="Path to workbench root")
-                                 or sub.add_argument("--dry-run", action="store_true")
-                                 or sub.add_argument("--format", choices=["text", "json"], default="text"),
+            setup_fn=_hydrate_setup,
             handler_fn=_hydrate_handler,
             description="Sync guardrails.md to all AGENTS.md files in a workbench",
         )
@@ -90,13 +105,16 @@ def _register_cli_commands(ctx):
         logger.warning("Failed to register framepack-hydrate CLI: %s", e)
 
     try:
+        def _update_setup(sub):
+            sub.add_argument("--skip-smoke", action="store_true")
+            sub.add_argument("--workbench", default=None)
+            sub.add_argument("--report-only", action="store_true")
+            sub.add_argument("--format", choices=["text", "json"], default="text")
+
         ctx.register_cli_command(
             name="framepack-update",
             help="End-to-end Framepack upgrade (sync deployed + hydrate + smoke)",
-            setup_fn=lambda sub: sub.add_argument("--skip-smoke", action="store_true")
-                                 or sub.add_argument("--workbench", default=None)
-                                 or sub.add_argument("--report-only", action="store_true")
-                                 or sub.add_argument("--format", choices=["text", "json"], default="text"),
+            setup_fn=_update_setup,
             handler_fn=_update_handler,
             description="Upgrade deployed plugin from source, hydrate workbenches, run smoke",
         )
