@@ -113,6 +113,8 @@ def _register_cli_commands(ctx):
         output = result.stdout or result.stderr
         if output:
             print(output)
+        if result.returncode:
+            raise SystemExit(result.returncode)
 
     try:
         def _hydrate_setup(sub):

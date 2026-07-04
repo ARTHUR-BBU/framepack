@@ -160,7 +160,7 @@ Framepack 现在不只会“发现环境不对”，还会把安装/升级拆成
 Framepack 现在多了一张“安检小票”，不是新的 HTML 审判官：
 
 - `core/quality_audit.py` — 纯 Python 语义审计，检查 stale `.framepack/arsenal.json`、Execution Manifest 武器缺登记、Weapon Load Plan 是否缺失/未实现、HANDWRITE reason 是否被 MOC 明显武器反证（覆盖 21 件非 deprecated builtin 可执行武器；`transitions-pack` deprecated 不强制）、手动 `data-hf-id`、Manifest 参数与 HTML 函数实参漂移、card-cascade 未声明、外部 Google Fonts 运行时依赖、缺失本地字体资产、暗底低可见性风险等问题。
-- `references/weapon-matching-pass.md` — HTML 前强制备菜台：expanded-prompt/story script 完成后生成 `.framepack/weapon-load-plan.json|md`，官方 catalog/registry 遇墙必须先探测代理并重试，找不到武器也必须留下 HANDWRITE waiver 收据。
+- `references/weapon-matching-pass.md` — HTML 前强制备菜台：expanded-prompt/story script 完成后生成 `.framepack/weapon-load-plan.json|md`；写/patch/terminal 修改 `index.html` 前若无法生成计划则硬阻断。官方 catalog/registry 遇墙必须先探测代理并重试，找不到武器也必须留下 HANDWRITE waiver 收据。
 - v0.10.6 hardening：国内用户常开本地 VPN/代理，外部资源获取（catalog/registry/fonts）要先检测代理并带代理访问；但最终生产 HTML 应尽量 vendor 到项目本地（如 `assets/fonts/`），不要让 render/playback 依赖 live Google Fonts。
 - `scripts/framepack_quality_audit.py <project> --format json|markdown` — 机器/人工可读报告。
 - pre_tool_call 在 handoff-consuming HyperFrames 命令前，如果项目已有 `index.html`，会注入非阻断 Quality Audit summary。

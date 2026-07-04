@@ -32,7 +32,7 @@ from core.weapon_load_plan import load_weapon_load_plan
 from core.weapon_matcher import match_weapons_for_project
 
 
-WEAPON_MATCHING_HARD_GATE = False
+WEAPON_MATCHING_HARD_GATE = True
 
 
 def _invokes_hyperframes_command(command: str) -> bool:
@@ -292,9 +292,11 @@ def _ensure_weapon_plan_before_html(ctx, html_path: str) -> None:
             ctx,
             "⚔️ **Framepack Weapon Matching Pass could not run**\n"
             "- missing: `.hyperframes/expanded-prompt.md`\n"
-            "- HTML writing may continue only with explicit awareness that HANDWRITE waivers are not yet valid.",
+            "- HTML writing is blocked until the pass can run or a valid HANDWRITE waiver exists.",
             role="user",
         )
+        if WEAPON_MATCHING_HARD_GATE:
+            raise RuntimeError("Weapon Matching Pass blocked HTML write: missing .hyperframes/expanded-prompt.md")
         return
     try:
         plan = match_weapons_for_project(project_dir, prompt_path=prompt, write=True)
@@ -304,23 +306,38 @@ def _ensure_weapon_plan_before_html(ctx, html_path: str) -> None:
             ctx,
             "⚔️ **Framepack Weapon Matching Pass failed before HTML**\n"
             f"- error: {exc}\n"
-            "- Do not claim no weapons exist; fix the pass or record a waiver.",
+            "- HTML writing is blocked; do not claim no weapons exist. Fix the pass or record a waiver.",
             role="user",
         )
+        if WEAPON_MATCHING_HARD_GATE:
+            raise RuntimeError(f"Weapon Matching Pass blocked HTML write: {exc}") from exc
         return
     _safe_inject(ctx, _weapon_plan_summary(plan), role="user")
 
 
-def _pre_tool_html_path(tool_name: str, args: dict) -> str:
+def _pre_tool_html_paths(tool_name: str, args: dict) -> list[str]:
     if tool_name == "write_file":
-        return str(args.get("path", ""))
+        path = str(args.get("path", ""))
+        return [path] if path else []
     if tool_name == "patch":
         if args.get("mode", "replace") == "patch":
             patch_text = str(args.get("patch", ""))
-            match = re.search(r"^\*\*\* Update File:\s*(.+)$", patch_text, re.M)
-            return match.group(1).strip() if match else ""
-        return str(args.get("path", ""))
-    return ""
+            return [match.strip() for match in re.findall(r"^\*\*\* (?:Update|Add) File:\s*(.+)$", patch_text, re.M)]
+        path = str(args.get("path", ""))
+        return [path] if path else []
+    if tool_name == "terminal":
+        command = _strip_heredoc_bodies(str(args.get("command", "")))
+        if not re.search(r"(^|[\s>])index\.html(?:\s|$)", command):
+            return []
+        workdir = Path(str(args.get("workdir", "") or os.getcwd()))
+        return [str(workdir / "index.html")]
+    return []
+
+
+# Backward-compatible helper for older tests/callers.
+def _pre_tool_html_path(tool_name: str, args: dict) -> str:
+    paths = _pre_tool_html_paths(tool_name, args)
+    return paths[0] if paths else ""
 
 
 def register(ctx):
@@ -336,10 +353,12 @@ def register(ctx):
         if not args:
             return
 
-        html_path = _pre_tool_html_path(tool_name, args)
-        if html_path:
-            _ensure_weapon_plan_before_html(ctx, html_path)
-            return
+        html_paths = _pre_tool_html_paths(tool_name, args)
+        if html_paths:
+            for html_path in html_paths:
+                _ensure_weapon_plan_before_html(ctx, html_path)
+            if tool_name != "terminal":
+                return
 
         if tool_name != "terminal":
             return

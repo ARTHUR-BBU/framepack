@@ -63,7 +63,7 @@ The JSON is machine-readable; the markdown is the short human/Agent handoff.
 ## Enforcement
 
 - post `expanded-prompt.md` write: automatically writes the plan and injects compact load summary.
-- pre `index.html` write/patch: if the plan is missing, generates it from expanded-prompt or injects a warning if prompt is missing.
+- pre `index.html` write/patch/terminal edit: if the plan is missing, generates it from expanded-prompt. If expanded-prompt is missing or matching fails, the hook raises a hard gate error and blocks HTML authoring until the pass can run or a valid waiver exists.
 - quality audit: if plan selected a Framepack builtin but HTML does not call its canonical function, reports `weapon_load_plan_not_implemented`.
 
 ## HANDWRITE waiver

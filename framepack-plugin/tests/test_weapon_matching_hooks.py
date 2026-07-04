@@ -2,6 +2,8 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 import sys
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
@@ -54,12 +56,13 @@ The KPI number 120+ should count up with snap.
     assert "number-count-up" in injected
 
 
-def test_pre_html_write_warns_when_prompt_missing(tmp_path):
+def test_pre_html_write_blocks_when_prompt_missing(tmp_path):
     from hooks.on_pre_tool_call import _ensure_weapon_plan_before_html
 
     ctx = Mock()
 
-    _ensure_weapon_plan_before_html(ctx, str(tmp_path / "index.html"))
+    with pytest.raises(RuntimeError, match="Weapon Matching Pass"):
+        _ensure_weapon_plan_before_html(ctx, str(tmp_path / "index.html"))
 
     assert not (tmp_path / ".framepack" / "weapon-load-plan.json").exists()
     injected = "\n".join(call.args[0] for call in ctx.inject_message.call_args_list)
@@ -79,3 +82,37 @@ def test_pre_html_write_noops_when_plan_exists(tmp_path):
     _ensure_weapon_plan_before_html(ctx, str(tmp_path / "index.html"))
 
     ctx.inject_message.assert_not_called()
+
+
+def test_patch_path_detection_scans_all_update_files():
+    from hooks.on_pre_tool_call import _pre_tool_html_paths
+
+    paths = _pre_tool_html_paths(
+        "patch",
+        {
+            "mode": "patch",
+            "patch": """*** Begin Patch
+*** Update File: notes.md
+@@
+-old
++new
+*** Update File: subdir/index.html
+@@
+-old
++new
+*** End Patch""",
+        },
+    )
+
+    assert paths == ["notes.md", "subdir/index.html"]
+
+
+def test_terminal_index_html_detection_uses_workdir(tmp_path):
+    from hooks.on_pre_tool_call import _pre_tool_html_paths
+
+    paths = _pre_tool_html_paths(
+        "terminal",
+        {"command": "python build.py > index.html", "workdir": str(tmp_path)},
+    )
+
+    assert paths == [str(tmp_path / "index.html")]
