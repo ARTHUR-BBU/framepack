@@ -67,7 +67,8 @@ def _register_cli_commands(ctx):
         workbench = getattr(args, "workbench", "")
         if workbench:
             cmd.append(workbench)
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60,
+                                encoding="utf-8", errors="replace")
         return result.stdout or result.stderr
 
     def _update_handler(args) -> str:
@@ -84,7 +85,8 @@ def _register_cli_commands(ctx):
         fmt = getattr(args, "format", "text")
         if fmt:
             cmd += ["--format", fmt]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300,
+                                encoding="utf-8", errors="replace")
         return result.stdout or result.stderr
 
     try:
