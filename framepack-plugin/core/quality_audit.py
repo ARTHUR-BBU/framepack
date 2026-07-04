@@ -656,6 +656,130 @@ def _build_canonical_snippet(function_name: str, params: dict[str, object]) -> s
     return f"{function_name}({{\n{joined}\n}})"
 
 
+_HANDWRITE_GENERIC_REASON_RE = re.compile(
+    r"no\s+(?:exact\s+)?(?:builtin|weapon|match)|没有(?:现成|匹配)|无(?:现成|匹配)|找不到|not\s+matched",
+    re.I,
+)
+
+_HANDWRITE_WEAPON_RULES: tuple[dict[str, object], ...] = (
+    {
+        "weapon_id": "number-count-up",
+        "severity": "P1",
+        "signals": (r"\b\d+(?:\.\d+)?\s*(?:\+|%|x|k|m|万|亿)?\b", r"数字|number|count|计数|跳动|数据冲击|stat"),
+        "requires_any": (r"\b\d", r"数字|number|count|计数|120\+"),
+    },
+    {
+        "weapon_id": "data-chart-editorial",
+        "severity": "P1",
+        "signals": (r"图表|chart|折线|柱状|数据点|market|市场|SVG\s*path|dashoffset|stroke-dashoffset"),
+        "requires_any": (r"图表|chart|dashoffset|stroke-dashoffset|折线|柱状|数据点"),
+    },
+    {
+        "weapon_id": "caption-clip-wipe",
+        "severity": "P1",
+        "signals": (r"擦出|擦除|wipe|clip[-\s]?wipe|left\s*to\s*right|从左到右"),
+        "requires_any": (r"擦出|擦除|wipe|clip"),
+    },
+    {
+        "weapon_id": "text-split-enter",
+        "severity": "P1",
+        "signals": (r"标题|title|文字|text|大字|东方之润", r"进场|enter|reveal|入场|tl\.from|opacity\s*\+\s*y|opacity\s*y"),
+        "requires_any": (r"标题|title|文字|text|大字",),
+    },
+)
+
+
+def _scene_aliases(scene: str) -> list[str]:
+    aliases = [scene]
+    match = re.search(r"(\d+)", scene)
+    if match:
+        num = match.group(1)
+        aliases.extend([f"scene {num}", f"scene_{num}", f"s{num}", f"S{num}", f"场景 {num}", f"场景{num}"])
+    return aliases
+
+
+def _scene_context(expanded_prompt: str, scene: str | None) -> str:
+    if not scene:
+        return expanded_prompt
+    aliases = _scene_aliases(scene)
+    heading = re.compile(r"^#{1,4}\s+.*(?:" + "|".join(re.escape(a) for a in aliases) + r").*$", re.I | re.M)
+    match = heading.search(expanded_prompt)
+    if not match:
+        return expanded_prompt
+    rest = expanded_prompt[match.start():]
+    first_newline = rest.find("\n")
+    if first_newline == -1:
+        return rest
+    next_heading = re.search(r"^#{1,4}\s+", rest[first_newline + 1:], re.M)
+    return rest[: first_newline + 1 + next_heading.start()] if next_heading else rest
+
+
+def _generic_handwrite_reason(reason: str | None) -> bool:
+    if not reason:
+        return True
+    return bool(_HANDWRITE_GENERIC_REASON_RE.search(reason))
+
+
+def _as_patterns(value: object) -> tuple[str, ...]:
+    if isinstance(value, str):
+        return (value,)
+    return tuple(str(item) for item in value)  # type: ignore[arg-type]
+
+
+def _match_handwrite_weapon(context: str) -> tuple[str, str, list[str]] | None:
+    hits: list[tuple[str, str, list[str]]] = []
+    for rule in _HANDWRITE_WEAPON_RULES:
+        signal_patterns = _as_patterns(rule["signals"])
+        required_patterns = _as_patterns(rule["requires_any"])
+        signals = [pattern for pattern in signal_patterns if re.search(pattern, context, re.I)]
+        required = any(re.search(pattern, context, re.I) for pattern in required_patterns)
+        if rule["weapon_id"] == "number-count-up":
+            required = bool(re.search(r"\b\d", context)) and bool(
+                re.search(r"数字|number|count|计数|跳动|数据冲击|120\+", context, re.I)
+            )
+        if required and signals:
+            hits.append((str(rule["weapon_id"]), str(rule["severity"]), signals))
+    if not hits:
+        return None
+    # Prefer the most specific/high-signal match.
+    return max(hits, key=lambda item: len(item[2]))
+
+
+def _audit_handwrite_truthfulness(project_dir: Path, expanded_prompt: str, manifest: list[ManifestWeapon]) -> list[QualityIssue]:
+    """Flag HANDWRITE waivers whose reason is contradicted by obvious MOC matches."""
+    issues: list[QualityIssue] = []
+    prompt_path = project_dir / ".hyperframes" / "expanded-prompt.md"
+    for ref in manifest:
+        if not (ref.handwrite or ref.id == "HANDWRITE"):
+            continue
+        if not _generic_handwrite_reason(ref.reason):
+            continue
+        scene = ref.used_by[0] if ref.used_by else None
+        context = _scene_context(expanded_prompt, scene)
+        match = _match_handwrite_weapon(context)
+        if not match:
+            continue
+        weapon_id, severity, signals = match
+        issues.append(
+            QualityIssue(
+                "handwrite_weapon_mismatch",
+                severity,
+                f"HANDWRITE reason says {ref.reason!r}, but the scene text clearly matches MOC weapon {weapon_id!r}; HANDWRITE is a last resort, not a shortcut around the arsenal.",
+                str(prompt_path),
+                scene=scene,
+                weapon_id=weapon_id,
+                details={
+                    "category": "handwrite_truthfulness",
+                    "handwrite_reason": ref.reason,
+                    "matched_weapon": weapon_id,
+                    "signals": signals,
+                    "recommendation": f"Replace HANDWRITE with {weapon_id} in the Execution Manifest, or write a specific waiver explaining why this weapon cannot be used.",
+                },
+            )
+        )
+    return issues
+
+
 def _audit_parameter_drift(project_dir: Path, html: str, manifest: list[ManifestWeapon]) -> list[QualityIssue]:
     issues: list[QualityIssue] = []
     html_path = project_dir / "index.html"
@@ -943,6 +1067,7 @@ def audit_project(project_dir: str | Path) -> QualityAuditReport:
     issues.extend(_audit_arsenal(project_dir, arsenal, manifest, duration))
     issues.extend(_audit_html_guardrails(project_dir, html, manifest))
     issues.extend(_audit_execution_contract(project_dir, html, manifest))
+    issues.extend(_audit_handwrite_truthfulness(project_dir, expanded_prompt, manifest))
     issues.extend(_audit_parameter_drift(project_dir, html, manifest))
     issues.extend(_audit_font_dependencies(project_dir, html))
     issues.extend(_audit_visibility(project_dir, frame_md, html))
