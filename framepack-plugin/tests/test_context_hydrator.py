@@ -24,7 +24,7 @@ def _make_plugin_dir(tmp_path: Path) -> Path:
     plugin = tmp_path / "_plugin"
     plugin.mkdir()
     (plugin / "plugin.yaml").write_text(
-        'name: framepack\nversion: "0.17.0"\n', encoding="utf-8"
+        'name: framepack\nversion: "0.18.0"\n', encoding="utf-8"
     )
     (plugin / "guardrails.md").write_text(
         "# Guardrails\n\n- rule one\n- rule two\n", encoding="utf-8"
@@ -226,7 +226,7 @@ class TestHydrateContext:
         assert result.action == "created"
         content = root_agents.read_text(encoding="utf-8")
         assert "FRAMEPACK MANAGED BLOCK" in content
-        assert "0.17.0" in content
+        assert "0.18.0" in content
 
     def test_ensure_workbench_root_agents_noops_when_current(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)
@@ -270,7 +270,7 @@ class TestHydrateContext:
         assert result is not None
         assert result.changed is True
         assert result.action == "updated"
-        assert "version=0.17.0" in content
+        assert "version=0.18.0" in content
         assert "version=0.14.0" not in content
         assert "# User rules before" in content
         assert "Keep this paragraph." in content
@@ -287,7 +287,7 @@ class TestHydrateContext:
         # After hydration, managed block should be present
         agents = (wb / "AGENTS.md").read_text(encoding="utf-8")
         assert "FRAMEPACK MANAGED BLOCK" in agents
-        assert "0.17.0" in agents
+        assert "0.18.0" in agents
         # Original content preserved
         assert "# Old rules" in agents
 
@@ -299,7 +299,7 @@ class TestHydrateContext:
         sync_md = wb / ".framepack" / "context-sync.md"
         assert sync_md.is_file()
         content = sync_md.read_text(encoding="utf-8")
-        assert "version: 0.17.0" in content
+        assert "version: 0.18.0" in content
 
     def test_context_sync_current_after_hydrate(self, tmp_path):
         plugin = _make_plugin_dir(tmp_path)
@@ -384,7 +384,7 @@ class TestStaleBodyDetection:
         assert "This is my test bench" in content
         # Managed block should survive
         assert "FRAMEPACK MANAGED BLOCK" in content
-        assert "0.17.0" in content
+        assert "0.18.0" in content
 
 
 # ---------------------------------------------------------------------------

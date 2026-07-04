@@ -20,7 +20,7 @@ if str(PLUGIN_ROOT) not in sys.path:
 from core.skill_overlay_manager import SkillOverlay
 from core.skill_overlay_planner import run_skill_overlay_plan
 
-FRAMEPACK_VERSION = "0.17.0"
+FRAMEPACK_VERSION = "0.18.0"
 
 
 def built_in_overlays() -> list[SkillOverlay]:
