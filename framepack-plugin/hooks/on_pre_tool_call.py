@@ -28,6 +28,11 @@ from core.pre_render_audit import audit_pre_render, build_pre_render_audit_messa
 from core.timeline_manifest import parse_hyperframes_time_windows, sync_timeline_from_project
 from core.render_readiness import build_readiness_board, render_board_summary, render_board_markdown, GateStatus
 from core.context_hydrator import ensure_workbench_root_agents
+from core.weapon_load_plan import load_weapon_load_plan
+from core.weapon_matcher import match_weapons_for_project
+
+
+WEAPON_MATCHING_HARD_GATE = False
 
 
 def _invokes_hyperframes_command(command: str) -> bool:
@@ -247,6 +252,77 @@ def _remind_lint_json_if_needed(ctx, command: str) -> None:
     _safe_inject(ctx, message, role="user")
 
 
+def _is_index_html_path(path: str) -> bool:
+    return bool(path) and Path(path).name == "index.html"
+
+
+def _project_dir_for_html_path(path: str) -> Path:
+    html_path = Path(path)
+    if not html_path.is_absolute():
+        html_path = Path(os.getcwd()) / html_path
+    return html_path.parent
+
+
+def _weapon_plan_summary(plan) -> str:
+    selected = [scene.selected for scene in plan.scenes if scene.selected]
+    waivers = [scene.scene for scene in plan.scenes if scene.handwrite]
+    lines = [
+        "⚔️ **Framepack Weapon Matching Pass — required before HTML**",
+        "",
+        f"- matched scenes: {len(selected)}",
+        f"- HANDWRITE waivers: {len(waivers)}",
+    ]
+    if selected:
+        lines.append(f"- selected weapons/skills: {', '.join(selected[:8])}")
+    lines.append("- receipt: `.framepack/weapon-load-plan.json`")
+    lines.append("")
+    lines.append("Load the listed resources before writing animation code. No bare GSAP comfort path unless the receipt has a waiver.")
+    return "\n".join(lines)
+
+
+def _ensure_weapon_plan_before_html(ctx, html_path: str) -> None:
+    if not _is_index_html_path(html_path):
+        return
+    project_dir = _project_dir_for_html_path(html_path)
+    if load_weapon_load_plan(project_dir) is not None:
+        return
+    prompt = project_dir / ".hyperframes" / "expanded-prompt.md"
+    if not prompt.is_file():
+        _safe_inject(
+            ctx,
+            "⚔️ **Framepack Weapon Matching Pass could not run**\n"
+            "- missing: `.hyperframes/expanded-prompt.md`\n"
+            "- HTML writing may continue only with explicit awareness that HANDWRITE waivers are not yet valid.",
+            role="user",
+        )
+        return
+    try:
+        plan = match_weapons_for_project(project_dir, prompt_path=prompt, write=True)
+    except Exception as exc:
+        logger.warning("pre-html Weapon Matching Pass failed: %s", exc)
+        _safe_inject(
+            ctx,
+            "⚔️ **Framepack Weapon Matching Pass failed before HTML**\n"
+            f"- error: {exc}\n"
+            "- Do not claim no weapons exist; fix the pass or record a waiver.",
+            role="user",
+        )
+        return
+    _safe_inject(ctx, _weapon_plan_summary(plan), role="user")
+
+
+def _pre_tool_html_path(tool_name: str, args: dict) -> str:
+    if tool_name == "write_file":
+        return str(args.get("path", ""))
+    if tool_name == "patch":
+        if args.get("mode", "replace") == "patch":
+            patch_text = str(args.get("patch", ""))
+            match = re.search(r"^\*\*\* Update File:\s*(.+)$", patch_text, re.M)
+            return match.group(1).strip() if match else ""
+        return str(args.get("path", ""))
+    return ""
+
+
 def register(ctx):
     """Register the pre_tool_call hook for handoff readiness."""
 
@@ -257,9 +333,15 @@ def register(ctx):
         session_id: str = "",
         **kwargs,
     ):
-        if tool_name != "terminal":
-            return
         if not args:
+            return
+
+        html_path = _pre_tool_html_path(tool_name, args)
+        if html_path:
+            _ensure_weapon_plan_before_html(ctx, html_path)
+            return
+
+        if tool_name != "terminal":
             return
 
         command = args.get("command", "")

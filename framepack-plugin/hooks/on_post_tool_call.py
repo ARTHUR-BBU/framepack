@@ -496,6 +496,46 @@ def _build_arsenal_warning_message(warnings) -> str:
     return "\n".join(lines)
 
 
+def _build_weapon_load_summary(plan) -> str:
+    matched = [scene for scene in plan.scenes if not scene.handwrite]
+    waivers = [scene for scene in plan.scenes if scene.handwrite]
+    lines = [
+        "⚔️ **Framepack Weapon Matching Pass — HTML 前备菜台**",
+        "",
+        f"- scenes: {len(plan.scenes)}",
+        f"- matched: {len(matched)}",
+        f"- HANDWRITE waivers: {len(waivers)}",
+        "",
+        "Before writing HTML, load these exact resources:",
+    ]
+    for load in plan.required_skill_loads[:10]:
+        suffix = f" / `{load.file_path}`" if load.file_path else ""
+        lines.append(f"- `{load.name}`{suffix} — {load.reason}")
+    if len(plan.required_skill_loads) > 10:
+        lines.append(f"- … {len(plan.required_skill_loads) - 10} more loads in `.framepack/weapon-load-plan.md`")
+    if waivers:
+        lines.append("")
+        lines.append("HANDWRITE is allowed only for waiver scenes recorded in `.framepack/weapon-load-plan.json`.")
+    return "\n".join(lines)
+
+
+def _run_weapon_matching_pass(ctx, project_dir: str | Path, prompt_path: str | Path | None = None) -> None:
+    try:
+        from core.weapon_matcher import match_weapons_for_project
+        plan = match_weapons_for_project(project_dir, prompt_path=prompt_path, write=True)
+    except Exception as exc:
+        logger.warning("Weapon Matching Pass failed: %s", exc)
+        _safe_inject(
+            ctx,
+            "⚔️ **Framepack Weapon Matching Pass could not run**\n"
+            f"- error: {exc}\n"
+            "- Do not claim there are no weapons; fix the pass or record a HANDWRITE waiver.",
+            role="user",
+        )
+        return
+    _safe_inject(ctx, _build_weapon_load_summary(plan), role="user")
+
+
 def _sync_arsenal_for_expanded_prompt(ctx, file_path: str, content: str) -> None:
     project_dir = Path(_project_dir_for_framepack_file(file_path))
     try:
@@ -810,6 +850,7 @@ def _handle_expanded_prompt(ctx, file_path: str) -> None:
         return
 
     _sync_arsenal_for_expanded_prompt(ctx, file_path, content)
+    _run_weapon_matching_pass(ctx, _project_dir_for_framepack_file(file_path), prompt_path=file_path)
 
     # Inject parameter reference card from Execution Manifest
     _inject_param_card_if_manifest(ctx, file_path)

@@ -644,6 +644,59 @@ def _audit_execution_contract(project_dir: Path, html: str, manifest: list[Manif
             )
     return issues
 
+
+def _audit_weapon_load_plan(project_dir: Path, html: str, expanded_prompt: str) -> list[QualityIssue]:
+    """Validate the mandatory pre-HTML Weapon Load Plan against index.html."""
+    issues: list[QualityIssue] = []
+    html_path = project_dir / "index.html"
+    try:
+        from .weapon_load_plan import load_weapon_load_plan
+    except Exception:  # pragma: no cover - defensive import guard
+        return issues
+
+    plan = load_weapon_load_plan(project_dir)
+    if plan is None:
+        if html.strip() and expanded_prompt.strip():
+            issues.append(
+                QualityIssue(
+                    "weapon_load_plan_missing",
+                    "P2",
+                    "index.html exists but .framepack/weapon-load-plan.json is missing; run the mandatory Weapon Matching Pass before HTML authoring so weapon/catalog/skill matching is auditable.",
+                    str(project_dir / ".framepack" / "weapon-load-plan.json"),
+                    details={"category": "weapon_load_plan"},
+                )
+            )
+        return issues
+
+    for scene in plan.scenes:
+        if scene.handwrite or not scene.selected:
+            continue
+        selected = next((match for match in scene.matches if match.id == scene.selected), None)
+        if selected is None or selected.source != "framepack_builtin":
+            continue
+        function_name = _canonical_function_name(selected.id)
+        if not function_name:
+            continue
+        if not _has_canonical_function_call(html, function_name):
+            issues.append(
+                QualityIssue(
+                    "weapon_load_plan_not_implemented",
+                    "P0",
+                    f"⛔ BLOCKING: Weapon Load Plan selected {selected.id!r} for {scene.scene}, but index.html does not call canonical function {function_name}(). Load the listed weapon resource before writing HTML, or change the plan to a HANDWRITE waiver.",
+                    str(html_path),
+                    scene=scene.scene,
+                    weapon_id=selected.id,
+                    details={
+                        "category": "weapon_load_plan",
+                        "function": function_name,
+                        "reuse_mode": selected.reuse_mode,
+                        "load": selected.load,
+                    },
+                )
+            )
+    return issues
+
+
 def _build_canonical_snippet(function_name: str, params: dict[str, object]) -> str:
     """Build a canonical code snippet showing correct parameter usage."""
     param_lines = []
@@ -1186,6 +1239,7 @@ def audit_project(project_dir: str | Path) -> QualityAuditReport:
     issues.extend(_audit_arsenal(project_dir, arsenal, manifest, duration))
     issues.extend(_audit_html_guardrails(project_dir, html, manifest))
     issues.extend(_audit_execution_contract(project_dir, html, manifest))
+    issues.extend(_audit_weapon_load_plan(project_dir, html, expanded_prompt))
     issues.extend(_audit_handwrite_truthfulness(project_dir, expanded_prompt, manifest))
     issues.extend(_audit_parameter_drift(project_dir, html, manifest))
     issues.extend(_audit_font_dependencies(project_dir, html))

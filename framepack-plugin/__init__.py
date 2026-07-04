@@ -93,6 +93,27 @@ def _register_cli_commands(ctx):
         if output:
             print(output)
 
+    def _match_weapons_handler(args) -> None:
+        import subprocess
+        script = plugin_root / "scripts" / "framepack_match_weapons.py"
+        cmd = [_sys.executable, str(script)]
+        project = getattr(args, "project", "")
+        if project:
+            cmd.append(project)
+        prompt = getattr(args, "prompt", None)
+        if prompt:
+            cmd += ["--prompt", prompt]
+        if getattr(args, "dry_run", False):
+            cmd.append("--dry-run")
+        fmt = getattr(args, "format", "text")
+        if fmt:
+            cmd += ["--format", fmt]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
+                                encoding="utf-8", errors="replace")
+        output = result.stdout or result.stderr
+        if output:
+            print(output)
+
     try:
         def _hydrate_setup(sub):
             sub.add_argument("workbench", help="Path to workbench root")
@@ -127,6 +148,24 @@ def _register_cli_commands(ctx):
         logger.info("Registered CLI command: framepack-update")
     except Exception as e:
         logger.warning("Failed to register framepack-update CLI: %s", e)
+
+    try:
+        def _match_weapons_setup(sub):
+            sub.add_argument("project", help="Project directory")
+            sub.add_argument("--prompt", default=None)
+            sub.add_argument("--dry-run", action="store_true")
+            sub.add_argument("--format", choices=["text", "json", "markdown"], default="text")
+
+        ctx.register_cli_command(
+            name="framepack-match-weapons",
+            help="Run mandatory Weapon Matching Pass before HTML authoring",
+            setup_fn=_match_weapons_setup,
+            handler_fn=_match_weapons_handler,
+            description="Match expanded-prompt scenes to HyperFrames/Framepack weapons and write .framepack/weapon-load-plan.*",
+        )
+        logger.info("Registered CLI command: framepack-match-weapons")
+    except Exception as e:
+        logger.warning("Failed to register framepack-match-weapons CLI: %s", e)
 
 
 def _register_skills(ctx):
