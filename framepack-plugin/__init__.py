@@ -55,7 +55,7 @@ def _register_cli_commands(ctx):
 
     plugin_root = _Path(__file__).resolve().parent
 
-    def _hydrate_handler(args) -> str:
+    def _hydrate_handler(args) -> None:
         import subprocess
         script = plugin_root / "scripts" / "framepack_hydrate.py"
         cmd = [_sys.executable, str(script)]
@@ -69,9 +69,11 @@ def _register_cli_commands(ctx):
             cmd.append(workbench)
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60,
                                 encoding="utf-8", errors="replace")
-        return result.stdout or result.stderr
+        output = result.stdout or result.stderr
+        if output:
+            print(output)
 
-    def _update_handler(args) -> str:
+    def _update_handler(args) -> None:
         import subprocess
         script = plugin_root / "scripts" / "framepack_update.py"
         cmd = [_sys.executable, str(script)]
@@ -87,7 +89,9 @@ def _register_cli_commands(ctx):
             cmd += ["--format", fmt]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=300,
                                 encoding="utf-8", errors="replace")
-        return result.stdout or result.stderr
+        output = result.stdout or result.stderr
+        if output:
+            print(output)
 
     try:
         def _hydrate_setup(sub):
