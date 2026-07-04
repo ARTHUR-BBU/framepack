@@ -116,3 +116,30 @@ def test_terminal_index_html_detection_uses_workdir(tmp_path):
     )
 
     assert paths == [str(tmp_path / "index.html")]
+
+
+def test_terminal_index_html_detection_covers_common_shell_forms(tmp_path):
+    """Reviewer blocker: quoted, ./, subdir/, and cd-prefixed forms must not bypass the gate."""
+    from hooks.on_pre_tool_call import _pre_tool_html_paths
+
+    cases = [
+        ('python build.py > "index.html"', str(tmp_path / "index.html")),
+        ("python build.py > ./index.html", str(tmp_path / "index.html")),
+        ("python build.py > subdir/index.html", str(tmp_path / "subdir" / "index.html")),
+        ("cd sub && python build.py > index.html", str(tmp_path / "sub" / "index.html")),
+    ]
+    for command, expected in cases:
+        paths = _pre_tool_html_paths("terminal", {"command": command, "workdir": str(tmp_path)})
+        assert expected in paths, f"missed form: {command!r} -> expected {expected}, got {paths}"
+
+
+def test_terminal_index_html_detection_no_false_positive_on_comments(tmp_path):
+    from hooks.on_pre_tool_call import _pre_tool_html_paths
+
+    # 'index.html' inside a comment or string literal that isn't a redirect target should not fire
+    paths = _pre_tool_html_paths(
+        "terminal",
+        {"command": "# touch index.html later\necho done", "workdir": str(tmp_path)},
+    )
+
+    assert paths == []

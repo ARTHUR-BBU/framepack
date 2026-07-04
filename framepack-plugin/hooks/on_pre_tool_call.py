@@ -327,11 +327,58 @@ def _pre_tool_html_paths(tool_name: str, args: dict) -> list[str]:
         return [path] if path else []
     if tool_name == "terminal":
         command = _strip_heredoc_bodies(str(args.get("command", "")))
-        if not re.search(r"(^|[\s>])index\.html(?:\s|$)", command):
-            return []
-        workdir = Path(str(args.get("workdir", "") or os.getcwd()))
-        return [str(workdir / "index.html")]
+        base_workdir = str(args.get("workdir", "") or os.getcwd())
+        # Resolve shell-level `cd sub && ...` so we gate the real project, not the tool workdir.
+        effective_workdir = _resolve_effective_workdir(command, base_workdir)
+        return _extract_index_html_redirects(command, effective_workdir)
     return []
+
+
+# Matches a redirect target that ends in index.html, supporting:
+#   > index.html, >> "index.html", > ./index.html, > subdir/index.html, | tee index.html
+_REDIRECT_INDEX_RE = re.compile(
+    r"""
+    (?:>>|>)\s*            # redirect operator
+    (?P<path>[^\s;|&>]+)   # target token (until whitespace or shell separator)
+    |                       #  -- or --
+    tee\s+                  # `tee` command
+    (?P<tee_path>[^\s;|&>]+)
+    """,
+    re.VERBOSE,
+)
+
+
+def _extract_index_html_redirects(command: str, workdir: str) -> list[str]:
+    """Extract index.html write targets from shell redirects, ignoring comments/literals.
+
+    A bare mention of `index.html` in a comment or non-redirect context must NOT fire,
+    so we only look at tokens that follow a redirect operator (>, >>) or `tee`.
+    """
+    base = Path(workdir or os.getcwd())
+    hits: list[str] = []
+    for line in command.splitlines():
+        # Strip full-line comments (shell `# ...`). Inline comments after `;` are rare for redirects.
+        stripped = line.lstrip()
+        if stripped.startswith("#"):
+            continue
+        for match in _REDIRECT_INDEX_RE.finditer(line):
+            raw = match.group("path") or match.group("tee_path") or ""
+            if not raw:
+                continue
+            cleaned = raw.strip().strip("\"'`")
+            if not cleaned.lower().endswith("index.html"):
+                continue
+            # Normalize ./ and relative subdir against the (possibly cd-resolved) workdir.
+            normalized = cleaned if Path(cleaned).is_absolute() else str((base / cleaned).resolve())
+            hits.append(normalized)
+    # De-duplicate while preserving order.
+    seen: set[str] = set()
+    unique: list[str] = []
+    for path in hits:
+        if path not in seen:
+            seen.add(path)
+            unique.append(path)
+    return unique
 
 
 # Backward-compatible helper for older tests/callers.
