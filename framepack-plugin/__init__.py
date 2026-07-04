@@ -28,7 +28,7 @@ def _ensure_plugin_root_on_path() -> None:
 def register(ctx):
     """Plugin entry point. Called once at Hermes startup."""
     _ensure_plugin_root_on_path()
-    logger.info("Framepack v0.16.0 Plugin registering")
+    logger.info("Framepack v0.17.0 Plugin registering")
 
     # Register skills (knowledge layer)
     _register_skills(ctx)
@@ -41,6 +41,68 @@ def register(ctx):
     # pre_tool_call: intercept index.html writes BEFORE they land
     from .hooks.on_pre_tool_call import register as register_pre_hook
     register_pre_hook(ctx)
+
+    # Register CLI commands (infrastructure layer)
+    _register_cli_commands(ctx)
+
+
+def _register_cli_commands(ctx):
+    """Register Framepack CLI subcommands for Hermes."""
+    import argparse
+    import json as _json
+    import sys as _sys
+    from pathlib import Path as _Path
+
+    plugin_root = _Path(__file__).resolve().parent
+
+    def _hydrate_handler(raw_args: str) -> str:
+        import subprocess
+        script = plugin_root / "scripts" / "framepack_hydrate.py"
+        args = raw_args.strip().split() if raw_args else []
+        result = subprocess.run(
+            [_sys.executable, str(script)] + args,
+            capture_output=True, text=True, timeout=60,
+        )
+        return result.stdout or result.stderr
+
+    def _update_handler(raw_args: str) -> str:
+        import subprocess
+        script = plugin_root / "scripts" / "framepack_update.py"
+        args = raw_args.strip().split() if raw_args else []
+        result = subprocess.run(
+            [_sys.executable, str(script)] + args,
+            capture_output=True, text=True, timeout=300,
+        )
+        return result.stdout or result.stderr
+
+    try:
+        ctx.register_cli_command(
+            name="framepack-hydrate",
+            help="Push latest Framepack guardrails to workbench AGENTS.md files",
+            setup_fn=lambda sub: sub.add_argument("workbench", help="Path to workbench root")
+                                 or sub.add_argument("--dry-run", action="store_true")
+                                 or sub.add_argument("--format", choices=["text", "json"], default="text"),
+            handler_fn=_hydrate_handler,
+            description="Sync guardrails.md to all AGENTS.md files in a workbench",
+        )
+        logger.info("Registered CLI command: framepack-hydrate")
+    except Exception as e:
+        logger.warning("Failed to register framepack-hydrate CLI: %s", e)
+
+    try:
+        ctx.register_cli_command(
+            name="framepack-update",
+            help="End-to-end Framepack upgrade (sync deployed + hydrate + smoke)",
+            setup_fn=lambda sub: sub.add_argument("--skip-smoke", action="store_true")
+                                 or sub.add_argument("--workbench", default=None)
+                                 or sub.add_argument("--report-only", action="store_true")
+                                 or sub.add_argument("--format", choices=["text", "json"], default="text"),
+            handler_fn=_update_handler,
+            description="Upgrade deployed plugin from source, hydrate workbenches, run smoke",
+        )
+        logger.info("Registered CLI command: framepack-update")
+    except Exception as e:
+        logger.warning("Failed to register framepack-update CLI: %s", e)
 
 
 def _register_skills(ctx):

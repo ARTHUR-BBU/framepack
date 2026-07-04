@@ -1,4 +1,4 @@
-"""Framepack v0.16.0 — Prompt Factory hooks.
+"""Framepack v0.17.0 — Prompt Factory hooks.
 
 Framepack is the director's creative engine. It produces two deliverables:
   1. frame.md — visual identity (HyperFrames Step 1 input)
@@ -23,6 +23,7 @@ from core.arsenal_registry import sync_arsenal_from_project, ArsenalWarning
 from core.control_profile import ControlProfile
 from core.restraint_audit import audit_weight_consistency
 from core.shell_utils import resolve_effective_workdir
+from core.workflow_overlay import is_workflow_skill, inject_overlay
 from core.context_hydrator import ensure_workbench_root_agents
 from core.gates.control_profile import check_control_profile_consistency
 from core.gates.scene_continuity import check_scene_continuity
@@ -658,6 +659,8 @@ def register(ctx):
                 project_dir = os.getcwd()
                 hydrate_guardrails(ctx, project_dir=project_dir, reason=f"skill_view:{skill_name}")
                 _ensure_workbench_root_context(ctx, project_dir, reason=f"skill_view:{skill_name}")
+            if is_workflow_skill(skill_name):
+                inject_overlay(ctx, skill_name, project_dir=os.getcwd())
             return
 
         # ── Lint cache bridge: detect terminal lint commands ──
@@ -691,7 +694,7 @@ def register(ctx):
             _run_pipeline_gates_and_update(ctx, project_dir, [])
 
     ctx.register_hook("post_tool_call", on_post_tool_call)
-    logger.info("Framepack v0.16.0 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration + lint cache bridge)")
+    logger.info("Framepack v0.17.0 post_tool_call hook registered (frame.md + expanded-prompt + asset-intake + guardrail hydration + lint cache bridge)")
 
 
 # ── Param Card Injection ──

@@ -1,7 +1,7 @@
 # Framepack
 
-> **HyperFrames 0.7.3 Director Workbench.**
-> Framepack turns fuzzy video intent into a director-approved HyperFrames workflow: route the job, ask for assets, write the creative bible, hand off cleanly, then taste-audit before render.
+> **HyperFrames Director Workbench.**
+> Framepack v0.17.0 turns fuzzy video intent into a director-approved HyperFrames workflow: route the job, ask for assets, write the creative bible, hand off cleanly, then taste-audit before render.
 
 Framepack is a Hermes Agent Plugin for HyperFrames 0.7.3. The new boundary is clear:
 
@@ -102,7 +102,7 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` enabled with version **0.16.0**.
+# You should see `framepack` enabled with version **0.17.0**.
 ```
 
 ## Compatibility

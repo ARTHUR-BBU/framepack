@@ -1,7 +1,7 @@
 ---
 name: framepack
-description: "Framepack v0.16.0 — HyperFrames 0.7.21 Director Workbench. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens), Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
-version: 0.16.0
+description: "Framepack v0.17.0 — HyperFrames 0.7.21 Director Workbench. Turns fuzzy video ideas into frame.md (visual identity) and expanded-prompt.md (creative breakdown with Time Windows + Execution Manifest + Structure Checklist), then HyperFrames takes over. Includes Kinetic Taste Engine (taste audit, surprise operators, kinetic grammar, taste specimens), Guardrail Hydrator, Arsenal Registry Runtime, HyperFrames Compatibility Adapter, Environment & Upgrade Manager, Production Quality Layer, Replica Mode render-integrity rules, and test-team hardening."
+version: 0.17.0
 author: 老田 + Hermes
 license: MIT
 platforms: [linux, macos, windows]
@@ -11,7 +11,7 @@ metadata:
     related_skills: [hyperframes, hyperframes-cli, gsap]
 ---
 
-# Framepack v0.16.0 — HyperFrames 0.7.21 Director Workbench
+# Framepack v0.17.0 — HyperFrames 0.7.21 Director Workbench
 
 Framepack is a Hermes Agent Plugin that translates fuzzy video intent into
 precise creative briefs HyperFrames can render. It does two things and hands off.
@@ -39,7 +39,7 @@ HyperFrames 工具链接管
 **Framepack 的边界：到 expanded-prompt.md 为止。**
 之后的 HTML 编写、结构验证、渲染，全部交给 HyperFrames。
 
-## v0.16.0: Director Workbench for HyperFrames 0.7.21
+## v0.17.0: Director Workbench for HyperFrames 0.7.21
 
 HyperFrames 0.7 已经长出自己的 `/hyperframes` workflow 入口、Studio preview、
 catalog、variables、media tools 和 cloud/render surface。Framepack 不再只是

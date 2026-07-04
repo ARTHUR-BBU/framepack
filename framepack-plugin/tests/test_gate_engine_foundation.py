@@ -86,12 +86,15 @@ def test_hyperframes_capability_alignment_warns_when_url_source_lacks_decision(t
 def test_hyperframes_capability_alignment_green_with_used_or_waived_decision(tmp_path: Path):
     fp = _fp(tmp_path)
     fp.joinpath("asset-intake.md").write_text("source: https://example.com\n", encoding="utf-8")
+    fp.joinpath("overlay-receipt.md").write_text(
+        "# Overlay Receipt\n- skill: website-to-video\n", encoding="utf-8",
+    )
     fp.joinpath("hyperframes-capability-alignment.md").write_text(
         """# HyperFrames Capability Alignment
 
 ## Decisions
 - used: website-to-video / capture for source evidence
-- waived:
+- waived: catalog (no matching components)
 """,
         encoding="utf-8",
     )

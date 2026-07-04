@@ -186,7 +186,7 @@ def test_audit_report_no_patches_registered(fake_hermes_home, tmp_path):
 
 def test_should_check_first_run(fake_project_dir):
     """First run (last_known_version is None) → should check."""
-    assert should_check_patches(fake_project_dir, current_version="0.16.0") is True
+    assert should_check_patches(fake_project_dir, current_version="0.17.0") is True
 
 
 def test_should_check_version_unchanged(fake_project_dir):
@@ -194,10 +194,10 @@ def test_should_check_version_unchanged(fake_project_dir):
     # Record a version
     reg_path = fake_project_dir / ".framepack" / "hermes_patches.json"
     data = json.loads(reg_path.read_text())
-    data["last_known_hermes_version"] = "0.16.0"
+    data["last_known_hermes_version"] = "0.17.0"
     reg_path.write_text(json.dumps(data))
 
-    assert should_check_patches(fake_project_dir, current_version="0.16.0") is False
+    assert should_check_patches(fake_project_dir, current_version="0.17.0") is False
 
 
 def test_should_check_version_changed(fake_project_dir):
@@ -212,11 +212,11 @@ def test_should_check_version_changed(fake_project_dir):
 
 def test_should_check_updates_version_after_check(fake_project_dir):
     """should_check_patches should update last_known_version when returning True."""
-    should_check_patches(fake_project_dir, current_version="0.16.0")
+    should_check_patches(fake_project_dir, current_version="0.17.0")
 
     reg_path = fake_project_dir / ".framepack" / "hermes_patches.json"
     data = json.loads(reg_path.read_text())
-    assert data["last_known_hermes_version"] == "0.16.0"
+    assert data["last_known_hermes_version"] == "0.17.0"
 
 
 # ── Integration: detect_hermes_version + find_hermes_install ───────────

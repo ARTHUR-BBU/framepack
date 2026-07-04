@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.16.0 — sync with plugin.yaml and README -->
+<!-- version: 0.17.0 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -189,7 +189,7 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.16.0 hooks do seven things for HyperFrames 0.7.3:
+v0.17.0 hooks do seven things for HyperFrames 0.7.3:
 
 ```text
 pre_tool_call:
@@ -272,7 +272,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.16.0 skills:
+Framepack v0.17.0 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|
@@ -346,7 +346,7 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 - 创意阶段与用户共创，不需要用户看 expanded-prompt.md 全文
 - **开发项目专属**：改 PLUGIN 文件必须同步部署，改 AGENTS.md 必须确认测试目录不需要同样改动
 
-<!-- FRAMEPACK MANAGED BLOCK START version=0.16.0 hash=sha256:db6bc55ac349bc913f57e31303d551f4838d57c387d109061f44f721e1ddd254 source=plugin -->
+<!-- FRAMEPACK MANAGED BLOCK START version=0.17.0 hash=sha256:721e8d2d1200a968dde51c81972800e83d92f7a51495f1ec81cdbf96640deebb source=plugin -->
 # Framepack Guardrails
 
 Framepack is a **Hermes Agent Plugin** — a Prompt Factory for HyperFrames.
@@ -636,7 +636,50 @@ Framepack skills:
 
 如果 Agent 跑 `npx hyperframes lint`（没有 `--json`），pre_tool_call hook 会提醒加 `--json`。
 
+## ⚔️ 铁律：HyperFrames 能力优先
+
+**遇到 URL / website / 产品发布 / 参考视频时，先查 HyperFrames 官方能力，别自己造。**
+
+检查顺序：
+1. `npx hyperframes capture <url>` — 抓取网站视觉 DNA（截图、配色、字体）
+2. `npx hyperframes catalog --json` — 查 registry 有没有现成组件
+3. HyperFrames workflow skill（product-launch-video / website-to-video 等）— 查官方工作流
+4. Framepack arsenal — 查武器库
+5. 最后才是 handwrite
+
+**跳过 1-3 直接 handwrite = 铁律违反。**
+
+遇到网络超时（TimeoutError / registry skip）时，必须先检查 HTTP(S)_PROXY / ALL_PROXY 并经代理重试，不许把超时当"网络就是不好"绕过。
+
+## HyperFrames Workflow Skill 共存规则
+
+当 HyperFrames workflow skill 和 Framepack 工作台共存时：
+
+| 阶段 | 谁负责 | 产出 |
+|------|--------|------|
+| 创意方向 | Framepack | frame.md（视觉身份 + 五行权重） |
+| 分镜导演 | Framepack | expanded-prompt.md（Director Story Bible + Execution Manifest） |
+| 素材抓取 | HyperFrames skill | capture/（截图、tokens.json） |
+| HTML 制作 | HyperFrames skill | compositions/frames/*.html |
+| 验证渲染 | HyperFrames skill | lint → validate → render |
+
+**frame.md 归属**：Framepack 的 frame.md 是创意源头。skill 的 build-frame.mjs 是确定性颜色映射器，不做创意决策。如果 Framepack 的 frame.md 已存在，跳过 build-frame.mjs（Step 2）。
+
+**STORYBOARD.md vs expanded-prompt.md**：expanded-prompt.md 先写（导演分镜），STORYBOARD.md 从中派生（制作分镜）。不是替代关系，是 enrich 关系。
+
+## 工作台入口
+
+**你在 Framepack 工作台。所有视频创意任务先经过 Framepack 分诊。**
+
+当用户给出 URL / 产品 / 参考视频时：
+1. 先判断：这是哪个意图？（product-launch / website-tour / explainer / PR / ...）
+2. 先跑 Framepack Phase 0（素材收集）→ Phase 1（frame.md）→ Phase 2（expanded-prompt.md）
+3. 然后才加载对应的 HyperFrames workflow skill 执行制作
+4. 如果 Agent 已经先加载了 workflow skill，Framepack overlay 会注入创意约束——遵守它
+
 ## Core Principle
 
 Framepack 的 skill 教"想什么"，HyperFrames 的 skill 教"怎么写"。两者不重复。
 <!-- FRAMEPACK MANAGED BLOCK END -->
+
+

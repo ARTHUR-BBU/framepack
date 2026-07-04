@@ -1,7 +1,8 @@
 # Framepack
 
-> **HyperFrames 0.7.3 导演工作台。**
-> Framepack 把模糊的视频想法，变成 HyperFrames 0.7.3 能正式执行的工作流：先分诊、问素材、写导演稿、清晰交接，再在渲染前做口味审片。
+> **HyperFrames 导演工作台。**
+> 当前版本为 **0.17.0**
+> Framepack v0.17.0 把模糊的视频想法，变成 HyperFrames 0.7.3 能正式执行的工作流：先分诊、问素材、写导演稿、清晰交接，再在渲染前做口味审片。
 
 Framepack 是 Hermes Agent 插件。新版边界很明确：
 
