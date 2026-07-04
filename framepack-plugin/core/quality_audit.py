@@ -662,29 +662,140 @@ _HANDWRITE_GENERIC_REASON_RE = re.compile(
 )
 
 _HANDWRITE_WEAPON_RULES: tuple[dict[str, object], ...] = (
+    # Text / typography weapons
     {
-        "weapon_id": "number-count-up",
+        "weapon_id": "text-split-enter",
         "severity": "P1",
-        "signals": (r"\b\d+(?:\.\d+)?\s*(?:\+|%|x|k|m|万|亿)?\b", r"数字|number|count|计数|跳动|数据冲击|stat"),
-        "requires_any": (r"\b\d", r"数字|number|count|计数|120\+"),
+        "signals": (r"\btitle\b|标题|大字|hero\s*text|文字分裂|split[-\s]?enter|左右合拢|拼合", r"进场|enter|reveal|入场|tl\.from|opacity\s*\+\s*y|opacity\s*y"),
+        "requires_any": (r"\btitle\b|标题|大字|hero\s*text|文字分裂|split[-\s]?enter|东方之润",),
     },
     {
-        "weapon_id": "data-chart-editorial",
+        "weapon_id": "splittext-stagger-chars",
         "severity": "P1",
-        "signals": (r"图表|chart|折线|柱状|数据点|market|市场|SVG\s*path|dashoffset|stroke-dashoffset"),
-        "requires_any": (r"图表|chart|dashoffset|stroke-dashoffset|折线|柱状|数据点"),
+        "signals": (r"逐字|每个字|字符|\bchars?\b|\bletters?\b|stagger\s*chars?|SplitText|飞入",),
+        "requires_any": (r"逐字|每个字|字符|\bchars?\b|\bletters?\b|SplitText",),
     },
     {
         "weapon_id": "caption-clip-wipe",
         "severity": "P1",
-        "signals": (r"擦出|擦除|wipe|clip[-\s]?wipe|left\s*to\s*right|从左到右"),
-        "requires_any": (r"擦出|擦除|wipe|clip"),
+        "signals": (r"擦出|擦除|wipe|clip[-\s]?wipe|left\s*to\s*right|从左到右|字幕揭示|caption",),
+        "requires_any": (r"擦出|擦除|wipe|clip|caption|字幕",),
     },
     {
-        "weapon_id": "text-split-enter",
+        "weapon_id": "typewriter-cursor",
         "severity": "P1",
-        "signals": (r"标题|title|文字|text|大字|东方之润", r"进场|enter|reveal|入场|tl\.from|opacity\s*\+\s*y|opacity\s*y"),
-        "requires_any": (r"标题|title|文字|text|大字",),
+        "signals": (r"打字机|typewriter|光标|cursor|逐字打出|terminal\s*typing",),
+        "requires_any": (r"打字机|typewriter|光标|cursor|逐字打出",),
+    },
+    {
+        "weapon_id": "anime-text-split",
+        "severity": "P2",
+        "signals": (r"anime\.js|animejs|anime\s*文字|anime\s*text|轻量文字拆分", r"逐字|letter|word|文字拆分|text\s*split"),
+        "requires_any": (r"anime\.js|animejs|anime\s*文字|anime\s*text",),
+    },
+
+    # Data / diagram / UI blocks
+    {
+        "weapon_id": "number-count-up",
+        "severity": "P1",
+        "signals": (r"\b\d+(?:\.\d+)?\s*(?:\+|%|x|k|m|万|亿)?\b", r"数字|number|count|计数|跳动|数据冲击|stat|KPI|指标"),
+        "requires_any": (r"数字|number|count|计数|跳动|数据冲击|KPI|指标",),
+    },
+    {
+        "weapon_id": "data-chart-editorial",
+        "severity": "P1",
+        "signals": (r"图表|\bchart\b|折线|柱状|数据点|market|市场|SVG\s*path|dashoffset|stroke-dashoffset|NYT|editorial\s*chart",),
+        "requires_any": (r"图表|\bchart\b|dashoffset|stroke-dashoffset|折线|柱状|数据点|editorial\s*chart",),
+    },
+    {
+        "weapon_id": "sticky-flowchart",
+        "severity": "P1",
+        "signals": (r"流程图|flowchart|白板|便利贴|sticky|节点|连接线|process\s*map|journey\s*map",),
+        "requires_any": (r"流程图|flowchart|便利贴|sticky|节点|连接线|process\s*map",),
+    },
+    {
+        "weapon_id": "macos-notification",
+        "severity": "P2",
+        "signals": (r"通知|notification|toast|macOS|弹窗|横幅|signup|新评论|社交证明",),
+        "requires_any": (r"通知|notification|toast|macOS|弹窗|横幅",),
+    },
+
+    # Card / device / grid showcase weapons
+    {
+        "weapon_id": "card-cascade-reveal",
+        "severity": "P1",
+        "signals": (r"\b(?:cards?|card)\b|卡片|card\s*(?:cascade|fan|grid)|扇形|依次翻出|功能卡", r"cascade|stagger|扇形|飞出|翻出|网格"),
+        "requires_any": (r"\bcards?\b|卡片|功能卡|card\s*(?:cascade|fan|grid)",),
+    },
+    {
+        "weapon_id": "hero-3d-device-spin",
+        "severity": "P1",
+        "signals": (r"3D\s*(?:设备|device|手机|phone|macbook|mockup)|设备旋转|device\s*spin|hero\s*device|产品截图.*旋转",),
+        "requires_any": (r"3D\s*(?:设备|device|手机|phone|macbook|mockup)|设备旋转|device\s*spin|hero\s*device",),
+    },
+    {
+        "weapon_id": "stagger-grid-reveal",
+        "severity": "P2",
+        "signals": (r"网格|grid|矩阵|tiles?|cells?|stagger\s*grid|依次揭示|中心向外",),
+        "requires_any": (r"网格|grid|矩阵|tiles?|cells?|stagger\s*grid",),
+    },
+    {
+        "weapon_id": "float-3d-card",
+        "severity": "P2",
+        "signals": (r"悬浮卡片|float(?:ing)?\s*card|3D\s*卡片|parallax\s*card|微微悬浮|rotationX|透视",),
+        "requires_any": (r"悬浮卡片|float(?:ing)?\s*card|3D\s*卡片|parallax\s*card",),
+    },
+
+    # Environment / background / FX weapons
+    {
+        "weapon_id": "bg-blur-mask",
+        "severity": "P2",
+        "signals": (r"背景模糊|blur\s*(?:mask|background)|backdrop-filter|景深|暗化背景|聚焦前景",),
+        "requires_any": (r"背景模糊|blur\s*(?:mask|background)|backdrop-filter|景深",),
+    },
+    {
+        "weapon_id": "gradient-shift",
+        "severity": "P2",
+        "signals": (r"渐变|gradient|色彩流动|背景流动|呼吸感|linear-gradient|色带",),
+        "requires_any": (r"渐变|gradient|色彩流动|背景流动|linear-gradient",),
+    },
+    {
+        "weapon_id": "particle-blob-bg",
+        "severity": "P2",
+        "signals": (r"粒子|particle|blob|有机体|organic\s*blob|蠕动|morphing\s*background",),
+        "requires_any": (r"粒子|particle|blob|有机体|organic\s*blob",),
+    },
+    {
+        "weapon_id": "light-leak-cinema",
+        "severity": "P2",
+        "signals": (r"漏光|light\s*leak|胶片|film\s*grain|letterbox|电影感|cinema|35mm|颗粒",),
+        "requires_any": (r"漏光|light\s*leak|胶片|film\s*grain|letterbox|35mm",),
+    },
+    {
+        "weapon_id": "glitch-flicker",
+        "severity": "P2",
+        "signals": (r"故障|glitch|flicker|闪烁|CRT|像素错位|digital\s*noise|干扰",),
+        "requires_any": (r"故障|glitch|flicker|CRT|干扰",),
+    },
+    {
+        "weapon_id": "elastic-scale-enter",
+        "severity": "P2",
+        "signals": (r"弹性|elastic|bounce|back\.out|scale\s*enter|弹入|缩放入场|pop\s*in",),
+        "requires_any": (r"弹性|elastic|bounce|scale\s*enter|弹入|缩放入场",),
+    },
+
+    # Media / SVG / sprite weapons
+    {
+        "weapon_id": "sprite-animation",
+        "severity": "P1",
+        "signals": (r"精灵|sprite|逐帧|frame\s*animation|spritesheet|序列帧|帧动画|背景定位",),
+        "requires_any": (r"精灵|sprite|spritesheet|序列帧|帧动画",),
+    },
+    {
+        "weapon_id": "svg-morph-transition",
+        "severity": "P2",
+        "signals": (r"SVG\s*变形|svg\s*morph|path\s*morph|形态变形|morph\s*transition|d\s*属性",),
+        "requires_any": (r"SVG\s*变形|svg\s*morph|path\s*morph|形态变形",),
     },
 )
 
@@ -736,6 +847,14 @@ def _match_handwrite_weapon(context: str) -> tuple[str, str, list[str]] | None:
         if rule["weapon_id"] == "number-count-up":
             required = bool(re.search(r"\b\d", context)) and bool(
                 re.search(r"数字|number|count|计数|跳动|数据冲击|120\+", context, re.I)
+            )
+        if rule["weapon_id"] == "text-split-enter":
+            required = required and (
+                len(signals) >= 2 or bool(re.search(r"文字分裂|split[-\s]?enter|左右合拢|拼合|东方之润", context, re.I))
+            )
+        if rule["weapon_id"] == "card-cascade-reveal":
+            required = required and (
+                len(signals) >= 2 or bool(re.search(r"card\s*(?:cascade|fan|grid)|依次翻出|扇形|功能卡", context, re.I))
             )
         if required and signals:
             hits.append((str(rule["weapon_id"]), str(rule["severity"]), signals))
