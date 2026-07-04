@@ -62,12 +62,18 @@ def test_overlay_fires_on_workflow_skill(skill_name, tmp_path):
 
 @pytest.mark.parametrize("skill_name", NON_WORKFLOW_SKILLS)
 def test_overlay_does_not_fire_on_non_workflow_skill(skill_name, tmp_path):
-    """Overlay does NOT fire for domain skills, Framepack skills, or utilities."""
+    """Overlay does NOT fire for domain skills, Framepack skills, or utilities.
+
+    Note: Framepack's own skills (framepack, framepack:framepack-director) do trigger
+    guardrail hydration which calls inject_message — but that's hydration, not overlay.
+    We only assert no OVERLAY-specific message is injected.
+    """
     ctx = MagicMock()
     hook = _post_hook(ctx)
     hook(tool_name="skill_view", args={"name": skill_name})
 
-    ctx.inject_message.assert_not_called()
+    injected = "\n".join(call.args[0] for call in ctx.inject_message.call_args_list)
+    assert "Framepack Director Overlay" not in injected
 
 
 def test_overlay_includes_creative_authority_rules(tmp_path):

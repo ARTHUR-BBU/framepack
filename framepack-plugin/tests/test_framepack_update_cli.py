@@ -4,8 +4,10 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from unittest.mock import Mock
 
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "framepack_update.py"
+PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_update_report_only_does_not_write():
@@ -49,3 +51,41 @@ def test_update_never_runs_git_pull():
         assert '"pull"' not in cmd_parts, f"git pull found in subprocess call: {cmd_parts}"
         assert '"push"' not in cmd_parts, f"git push found in subprocess call: {cmd_parts}"
         assert '"fetch"' not in cmd_parts, f"git fetch found in subprocess call: {cmd_parts}"
+
+
+def test_update_source_dir_prefers_dev_repo_when_available():
+    """When launched from deployed plugin, update must still sync from source repo."""
+    sys.path.insert(0, str(PLUGIN_ROOT / "scripts"))
+    import framepack_update
+
+    dev_repo = Path("F:/hyperframes/framepack-plugin")
+    expected = dev_repo if dev_repo.exists() else PLUGIN_ROOT
+    assert framepack_update._SOURCE_DIR == expected
+
+
+def test_smoke_failure_detail_includes_failure_summary(monkeypatch):
+    """Smoke failures should report useful pytest output, not a blank detail."""
+    sys.path.insert(0, str(PLUGIN_ROOT / "scripts"))
+    import framepack_update
+
+    def fake_run(cmd, **kwargs):
+        if "pytest" in cmd:
+            return Mock(
+                returncode=1,
+                stdout="\r\nFAILED tests/test_example.py::test_bad\r\n1 failed, 2 passed\r\n",
+                stderr="",
+            )
+        if cmd[:2] == ["git", "rev-list"]:
+            return Mock(returncode=0, stdout="0\n")
+        if cmd[:2] == ["git", "status"]:
+            return Mock(returncode=0, stdout="")
+        return Mock(returncode=0, stdout="")
+
+    monkeypatch.setattr(framepack_update.subprocess, "run", fake_run)
+    monkeypatch.setattr(framepack_update, "_sync_files", lambda *args, **kwargs: ([], []))
+
+    report = framepack_update.run_update(skip_smoke=False, report_only=False)
+    smoke = [s for s in report.steps if s.name == "smoke"][0]
+
+    assert smoke.status == "error"
+    assert "FAILED tests/test_example.py::test_bad" in smoke.detail

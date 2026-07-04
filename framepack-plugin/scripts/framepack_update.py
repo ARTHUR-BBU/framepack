@@ -17,11 +17,35 @@ import argparse
 import hashlib
 import json
 import shutil
+import subprocess
 import sys
+import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
-_SOURCE_DIR = Path(__file__).resolve().parents[1]
+
+def _looks_like_plugin_source(path: Path) -> bool:
+    return (path / "plugin.yaml").is_file() and (path / "scripts" / "framepack_update.py").is_file()
+
+
+def _resolve_source_dir(current_file: Path) -> Path:
+    """Resolve authoritative source repo even when this script runs from deployed plugin."""
+    env_source = os.environ.get("FRAMEPACK_SOURCE_DIR")
+    if env_source and _looks_like_plugin_source(Path(env_source)):
+        return Path(env_source)
+
+    candidates = [
+        Path.cwd() / "framepack-plugin",
+        Path("F:/hyperframes/framepack-plugin"),
+        current_file.resolve().parents[1],
+    ]
+    for candidate in candidates:
+        if _looks_like_plugin_source(candidate):
+            return candidate
+    return current_file.resolve().parents[1]
+
+
+_SOURCE_DIR = _resolve_source_dir(Path(__file__))
 _DEPLOYED_DIR = Path("F:/Hermes_windows/plugins/framepack")
 
 _FILES_TO_SYNC = [
@@ -115,7 +139,6 @@ def _sync_files(source: Path, deployed: Path, report_only: bool) -> tuple[list[s
 
 def _git_state(source: Path) -> tuple[int | None, bool | None]:
     """Return (ahead_count, is_dirty). Never modifies git state."""
-    import subprocess
     try:
         ahead = subprocess.run(
             ["git", "rev-list", "--count", "origin/main..HEAD"],
@@ -133,14 +156,26 @@ def _git_state(source: Path) -> tuple[int | None, bool | None]:
         return None, None
 
 
+def _pytest_failure_summary(stdout: str, stderr: str) -> str:
+    """Return concise, printable pytest failure detail."""
+    combined = "\n".join(part for part in [stdout, stderr] if part)
+    lines = [line.strip() for line in combined.replace("\r", "\n").splitlines() if line.strip()]
+    interesting = [
+        line for line in lines
+        if line.startswith(("FAILED ", "ERROR ", "E   ", "E       "))
+        or " failed" in line
+        or " error" in line.lower()
+    ]
+    selected = interesting[-8:] if interesting else lines[-8:]
+    return " | ".join(selected)[-800:]
+
+
 def run_update(
     skip_smoke: bool = False,
     workbench: str | None = None,
     report_only: bool = False,
 ) -> UpdateReport:
     """Run the full update chain."""
-    import subprocess
-
     version = _read_version(_SOURCE_DIR)
     steps: list[UpdateStepResult] = []
 
@@ -187,12 +222,14 @@ def run_update(
                 [sys.executable, "-m", "pytest", str(_DEPLOYED_DIR / "tests"),
                  "-q", "-o", "addopts=", "-x"],
                 capture_output=True, text=True, timeout=120,
+                encoding="utf-8", errors="replace",
             )
             if result.returncode == 0:
                 last_line = [l for l in result.stdout.strip().splitlines() if l][-1]
                 steps.append(UpdateStepResult(name="smoke", status="ok", detail=last_line))
             else:
-                steps.append(UpdateStepResult(name="smoke", status="error", detail=result.stdout[-500:]))
+                detail = _pytest_failure_summary(result.stdout, result.stderr)
+                steps.append(UpdateStepResult(name="smoke", status="error", detail=detail))
         except Exception as e:
             steps.append(UpdateStepResult(name="smoke", status="error", detail=str(e)))
     else:
