@@ -20,6 +20,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 _PLUGIN_DIR = Path(__file__).resolve().parents[1]
+if str(_PLUGIN_DIR) not in sys.path:
+    sys.path.insert(0, str(_PLUGIN_DIR))
 
 
 @dataclass

@@ -8,6 +8,17 @@ from pathlib import Path
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "framepack_hydrate.py"
 
 
+def test_hydrate_cli_runs_without_external_pythonpath(tmp_path):
+    """The standalone script must add plugin root to sys.path itself."""
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), str(tmp_path), "--dry-run", "--format", "json"],
+        capture_output=True, text=True, timeout=30,
+    )
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    assert data["kind"] == "framepack_hydrate_report"
+
+
 def test_hydrate_dry_run_on_empty_dir(tmp_path):
     """Dry-run on empty dir should not crash and should report no files."""
     import os
