@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>caption-clip-wipe weapon bench</title>
+  <style>
+    html, body { margin: 0; width: 100%; height: 100%; background: #050507; color: #f8f4e8; }
+    body { font-family: "Inter", "Arial", sans-serif; overflow: hidden; }
+    #main { position: relative; width: 100%; height: 100%; background: radial-gradient(circle at 20% 12%, rgba(255,185,72,.18), transparent 34%), #050507; }
+    .clip { position: absolute; inset: 0; }
+    .scene-inner { width: 100%; height: 100%; box-sizing: border-box; padding: 92px 112px; display: flex; flex-direction: column; justify-content: center; gap: 42px; }
+    .bench-title { margin: 0; font-size: 38px; letter-spacing: .18em; text-transform: uppercase; color: #e9b95f; }
+    .bench-lane { border-left: 5px solid rgba(233,185,95,.92); padding: 18px 0 18px 34px; }
+    .lane-label { margin: 0 0 10px; color: rgba(248,244,232,.58); font-size: 24px; letter-spacing: .08em; text-transform: uppercase; }
+    .caption { margin: 0; max-width: 1440px; font-size: 78px; line-height: .96; letter-spacing: -.04em; font-weight: 900; }
+    .word { display: inline-block; margin-right: .22em; will-change: clip-path, opacity; }
+  </style>
+</head>
+<body>
+  <div id="main" data-composition-id="main" data-start="0" data-width="1920" data-height="1080" data-duration="8">
+    <div id="bench-scene" class="clip" data-start="0" data-duration="8" data-track-index="1">
+      <div class="scene-inner">
+        <h1 class="bench-title">Framepack Weapon Bench · caption-clip-wipe</h1>
+        <section class="bench-lane" id="lane-a">
+          <p class="lane-label">Editorial wipe · left-to-right</p>
+          <h2 class="caption"><span class="word" style="clip-path: inset(0 100% 0 0)">CREATIVE</span><span class="word" style="clip-path: inset(0 100% 0 0)">GATE</span><span class="word" style="clip-path: inset(0 100% 0 0)">PASSES</span></h2>
+        </section>
+        <section class="bench-lane" id="lane-b">
+          <p class="lane-label">Hero emphasis · center-out</p>
+          <h2 class="caption"><span class="word" style="clip-path: inset(0 100% 0 0)">POLISH</span><span class="word" style="clip-path: inset(0 100% 0 0)">BEFORE</span><span class="word" style="clip-path: inset(0 100% 0 0)">RENDER</span></h2>
+        </section>
+        <section class="bench-lane" id="lane-c">
+          <p class="lane-label">Vertical caption · top-to-bottom</p>
+          <h2 class="caption"><span class="word" style="clip-path: inset(0 100% 0 0)">NO</span><span class="word" style="clip-path: inset(0 100% 0 0)">FAKE</span><span class="word" style="clip-path: inset(0 100% 0 0)">WEAPONS</span></h2>
+        </section>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script src="references/caption-clip-wipe.js"></script>
+  <script>
+    window.__timelines = window.__timelines || {};
+    const tl = gsap.timeline({ paused: true });
+    tl.from('#bench-scene .scene-inner', { opacity: 0, y: 30, duration: 0.45, ease: 'power2.out' }, 0.05);
+      captionClipWipe(tl, '#lane-a .caption', { direction: 'left-to-right', staggerPerWord: 0.08, durationPerWord: 0.45 }, 0.35);
+      captionClipWipe(tl, '#lane-b .caption', { direction: 'center-out', staggerPerWord: 0.08, durationPerWord: 0.45 }, 2.45);
+      captionClipWipe(tl, '#lane-c .caption', { direction: 'top-to-bottom', staggerPerWord: 0.08, durationPerWord: 0.45 }, 4.55);
+    window.__timelines["main"] = tl;
+  </script>
+</body>
+</html>
