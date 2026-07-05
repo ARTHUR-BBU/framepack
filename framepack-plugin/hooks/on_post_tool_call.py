@@ -678,6 +678,53 @@ def _handle_lint_cache_bridge(ctx, command: str, workdir: str) -> None:
     )
 
 
+def _enforce_weapon_implementation_gate(ctx, file_path: str) -> None:
+    """Post-write hard gate: block HTML that ignores weapon-load-plan selections.
+
+    If the written/patched file is index.html and a weapon-load-plan exists that
+    selects framepack builtin weapons, check that those weapon functions are called.
+    Missing weapon calls → inject violations + raise RuntimeError to block.
+    """
+    if not file_path or Path(file_path).name != "index.html":
+        return
+
+    try:
+        from core.weapon_enforcement import check_weapon_implementation
+    except Exception:
+        return
+
+    project_dir = Path(file_path).parent if Path(file_path).is_absolute() else Path(os.getcwd()) / file_path
+    project_dir = project_dir.resolve()
+
+    try:
+        violations = check_weapon_implementation(project_dir)
+    except Exception as exc:
+        logger.warning("Weapon enforcement gate check failed: %s", exc)
+        return
+
+    if not violations:
+        return
+
+    lines = [
+        "⚔️ **Weapon Enforcement Gate — BLOCKED**",
+        "",
+        f"index.html was written but {len(violations)} weapon(s) from the Weapon Load Plan are not called:",
+        "",
+    ]
+    for v in violations[:10]:
+        lines.append(f"- `{v.weapon_id}` → expected `{v.function_name}()` in scene {v.scene}")
+        lines.append(f"  - load: skill_view('framepack-animation-library', file_path='{v.weapon_id}.js')")
+    if len(violations) > 10:
+        lines.append(f"- … {len(violations) - 10} more violation(s)")
+    lines.extend([
+        "",
+        "**You cannot proceed with bare GSAP. Load each weapon .js and call the canonical function.**",
+        "**This is a hard gate. Fix the HTML or change the plan to HANDWRITE waivers.**",
+    ])
+    _safe_inject(ctx, "\n".join(lines), role="user")
+    raise RuntimeError(f"weapon implementation gate: {len(violations)} weapon(s) not called in index.html")
+
+
 def register(ctx):
     """Register the post_tool_call hook for frame.md and expanded-prompt detection."""
 
@@ -711,10 +758,20 @@ def register(ctx):
                 _handle_lint_cache_bridge(ctx, command, workdir)
             return
 
-        if tool_name not in ("write_file",):
+        if tool_name not in ("write_file", "patch"):
             return
 
+        # ── Post-write weapon enforcement gate ──
         file_path = args.get("path", "")
+        if tool_name == "patch":
+            patch_text = str(args.get("patch", ""))
+            import re as _re
+            _patch_files = [m.strip() for m in _re.findall(r"^\*\*\* (?:Update|Add) File:\s*(.+)$", patch_text, _re.M)]
+            for pf in _patch_files:
+                if Path(pf).name == "index.html":
+                    _enforce_weapon_implementation_gate(ctx, pf)
+        elif file_path:
+            _enforce_weapon_implementation_gate(ctx, file_path)
 
         if _is_frame_md(file_path):
             project_dir = _project_dir_for_framepack_file(file_path)

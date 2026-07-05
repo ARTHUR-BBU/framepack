@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_known_hermes_version": "0.17.0",
+  "last_known_hermes_version": "0.18.0",
   "patches": [
     {
       "id": "skills_tool_file_path",

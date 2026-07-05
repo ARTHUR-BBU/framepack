@@ -2,7 +2,7 @@
   "framepack_version": "0.18.0",
   "hyperframes": {
     "supported_min": "0.7.3",
-    "supported_max_tested": "0.7.21",
+    "supported_max_tested": "0.7.33",
     "soft_max": "0.7.x",
     "hard_block_below": "0.7.0",
     "unknown_newer_policy": "warn_and_probe",
@@ -29,6 +29,7 @@
       "beats",
       "inspect",
       "layout",
+      "keyframes",
       "snapshot",
       "play",
       "info",
