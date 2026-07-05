@@ -1,0 +1,50 @@
+{
+  "weapon_id": "caption-clip-wipe",
+  "presets": {
+    "editorial_lower_third": {
+      "motion_role": "premium-callout",
+      "duration": 0.8,
+      "ease": "power3.out",
+      "max_lines": 2,
+      "safe_for": ["product-callout", "quote", "metric-label", "caption", "lower-third"],
+      "avoid": ["body-copy", "paragraph", "long_body_copy"],
+      "params": {
+        "direction": "left-to-right",
+        "stagger": 0.08,
+        "duration": 0.45,
+        "clipPath": "inset(0 100% 0 0)",
+        "target": ".caption-line"
+      }
+    },
+    "hero_emphasis": {
+      "motion_role": "hero-emphasis",
+      "duration": 0.8,
+      "ease": "power3.out",
+      "max_lines": 1,
+      "safe_for": ["hero", "headline", "tagline"],
+      "avoid": ["paragraph", "dense-copy"],
+      "params": {
+        "direction": "center-out",
+        "stagger": 0.08,
+        "duration": 0.45,
+        "clipPath": "inset(0 50% 0 50%)",
+        "target": ".hero-line"
+      }
+    },
+    "vertical_caption": {
+      "motion_role": "vertical-caption",
+      "duration": 0.8,
+      "ease": "power3.out",
+      "max_lines": 2,
+      "safe_for": ["side-label", "vertical-caption", "annotation"],
+      "avoid": ["paragraph", "body-copy"],
+      "params": {
+        "direction": "top-to-bottom",
+        "stagger": 0.08,
+        "duration": 0.45,
+        "clipPath": "inset(0 0 100% 0)",
+        "target": ".vertical-line"
+      }
+    }
+  }
+}

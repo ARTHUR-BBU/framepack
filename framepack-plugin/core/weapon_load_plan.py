@@ -23,6 +23,9 @@ class WeaponMatch:
     id: str
     confidence: str
     reuse_mode: str
+    preset_id: str | None = None
+    score_class: str | None = None
+    studio_editable: bool | None = None
     load: dict[str, Any] = field(default_factory=dict)
     params_hint: dict[str, Any] = field(default_factory=dict)
     reason: str = ""
@@ -133,6 +136,12 @@ def render_weapon_load_plan_markdown(plan: WeaponLoadPlan) -> str:
                 lines.append(
                     f"  - `{match.id}` ({match.source}, {match.confidence}, {match.reuse_mode})"
                 )
+                if match.preset_id:
+                    lines.append(f"    - preset: `{match.preset_id}`")
+                if match.score_class:
+                    lines.append(f"    - score_class: `{match.score_class}`")
+                if match.studio_editable is not None:
+                    lines.append(f"    - studio_editable: `{str(match.studio_editable).lower()}`")
         if scene.waiver:
             lines.append(f"- waiver: {scene.waiver.reason}")
             lines.append(f"- checked_sources: {', '.join(scene.waiver.checked_sources)}")

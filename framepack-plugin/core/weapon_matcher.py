@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Iterable
 
+from .weapon_scorecard import load_scorecard
 from .weapon_load_plan import (
     HandwriteWaiver,
     SceneWeaponPlan,
@@ -15,10 +16,12 @@ from .weapon_load_plan import (
     WeaponMatch,
     write_weapon_load_plan,
 )
+from .weapon_presets import choose_recommended_preset
 from .weapon_sources import WeaponSource, list_all_weapon_sources
 
 
 CHECKED_SOURCES = ["hyperframes_official", "framepack_builtin", "specialist_skill", "project_local"]
+_SCORECARD_DIR = Path(__file__).resolve().parents[1] / "weapon-scorecards"
 
 
 @dataclass
@@ -55,6 +58,12 @@ def extract_scene_blocks(prompt: str) -> list[SceneBlock]:
 
 
 def _specificity_guard(source: WeaponSource, text: str, hit_count: int) -> bool:
+    if source.id in {"caption-clip-wipe", "skill:hyperframes:captions"} and re.search(
+        r"\b(?:no|without)\s+(?:caption|captions|callout|callouts|overlay|overlays)\b|(?:不要|无|不加)(?:字幕|标注|标签)",
+        text,
+        re.I,
+    ):
+        return False
     if source.id == "number-count-up":
         return bool(re.search(r"\b\d", text)) and bool(re.search(r"数字|number|count|计数|跳动|数据冲击|KPI|指标", text, re.I))
     if source.id == "text-split-enter":
@@ -102,6 +111,37 @@ def _score_source(source: WeaponSource, text: str) -> tuple[int, list[str]]:
     return _source_priority(source) + len(hits) * 20, hits
 
 
+def _score_class_for_weapon(weapon_id: str) -> str | None:
+    path = _SCORECARD_DIR / f"{weapon_id}.json"
+    if not path.is_file():
+        return None
+    return load_scorecard(path).score_class
+
+
+def _studio_editable_for_weapon(weapon_id: str, preset_id: str | None) -> bool | None:
+    if preset_id and weapon_id in {"caption-clip-wipe"}:
+        return False
+    return None
+
+
+def _build_weapon_match(scene: SceneBlock, score: int, source: WeaponSource, hits: list[str]) -> WeaponMatch:
+    preset = choose_recommended_preset(source.id, scene.text)
+    params_hint = preset.to_params_hint() if preset else {}
+    preset_id = preset.preset_id if preset else None
+    return WeaponMatch(
+        source=source.source_type,
+        id=source.id,
+        confidence=_confidence(score),
+        reuse_mode=_reuse_mode(source),
+        preset_id=preset_id,
+        score_class=_score_class_for_weapon(source.id),
+        studio_editable=_studio_editable_for_weapon(source.id, preset_id),
+        load=dict(source.load),
+        params_hint=params_hint,
+        reason=f"matched signals: {', '.join(hits[:3])}",
+    )
+
+
 def _match_scene(scene: SceneBlock, sources: Iterable[WeaponSource]) -> SceneWeaponPlan:
     scored: list[tuple[int, WeaponSource, list[str]]] = []
     for source in sources:
@@ -110,18 +150,7 @@ def _match_scene(scene: SceneBlock, sources: Iterable[WeaponSource]) -> SceneWea
             scored.append((score, source, hits))
     scored.sort(key=lambda item: item[0], reverse=True)
 
-    matches = [
-        WeaponMatch(
-            source=source.source_type,
-            id=source.id,
-            confidence=_confidence(score),
-            reuse_mode=_reuse_mode(source),
-            load=dict(source.load),
-            params_hint={},
-            reason=f"matched signals: {', '.join(hits[:3])}",
-        )
-        for score, source, hits in scored[:5]
-    ]
+    matches = [_build_weapon_match(scene, score, source, hits) for score, source, hits in scored[:5]]
 
     selected_match = next((match for match in matches if match.source != "hyperframes_official"), matches[0] if matches else None)
     if selected_match:

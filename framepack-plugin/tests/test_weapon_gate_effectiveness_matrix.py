@@ -128,3 +128,46 @@ def test_weapon_usage_evidence_rejects_empty_params():
     assert evidence.script_loaded is True
     assert evidence.preset_or_params_present is False
     assert evidence.passes_gate is False
+
+
+def test_weapon_usage_evidence_requires_preset_or_equivalent_required_params():
+    from core.weapon_enforcement import analyze_weapon_usage
+
+    loose = analyze_weapon_usage(
+        """<script src="parts/references/caption-clip-wipe.js"></script><script>captionClipWipe(tl, { target: '.caption-line', duration: 0.45 });</script>""",
+        weapon_id="caption-clip-wipe",
+        function_name="captionClipWipe",
+        ref_path="parts/references/caption-clip-wipe.js",
+        params_hint={
+            "preset_id": "editorial_lower_third",
+            "target": ".caption-line",
+            "duration": 0.45,
+            "direction": "left-to-right",
+            "stagger": 0.08,
+        },
+    )
+    explicit = analyze_weapon_usage(
+        """<script src="parts/references/caption-clip-wipe.js"></script><script>captionClipWipe(tl, { preset: 'editorial_lower_third', target: '.caption-line', duration: 0.45 });</script>""",
+        weapon_id="caption-clip-wipe",
+        function_name="captionClipWipe",
+        ref_path="parts/references/caption-clip-wipe.js",
+        params_hint={"preset_id": "editorial_lower_third"},
+    )
+    equivalent = analyze_weapon_usage(
+        """<script src="parts/references/caption-clip-wipe.js"></script><script>captionClipWipe(tl, { target: '.caption-line', duration: 0.45, direction: 'left-to-right', stagger: 0.08 });</script>""",
+        weapon_id="caption-clip-wipe",
+        function_name="captionClipWipe",
+        ref_path="parts/references/caption-clip-wipe.js",
+        params_hint={
+            "preset_id": "editorial_lower_third",
+            "target": ".caption-line",
+            "duration": 0.45,
+            "direction": "left-to-right",
+            "stagger": 0.08,
+        },
+    )
+
+    assert loose.preset_or_params_present is False
+    assert loose.passes_gate is False
+    assert explicit.passes_gate is True
+    assert equivalent.passes_gate is True

@@ -76,3 +76,40 @@ def test_match_weapons_cli_dry_run_does_not_write(tmp_path):
     assert result.returncode == 0, result.stderr
     assert "Framepack Weapon Load Plan" in result.stdout
     assert not (project / ".framepack" / "weapon-load-plan.json").exists()
+
+
+def test_match_weapons_cli_suggests_caption_clip_wipe_preset(tmp_path):
+    project = _make_project(
+        tmp_path,
+        """
+## Scene 2 — product callout
+Premium product-callout lower-third caption with a short quote and metric-label.
+Use caption clip wipe motion.
+""",
+    )
+
+    result = subprocess.run(
+        [sys.executable, str(SCRIPT), str(project), "--format", "json"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+
+    assert result.returncode == 0, result.stderr
+    data = json.loads(result.stdout)
+    match = data["scenes"][0]["matches"][0]
+    assert data["scenes"][0]["selected"] == "caption-clip-wipe"
+    assert match["preset_id"] == "editorial_lower_third"
+    assert match["score_class"] == "B"
+    assert match["studio_editable"] is False
+    assert match["params_hint"]["direction"] == "left-to-right"
+
+
+def test_matcher_does_not_treat_negated_caption_as_caption_weapon(tmp_path):
+    from core.weapon_matcher import match_weapons_for_prompt
+
+    plan = match_weapons_for_prompt("Scene 1: calm pearl macro shot with no caption or callout overlays")
+    ids = {match.id for scene in plan.scenes for match in scene.matches}
+
+    assert "caption-clip-wipe" not in ids

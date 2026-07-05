@@ -104,12 +104,20 @@ def _call_has_preset_or_params(args: str, params_hint: dict[str, object] | None)
         return False
 
     # When a plan asks for a preset, accept either an explicit preset field or
-    # enough concrete timing/target params to avoid an empty/default pass.
+    # the preset's concrete key params. A loose target+duration call is still
+    # too easy to fake; Phase 2 requires a real recipe, not a garnish label.
     wants_preset = bool(params_hint and params_hint.get("preset_id"))
     if wants_preset:
-        return bool(re.search(r"\bpreset\s*:", args)) or (
-            bool(re.search(r"\btarget\s*:", args)) and bool(re.search(r"\bduration\s*:", args))
-        )
+        if re.search(r"\bpreset\s*:", args):
+            return True
+        required = [
+            key
+            for key in ("target", "duration", "direction", "stagger")
+            if params_hint and key in params_hint
+        ]
+        if not required:
+            required = ["target", "duration"]
+        return all(re.search(rf"\b{re.escape(key)}\s*:", args) for key in required)
 
     return bool(re.search(r"\b(?:target|selector|duration|text|value|preset)\s*:", args))
 
