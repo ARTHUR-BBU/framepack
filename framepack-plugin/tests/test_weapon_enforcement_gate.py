@@ -13,6 +13,10 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
+REAL_NUMBER_COUNT_HTML = """<html><body><script src="parts/references/number-count-up.js"></script>
+<script>numberCountUp({target:'#metric', duration:1.2});</script></body></html>"""
+
+
 def _make_project_with_plan(tmp_path: Path, html: str) -> Path:
     """Create a project with expanded-prompt + weapon-load-plan + index.html."""
     from core.weapon_matcher import match_weapons_for_prompt
@@ -45,13 +49,10 @@ def test_check_weapon_implementation_finds_missing_weapon(tmp_path):
 
 
 def test_check_weapon_implementation_passes_when_weapon_called(tmp_path):
-    """HTML with correct weapon function call → zero violations."""
+    """HTML with loaded weapon script and concrete params → zero violations."""
     from core.weapon_enforcement import check_weapon_implementation
 
-    _make_project_with_plan(
-        tmp_path,
-        "<html><body><script>numberCountUp({target:120});</script></body></html>",
-    )
+    _make_project_with_plan(tmp_path, REAL_NUMBER_COUNT_HTML)
 
     violations = check_weapon_implementation(tmp_path)
 
@@ -83,18 +84,18 @@ def test_post_write_gate_blocks_when_weapons_missing(tmp_path):
         _enforce_weapon_implementation_gate(ctx, str(tmp_path / "index.html"))
 
 
-def test_post_write_gate_passes_when_weapons_called(tmp_path):
-    """post_tool_call on write_file(index.html) with correct weapon calls → no error."""
+def test_post_write_gate_passes_when_weapons_called_and_writes_receipt(tmp_path):
+    """post_tool_call on index.html with real weapon usage → no error + fresh receipt."""
+    from core.weapon_enforcement import is_weapon_enforcement_receipt_current
     from hooks.on_post_tool_call import _enforce_weapon_implementation_gate
 
-    _make_project_with_plan(
-        tmp_path,
-        "<html><body><script>numberCountUp({target:120});</script></body></html>",
-    )
+    _make_project_with_plan(tmp_path, REAL_NUMBER_COUNT_HTML)
 
     ctx = Mock()
-    # Should not raise
     _enforce_weapon_implementation_gate(ctx, str(tmp_path / "index.html"))
+
+    ok, reason = is_weapon_enforcement_receipt_current(tmp_path)
+    assert ok, reason
 
 
 def test_post_write_gate_ignores_non_html_files(tmp_path):
@@ -105,3 +106,32 @@ def test_post_write_gate_ignores_non_html_files(tmp_path):
     ctx = Mock()
     _enforce_weapon_implementation_gate(ctx, str(tmp_path / "style.css"))
     ctx.inject_message.assert_not_called()
+
+
+def test_weapon_enforcement_receipt_goes_stale_when_index_changes(tmp_path):
+    from core.weapon_enforcement import is_weapon_enforcement_receipt_current
+    from hooks.on_post_tool_call import _enforce_weapon_implementation_gate
+
+    _make_project_with_plan(tmp_path, REAL_NUMBER_COUNT_HTML)
+    _enforce_weapon_implementation_gate(Mock(), str(tmp_path / "index.html"))
+    ok, reason = is_weapon_enforcement_receipt_current(tmp_path)
+    assert ok, reason
+
+    (tmp_path / "index.html").write_text("<html><script>numberCountUp({});</script></html>", encoding="utf-8")
+
+    ok, reason = is_weapon_enforcement_receipt_current(tmp_path)
+    assert not ok
+    assert "sha" in reason.lower() or "stale" in reason.lower()
+
+
+def test_pre_render_gate_blocks_stale_weapon_receipt(tmp_path):
+    from hooks.on_pre_tool_call import _enforce_weapon_receipt_before_render
+    from hooks.on_post_tool_call import _enforce_weapon_implementation_gate
+
+    _make_project_with_plan(tmp_path, REAL_NUMBER_COUNT_HTML)
+    _enforce_weapon_implementation_gate(Mock(), str(tmp_path / "index.html"))
+    (tmp_path / "index.html").write_text("<html><script>numberCountUp({});</script></html>", encoding="utf-8")
+
+    ctx = Mock()
+    with pytest.raises(RuntimeError, match="weapon enforcement receipt"):
+        _enforce_weapon_receipt_before_render(ctx, str(tmp_path))

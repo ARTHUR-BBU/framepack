@@ -689,7 +689,7 @@ def _enforce_weapon_implementation_gate(ctx, file_path: str) -> None:
         return
 
     try:
-        from core.weapon_enforcement import check_weapon_implementation
+        from core.weapon_enforcement import check_weapon_implementation, write_weapon_enforcement_receipt
     except Exception:
         return
 
@@ -703,6 +703,7 @@ def _enforce_weapon_implementation_gate(ctx, file_path: str) -> None:
         return
 
     if not violations:
+        write_weapon_enforcement_receipt(project_dir, violations)
         return
 
     lines = [

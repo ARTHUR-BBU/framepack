@@ -387,6 +387,27 @@ def _pre_tool_html_path(tool_name: str, args: dict) -> str:
     return paths[0] if paths else ""
 
 
+def _enforce_weapon_receipt_before_render(ctx, workdir: str) -> None:
+    """Hard-stop render/preview when index.html changed after weapon enforcement."""
+    try:
+        from core.weapon_enforcement import is_weapon_enforcement_receipt_current
+    except Exception:
+        return
+
+    ok, reason = is_weapon_enforcement_receipt_current(workdir)
+    if ok:
+        return
+
+    message = (
+        "⚔️ **Weapon Enforcement Receipt — BLOCKED**\n\n"
+        f"index.html cannot be previewed/rendered because {reason}.\n\n"
+        "Run the post-write weapon enforcement gate again by rewriting/fixing `index.html`, "
+        "or fix the selected weapon calls so `.framepack/weapon-enforcement-receipt.json` matches the current file."
+    )
+    _safe_inject(ctx, message, role="user")
+    raise RuntimeError(f"weapon enforcement receipt stale: {reason}")
+
+
 def register(ctx):
     """Register the pre_tool_call hook for handoff readiness."""
 
@@ -427,6 +448,7 @@ def register(ctx):
         _sync_timeline_for_hyperframes(ctx, workdir)
         _audit_quality_for_hyperframes(ctx, workdir)
         if _is_pre_render_review_command(command_for_detection):
+            _enforce_weapon_receipt_before_render(ctx, workdir)
             _inject_readiness_board(ctx, workdir)
             _audit_pre_render_for_hyperframes(ctx, workdir)
         _remind_lint_json_if_needed(ctx, command_for_detection)
