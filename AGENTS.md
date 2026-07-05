@@ -341,6 +341,7 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 ## Editing Rules
 
 - Keep README, AGENTS.md, plugin.yaml 版本号三处同步
+- 每个 Framepack 版本发布都必须加载 `framepack-release-readme-refresh` skill，并详细更新英文 `README.md` 与中文 `docs/README.zh-CN.md`：产品定位、架构、功能模块关系、设计哲学、设计目标、兼容性、release-specific 战略变化缺一不可。
 - Framepack 不管 HTML——所有 HTML/结构/渲染问题归 HyperFrames
 - 武器库是字典，不是自动注入
 - 创意阶段与用户共创，不需要用户看 expanded-prompt.md 全文
