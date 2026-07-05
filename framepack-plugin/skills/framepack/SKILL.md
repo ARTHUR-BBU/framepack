@@ -422,7 +422,7 @@ Framepack 现在不只“提醒 Agent 要用武器”，还会维护项目级武
 
 1. **Replica Mode 不是灵感提取，是视频反编译。** 写 HTML 前必须先产出三件套：`VIDEO_DNA.md`、`.hermes/content_decomposition.md`、`TEMPLATE_BLUEPRINT.md`。
 2. **`TEMPLATE_BLUEPRINT.md` 是施工图。** HTML 实现必须从 blueprint 落地，不能从 Agent 自由想象重编一支片。
-3. **root composition 必须显式 `data-duration="TOTAL_SECONDS"`。** 不要依赖 GSAP timeline inference；final hold / 片尾黑场 / outro 会被合法剪掉，render 仍可能 exit 0。
+3. **root composition 必须显式 `data-duration="TOTAL_SECONDS"`。** 不要依赖 GSAP timeline inference；final hold / 片尾黑场 / outro 会被合法剪掉，render 仍可能 exit 0。（HF 0.7.23+ 对纯 CSS/WAAPI/Lottie composition 可自动推断 data-duration，但 GSAP timeline 仍需显式声明。）
 4. **Replica handoff 禁止模糊实现语句。** `if strict`、`maybe`、`optionally`、`merge if needed`、`no outgoing transition` 必须改成 locked decision 或 `approved exception`。
 5. **视觉验收要闭环。** snapshot contact sheet → 标硬伤 → CSS/布局修复 → 第二轮 snapshot → render；snapshot 后清理 `data-hf-id` 污染。
 6. **警告分级。** `timeline_track_too_dense`、`overlapping_gsap_tweens`、`gsap_studio_edit_blocked` 可作为 P1/P2 工程整洁度，不等同于当前交付阻断；但必须记录后续 refactor 计划。

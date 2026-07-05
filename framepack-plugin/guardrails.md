@@ -272,7 +272,7 @@ Framepack skills:
 
 | Warning Code | 描述 | 状态 | 规避方式 |
 |---|---|---|---|
-| gsap_studio_edit_blocked | GSAP 注册 timeline 的元素 Studio 不可拖拽编辑 | 等上游加 suppress 标记 | 不在 Studio 里拖拽 GSAP 管的元素 |
+| gsap_studio_edit_blocked | GSAP 注册 timeline 的元素 Studio 不可拖拽编辑 | HF 0.7.22+ SDK resolveEditingAffordances 部分缓解 | 不在 Studio 里拖拽 GSAP 管的元素；可用 SDK adapter 查询可编辑性 |
 
 **Agent 行为**：看到 `upstream_limit` 分类的 warning，不要试图修复——这是 HyperFrames 的
 结构性限制，修不了。只在 `quality_issue` 分类上花时间。
@@ -292,11 +292,13 @@ Framepack skills:
 **遇到 URL / website / 产品发布 / 参考视频时，先查 HyperFrames 官方能力，别自己造。**
 
 检查顺序：
-1. `npx hyperframes capture <url>` — 抓取网站视觉 DNA（截图、配色、字体）
-2. `npx hyperframes catalog --json` — 查 registry 有没有现成组件
-3. HyperFrames workflow skill（product-launch-video / website-to-video 等）— 查官方工作流
-4. Framepack arsenal — 查武器库
-5. 最后才是 handwrite
+1. `npx hyperframes capture <url>` — 抓取网站视觉 DNA（截图、配色、字体、gradient washes、glass panels、nav CTAs — HF 0.7.23+0.7.27）
+2. `npx hyperframes catalog --json` — 查 registry 有没有现成组件（134+ entries）
+3. `npx hyperframes figma` — Figma 集成：导入 frames、拉品牌 tokens、Figma Motion→GSAP（HF 0.7.29+）
+4. `npx hyperframes keyframes` — 检查 GSAP/CSS/Anime.js 关键帧 + onion-skin 诊断（HF 0.7.25+）
+5. HyperFrames workflow skill（product-launch-video / website-to-video 等）— 查官方工作流
+6. Framepack arsenal — 查武器库
+7. 最后才是 handwrite
 
 **跳过 1-3 直接 handwrite = 铁律违反。**
 

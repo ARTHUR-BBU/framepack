@@ -36,7 +36,8 @@ WARNING_CLASSIFICATION: dict[str, dict[str, Any]] = {
         "default_severity": "P2",
         "description": (
             "HyperFrames 架构限制：GSAP 注册 timeline 的元素 Studio 不可拖拽编辑。"
-            "这不是 bug，是 HyperFrames 的设计决策。"
+            "HF 0.7.22+ 的 SDK resolveEditingAffordances API 部分缓解此问题——"
+            "外部编辑器现在可以查询元素可编辑性。Framepack weapon-load-plan 可标注 studio_editable。"
         ),
     },
     # ── Quality issues (must fix) ──
@@ -70,6 +71,29 @@ WARNING_CLASSIFICATION: dict[str, dict[str, Any]] = {
         "description": (
             "使用了未声明 @font-face 的字体族名。"
             "应添加 @font-face 声明或 vendor 字体文件到 assets/fonts/。"
+            "（HF 0.7.22+ 不再对 system-ui 和 var() 报此 warning。）"
+        ),
+    },
+    # ── HF 0.7.21+ new lint rules ──
+    "crossorigin_on_media": {
+        "category": "quality_issue",
+        "default_severity": "P0",
+        "description": (
+            "media 元素上的 crossorigin 属性会导致 preview 显示空白。"
+            "移除 crossorigin 属性或使用本地 vendor 的媒体文件。"
+        ),
+    },
+    "visible_markup_comment": {
+        "category": "quality_issue",
+        "default_severity": "P2",
+        "description": "HTML 注释内容在渲染中可见。检查注释是否在 DOM 结构外。"
+    },
+    "id_less_media_wash": {
+        "category": "quality_issue",
+        "default_severity": "P0",
+        "description": (
+            "仅有 data-hf-id 没有 real id 的 video/audio 会渲染成白屏并丢失音频。"
+            "确保 media 元素有真实 id 属性。"
         ),
     },
 }

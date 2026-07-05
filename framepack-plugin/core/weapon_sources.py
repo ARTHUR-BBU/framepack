@@ -87,6 +87,7 @@ def list_specialist_skill_sources() -> list[WeaponSource]:
         WeaponSource("skill:framepack-reference-miner", "specialist_skill", "skill", "reference", {"skill": "framepack-reference-miner"}, (r"参考视频|reference video|DNA|复刻|template from reference",), "Reference video DNA mining"),
         WeaponSource("skill:sprite-to-hyperframes", "specialist_skill", "skill", "reference", {"skill": "sprite-to-hyperframes"}, (r"sprite|精灵|spritesheet|mascot|吉祥物",), "Sprite sheet to HyperFrames workflow"),
         WeaponSource("skill:media-use", "specialist_skill", "skill", "reference", {"skill": "media-use"}, (r"BGM|SFX|音效|素材|media|music",), "Media asset acquisition/handling"),
+        WeaponSource("skill:figma", "specialist_skill", "skill", "reference", {"skill": "figma"}, (r"figma|Figma|frame.*import|brand.*token|Figma.*Motion|Motion.*GSAP",), "Figma import: frames, tokens, components, Motion→GSAP (HF 0.7.29)"),
     ]
 
 
@@ -100,7 +101,38 @@ def list_hyperframes_official_sources() -> list[WeaponSource]:
             {"command": "npx hyperframes catalog --json"},
             (r"catalog|registry|official component|官方组件|模板|component",),
             PROXY_RETRY_NOTE,
-        )
+        ),
+        WeaponSource(
+            "hyperframes:capture",
+            "hyperframes_official",
+            "reference",
+            "reference",
+            {"command": "npx hyperframes capture <url>"},
+            (
+                r"website|网站|URL|capture|截图|配色|字体|gradient\s*wash|glass\s*panel|"
+                r"nav\s*CTA|chip|stat[-\s]?cell|tab|icon\s*font|transparent\s*ground|"
+                r"品牌.*视觉|brand.*visual",
+            ),
+            "Capture extracts website visual DNA: screenshots, palettes, fonts, gradient washes, glass panels, nav CTAs (HF 0.7.23+0.7.27). " + PROXY_RETRY_NOTE,
+        ),
+        WeaponSource(
+            "hyperframes:figma",
+            "hyperframes_official",
+            "reference",
+            "reference",
+            {"command": "npx hyperframes figma", "skill": "figma"},
+            (r"figma|Figma|frame\s*import|brand\s*token|design\s*token|Figma\s*Motion|figma.*GSAP",),
+            "Figma integration (HF 0.7.29): import frames as assets, pull brand variables as tokens, convert frames to HTML, translate Figma Motion to GSAP. " + PROXY_RETRY_NOTE,
+        ),
+        WeaponSource(
+            "hyperframes:keyframes",
+            "hyperframes_official",
+            "reference",
+            "reference",
+            {"command": "npx hyperframes keyframes"},
+            (r"keyframe|关键帧|onion[-\s]?skin|GSAP.*inspect|CSS.*animation.*inspect",),
+            "Keyframes command (HF 0.7.25): inspect GSAP/CSS/Anime.js keyframes + 3D onion-skin diagnostics from CLI.",
+        ),
     ]
 
 

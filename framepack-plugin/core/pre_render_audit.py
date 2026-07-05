@@ -214,6 +214,11 @@ def build_pre_render_audit_message(report: PreRenderAuditReport) -> str:
             "A. revise now",
             "B. add assets",
             "C. render anyway",
+            "",
+            "Visual verification before render:",
+            "- `npx hyperframes keyframes` — inspect GSAP/CSS/Anime keyframes + onion-skin (HF 0.7.25+)",
+            "- `npx hyperframes snapshot` — capture key frames as PNG for visual review",
+            "- `npx hyperframes validate` — runtime validate in headless Chrome",
         ]
     )
     return "\n".join(lines)
