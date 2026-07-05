@@ -190,3 +190,23 @@ def test_taste_issues_counted_in_summary(tmp_path):
         assert report.summary.get("P1", 0) > 0
     finally:
         shutil.rmtree(d)
+
+
+def test_commercial_taste_issue_surfaces_in_quality_report(tmp_path):
+    """Phase 3 commercial taste signals must ride the existing quality bridge."""
+    d = _make_project(
+        frame_md="# minimal frame",
+        expanded=(
+            "# Product launch video\n"
+            "Text: Transform your workflow with next generation intelligent automation for every team.\n"
+            "Text: More productivity, more clarity, more growth, more speed.\n"
+            "Text: Join thousands of teams today with a platform built for modern operations.\n"
+            "Product: none.\n"
+        ),
+    )
+    try:
+        report = audit_project(d)
+        codes = [(i.code, i.severity) for i in report.issues]
+        assert ("text_dominance", "P1") in codes
+    finally:
+        shutil.rmtree(d)

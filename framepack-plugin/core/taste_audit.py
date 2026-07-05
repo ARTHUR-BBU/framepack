@@ -7,6 +7,7 @@ files. It gives director critique for frame.md and expanded-prompt.md.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import json
 from pathlib import Path
 import re
 from typing import Any
@@ -313,6 +314,142 @@ def _audit_motif_transformation(frame_md: str, expanded_prompt: str, frame_path:
     return []
 
 
+
+def _audit_text_dominance(expanded_prompt: str, expanded_path: Path) -> list[TasteAuditIssue]:
+    text_lines = re.findall(r"^\s*(?:text|copy|headline|title)\s*:\s*(.+)$", expanded_prompt, re.I | re.M)
+    word_count = sum(len(re.findall(r"\b\w+\b", line)) for line in text_lines)
+    product_none = re.search(r"\bproduct\s*:\s*(?:none|n/?a|null|missing)\b", expanded_prompt, re.I)
+    if len(text_lines) >= 3 and word_count >= 22 and product_none:
+        return [
+            TasteAuditIssue(
+                code="text_dominance",
+                severity="risk",
+                message="Text is carrying the film while product presence is missing; this can collapse into animated PPT instead of a commercial video.",
+                suggestion="Promote product visuals, UI, footage, or proof imagery to hero status; reduce copy to premium labels and cue words.",
+                path=str(expanded_path),
+                details={"text_lines": len(text_lines), "word_count": word_count},
+            )
+        ]
+    return []
+
+
+def _audit_product_absence(expanded_prompt: str, expanded_path: Path) -> list[TasteAuditIssue]:
+    launch_signal = re.search(r"product\s+launch|website\s+to\s+video|commercial|brand\s+video", expanded_prompt, re.I)
+    production_text = re.sub(r"product\s+launch|website\s+to\s+video|commercial|brand\s+video", "", expanded_prompt, flags=re.I)
+    product_signal = re.search(
+        r"\b(mockup|device|screenshot|screen|ui|interface|app\s+screen|logo|asset|footage|product\s+(?:visual|shot|hero|image|photo))\b",
+        production_text,
+        re.I,
+    )
+    if launch_signal and not product_signal:
+        return [
+            TasteAuditIssue(
+                code="product_absence",
+                severity="risk",
+                message="Commercial/product intent is declared, but no concrete product visual is planned.",
+                suggestion="Add product screenshots, UI cards, device mockups, logo moments, or explicit asset waivers before production.",
+                path=str(expanded_path),
+            )
+        ]
+    return []
+
+
+def _audit_flat_background(expanded_prompt: str, expanded_path: Path) -> list[TasteAuditIssue]:
+    flat_bg = re.search(r"background\s*:\s*(?:solid|plain|flat)\b", expanded_prompt, re.I)
+    no_depth = re.search(r"depth\s+layers?\s*:\s*(?:none|no|0)\b", expanded_prompt, re.I)
+    if flat_bg and no_depth:
+        return [
+            TasteAuditIssue(
+                code="flat_background",
+                severity="suggestion",
+                message="Scene uses a flat/solid background with no depth layers; this risks a slide-deck look.",
+                suggestion="Add 2-5 restrained atmosphere layers: product shadow, gradient wash, grid, particles, depth cards, or motif echoes.",
+                path=str(expanded_path),
+            )
+        ]
+    return []
+
+
+def _audit_weapon_preset_missing(project: Path) -> list[TasteAuditIssue]:
+    plan_path = project / ".framepack" / "weapon-load-plan.json"
+    if not plan_path.is_file():
+        return []
+    try:
+        data = json.loads(plan_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+
+    issues: list[TasteAuditIssue] = []
+    for scene in data.get("scenes", []):
+        for match in scene.get("matches", []):
+            if match.get("reuse_mode") in {"full", "adapt"} and not match.get("preset_id"):
+                issues.append(
+                    TasteAuditIssue(
+                        code="weapon_preset_missing",
+                        severity="suggestion",
+                        message="A selected reusable weapon has no preset recommendation; the Agent may use the tool without a quality recipe.",
+                        suggestion="Add a preset or params_hint for this weapon, or record a waiver explaining why the scene is hand-tuned.",
+                        path=str(plan_path),
+                        scene=str(scene.get("scene") or scene.get("scene_id") or ""),
+                        details={"weapon_id": match.get("id") or match.get("weapon_id")},
+                    )
+                )
+    return issues
+
+
+def _audit_bgm_unplanned(expanded_prompt: str, expanded_path: Path) -> list[TasteAuditIssue]:
+    audio_signal = re.search(r"\b(audio|bgm|music|soundtrack|rhythm)\b", expanded_prompt, re.I)
+    unplanned = re.search(r"\b(?:audio|bgm|music)\s*:\s*(?:tbd|none|missing|unplanned)|no\s+bgm\s+plan", expanded_prompt, re.I)
+    if audio_signal and unplanned:
+        return [
+            TasteAuditIssue(
+                code="bgm_unplanned",
+                severity="suggestion",
+                message="Rhythm/audio is mentioned but BGM planning is unresolved; motion may lose its spine.",
+                suggestion="Choose a BGM direction, beat cues, or an explicit no-music waiver before render planning.",
+                path=str(expanded_path),
+            )
+        ]
+    return []
+
+
+def _has_proof_frames(project: Path) -> bool:
+    roots = [
+        project / ".framepack" / "proof-frames",
+        project / ".framepack" / "proofs",
+        project / "proofs",
+        project / "snapshots",
+    ]
+    return any(root.is_dir() and any(root.rglob("*.png")) for root in roots)
+
+
+def _audit_no_proof_frames(project: Path) -> list[TasteAuditIssue]:
+    html_path = project / "index.html"
+    if html_path.is_file() and not _has_proof_frames(project):
+        return [
+            TasteAuditIssue(
+                code="no_proof_frames",
+                severity="suggestion",
+                message="index.html exists but no proof frames/snapshots were found; taste cannot be checked from prose alone.",
+                suggestion="Capture representative proof frames or a contact sheet before pre-render taste sign-off.",
+                path=str(html_path),
+            )
+        ]
+    return []
+
+
+def _audit_commercial_signals(project: Path, expanded_prompt: str, expanded_path: Path) -> list[TasteAuditIssue]:
+    issues: list[TasteAuditIssue] = []
+    if expanded_prompt:
+        issues.extend(_audit_text_dominance(expanded_prompt, expanded_path))
+        issues.extend(_audit_product_absence(expanded_prompt, expanded_path))
+        issues.extend(_audit_flat_background(expanded_prompt, expanded_path))
+        issues.extend(_audit_bgm_unplanned(expanded_prompt, expanded_path))
+    issues.extend(_audit_weapon_preset_missing(project))
+    issues.extend(_audit_no_proof_frames(project))
+    return issues
+
+
 def audit_project(project_dir: str | Path) -> TasteAuditReport:
     project = Path(project_dir)
     frame_path = project / "frame.md"
@@ -345,7 +482,13 @@ def audit_project(project_dir: str | Path) -> TasteAuditReport:
     if expanded_prompt:
         issues.extend(_audit_generic_fade_stack(expanded_prompt, expanded_path, frame_md=frame_md))
         issues.extend(_audit_static_mockup(expanded_prompt, expanded_path))
+    issues.extend(_audit_commercial_signals(project, expanded_prompt, expanded_path))
     issues.extend(_audit_surprise_usage(frame_md, expanded_prompt, frame_path, expanded_path))
     issues.extend(_audit_motif_transformation(frame_md, expanded_prompt, frame_path, expanded_path))
 
     return TasteAuditReport(str(project), issues, _summarize(issues))
+
+
+def audit_commercial_taste(project_dir: str | Path) -> TasteAuditReport:
+    """Compatibility API for Phase 3 commercial taste audit."""
+    return audit_project(project_dir)

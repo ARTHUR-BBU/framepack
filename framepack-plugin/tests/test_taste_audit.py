@@ -267,3 +267,82 @@ taste:
     project = write_project(tmp_path, frame=frame, expanded=expanded)
     report = audit_project(project)
     assert any(issue.code == "motif_not_transformed" for issue in report.issues)
+
+
+def test_commercial_taste_detects_ppt_like_text_dominance(tmp_path):
+    expanded = """
+## Scene 1
+Text: Transform your workflow with next generation intelligent automation for every team.
+Text: More productivity, more clarity, more growth, more speed.
+Text: Join thousands of teams today.
+Product: none.
+"""
+    project = write_project(tmp_path, expanded=expanded)
+    report = audit_project(project)
+    issue = next(issue for issue in report.issues if issue.code == "text_dominance")
+    assert issue.severity == "risk"
+    assert "PPT" in issue.message
+
+
+def test_commercial_taste_detects_product_absence_when_product_launch(tmp_path):
+    expanded = """
+# Product launch video
+## Scene 1
+Hero typography and gradient waves introduce the app.
+## Scene 2
+CTA copy appears over abstract particles.
+"""
+    project = write_project(tmp_path, expanded=expanded)
+    report = audit_project(project)
+    assert any(issue.code == "product_absence" for issue in report.issues)
+
+
+def test_commercial_taste_detects_flat_background(tmp_path):
+    expanded = """
+## Scene 1
+Background: solid blue background.
+Depth layers: none.
+Transition out: fade.
+"""
+    project = write_project(tmp_path, expanded=expanded)
+    report = audit_project(project)
+    assert any(issue.code == "flat_background" for issue in report.issues)
+
+
+def test_commercial_taste_detects_weapon_preset_missing(tmp_path):
+    project = write_project(tmp_path, expanded="# Scene 1\nCaption callout enters.\n")
+    fp = project / ".framepack"
+    fp.mkdir()
+    (fp / "weapon-load-plan.json").write_text(
+        """{
+  "version": "0.1",
+  "source_prompt": ".hyperframes/expanded-prompt.md",
+  "scenes": [{
+    "scene": "scene_1",
+    "need": "caption callout",
+    "matches": [{"source": "builtin", "id": "caption-clip-wipe", "confidence": "high", "reuse_mode": "full", "preset_id": null}]
+  }]
+}""",
+        encoding="utf-8",
+    )
+    report = audit_project(project)
+    assert any(issue.code == "weapon_preset_missing" for issue in report.issues)
+
+
+def test_commercial_taste_detects_bgm_unplanned_when_video_mentions_audio(tmp_path):
+    expanded = """
+# Product launch video
+Rhythm: punch-breathe-CTA.
+Audio: TBD.
+No BGM plan yet.
+"""
+    project = write_project(tmp_path, expanded=expanded)
+    report = audit_project(project)
+    assert any(issue.code == "bgm_unplanned" for issue in report.issues)
+
+
+def test_commercial_taste_detects_missing_proof_frames_after_html_exists(tmp_path):
+    project = write_project(tmp_path, expanded="# Scene 1\nProduct hero.\n")
+    (project / "index.html").write_text("<div data-duration='8'></div>", encoding="utf-8")
+    report = audit_project(project)
+    assert any(issue.code == "no_proof_frames" for issue in report.issues)
