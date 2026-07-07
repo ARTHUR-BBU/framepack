@@ -7,67 +7,67 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.16.0 post-release / Unreleased；HyperFrames 0.7.24 recon 完成（YELLOW），golden lint debt 已定位，hook classification 已补 validate，Framepack capability radar 已更新全部 0.7.24 skills pack。
-**分支**: `main` 领先 `origin/main` 14 个提交（未 push）。
-**源码版本**: `framepack-plugin/plugin.yaml = 0.16.0`（未 bump）。
-**HyperFrames 窗口**: production support 仍为 `0.7.3 – 0.7.21`；recon target `0.7.24` 判定 YELLOW。
-**最新开发提交**: `adebafa` (`fix: classify HyperFrames validate command`)。
-**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已同步；独立 skill 已同步；md5 全绿。
-**测试**: 源码 `915 passed in 18.95s`；部署目录 `915 passed in 18.12s`；md5 sync OK。
+**阶段**: v0.18.0 / Commercial Video Quality Engine Phase 3A 已完成；准备在新 session 试做 Phase 3B `Taste Control Loop`。
+**分支**: `main` 与 `origin/main` 对齐；handoff 前工作区无业务改动。
+**源码版本**: `framepack-plugin/plugin.yaml = 0.18.0`。
+**HyperFrames 窗口**: Framepack v0.18.0 描述仍以 HyperFrames 0.7.21 Director Workbench 为产品锚点；生产升级窗口另行 recon，不在本次 handoff 范围。
+**最后功能提交**: `1eb888d` (`feat: add commercial taste audit signals`)。
+**部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已在 Phase 3A 同步；关键文件 md5 已校验通过。
+**测试**: Phase 3A 源码全量 `1033 passed in 68.07s`；部署目录全量 `1033 passed in 103.99s`；focused taste/quality bridge `50 passed in 5.30s`；ad-hoc `ADHOC_PHASE3_COMMERCIAL_TASTE_VERIFY_PASSED=True`。
 
 ### 上次做了什么
 
-- ✅ 摸底排查：确认旧 `pipeline_progress.py` 是模板轴（空项目/模板选择都落到“已选模板”心智），`asset-intake.md` 只 inject 素材检查、不写 progress。
-- ✅ 官方材料落库：`hyperframes.heygen.com` Prompting / Pipeline / Common Mistakes / 4K / HDR / HTML-in-Canvas / Keyframes / llms.txt 存到 `.hermes/research/hyperframes-0.7.21-official/`。
-- ✅ 设计与计划：新增 `.hermes/designs/2026-07-01--official-prompt-pipeline-alignment.md` 与 `.hermes/plans/2026-07-01_203809-non-template-pipeline-alignment.md`。
-- ✅ 代码校准：将 progress spine 从模板轴改为官方 pipeline 轴：素材准备 → 视觉身份 → 文案脚本 → 分镜导演稿 → 配音/节奏 → 制作中 → 验片交付。
-- ✅ 非模板入口补齐：`.framepack/asset-intake.md` 写入后现在会跑 `core.gates.asset_intake.check_asset_depth` 并写 `.framepack/progress.md`；非模板项目会注入“创作小票”（时长/画幅/风格/关键元素/音频/输出目标）。
-- ✅ 模板入口补齐：`template-selection.md` 写入后现在同时注入模板参数卡并写 `.framepack/progress.md`，显示“素材准备（template-selection.md）”，不再回到“已选模板”轴。
-- ✅ dogfood smoke：新增 `.hermes/dogfood/non_template_template_pipeline_smoke.py`，用部署插件真实 hook 跑非模板 asset-intake → frame.md → expanded-prompt，以及模板 template-selection → 参数卡 → progress。
-- ✅ skill 规则沉淀：`framepack` skill 新增“非模板与模板一等公民”规则，并新增 `references/non-template-first-pipeline-alignment.md`；三副本 md5 已同步。
-- ✅ TDD + simplify/code-review：先 RED 后 GREEN；静态安全扫描 clean；未引入复杂状态机，仍是文件证据检测 + 伴随式 gates。
-- ✅ dogfood 黄灯闭环：Script Lanes 支持 `director_decision: true` + `decision_reason` 作为自主导演证据；不再伪造 user confirmation。
-- ✅ Scene Continuity 证据货架：timeline sync 现在为每个 scene scaffold `continuity`，并在 `proofs.required` 自动登记 scene boundary proof 位；没有真实 proof 仍保持 yellow，不造假。
-- ✅ Context Sync 卫生修复：workbench hydrate 同步写 case-level `.framepack/context-sync.md` receipt，case readiness 可直接读到 GREEN。
-- ✅ HyperFrames Capability Radar：新增 `core/hyperframes_capabilities.py` + `scripts/framepack_hyperframes_capabilities.py`，并新增 `HyperFrames Capability Alignment` gate；遇到 URL/website/capture/registry/logo wall/sponsor/parallax/skills-pack 信号，会要求记录 used/waived，避免 Framepack 重造 HyperFrames 官方能力。
-- ✅ HyperFrames 0.7.24 recon：blank smoke 全链路通过（lint/validate/inspect/render/ffprobe 0 error）；catalog JSON 可解析但 stderr 有 registry timeout skip；doctor ok=false（缺 Docker + whisper-cpp + MusicGen，均为 optional）。
-- ✅ Golden project recon：aura-noema 模板 render 成功（60s/1800frames/1920x1080/30fps）；lint 0.7.24 新增 2 个 `gsap_css_transform_conflict` error（loader-scanline / loader-strip），是 lint 规则升级暴露的模板旧债，非渲染阻断。
-- ✅ Hook classification 补 `validate`：0.7.24 命令面全覆盖（32 个命令全部显式分类，0 unknown fallback）。
-- ✅ Capability radar 更新：新增 music-to-video / talking-head-recut / slideshow / general-video；记录 20 个 0.7.24 observed skills。
+- ✅ Phase 2 完成并推送：`07e15bb feat: add weapon preset registry`。把武器系统从“推荐武器”升级到“推荐武器 + preset + scorecard + params_hint + post-write gate”。
+- ✅ Phase 2 reviewer-mode 修复真实误报：`no caption or callout overlays` 不再误触发 `caption-clip-wipe` / captions skill。
+- ✅ 战略 README 更新并推送：`d4b12f2 docs: refresh Framepack strategy readmes`。中英文 README 已写入 v0.18.0 产品定位、设计哲学、架构、功能模块关系、武器质量引擎。
+- ✅ 发布 README 规则沉淀：创建 `framepack-release-readme-refresh` skill，并提交 `de37599 docs: require release README refresh`。以后每个 Framepack 版本发布必须更新英文 `README.md` 与中文 `docs/README.zh-CN.md`。
+- ✅ Phase 3A 完成并推送：`1eb888d feat: add commercial taste audit signals`。`core/taste_audit.py` 新增商业视频廉价感信号：`text_dominance`、`product_absence`、`flat_background`、`weapon_preset_missing`、`bgm_unplanned`、`no_proof_frames`。
+- ✅ Phase 3A 已接入 quality bridge：`text_dominance` 等 taste issue 能进入主 `quality_audit`，例如映射为 P1。
+- ✅ 用户明确质疑：Taste 不能停留在“品味原则/会议稿”。Framepack 作为 Hermes 插件必须 Harness Agent：短规则 + 文件账本 + hook 注入 + gate + waiver + proof 小票。
+- ✅ 已达成下一步判断：Phase 3A 只是“雷达”，不算真正产品化；新 session 要试做 Phase 3B：`Taste Control Loop`，让 P1 taste debt 不能被 Agent 静默忽略。
 
 ### 当前关键证据
 
 ```text
-feature commit: 60112be feat: align pipeline progress with non-template flow
-follow-up commit: 1391c32 fix: update template selection progress
-source targeted: 19 passed in 0.25s
-source full: 915 passed in 18.95s
-deployed full: 915 passed in 18.12s
-dogfood: python .hermes/dogfood/non_template_template_pipeline_smoke.py → all checks True
-md5 sync: on_post_tool_call.py + test_post_tool_gate_routing.py OK
-git diff --check: clean
-strict secret scan: clean
+latest functional commit: 1eb888d feat: add commercial taste audit signals
+README strategy commit: d4b12f2 docs: refresh Framepack strategy readmes
+README release-rule commit: de37599 docs: require release README refresh
+Phase 2 preset commit: 07e15bb feat: add weapon preset registry
+source full: 1033 passed in 68.07s
+deployed full: 1033 passed in 103.99s
+focused taste/quality bridge: 50 passed in 5.30s
+md5 sync: PHASE3_MD5_OK=True
+ad-hoc: ADHOC_PHASE3_COMMERCIAL_TASTE_VERIFY_PASSED=True
+git state before handoff: main == origin/main, no business changes
 ```
 
 ### 注意点 / 坑位
 
-- 本轮不 bump `plugin.yaml`，不移动 v0.16.0 tag；这是 post-release / Unreleased 开发成果。
-- `Script Lanes` 现在支持用户确认、导演自主决策、waiver 三种 green 证据；但没有真实确认/决策/豁免时仍应 yellow。
-- `Scene Continuity` 会 scaffold boundary proof 位，但不会自动 green；必须有真实 boundary_proofs 才算证据闭环。
-- HyperFrames Capability Alignment 是路由雷达，不是安装器；发现官方能力信号后要求记录 used/waived，不自动安装 latest 或 skills pack。
-- HyperFrames 0.7.24 判定 YELLOW：runtime 可用，但 doctor 缺 Docker/whisper-cpp/MusicGen（optional），catalog stderr 有 timeout skip，golden template 有 2 个 gsap_css_transform_conflict lint error（旧债）；不升生产窗口。
-- `validate` 命令必须走 requires_handoff 分类；0.7.24 之前 Framepack 漏分类，已修。
-- 非模板“创作小票”只在没有 `.framepack/template-selection.md` 时注入；模板项目继续走模板参数卡。
-- `asset-intake.md` / `template-selection.md` 的项目根解析已修：都回到 project root，不再误写到 `.framepack/.framepack/progress.md`。
-- 简化原则：没有新增 schema engine / 状态机 / 数据库；仍是 artifact evidence + existing gates。
-- `.hermes/dogfood/non_template_template_pipeline_smoke.py` 依赖部署路径 `F:/Hermes_windows/plugins/framepack`，用于 runtime smoke，不是通用 pytest。
+- 本 handoff 是用户要求“开新 session 前先交接”；不要继续在旧 session 开 Phase 3B。
+- Phase 3A 的价值是发现廉价感，不是控制 Agent；不要在新 session 把它吹成最终产品化闭环。
+- 用户的核心标准：如果 Phase 3B 只是继续加建议，就停，回去搞武器库；只有能形成 Harness Agent 的闭环才继续。
+- Hermes 插件可用的控制杆：`ctx.inject_message` 上下文注入、`pre_tool_call` render/preview 前审计、`post_tool_call` 写后验收、`.framepack/*` 文件账本、waiver/proof 证据小票。
+- Phase 3B 不应做“高级感圣经”。目标是：taste issue → action card → debt ledger → render 前 revise/proof/waiver 三选一 → 注入 Agent 下一步必须处理。
+- 创意不能像编译器一样一刀切 block；但 Agent 不能装没看见。正确口径是“修 / 证明 / 签 waiver”，不是绝对禁止 render。
+- 开工必须 TDD：先写 failing tests，证明 P1 taste debt 会落账、会被 pre-render hook 注入、修复/waiver 后能放行。
+- 改 plugin 文件后必须同步到 `F:/Hermes_windows/plugins/framepack/`，并用 md5 校验，不能只比文件大小。
 
 ### 下次要做什么
 
-1. 如果要发版：走 Framepack release/version bump 流程，把 Unreleased 成果整理进正式版本号、README、plugin.yaml、changelog 和部署包。
-2. HyperFrames 0.7.24 recon 已完成（YELLOW）；如需升生产窗口，需先修 golden template 的 gsap_css_transform_conflict lint debt。
-3. 继续真实项目 dogfood：要求填写 `.framepack/hyperframes-capability-alignment.md` 的 used/waived，专门观察 Framepack 是否正确调用 website-to-video/capture/catalog/skills-pack，而不是重造轮子。
-4. 如需推远端：先确认是否要 push 当前 `main` ahead 14 commits。
+1. 新 session 第一动作：读本 `CONTEXT.md`，再跑 `git status --short --branch && git log --oneline -5` 现场复核。
+2. 加载技能：`brainstorming`、`test-driven-development`、`verification-before-completion`、`framepack-plugin-engineering`、必要时 `hermes-agent`。
+3. 试做 Phase 3B 最小闭环，不扩写哲学：
+   - `TasteActionCard` / `required_action` / `acceptance` / `repair_target` schema；
+   - `.framepack/taste-audit.json` + `.framepack/taste-debt.md` ledger；
+   - pre-render/preview hook 注入 `Framepack Taste Control` 消息；
+   - P1 open debt 要求 revise / proof / waiver 三选一；
+   - waiver 落账后放行但保留记录。
+4. 建议第一组 RED 测试：
+   - `text_dominance` 生成 action card 与 open debt；
+   - `npx hyperframes render` 前 hook 注入 Taste Control，不只是 advisory；
+   - 存在 `.framepack/taste-waivers.json` 时同一 issue 变为 waived/放行；
+   - 修改 expanded-prompt 后同一 issue 能从 open 变 resolved。
+5. 若 Phase 3B 做不出可验证控制闭环：停止 taste，回到武器库扩充 presets/scorecards/真实 commercial case harness。
 
 ## 设计文档
 
