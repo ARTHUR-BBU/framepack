@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from core.taste_control import build_taste_control
+from core.taste_control import build_taste_control, intervention_events_for_taste_report
 
 
 def write_project(tmp_path: Path, expanded: str) -> Path:
@@ -64,6 +64,22 @@ def test_p1_taste_issue_generates_open_action_card(tmp_path):
     persisted = load_audit(project)
     assert persisted["summary"]["open"] == 1
     assert persisted["cards"][0]["code"] == "text_dominance"
+
+
+def test_open_taste_cards_emit_decision_required_intervention_events(tmp_path):
+    project = write_project(tmp_path, ppt_like_expanded())
+    report = build_taste_control(project)
+
+    events = intervention_events_for_taste_report(report)
+
+    assert len(events) == 1
+    event = events[0]
+    assert event.department == "taste"
+    assert event.code == "text_dominance"
+    assert event.severity == "decision_required"
+    assert event.required_action == "revise"
+    assert event.artifact == ".hyperframes/expanded-prompt.md"
+    assert "product visuals" in event.acceptance.lower() or "product" in event.acceptance.lower()
 
 
 def test_matching_waiver_marks_card_waived(tmp_path):

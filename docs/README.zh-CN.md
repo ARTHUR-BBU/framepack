@@ -72,6 +72,34 @@ Framepack Pre-render Taste Audit
 HyperFrames render / publish / cloud
 ```
 
+## 事业部化架构
+
+Framepack 不是一堆 hook、detector、weapon、audit 的杂货铺，而是一组协作的产品事业部。每个事业部只管一类事，有自己的边界、产物和验收小票。
+
+| 事业部 | 通俗角色 | 负责 | 不负责 |
+|---|---|---|---|
+| Intent & Intake | 前厅经理：先听懂需求，再让厨房开火 | 分诊、素材问题、用户决策点 | 分镜编排、taste 判断、weapon 选择 |
+| Director Bible | 导演组：把想法变成可拍分镜圣经 | `frame.md`、`.hyperframes/expanded-prompt.md`、时间窗、motif、execution manifest | HTML、render、最终 proof |
+| Taste Intelligence | 主厨舌头：判断方向商业上够不够强 | `taste_read`、`taste_dials`、taste rules、prompt/pixel 口味债、action cards | 具体 weapon 选择、实现层强制执行 |
+| Weapon Production | 厨房设备 + 标准菜谱：选择成熟做法 | weapon matching、arsenal、presets、scorecards、load plans | 整片审美判断 |
+| Production Audit | 出餐验货：承诺和实物对账 | quality audit、proof/timeline 漂移、旧素材、上游 warning 分类 | 重写创意方向 |
+| Intervention & Railguard | 店长 / 铁路调度员：Agent 偏航时拉回轨道 | gates、corrective injection、required next action、waiver、小票 | 具体 Taste / Weapon / Audit 业务规则 |
+| Knowledge Assets | 菜谱档案馆：把好经验沉淀成资产 | templates、reference DNA、visual styles、research PRD、case learnings | 未验证的一次性魔法 |
+| Platform Integration | 外联和运维：保证 Hermes / HyperFrames / Framepack 对齐 | hooks、compatibility、guardrails、部署同步、release docs | 创意审美或 weapon 语义 |
+
+最重要的生产治理链路是：
+
+```text
+Taste → Weapon → Audit → Intervention
+```
+
+- **Taste** 判断方向商业上强不强。
+- **Weapon** 判断应该用哪种成熟制作手段。
+- **Audit** 检查承诺有没有真实兑现。
+- **Intervention** 是可复用的强硬介入 / 轨道层：Agent 跳步骤、假调用、忽略 proof、需要 waiver 时，把它拉回流程。
+
+这个边界让系统互补而不抢活：Taste 不变成代码检查器，Weapon 不变成艺术评论家，Audit 不变成导演，Gate 也不再散落在各个模块里。
+
 ## 功能模块逻辑关系
 
 | 模块 | 作用 | 产物 / 契约 |

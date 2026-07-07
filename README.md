@@ -72,6 +72,34 @@ Framepack Pre-render Taste Audit
 HyperFrames render / publish / cloud
 ```
 
+## Department architecture
+
+Framepack is organized as a set of cooperating product departments, not a pile of hooks and detectors. Each department owns one job, one boundary, and one kind of receipt.
+
+| Department | Plain-language role | Owns | Does not own |
+|---|---|---|---|
+| Intent & Intake | Front desk: understand the job before the kitchen starts cooking | routing, asset questions, user decision gates | scene choreography, taste judgment, weapon choice |
+| Director Bible | Director room: turn intent into a shootable story bible | `frame.md`, `.hyperframes/expanded-prompt.md`, time windows, motifs, execution manifest | HTML, render, final quality proof |
+| Taste Intelligence | Chef's palate: decide whether the idea is commercially strong | `taste_read`, `taste_dials`, taste rules, prompt/pixel taste debt, action cards | concrete weapon selection, implementation enforcement |
+| Weapon Production | Kitchen equipment + recipes: choose the mature way to build | weapon matching, arsenal, presets, scorecards, load plans | whole-film taste judgment |
+| Production Audit | Pass inspection: verify promises against artifacts | quality audit, proof/timeline drift, stale props, upstream warning classification | rewriting the creative direction |
+| Intervention & Railguard | Floor manager: pull the Agent back on track when it drifts | gates, corrective injections, required next actions, waivers, receipts | business-specific taste/weapon/audit logic |
+| Knowledge Assets | Recipe archive: turn useful cases into reusable assets | templates, reference DNA, visual styles, research PRDs, case learnings | unverified one-off magic |
+| Platform Integration | Runtime and release ops: keep Hermes/HyperFrames/Framepack aligned | hooks, compatibility, guardrails, deployment sync, release docs | creative taste or weapon semantics |
+
+The most important production-governance chain is:
+
+```text
+Taste → Weapon → Audit → Intervention
+```
+
+- **Taste** says whether the direction is commercially strong.
+- **Weapon** says which proven production method should be used.
+- **Audit** checks whether the promise was actually fulfilled.
+- **Intervention** is the reusable hard stop / railguard layer that pulls the Agent back when it skips steps, fakes a call, ignores proof, or needs a waiver.
+
+This boundary keeps the system complementary: Taste does not become a code checker, Weapon does not become an art critic, Audit does not become a director, and gates do not stay scattered across every module.
+
 ## Core modules
 
 | Module | Purpose | Output / contract |

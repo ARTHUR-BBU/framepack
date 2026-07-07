@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .intervention_events import InterventionEvent, make_event
 from .taste_rules import acceptance_for, repair_target_for
 
 
@@ -268,3 +269,29 @@ def build_taste_control_message(report: TasteControlReport) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def intervention_events_for_taste_report(report: TasteControlReport) -> list[InterventionEvent]:
+    """Convert open Taste action cards into reusable railguard events."""
+    events: list[InterventionEvent] = []
+    project = Path(report.project_dir)
+    for card in report.cards:
+        if card.status != "open":
+            continue
+        artifact = card.repair_target
+        try:
+            artifact = str(Path(artifact).relative_to(project)).replace("\\", "/")
+        except ValueError:
+            pass
+        events.append(
+            make_event(
+                department="taste",
+                code=card.code,
+                severity="decision_required",
+                reason=card.message,
+                required_action="revise",
+                artifact=artifact,
+                acceptance=card.acceptance,
+            )
+        )
+    return events
