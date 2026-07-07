@@ -109,6 +109,62 @@ Now:
 
 This is the foundation for commercial taste at scale: weapons become **operational assets** with recipes, ratings, contracts, and audit trails.
 
+## Taste Layer: commercial taste nervous system
+
+The Taste Layer is Framepack's answer to a simple product question: **how do we stop AI from making something technically valid but commercially weak?**
+
+It is not a prettier linter. A linter checks whether the plate is clean. The Taste Layer asks whether this dish should leave the kitchen at all: is there a real product on screen, does the opening have a visual hook, is the motion earning its keep, are we seeing proof frames or just flattering prose?
+
+In plain language, the Taste Layer is Framepack's **chef's palate + kitchen ticket system**:
+
+- **Palate** — reads the brief and decides what kind of film this is: brand film, product launch, website-to-video, explainer, product UI demo, event teaser.
+- **Dials** — converts creative judgment into controllable settings: design variance, motion intensity, visual density, plus the existing five-element control profile.
+- **Anti-slop scanner** — catches generated-video tells: text carrying the film, missing product visuals, static mockups, generic fades, fake precision, AI-copy punctuation, fake UI, decorative grids/glows, and other “animated PPT” symptoms.
+- **Receipts** — writes `taste-audit.json` and `taste-debt.md`, so quality problems become action cards instead of vibes.
+- **Decision loop** — before preview/render, the user gets clear choices: revise, attach proof, waive intentionally, or render anyway.
+
+### What it does today
+
+Current Taste Layer capabilities:
+
+| Capability | Why it matters | Current artifact |
+|---|---|---|
+| Taste read | The Agent must name the film type before judging it | `taste_read` in `frame.md` |
+| Taste dials | Taste becomes controllable instead of mystical | `taste_dials` + `control_profile` |
+| Rule registry | Taste rules are data-backed, not scattered hardcoded strings | `core/taste_rules.py` |
+| Prompt detectors | Catch weak direction before HTML exists | `opening_visual_absence`, `copy_punctuation_slop`, `missing_taste_read`, `invalid_taste_dial` |
+| Taste Control cards | P1 taste debt becomes concrete next action | `.framepack/taste-audit.json`, `.framepack/taste-debt.md` |
+
+### Where the latest update fits
+
+The current update is the **foundation pour** for the Taste Layer 2.0 system.
+
+Before this update, taste lived mostly as a report-first audit: useful, but closer to a critic reading the script. Now Framepack has a reusable taste grammar:
+
+```text
+brief/register/dials
+  → rule registry
+  → prompt detectors
+  → audit report
+  → Taste Control action cards
+```
+
+That matters because future taste checks no longer need to be one-off rules. They can plug into the same registry, severity mapping, waiver logic, and pre-render decision loop.
+
+### Roadmap
+
+The Taste Layer will grow in stages:
+
+1. **Director Bible checks** — keep expanding prompt-level detectors so bad taste is caught before production starts.
+2. **HTML / implementation slop detectors** — catch fake dashboards, gradient text, decorative generated surfaces, bounce/elastic motion, raw scroll listeners, missing reduced-motion fallbacks.
+3. **Proof-frame evidence loop** — require contact sheets or sampled frames before final taste sign-off, so the system judges pixels instead of promises.
+4. **Register-aware severity** — a kinetic type event, luxury object film, and SaaS product launch should not be judged by the same ruler.
+5. **Rule-pack lifecycle** — every useful commercial case should feed back into the rule registry, presets, scorecards, and templates.
+
+Long-term, the Taste Layer should become Framepack's **commercial video intelligence layer**: the part that helps an Agent not merely finish a video, but make something useful, usable, good, and occasionally surprising enough that a user says, “I did not expect AI to make that.”
+
+This section should be refreshed whenever a new Taste Layer capability lands.
+
 ## What Framepack does
 
 - Routes the request before writing anything.

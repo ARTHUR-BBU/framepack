@@ -109,6 +109,62 @@ v0.18.0 的核心变化，是 Framepack 从“用了武器吗？”升级为“�
 
 这一步的意义：武器不再是一堆 JS 片段，而是带菜谱、评级、契约和验货小票的 **生产资产**。
 
+## Taste 层：商业视频的审美神经系统
+
+Taste 层回答的是一个特别朴素、但特别产品的问题：**怎么阻止 AI 做出“技术上能跑、商业上很弱”的片子？**
+
+它不是一个更漂亮的 lint。lint 像洗碗机，检查盘子干不干净；Taste 层像主厨试菜，问的是：这盘菜该不该端出去？画面里有没有真实产品？开场有没有视觉钩子？动效是不是有表达任务？我们看到的是 proof frame，还是一堆自我感动的漂亮文字？
+
+通俗地说，Taste 层是 Framepack 的 **主厨味觉 + 厨房小票系统**：
+
+- **先尝味道** — 先读 brief，判断这到底是哪类片：品牌片、产品发布、website-to-video、解释视频、产品 UI demo、活动预告。
+- **把口味变成旋钮** — 把“高级一点 / 动一点 / 克制一点”翻译成可控参数：design variance、motion intensity、visual density，以及 Framepack 已有的五行 control profile。
+- **抓 AI 味** — 抓会动 PPT、文字扛全片、产品缺席、静态 mockup、泛泛 fade、假精确数字、AI 标点、假 UI、发光网格这些廉价套路。
+- **留下小票** — 写出 `taste-audit.json` 和 `taste-debt.md`，让审美问题变成 action card，而不是“我感觉不太行”。
+- **形成决策闭环** — preview/render 前给用户清楚选择：改、补 proof、明确 waiver，或者知道风险后继续 render anyway。
+
+### 现在已经能做什么
+
+当前 Taste 层能力：
+
+| 能力 | 为什么重要 | 当前产物 |
+|---|---|---|
+| Taste read | Agent 先说清“这是什么片”，再开始评判 | `frame.md` 里的 `taste_read` |
+| Taste dials | 审美不再玄学，变成可调旋钮 | `taste_dials` + `control_profile` |
+| Rule registry | taste 规则不再散落硬编码，而是可演进资产 | `core/taste_rules.py` |
+| Prompt detectors | HTML 还没写之前，就先抓方向上的廉价感 | `opening_visual_absence`、`copy_punctuation_slop`、`missing_taste_read`、`invalid_taste_dial` |
+| Taste Control cards | P1 口味债变成下一步动作，而不是一句警告 | `.framepack/taste-audit.json`、`.framepack/taste-debt.md` |
+
+### 这次更新在整个 Taste 层里的位置
+
+这次更新不是“又加几条检查规则”，而是给 Taste Layer 2.0 浇地基。
+
+以前的 Taste Audit 更像一个影评人读剧本：能指出问题，但还不够系统。现在 Framepack 开始有一套可复用的审美语法：
+
+```text
+brief / register / dials
+  → rule registry
+  → prompt detectors
+  → audit report
+  → Taste Control action cards
+```
+
+这很关键：以后新增 taste 检查，不需要东一条西一条地硬塞。它们可以挂进同一个规则注册表、严重级别映射、waiver 机制和 pre-render 决策链。
+
+### 规划和展望
+
+Taste 层会分几步长大：
+
+1. **Director Bible 检查** — 继续扩展 prompt-level detectors，在制作前先抓坏方向。
+2. **HTML / 实现层 AI 味检查** — 抓假 dashboard、渐变字、装饰性发光网格、bounce/elastic 动画、裸 scroll listener、缺 reduced-motion fallback。
+3. **Proof-frame 证据闭环** — 最终审片不能只看文字，要看 contact sheet / sampled frames，让系统对像素负责。
+4. **按片型调严重级别** — 活动预告、奢侈品物件片、SaaS 产品发布，不能用同一把尺子打分。
+5. **规则资产生命周期** — 每个真实商业 case 的经验，都应该反哺 rule registry、preset、scorecard、template。
+
+长期看，Taste 层会成为 Framepack 的 **商业视频智能层**：它帮 Agent 不只是“把视频做完”，而是做出有用、能用、好用，并且偶尔能让用户惊一下的东西。
+
+这个章节以后每次 Taste 层能力升级时都要同步更新。
+
 ## Framepack 做什么
 
 - 写东西前先分诊，不盲写。
