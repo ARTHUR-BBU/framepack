@@ -50,6 +50,11 @@ colors:
   primary: "#EEE3D4"
   accent: "#C7A26A"
   background: "#04070F"
+taste_read:
+  register: brand_film
+  audience: luxury buyers
+  visual_family: luxury_object_emergence
+  anti_references: [animated PPT, generic product slideshow]
 taste:
   reference_dna:
     - luxury_object_emergence
@@ -89,6 +94,11 @@ colors:
   primary: "#00F0FF"
   accent: "#FF2D95"
   background: "#0A0A0F"
+taste_read:
+  register: explainer
+  audience: technical viewers
+  visual_family: data_cathedral_explainer
+  anti_references: [flat icon explainer, generic SaaS gradient]
 taste:
   reference_dna:
     - data_cathedral_explainer
@@ -151,6 +161,11 @@ colors:
   primary: "#0A0A0A"
   accent: "#FFFFFF"
   background: "#F5F5F0"
+taste_read:
+  register: brand_film
+  audience: editorial readers
+  visual_family: monochrome_luxe_editorial
+  anti_references: [over-animated ad, generic hero section]
 taste:
   reference_dna:
     - luxury_object_emergence

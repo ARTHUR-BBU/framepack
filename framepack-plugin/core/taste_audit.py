@@ -13,6 +13,8 @@ import re
 from typing import Any
 
 from .taste_grammar import moves_by_energy_level
+from .taste_read import parse_taste_context
+from .taste_text_detectors import detect_text_taste_issues
 
 
 @dataclass
@@ -456,8 +458,31 @@ def audit_project(project_dir: str | Path) -> TasteAuditReport:
     expanded_path = project / ".hyperframes" / "expanded-prompt.md"
     frame_md = _read(frame_path)
     expanded_prompt = _read(expanded_path)
+    taste_context = parse_taste_context(frame_md, expanded_prompt)
 
     issues: list[TasteAuditIssue] = []
+    if expanded_prompt and not taste_context.explicit_taste_read:
+        issues.append(
+            TasteAuditIssue(
+                code="missing_taste_read",
+                severity="risk",
+                message="No explicit taste_read declares the video register, audience, visual family, and anti-references.",
+                suggestion="Add a taste_read block naming register, audience, visual_family, and anti_references before expanding or rendering.",
+                path=str(frame_path),
+                details={"inferred_register": taste_context.register},
+            )
+        )
+    for context_issue in taste_context.issues:
+        if context_issue.get("code") == "invalid_taste_dial":
+            issues.append(
+                TasteAuditIssue(
+                    code="invalid_taste_dial",
+                    severity="suggestion",
+                    message=context_issue.get("message", "taste_dials must be integers from 1 to 10."),
+                    suggestion="Set design_variance, motion_intensity, and visual_density to integers from 1 to 10.",
+                    path=str(frame_path),
+                )
+            )
     if frame_md and not _has_taste_block(frame_md):
         issues.append(
             TasteAuditIssue(
@@ -480,6 +505,7 @@ def audit_project(project_dir: str | Path) -> TasteAuditReport:
         )
 
     if expanded_prompt:
+        issues.extend(detect_text_taste_issues(frame_md, expanded_prompt, taste_context))
         issues.extend(_audit_generic_fade_stack(expanded_prompt, expanded_path, frame_md=frame_md))
         issues.extend(_audit_static_mockup(expanded_prompt, expanded_path))
     issues.extend(_audit_commercial_signals(project, expanded_prompt, expanded_path))

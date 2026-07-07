@@ -342,7 +342,48 @@ No BGM plan yet.
 
 
 def test_commercial_taste_detects_missing_proof_frames_after_html_exists(tmp_path):
-    project = write_project(tmp_path, expanded="# Scene 1\nProduct hero.\n")
-    (project / "index.html").write_text("<div data-duration='8'></div>", encoding="utf-8")
+    project = write_project(tmp_path, expanded="# Scene 1\nProduct-led launch.\n")
+    (project / "index.html").write_text("<html></html>", encoding="utf-8")
+
     report = audit_project(project)
     assert any(issue.code == "no_proof_frames" for issue in report.issues)
+
+
+def test_integrated_prompt_detector_detects_opening_visual_absence(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+  anti_references: [animated PPT]
+"""
+    expanded = """
+## Scene 1 — Hook
+Text: Transform your workflow.
+Headline: Intelligent operations for every team.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    assert any(issue.code == "opening_visual_absence" for issue in report.issues)
+
+
+def test_integrated_prompt_detector_detects_visible_copy_dash(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+  anti_references: [animated PPT]
+"""
+    expanded = """
+## Scene 1 — Hook
+Product: dashboard screenshot enters.
+Headline: Deploy faster — without chaos.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    assert any(issue.code == "copy_punctuation_slop" for issue in report.issues)

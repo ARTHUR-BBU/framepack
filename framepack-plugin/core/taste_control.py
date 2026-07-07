@@ -15,6 +15,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from .taste_rules import acceptance_for, repair_target_for
+
 
 TASTE_AUDIT_PATH = Path(".framepack") / "taste-audit.json"
 TASTE_DEBT_PATH = Path(".framepack") / "taste-debt.md"
@@ -107,22 +109,17 @@ def _matching_waiver(card: TasteActionCard, waivers: list[dict[str, Any]]) -> di
 
 
 def _acceptance_for(code: str) -> str:
-    table = {
-        "text_dominance": "Revise so product visuals, UI, footage, logo, or proof imagery carry the scene; copy becomes premium labels/cue words.",
-        "product_absence": "Add concrete product screenshots, device mockups, UI cards, logo moments, footage, or an explicit asset waiver.",
-        "static_mockup_risk": "Choreograph the mockup as a product moment: entrance, relationship to UI/cards, and outgoing transition seed.",
-        "generic_fade_stack": "Replace at least one generic fade/crossfade with a motif-driven transition or documented proof that the repetition is intentional.",
-        "no_proof_frames": "Capture representative proof frames/contact sheet so taste can be checked from pixels, not prose alone.",
-    }
-    return table.get(code, "Revise the cited creative artifact, attach proof frames, or record a user-approved waiver with a concrete reason.")
+    try:
+        return acceptance_for(code)
+    except KeyError:
+        return "Revise the cited creative artifact, attach proof frames, or record a user-approved waiver with a concrete reason."
 
 
 def _repair_target_for(path: str | None, code: str) -> str:
-    if path:
-        return path
-    if code in {"text_dominance", "product_absence", "generic_fade_stack", "static_mockup_risk"}:
-        return ".hyperframes/expanded-prompt.md"
-    return "frame.md or .hyperframes/expanded-prompt.md"
+    try:
+        return repair_target_for(code, path)
+    except KeyError:
+        return path or "frame.md or .hyperframes/expanded-prompt.md"
 
 
 def _card_from_taste_issue(issue: Any) -> TasteActionCard:

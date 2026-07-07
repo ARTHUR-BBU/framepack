@@ -53,7 +53,16 @@ def test_lint_does_not_inject_pre_render_advisory():
 
 
 def _write_text_dominance_project(tmpdir: str) -> None:
-    Path(tmpdir, "frame.md").write_text("# frame", encoding="utf-8")
+    Path(tmpdir, "frame.md").write_text(
+        """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+  anti_references: [animated PPT]
+""",
+        encoding="utf-8",
+    )
     Path(tmpdir, "index.html").write_text("<div data-composition-id='x'></div>", encoding="utf-8")
     hyper = Path(tmpdir, ".hyperframes")
     hyper.mkdir()
@@ -95,6 +104,11 @@ def test_render_does_not_inject_taste_control_when_matching_waiver_exists():
                         {
                             "code": "text_dominance",
                             "reason": "Typography-led teaser approved by user for this proof cut.",
+                            "approved_by": "user",
+                        },
+                        {
+                            "code": "opening_visual_absence",
+                            "reason": "Opening is intentionally typography-led for this proof cut.",
                             "approved_by": "user",
                         }
                     ]

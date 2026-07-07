@@ -7,7 +7,18 @@ from core.taste_control import build_taste_control
 def write_project(tmp_path: Path, expanded: str) -> Path:
     project = tmp_path / "project"
     project.mkdir()
-    (project / "frame.md").write_text("# minimal frame\n", encoding="utf-8")
+    (project / "frame.md").write_text(
+        """
+taste_read:
+  register: product_launch
+  audience: commercial buyers
+  visual_family: product-led commercial
+  anti_references:
+    - animated PPT
+    - static screenshot slide
+""",
+        encoding="utf-8",
+    )
     hyper = project / ".hyperframes"
     hyper.mkdir()
     hyper.joinpath("expanded-prompt.md").write_text(expanded, encoding="utf-8")
