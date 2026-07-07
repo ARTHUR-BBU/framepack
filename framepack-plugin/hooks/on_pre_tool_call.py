@@ -25,6 +25,7 @@ from core.hyperframes_adapter import (
 )
 from core.quality_audit import audit_project
 from core.pre_render_audit import audit_pre_render, build_pre_render_audit_message
+from core.taste_control import build_taste_control, build_taste_control_message
 from core.timeline_manifest import parse_hyperframes_time_windows, sync_timeline_from_project
 from core.render_readiness import build_readiness_board, render_board_summary, render_board_markdown, GateStatus
 from core.context_hydrator import ensure_workbench_root_agents
@@ -180,6 +181,21 @@ def _audit_pre_render_for_hyperframes(ctx, workdir: str) -> None:
     except Exception as exc:
         logger.warning("pre_tool_call pre-render audit failed: %s", exc)
         _safe_inject(ctx, f"🎬 **Framepack Pre-render Audit Warning**\n- pre_render_audit_error: {exc}", role="user")
+
+
+def _inject_taste_control(ctx, workdir: str) -> None:
+    """Persist and inject Taste Control debt before preview/render."""
+    project_dir = Path(workdir)
+    if not (project_dir / ".hyperframes" / "expanded-prompt.md").is_file():
+        return
+    try:
+        report = build_taste_control(project_dir)
+        message = build_taste_control_message(report)
+        if message:
+            _safe_inject(ctx, message, role="user")
+    except Exception as exc:
+        logger.warning("pre_tool_call taste control failed: %s", exc)
+        _safe_inject(ctx, f"🎛️ **Framepack Taste Control Warning**\n- taste_control_error: {exc}", role="user")
 
 
 def _inject_readiness_board(ctx, workdir: str) -> None:
@@ -449,6 +465,7 @@ def register(ctx):
         _audit_quality_for_hyperframes(ctx, workdir)
         if _is_pre_render_review_command(command_for_detection):
             _enforce_weapon_receipt_before_render(ctx, workdir)
+            _inject_taste_control(ctx, workdir)
             _inject_readiness_board(ctx, workdir)
             _audit_pre_render_for_hyperframes(ctx, workdir)
         _remind_lint_json_if_needed(ctx, command_for_detection)
