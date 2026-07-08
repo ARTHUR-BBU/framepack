@@ -161,7 +161,7 @@ Taste 层回答的是一个特别朴素、但特别产品的问题：**怎么阻
 | Taste dials | 审美不再玄学，变成可调旋钮 | `taste_dials` + `control_profile` |
 | Rule registry | taste 规则不再散落硬编码，而是可演进资产 | `core/taste_rules.py` |
 | Prompt detectors | HTML 还没写之前，就先抓方向上的廉价感 | `opening_visual_absence`、`copy_punctuation_slop`、`missing_taste_read`、`invalid_taste_dial` |
-| Taste Control cards | P1 口味债变成下一步动作，而不是一句警告 | `.framepack/taste-audit.json`、`.framepack/taste-debt.md` |
+| Taste Control cards | open 口味债变成下一步动作，而不是一句警告 | `.framepack/taste-audit.json`、`.framepack/taste-debt.md` |
 
 ### 这次更新在整个 Taste 层里的位置
 

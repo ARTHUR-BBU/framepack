@@ -14,7 +14,8 @@ from typing import Any
 
 from .taste_grammar import moves_by_energy_level
 from .taste_html_detectors import detect_html_taste_issues
-from .taste_read import parse_taste_context
+from .taste_read import TasteContext, parse_taste_context
+from .taste_rules import get_rule, priority_for_audit_severity, severity_for
 from .taste_text_detectors import detect_text_taste_issues
 
 
@@ -44,7 +45,7 @@ class TasteAuditReport:
         }
 
 
-SEVERITIES = ("risk", "suggestion", "note")
+SEVERITIES = ("blocker", "risk", "suggestion", "note")
 
 
 def _read(path: Path) -> str:
@@ -56,6 +57,62 @@ def _summarize(issues: list[TasteAuditIssue]) -> dict[str, int]:
     for issue in issues:
         summary[issue.severity] = summary.get(issue.severity, 0) + 1
     return summary
+
+
+_PRIORITY_TO_SEVERITY = {
+    "P0": "blocker",
+    "P1": "risk",
+    "P2": "suggestion",
+    "P3": "note",
+}
+
+_SEVERITY_TO_PRIORITY = {
+    "blocker": "P0",
+    "risk": "P1",
+    "suggestion": "P2",
+    "note": "P3",
+}
+
+
+def _priority_to_severity(priority: str, fallback: str) -> str:
+    return _PRIORITY_TO_SEVERITY.get(priority, fallback)
+
+
+def _dial_adjusted_priority(code: str, priority: str, taste_context: TasteContext) -> str:
+    dials = taste_context.dials
+    motion = dials.get("motion_intensity")
+    variance = dials.get("design_variance")
+    density = dials.get("visual_density")
+
+    if code == "motion_claim_unproven" and motion is not None:
+        if motion >= 8:
+            return "P0"
+        if motion <= 3 and priority == "P1":
+            return "P2"
+    if code == "no_controlled_surprise" and variance is not None:
+        if variance <= 3:
+            return "P3"
+        if variance >= 8:
+            return "P1"
+    if code in {"flat_background", "decorative_generated_surface"} and density is not None:
+        if density <= 3:
+            return "P3"
+        if density >= 8 and priority == "P2":
+            return "P1"
+    return priority
+
+
+def _refine_issue_severities(issues: list[TasteAuditIssue], taste_context: TasteContext) -> None:
+    for issue in issues:
+        try:
+            rule = get_rule(issue.code)
+        except KeyError:
+            continue
+        priority = priority_for_audit_severity(issue.severity)
+        if issue.code in {"product_absence", "text_dominance", "opening_visual_absence"} and taste_context.register in rule.registers:
+            priority = severity_for(rule, register=taste_context.register, dials=taste_context.dials)
+        priority = _dial_adjusted_priority(issue.code, priority, taste_context)
+        issue.severity = _priority_to_severity(priority, issue.severity)
 
 
 def _has_taste_block(frame_md: str) -> bool:
@@ -559,6 +616,7 @@ def audit_project(project_dir: str | Path) -> TasteAuditReport:
     issues.extend(_audit_commercial_signals(project, expanded_prompt, expanded_path))
     issues.extend(_audit_surprise_usage(frame_md, expanded_prompt, frame_path, expanded_path))
     issues.extend(_audit_motif_transformation(frame_md, expanded_prompt, frame_path, expanded_path))
+    _refine_issue_severities(issues, taste_context)
 
     return TasteAuditReport(str(project), issues, _summarize(issues))
 

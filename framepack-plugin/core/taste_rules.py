@@ -314,6 +314,19 @@ def severity_for(rule: TasteRule | str, register: str | None = None, dials: Mapp
     return resolved.default_severity
 
 
+_AUDIT_SEVERITY_TO_PRIORITY = {
+    "blocker": "P0",
+    "risk": "P1",
+    "suggestion": "P2",
+    "note": "P3",
+}
+
+
+def priority_for_audit_severity(severity: str) -> str:
+    """Return Taste Control priority for a Taste audit severity."""
+    return _AUDIT_SEVERITY_TO_PRIORITY.get(severity, "P2")
+
+
 def acceptance_for(rule_id: str) -> str:
     return get_rule(rule_id).acceptance
 

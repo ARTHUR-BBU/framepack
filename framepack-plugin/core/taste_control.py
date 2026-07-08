@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from .intervention_events import InterventionEvent, make_event
-from .taste_rules import acceptance_for, repair_target_for
+from .taste_rules import acceptance_for, priority_for_audit_severity, repair_target_for
 
 
 TASTE_AUDIT_PATH = Path(".framepack") / "taste-audit.json"
@@ -128,7 +128,7 @@ def _card_from_taste_issue(issue: Any) -> TasteActionCard:
     return TasteActionCard(
         issue_id=issue_id,
         code=issue.code,
-        severity="P1",
+        severity=priority_for_audit_severity(issue.severity),
         message=issue.message,
         required_action="revise",
         acceptance=_acceptance_for(issue.code),
@@ -182,7 +182,7 @@ def _write_markdown(project: Path, report: TasteControlReport) -> None:
         "",
     ]
     if not report.cards:
-        lines.append("No P1 taste debt recorded.")
+        lines.append("No open taste debt recorded.")
     for card in report.cards:
         label = card.status.upper()
         lines.extend(
@@ -214,7 +214,7 @@ def build_taste_control(project_dir: str | Path) -> TasteControlReport:
     current_cards = [
         _card_from_taste_issue(issue)
         for issue in taste_report.issues
-        if issue.severity == "risk"
+        if issue.severity in {"blocker", "risk"}
     ]
 
     for card in current_cards:
@@ -259,9 +259,9 @@ def build_taste_control_message(report: TasteControlReport) -> str:
     if not open_cards:
         return ""
     lines = [
-        "🎛️ **Framepack Taste Control — P1 taste debt needs a decision**",
+        "🎛️ **Framepack Taste Control — open taste debt needs a decision**",
         "",
-        f"Open P1 taste debt: {len(open_cards)}",
+        f"Open taste debt: {len(open_cards)}",
         "",
         "Before preview/render, choose one per card: revise / proof / waiver.",
         "",

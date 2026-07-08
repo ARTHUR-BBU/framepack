@@ -50,9 +50,10 @@ class QualityAuditReport:
 SEVERITIES = ("P0", "P1", "P2", "P3")
 
 # Taste-audit severity → quality-audit severity.
-# Taste problems never escalate to P0 — they advise, not block.
-# risk → "this doesn't work", suggestion → "could be better", note → "FYI".
+# blocker → "claimed quality cannot be trusted", risk → "this doesn't work",
+# suggestion → "could be better", note → "FYI".
 TASTE_SEVERITY_MAP = {
+    "blocker": "P0",
     "risk": "P1",
     "suggestion": "P2",
     "note": "P3",

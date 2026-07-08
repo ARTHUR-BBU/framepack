@@ -75,6 +75,34 @@ def test_note_taste_issue_surfaces_as_p3(tmp_path):
         shutil.rmtree(d)
 
 
+def test_blocker_taste_issue_surfaces_as_p0(tmp_path):
+    """A Taste blocker must stay P0 when bridged into Quality Audit."""
+    d = _make_project(
+        frame_md=(
+            "taste_read:\n"
+            "  register: product_launch\n"
+            "  audience: buyers\n"
+            "  visual_family: product-led commercial\n"
+            "taste_dials:\n"
+            "  design_variance: 6\n"
+            "  motion_intensity: 9\n"
+            "  visual_density: 6\n"
+        ),
+        expanded=(
+            "# Product launch video\n"
+            "Motion: high-energy kinetic choreography with morphing dashboard cards.\n"
+            "Scene 1: Product UI explodes into metric trails.\n"
+        ),
+    )
+    try:
+        d.joinpath("index.html").write_text("<script>anime({ targets: '.card' })</script>", encoding="utf-8")
+        report = audit_project(d)
+        codes = [(i.code, i.severity) for i in report.issues]
+        assert ("motion_claim_unproven", "P0") in codes
+    finally:
+        shutil.rmtree(d)
+
+
 # ── Suggestion preservation ─────────────────────────────────────────────
 
 

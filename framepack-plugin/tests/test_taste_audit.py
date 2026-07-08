@@ -315,7 +315,78 @@ CTA copy appears over abstract particles.
 """
     project = write_project(tmp_path, expanded=expanded)
     report = audit_project(project)
-    assert any(issue.code == "product_absence" for issue in report.issues)
+    issue = next(issue for issue in report.issues if issue.code == "product_absence")
+    assert issue.severity == "risk"
+
+
+def test_register_aware_severity_downgrades_product_absence_for_brand_film(tmp_path):
+    frame = """
+taste_read:
+  register: brand_film
+  audience: culture audience
+  visual_family: atmospheric brand film
+  anti_references: [literal product demo]
+"""
+    expanded = """
+# Brand video
+## Scene 1
+Hero typography and gradient waves introduce the company spirit.
+## Scene 2
+CTA copy appears over abstract particles.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "product_absence")
+    assert issue.severity == "suggestion"
+
+
+def test_high_motion_dial_escalates_unproven_motion_to_blocker(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+taste_dials:
+  design_variance: 6
+  motion_intensity: 9
+  visual_density: 6
+"""
+    expanded = """
+# Product launch video
+Motion: high-energy kinetic choreography with morphing dashboard cards.
+Scene 1: Product UI explodes into metric trails, parallax layers, and a snap CTA transition.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded, html="<script>anime({ targets: '.card' })</script>")
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "motion_claim_unproven")
+    assert issue.severity == "blocker"
+
+
+def test_low_design_variance_downgrades_missing_surprise_to_note(tmp_path):
+    frame = """
+taste_read:
+  register: brand_film
+  audience: culture audience
+  visual_family: restrained editorial
+taste_dials:
+  design_variance: 2
+  motion_intensity: 3
+  visual_density: 3
+taste:
+  visual_physics:
+    gravity: low
+  taste_moves: [object_worship]
+"""
+    project = write_project(tmp_path, frame=frame)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "no_controlled_surprise")
+    assert issue.severity == "note"
 
 
 def test_commercial_taste_detects_flat_background(tmp_path):

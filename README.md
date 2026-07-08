@@ -161,7 +161,7 @@ Current Taste Layer capabilities:
 | Taste dials | Taste becomes controllable instead of mystical | `taste_dials` + `control_profile` |
 | Rule registry | Taste rules are data-backed, not scattered hardcoded strings | `core/taste_rules.py` |
 | Prompt detectors | Catch weak direction before HTML exists | `opening_visual_absence`, `copy_punctuation_slop`, `missing_taste_read`, `invalid_taste_dial` |
-| Taste Control cards | P1 taste debt becomes concrete next action | `.framepack/taste-audit.json`, `.framepack/taste-debt.md` |
+| Taste Control cards | Open taste debt becomes concrete next action | `.framepack/taste-audit.json`, `.framepack/taste-debt.md` |
 
 ### Where the latest update fits
 

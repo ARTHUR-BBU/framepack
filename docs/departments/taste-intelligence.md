@@ -47,13 +47,21 @@ Taste outputs findings, not rewrites:
 
 ## 4. Severity policy
 
-| Taste severity | Meaning | Intervention mapping |
-|---|---|---|
-| `risk` | likely commercial-quality failure | `decision_required` |
-| `suggestion` | quality improvement, not mandatory | stays advisory unless promoted by register |
-| `note` | context / acceptable caveat | no pullback |
+Taste now has a small register-aware “mixing console”: detectors say what smells wrong; the severity refiner decides how loud the alarm should be for this exact film type.
 
-Register can shift severity. Example: product absence is P1 for product launch, but may be P2 for brand film.
+| Taste severity | Priority | Meaning | Intervention mapping |
+|---|---:|---|---|
+| `blocker` | `P0` | claimed quality cannot be trusted without evidence | `decision_required` |
+| `risk` | `P1` | likely commercial-quality failure | `decision_required` |
+| `suggestion` | `P2` | quality improvement, not mandatory | stays advisory unless promoted by register/dials |
+| `note` | `P3` | context / acceptable caveat | no pullback |
+
+Register and dials can shift severity:
+
+- `product_absence` is P1 for product launch / website-to-video, but P2 for brand film.
+- `motion_claim_unproven` becomes P0 when `taste_dials.motion_intensity >= 8`.
+- `no_controlled_surprise` becomes P3 when `taste_dials.design_variance <= 3` because the brief is intentionally restrained.
+- high visual density can promote composition slop; low visual density can downgrade decorative-surface concerns.
 
 ## 5. Current detector families
 
@@ -169,9 +177,9 @@ Implemented:
 - Taste → Intervention events
 - first HTML implementation slop detectors
 - proof-frame evidence loop for significant motion claims
+- register-aware severity refinement from `taste_dials`
 
 Next priority:
 
-1. register-aware severity refinement from `taste_dials`
-2. richer Director Bible detectors for scene layout repetition and product-presence quality
-3. detector lifecycle docs: how to add, test, tune, and retire rules
+1. richer Director Bible detectors for scene layout repetition and product-presence quality
+2. detector lifecycle docs: how to add, test, tune, and retire rules

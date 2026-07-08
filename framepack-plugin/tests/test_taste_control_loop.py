@@ -125,6 +125,36 @@ Scene 1: Product UI explodes into metric trails, parallax layers, and a snap CTA
     assert event.required_action == "revise"
 
 
+def test_blocker_taste_issue_generates_open_action_card(tmp_path):
+    project = write_project(
+        tmp_path,
+        """
+# Product launch video
+Product: device mockup with real dashboard UI is the hero.
+Motion: high-energy kinetic choreography with morphing dashboard cards.
+Scene 1: Product UI explodes into metric trails, parallax layers, and a snap CTA transition.
+""",
+        html="<script>anime({ targets: '.card' })</script>",
+    )
+    frame = project / "frame.md"
+    frame.write_text(
+        frame.read_text(encoding="utf-8")
+        + """
+taste_dials:
+  design_variance: 6
+  motion_intensity: 9
+  visual_density: 6
+""",
+        encoding="utf-8",
+    )
+
+    report = build_taste_control(project)
+
+    card = next(card for card in report.cards if card.code == "motion_claim_unproven")
+    assert card.status == "open"
+    assert card.severity == "P0"
+
+
 def test_matching_waiver_marks_card_waived(tmp_path):
     project = write_project(tmp_path, ppt_like_expanded())
     fp = project / ".framepack"
