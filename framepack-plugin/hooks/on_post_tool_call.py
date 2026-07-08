@@ -689,7 +689,11 @@ def _enforce_weapon_implementation_gate(ctx, file_path: str) -> None:
         return
 
     try:
-        from core.weapon_enforcement import check_weapon_implementation, write_weapon_enforcement_receipt
+        from core.weapon_enforcement import (
+            check_weapon_implementation,
+            intervention_events_for_weapon_violations,
+            write_weapon_enforcement_receipt,
+        )
     except Exception:
         return
 
@@ -706,17 +710,20 @@ def _enforce_weapon_implementation_gate(ctx, file_path: str) -> None:
         write_weapon_enforcement_receipt(project_dir, violations)
         return
 
+    events = intervention_events_for_weapon_violations(violations)
     lines = [
         "⚔️ **Weapon Enforcement Gate — BLOCKED**",
         "",
         f"index.html was written but {len(violations)} weapon(s) from the Weapon Load Plan are not called:",
         "",
+        "Intervention events:",
     ]
-    for v in violations[:10]:
-        lines.append(f"- `{v.weapon_id}` → expected `{v.function_name}()` in scene {v.scene}")
-        lines.append(f"  - load: skill_view('framepack-animation-library', file_path='{v.weapon_id}.js')")
-    if len(violations) > 10:
-        lines.append(f"- … {len(violations) - 10} more violation(s)")
+    for event in events[:10]:
+        lines.append(f"- `{event.severity}` `{event.code}` → action `{event.required_action}` on `{event.artifact}`")
+        lines.append(f"  - reason: {event.reason}")
+        lines.append(f"  - acceptance: {event.acceptance}")
+    if len(events) > 10:
+        lines.append(f"- … {len(events) - 10} more intervention event(s)")
     lines.extend([
         "",
         "**You cannot proceed with bare GSAP. Load each weapon .js and call the canonical function.**",

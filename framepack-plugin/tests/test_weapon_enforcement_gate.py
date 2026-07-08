@@ -48,6 +48,28 @@ def test_check_weapon_implementation_finds_missing_weapon(tmp_path):
     assert "numberCountUp" in v.message or v.function_name == "numberCountUp"
 
 
+def test_weapon_violations_emit_hard_stop_intervention_events(tmp_path):
+    """Weapon business findings become reusable Intervention hard stops."""
+    from core.weapon_enforcement import check_weapon_implementation, intervention_events_for_weapon_violations
+
+    _make_project_with_plan(
+        tmp_path,
+        "<html><body><script>gsap.to('.num',{duration:1,opacity:1})</script></body></html>",
+    )
+    violations = check_weapon_implementation(tmp_path)
+
+    events = intervention_events_for_weapon_violations(violations)
+
+    assert len(events) == 1
+    event = events[0]
+    assert event.department == "weapon"
+    assert event.code == "weapon_not_called"
+    assert event.severity == "hard_stop"
+    assert event.required_action == "load_weapon"
+    assert event.artifact == "index.html"
+    assert "numberCountUp" in event.acceptance
+
+
 def test_check_weapon_implementation_passes_when_weapon_called(tmp_path):
     """HTML with loaded weapon script and concrete params → zero violations."""
     from core.weapon_enforcement import check_weapon_implementation
@@ -82,6 +104,11 @@ def test_post_write_gate_blocks_when_weapons_missing(tmp_path):
     ctx = Mock()
     with pytest.raises(RuntimeError, match="weapon implementation"):
         _enforce_weapon_implementation_gate(ctx, str(tmp_path / "index.html"))
+
+    injected = ctx.inject_message.call_args.args[0]
+    assert "hard_stop" in injected
+    assert "load_weapon" in injected
+    assert "weapon_not_called" in injected
 
 
 def test_post_write_gate_passes_when_weapons_called_and_writes_receipt(tmp_path):

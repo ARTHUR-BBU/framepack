@@ -20,6 +20,7 @@ from .quality_audit import (
     _has_canonical_function_call,
     _mask_js_comments_and_strings,
 )
+from .intervention_events import InterventionEvent, make_event
 from .weapon_load_plan import load_weapon_load_plan
 
 
@@ -283,3 +284,22 @@ def check_weapon_implementation(project_dir: str | Path) -> list[WeaponViolation
                 )
             )
     return violations
+
+
+def intervention_events_for_weapon_violations(violations: list[WeaponViolation]) -> list[InterventionEvent]:
+    """Convert Weapon Production findings into reusable railguard hard stops."""
+    return [
+        make_event(
+            department="weapon",
+            code="weapon_not_called",
+            severity="hard_stop",
+            reason=violation.message,
+            required_action="load_weapon",
+            artifact="index.html",
+            acceptance=(
+                f"Load the canonical {violation.weapon_id} weapon script and call "
+                f"{violation.function_name}() with preset-quality params, or write a concrete HANDWRITE waiver."
+            ),
+        )
+        for violation in violations
+    ]
