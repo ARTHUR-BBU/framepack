@@ -370,6 +370,94 @@ def test_commercial_taste_detects_missing_proof_frames_after_html_exists(tmp_pat
     assert any(issue.code == "no_proof_frames" for issue in report.issues)
 
 
+def test_motion_claim_unproven_when_high_motion_plan_has_no_proof_frames(tmp_path):
+    expanded = """
+# Product launch video
+Motion: high-energy kinetic choreography with morphing dashboard cards.
+Scene 1: Product UI explodes into metric trails, parallax layers, and a snap CTA transition.
+"""
+    project = write_project(tmp_path, expanded=expanded, html="<html><script>gsap.to('.card',{x:100})</script></html>")
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "motion_claim_unproven")
+    assert issue.severity == "risk"
+    assert Path(issue.path).name == "proof-frames"
+    assert Path(issue.path).parent.name == ".framepack"
+
+
+def test_motion_claim_has_proof_frames_when_png_exists(tmp_path):
+    expanded = """
+# Product launch video
+Motion: high-energy kinetic choreography with morphing dashboard cards.
+Scene 1: Product UI explodes into metric trails, parallax layers, and a snap CTA transition.
+"""
+    project = write_project(tmp_path, expanded=expanded, html="<html><script>gsap.to('.card',{x:100})</script></html>")
+    proof_dir = project / ".framepack" / "proof-frames"
+    proof_dir.mkdir(parents=True)
+    (proof_dir / "001.png").write_bytes(b"not-real-png-but-proof-artifact-exists")
+
+    report = audit_project(project)
+
+    assert not any(issue.code == "motion_claim_unproven" for issue in report.issues)
+
+
+def test_motion_claim_requires_canonical_proof_frames_not_legacy_snapshots(tmp_path):
+    expanded = """
+# Product launch video
+Motion: high-energy kinetic choreography with morphing dashboard cards.
+Scene 1: Product UI explodes into metric trails, parallax layers, and a snap CTA transition.
+"""
+    project = write_project(tmp_path, expanded=expanded, html="<html><script>gsap.to('.card',{x:100})</script></html>")
+    snapshots = project / "snapshots"
+    snapshots.mkdir()
+    (snapshots / "001.png").write_bytes(b"legacy snapshot should not satisfy motion proof contract")
+
+    report = audit_project(project)
+
+    assert any(issue.code == "motion_claim_unproven" for issue in report.issues)
+
+
+def test_motion_claim_requires_canonical_proof_frames_not_legacy_framepack_proofs(tmp_path):
+    expanded = """
+# Product launch video
+Motion: high-energy kinetic choreography with morphing dashboard cards.
+Scene 1: Product UI explodes into metric trails, parallax layers, and a snap CTA transition.
+"""
+    project = write_project(tmp_path, expanded=expanded, html="<html><script>anime({ targets: '.card' })</script></html>")
+    legacy_proofs = project / ".framepack" / "proofs"
+    legacy_proofs.mkdir(parents=True)
+    (legacy_proofs / "001.png").write_bytes(b"legacy proof should not satisfy motion proof contract")
+
+    report = audit_project(project)
+
+    assert any(issue.code == "motion_claim_unproven" for issue in report.issues)
+
+
+def test_motion_claim_detects_html_only_keyframes_without_proof(tmp_path):
+    project = write_project(
+        tmp_path,
+        expanded="# Product launch video\nProduct: dashboard hero.\n",
+        html="<style>@keyframes float { from { opacity: 0 } to { opacity: 1 } }</style>",
+    )
+
+    report = audit_project(project)
+
+    assert any(issue.code == "motion_claim_unproven" for issue in report.issues)
+
+
+def test_motion_claim_detects_html_only_anime_call_without_proof(tmp_path):
+    project = write_project(
+        tmp_path,
+        expanded="# Product launch video\nProduct: dashboard hero.\n",
+        html="<script>anime({ targets: '.card', translateX: 120, duration: 800 })</script>",
+    )
+
+    report = audit_project(project)
+
+    assert any(issue.code == "motion_claim_unproven" for issue in report.issues)
+
+
 def test_integrated_prompt_detector_detects_opening_visual_absence(tmp_path):
     frame = """
 taste_read:

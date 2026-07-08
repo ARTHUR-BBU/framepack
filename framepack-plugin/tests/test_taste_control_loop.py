@@ -104,6 +104,27 @@ def test_html_fake_product_ui_generates_taste_action_card_and_event(tmp_path):
     assert event.severity == "decision_required"
 
 
+def test_motion_claim_unproven_generates_proof_frame_action_card_and_event(tmp_path):
+    expanded = """
+# Product launch video
+Product: device mockup with real dashboard UI is the hero.
+Motion: high-energy kinetic choreography with morphing dashboard cards.
+Scene 1: Product UI explodes into metric trails, parallax layers, and a snap CTA transition.
+"""
+    html = "<html><script>gsap.to('.card',{x:100})</script></html>"
+    project = write_project(tmp_path, expanded, html=html)
+
+    report = build_taste_control(project)
+    card = next(card for card in report.cards if card.code == "motion_claim_unproven")
+    events = intervention_events_for_taste_report(report)
+    event = next(event for event in events if event.code == "motion_claim_unproven")
+
+    assert card.status == "open"
+    assert card.repair_target == ".framepack/proof-frames"
+    assert event.artifact == ".framepack/proof-frames"
+    assert event.required_action == "revise"
+
+
 def test_matching_waiver_marks_card_waived(tmp_path):
     project = write_project(tmp_path, ppt_like_expanded())
     fp = project / ".framepack"

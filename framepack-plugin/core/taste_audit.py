@@ -426,6 +426,11 @@ def _has_proof_frames(project: Path) -> bool:
     return any(root.is_dir() and any(root.rglob("*.png")) for root in roots)
 
 
+def _has_canonical_motion_proof_frames(project: Path) -> bool:
+    proof_root = project / ".framepack" / "proof-frames"
+    return proof_root.is_dir() and any(proof_root.rglob("*.png"))
+
+
 def _audit_no_proof_frames(project: Path) -> list[TasteAuditIssue]:
     html_path = project / "index.html"
     if html_path.is_file() and not _has_proof_frames(project):
@@ -439,6 +444,32 @@ def _audit_no_proof_frames(project: Path) -> list[TasteAuditIssue]:
             )
         ]
     return []
+
+
+def _has_significant_motion_claim(expanded_prompt: str, html: str) -> bool:
+    text = expanded_prompt + "\n" + html
+    prose_motion = re.search(
+        r"\b(high[-\s]?energy|kinetic\s+choreography|morph(?:ing)?|parallax|trail(?:s)?|snap\s+CTA|explodes?\s+into)\b",
+        text,
+        re.I,
+    )
+    code_motion = re.search(r"(?:\bgsap\.|\banime\s*\(|@keyframes\b)", text, re.I)
+    return bool(prose_motion or code_motion)
+
+
+def _audit_motion_claim_unproven(project: Path, expanded_prompt: str, html: str) -> list[TasteAuditIssue]:
+    if not html or not _has_significant_motion_claim(expanded_prompt, html) or _has_canonical_motion_proof_frames(project):
+        return []
+    proof_path = project / ".framepack" / "proof-frames"
+    return [
+        TasteAuditIssue(
+            code="motion_claim_unproven",
+            severity="risk",
+            message="The plan claims significant motion but no proof frames/contact sheet demonstrate it.",
+            suggestion="Attach representative proof frames/contact sheet or lower the motion claim to match what is actually shown.",
+            path=str(proof_path),
+        )
+    ]
 
 
 def _audit_commercial_signals(project: Path, expanded_prompt: str, expanded_path: Path) -> list[TasteAuditIssue]:
@@ -524,6 +555,7 @@ def audit_project(project_dir: str | Path) -> TasteAuditReport:
                     details=html_issue.details,
                 )
             )
+        issues.extend(_audit_motion_claim_unproven(project, expanded_prompt, html))
     issues.extend(_audit_commercial_signals(project, expanded_prompt, expanded_path))
     issues.extend(_audit_surprise_usage(frame_md, expanded_prompt, frame_path, expanded_path))
     issues.extend(_audit_motif_transformation(frame_md, expanded_prompt, frame_path, expanded_path))

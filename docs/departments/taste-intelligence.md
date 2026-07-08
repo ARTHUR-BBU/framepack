@@ -102,7 +102,7 @@ Purpose: force proof when prose claims are not enough.
 Examples:
 
 - `no_proof_frames`
-- `motion_claim_unproven`
+- `motion_claim_unproven` — significant motion is claimed in the Director Bible or HTML, but canonical `.framepack/proof-frames/*.png` evidence is missing
 
 ## 6. Best-practice finding format
 
@@ -168,10 +168,10 @@ Implemented:
 - Taste Control action cards
 - Taste → Intervention events
 - first HTML implementation slop detectors
+- proof-frame evidence loop for significant motion claims
 
 Next priority:
 
-1. proof-frame evidence loop
-2. register-aware severity refinement from `taste_dials`
-3. richer Director Bible detectors for scene layout repetition and product-presence quality
-4. detector lifecycle docs: how to add, test, tune, and retire rules
+1. register-aware severity refinement from `taste_dials`
+2. richer Director Bible detectors for scene layout repetition and product-presence quality
+3. detector lifecycle docs: how to add, test, tune, and retire rules
