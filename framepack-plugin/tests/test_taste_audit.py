@@ -3,7 +3,7 @@ from pathlib import Path
 from core.taste_audit import audit_project
 
 
-def write_project(tmp_path: Path, frame: str = "", expanded: str = "") -> Path:
+def write_project(tmp_path: Path, frame: str = "", expanded: str = "", html: str = "") -> Path:
     project = tmp_path / "project"
     project.mkdir()
     if frame:
@@ -12,6 +12,8 @@ def write_project(tmp_path: Path, frame: str = "", expanded: str = "") -> Path:
         hyper = project / ".hyperframes"
         hyper.mkdir()
         (hyper / "expanded-prompt.md").write_text(expanded, encoding="utf-8")
+    if html:
+        (project / "index.html").write_text(html, encoding="utf-8")
     return project
 
 
@@ -114,6 +116,25 @@ def test_detects_static_mockup_language(tmp_path):
     report = audit_project(project)
     issue = next(issue for issue in report.issues if issue.code == "static_mockup_risk")
     assert issue.severity == "risk"
+
+
+def test_audit_project_includes_html_implementation_slop(tmp_path):
+    html = """
+    <main class="product-dashboard mockup">
+      <div class="browser-bar"></div><div class="sidebar"></div>
+      <div class="chart-card"></div><div class="metric-card"></div>
+    </main>
+    <style>.card { animation: float 2s infinite; }</style>
+    <script>window.addEventListener('scroll', () => hero.style.transform = `translateY(${window.scrollY}px)`);</script>
+    """
+    project = write_project(tmp_path, html=html)
+
+    report = audit_project(project)
+    by_code = {issue.code: issue for issue in report.issues}
+
+    assert by_code["fake_product_ui_divs"].path.endswith("index.html")
+    assert by_code["raw_scroll_listener"].path.endswith("index.html")
+    assert by_code["missing_reduced_motion"].path.endswith("index.html")
 
 
 def test_detects_missing_controlled_surprise_when_taste_exists(tmp_path):

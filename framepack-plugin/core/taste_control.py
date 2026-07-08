@@ -139,6 +139,20 @@ def _card_from_taste_issue(issue: Any) -> TasteActionCard:
     )
 
 
+def _project_relative_target(project: Path, target: str) -> str:
+    try:
+        return str(Path(target).relative_to(project)).replace("\\", "/")
+    except ValueError:
+        return target
+
+
+def _normalize_card_targets(project: Path, cards: list[TasteActionCard]) -> None:
+    for card in cards:
+        card.repair_target = _project_relative_target(project, card.repair_target)
+        if card.path:
+            card.path = _project_relative_target(project, card.path)
+
+
 def _summarize(cards: list[TasteActionCard]) -> dict[str, int]:
     summary = {"open": 0, "waived": 0, "resolved": 0}
     for card in cards:
@@ -232,6 +246,7 @@ def build_taste_control(project_dir: str | Path) -> TasteControlReport:
             resolved_cards.append(old_card)
 
     cards = current_cards + resolved_cards
+    _normalize_card_targets(project, cards)
     report = TasteControlReport(str(project), cards, _summarize(cards))
     _write_json(project, report)
     _write_markdown(project, report)

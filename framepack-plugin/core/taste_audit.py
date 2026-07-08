@@ -13,6 +13,7 @@ import re
 from typing import Any
 
 from .taste_grammar import moves_by_energy_level
+from .taste_html_detectors import detect_html_taste_issues
 from .taste_read import parse_taste_context
 from .taste_text_detectors import detect_text_taste_issues
 
@@ -456,8 +457,10 @@ def audit_project(project_dir: str | Path) -> TasteAuditReport:
     project = Path(project_dir)
     frame_path = project / "frame.md"
     expanded_path = project / ".hyperframes" / "expanded-prompt.md"
+    html_path = project / "index.html"
     frame_md = _read(frame_path)
     expanded_prompt = _read(expanded_path)
+    html = _read(html_path)
     taste_context = parse_taste_context(frame_md, expanded_prompt)
 
     issues: list[TasteAuditIssue] = []
@@ -508,6 +511,19 @@ def audit_project(project_dir: str | Path) -> TasteAuditReport:
         issues.extend(detect_text_taste_issues(frame_md, expanded_prompt, taste_context))
         issues.extend(_audit_generic_fade_stack(expanded_prompt, expanded_path, frame_md=frame_md))
         issues.extend(_audit_static_mockup(expanded_prompt, expanded_path))
+    if html:
+        for html_issue in detect_html_taste_issues(html):
+            issues.append(
+                TasteAuditIssue(
+                    code=html_issue.code,
+                    severity=html_issue.severity,
+                    message=html_issue.message,
+                    suggestion=html_issue.suggestion,
+                    path=str(html_path),
+                    scene=html_issue.scene,
+                    details=html_issue.details,
+                )
+            )
     issues.extend(_audit_commercial_signals(project, expanded_prompt, expanded_path))
     issues.extend(_audit_surprise_usage(frame_md, expanded_prompt, frame_path, expanded_path))
     issues.extend(_audit_motif_transformation(frame_md, expanded_prompt, frame_path, expanded_path))

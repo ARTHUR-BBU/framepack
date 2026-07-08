@@ -4,7 +4,7 @@ from pathlib import Path
 from core.taste_control import build_taste_control, intervention_events_for_taste_report
 
 
-def write_project(tmp_path: Path, expanded: str) -> Path:
+def write_project(tmp_path: Path, expanded: str, html: str = "") -> Path:
     project = tmp_path / "project"
     project.mkdir()
     (project / "frame.md").write_text(
@@ -22,6 +22,8 @@ taste_read:
     hyper = project / ".hyperframes"
     hyper.mkdir()
     hyper.joinpath("expanded-prompt.md").write_text(expanded, encoding="utf-8")
+    if html:
+        (project / "index.html").write_text(html, encoding="utf-8")
     return project
 
 
@@ -80,6 +82,26 @@ def test_open_taste_cards_emit_decision_required_intervention_events(tmp_path):
     assert event.required_action == "revise"
     assert event.artifact == ".hyperframes/expanded-prompt.md"
     assert "product visuals" in event.acceptance.lower() or "product" in event.acceptance.lower()
+
+
+def test_html_fake_product_ui_generates_taste_action_card_and_event(tmp_path):
+    html = """
+    <main class="product-dashboard mockup">
+      <div class="browser-bar"></div><div class="sidebar"></div>
+      <div class="chart-card"></div><div class="metric-card"></div>
+    </main>
+    """
+    project = write_project(tmp_path, product_led_expanded(), html=html)
+
+    report = build_taste_control(project)
+    card = next(card for card in report.cards if card.code == "fake_product_ui_divs")
+    events = intervention_events_for_taste_report(report)
+    event = next(event for event in events if event.code == "fake_product_ui_divs")
+
+    assert card.status == "open"
+    assert card.repair_target == "index.html"
+    assert event.artifact == "index.html"
+    assert event.severity == "decision_required"
 
 
 def test_matching_waiver_marks_card_waived(tmp_path):
