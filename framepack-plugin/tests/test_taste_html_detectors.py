@@ -87,3 +87,99 @@ def test_allows_grid_when_it_has_product_or_data_role():
     """
 
     assert "decorative_generated_surface" not in codes_for(html)
+
+
+# ── Phase 4 gap detectors ──
+
+def test_detects_gradient_text_slop():
+    html = """
+    <style>
+      .hero-title {
+        background: linear-gradient(135deg, #6366f1, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+    </style>
+    <h1 class="hero-title">AI Operating Layer</h1>
+    """
+
+    assert "gradient_text_slop" in codes_for(html)
+
+
+def test_allows_solid_color_text():
+    html = """
+    <style>
+      .hero-title { color: #1a1a2e; background: #f5f5f5; }
+    </style>
+    <h1 class="hero-title">AI Operating Layer</h1>
+    """
+
+    assert "gradient_text_slop" not in codes_for(html)
+
+
+def test_detects_bounce_or_elastic_easing():
+    html = """
+    <script>
+      gsap.to('.card', { y: -20, ease: 'elastic.out(1, 0.3)' });
+      gsap.to('.title', { scale: 1, ease: 'bounce.out' });
+    </script>
+    """
+
+    assert "bounce_or_elastic_easing" in codes_for(html)
+
+
+def test_allows_power_easing():
+    html = """
+    <script>
+      gsap.to('.card', { y: -20, ease: 'power2.out' });
+    </script>
+    """
+
+    assert "bounce_or_elastic_easing" not in codes_for(html)
+
+
+def test_detects_over_rounded_codex_cards():
+    html = """
+    <style>
+      .card { border-radius: 48px; }
+    </style>
+    <div class="card">Content</div>
+    """
+
+    assert "over_rounded_codex_cards" in codes_for(html)
+
+
+def test_allows_moderate_radius():
+    html = """
+    <style>
+      .card { border-radius: 12px; }
+    </style>
+    <div class="card">Content</div>
+    """
+
+    assert "over_rounded_codex_cards" not in codes_for(html)
+
+
+def test_detects_ghost_card_shadow_border():
+    html = """
+    <style>
+      .card {
+        border: 1px solid rgba(0,0,0,0.1);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+      }
+    </style>
+    <div class="card">Content</div>
+    """
+
+    assert "ghost_card_shadow_border" in codes_for(html)
+
+
+def test_allows_shadow_only_without_border():
+    html = """
+    <style>
+      .card { box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    </style>
+    <div class="card">Content</div>
+    """
+
+    assert "ghost_card_shadow_border" not in codes_for(html)

@@ -44,6 +44,12 @@ _REDUCED_MOTION_RE = re.compile(r"prefers-reduced-motion|reducedMotion|matchMedi
 _DECORATIVE_SURFACE_RE = re.compile(r"\b(grid|glow|crosshair|stripe|scanline|noise|particle|orb|mesh-gradient)\b", re.I)
 _STORY_ROLE_RE = re.compile(r"\b(product|data|metric|topology|architecture|map|timeline|proof|real|navigation|status)\b", re.I)
 
+_GRADIENT_TEXT_RE = re.compile(r"background-clip\s*:\s*text|-webkit-background-clip\s*:\s*text|-webkit-text-fill-color\s*:\s*transparent", re.I)
+_BOUNCE_ELASTIC_RE = re.compile(r"ease\s*[:('\"\s]*['\"]?(?:bounce|elastic)\b|cubic-bezier\s*\([^)]*1\.[0-9]+", re.I)
+_BORDER_RADIUS_RE = re.compile(r"border-radius\s*:\s*(\d+)", re.I)
+_BORDER_RE = re.compile(r"border\s*:\s*\d+px\s+solid", re.I)
+_DIFFUSE_SHADOW_RE = re.compile(r"box-shadow\s*:\s*[^;]*\b[3-9]\dpx\b[^;]*\b(?:rgba?\(|hsla?\()[^;]*0\.\d", re.I)
+
 
 def _detect_fake_product_ui_divs(html: str) -> HtmlTasteIssue | None:
     if _REAL_ASSET_RE.search(html):
@@ -100,6 +106,56 @@ def _detect_decorative_generated_surface(html: str) -> HtmlTasteIssue | None:
     )
 
 
+def _detect_gradient_text_slop(html: str) -> HtmlTasteIssue | None:
+    if not _GRADIENT_TEXT_RE.search(html):
+        return None
+    return HtmlTasteIssue(
+        code="gradient_text_slop",
+        severity="suggestion",
+        message="Gradient text (background-clip:text) detected; this is a high-frequency generated design tell.",
+        suggestion=acceptance_for("gradient_text_slop"),
+        path=HTML_PATH,
+    )
+
+
+def _detect_bounce_or_elastic_easing(html: str) -> HtmlTasteIssue | None:
+    if not _BOUNCE_ELASTIC_RE.search(html):
+        return None
+    return HtmlTasteIssue(
+        code="bounce_or_elastic_easing",
+        severity="suggestion",
+        message="Bounce or elastic easing detected; these read as playful/cheap unless the brand voice explicitly calls for it.",
+        suggestion=acceptance_for("bounce_or_elastic_easing"),
+        path=HTML_PATH,
+    )
+
+
+def _detect_over_rounded_codex_cards(html: str) -> HtmlTasteIssue | None:
+    radii = [int(m.group(1)) for m in _BORDER_RADIUS_RE.finditer(html)]
+    if not any(r >= 32 for r in radii):
+        return None
+    return HtmlTasteIssue(
+        code="over_rounded_codex_cards",
+        severity="suggestion",
+        message="Excessive border-radius (32px+) on cards or containers detected; this reads like a default generated template.",
+        suggestion=acceptance_for("over_rounded_codex_cards"),
+        path=HTML_PATH,
+        details={"max_radius": max(radii)},
+    )
+
+
+def _detect_ghost_card_shadow_border(html: str) -> HtmlTasteIssue | None:
+    if not (_BORDER_RE.search(html) and _DIFFUSE_SHADOW_RE.search(html)):
+        return None
+    return HtmlTasteIssue(
+        code="ghost_card_shadow_border",
+        severity="suggestion",
+        message="Card has both a 1px border and a wide diffuse shadow, producing a muddy 'ghost' effect.",
+        suggestion=acceptance_for("ghost_card_shadow_border"),
+        path=HTML_PATH,
+    )
+
+
 def detect_html_taste_issues(html: str) -> list[HtmlTasteIssue]:
     issues: list[HtmlTasteIssue] = []
     if not html.strip():
@@ -109,6 +165,10 @@ def detect_html_taste_issues(html: str) -> list[HtmlTasteIssue]:
         _detect_raw_scroll_listener,
         _detect_missing_reduced_motion,
         _detect_decorative_generated_surface,
+        _detect_gradient_text_slop,
+        _detect_bounce_or_elastic_easing,
+        _detect_over_rounded_codex_cards,
+        _detect_ghost_card_shadow_border,
     ):
         issue = detector(html)
         if issue:

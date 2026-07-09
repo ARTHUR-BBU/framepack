@@ -206,6 +206,67 @@ def _detect_copy_overcrowding(expanded_prompt: str, taste_context: TasteContext)
     )
 
 
+_FAKE_PRECISION_RE = re.compile(
+    r"\b(\d+[.,]\d{2,}\s*%|\d+[.,]\d{1,}\s*[xX]\b|\d{2,}[kKmM]\b|\d+\.\d+\s*(?:lb|kg|ms|fps)\b)"
+)
+_PRECISION_SOURCE_RE = re.compile(r"\b(source|real data|mock|sample|provided by user|benchmark|measured|verified|actual)\b", re.I)
+_VERSION_LABEL_RE = re.compile(r"(?:^|\s)(v\d+[.\d]*|version\s*\d+[.\d]*)\s*$", re.I)
+_SCROLL_CUE_RE = re.compile(r"\b(scroll (?:down|up|to (?:explore|see|continue)|for more))\b", re.I)
+_SECTION_NUMBER_RE = re.compile(r"^\s*\d{1,2}\s*[/–—]\s*\d{1,2}\s*$")
+_WEATHER_TIME_RE = re.compile(r"\b(\d{1,2}[:]\d{2}\s*(?:am|pm)?|\d{1,3}°[fc]\b|sunrise|sunset|new york|london|tokyo|san francisco)\b", re.I)
+
+
+def _detect_fake_precision(frame_md: str, expanded_prompt: str) -> list[TextTasteIssue]:
+    sources = (("frame.md", frame_md), (EXPANDED_PROMPT_PATH, expanded_prompt))
+    issues: list[TextTasteIssue] = []
+    for path, text in sources:
+        for match in _FAKE_PRECISION_RE.finditer(text):
+            span_start = max(0, match.start() - 120)
+            span_end = min(len(text), match.end() + 120)
+            context = text[span_start:span_end]
+            if _PRECISION_SOURCE_RE.search(context):
+                continue
+            issues.append(
+                TextTasteIssue(
+                    code="fake_precision",
+                    severity="suggestion",
+                    message="Copy uses a fake-precise metric without a source, which reads like AI-invented proof.",
+                    suggestion=acceptance_for("fake_precision"),
+                    path=path,
+                    details={"metric": match.group(1)},
+                )
+            )
+    return issues
+
+
+def _detect_ui_debris_copy(frame_md: str, expanded_prompt: str) -> list[TextTasteIssue]:
+    sources = (("frame.md", frame_md), (EXPANDED_PROMPT_PATH, expanded_prompt))
+    issues: list[TextTasteIssue] = []
+    for path, text in sources:
+        for match in _VISIBLE_COPY_RE.finditer(text):
+            copy = match.group("copy").strip()
+            if _VERSION_LABEL_RE.search(copy):
+                issues.append(_make_ui_debris_issue(path, copy, "version_label"))
+            elif _SCROLL_CUE_RE.search(copy):
+                issues.append(_make_ui_debris_issue(path, copy, "scroll_cue"))
+            elif _SECTION_NUMBER_RE.match(copy):
+                issues.append(_make_ui_debris_issue(path, copy, "section_number"))
+            elif _WEATHER_TIME_RE.search(copy):
+                issues.append(_make_ui_debris_issue(path, copy, "weather_time_strip"))
+    return issues
+
+
+def _make_ui_debris_issue(path: str, copy: str, signal: str) -> TextTasteIssue:
+    return TextTasteIssue(
+        code="ui_debris_copy",
+        severity="suggestion",
+        message=f"Decorative UI debris in visible copy ({signal}), which clutters the screen without product value.",
+        suggestion=acceptance_for("ui_debris_copy"),
+        path=path,
+        details={"signal": signal, "copy": copy[:160]},
+    )
+
+
 def detect_text_taste_issues(frame_md: str, expanded_prompt: str, taste_context: TasteContext) -> list[TextTasteIssue]:
     issues: list[TextTasteIssue] = []
     opening_issue = _detect_opening_visual_absence(expanded_prompt, taste_context)
@@ -221,4 +282,6 @@ def detect_text_taste_issues(frame_md: str, expanded_prompt: str, taste_context:
     if copy_issue:
         issues.append(copy_issue)
     issues.extend(_detect_copy_punctuation_slop(frame_md, expanded_prompt))
+    issues.extend(_detect_fake_precision(frame_md, expanded_prompt))
+    issues.extend(_detect_ui_debris_copy(frame_md, expanded_prompt))
     return issues

@@ -569,6 +569,73 @@ Headline: Deploy faster — without chaos.
     assert any(issue.code == "copy_punctuation_slop" for issue in report.issues)
 
 
+def test_director_bible_fake_precision_detected_without_source(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Product: device mockup with real dashboard UI.
+Headline: Boost productivity by 99.99%.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issues = [issue for issue in report.issues if issue.code == "fake_precision"]
+    assert issues
+    assert issues[0].severity == "suggestion"
+    assert issues[0].path.endswith("expanded-prompt.md")
+    assert "99.99%" in issues[0].details["metric"]
+
+
+def test_director_bible_fake_precision_allowed_with_source(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Product: device mockup with real dashboard UI.
+Headline: Boost productivity by 99.99% (source: internal benchmark).
+Copy: Over 48k teams (real data from customer DB).
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    assert not any(issue.code == "fake_precision" for issue in report.issues)
+
+
+def test_director_bible_ui_debris_copy_detected(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Product: device mockup with real dashboard UI.
+Copy: v2.0
+Copy: Scroll to explore
+Copy: 01 / 04
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issues = [issue for issue in report.issues if issue.code == "ui_debris_copy"]
+    assert issues
+    assert issues[0].severity == "suggestion"
+    assert issues[0].path.endswith("expanded-prompt.md")
+
+
 def test_director_bible_detects_repeated_scene_layout_grammar(tmp_path):
     frame = """
 taste_read:
