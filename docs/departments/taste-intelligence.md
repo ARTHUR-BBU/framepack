@@ -65,9 +65,9 @@ Register and dials can shift severity:
 
 ## 5. Current detector families
 
-### 5.1 Brief-read detectors
+### 5.1 Brief-read audit issue codes
 
-Purpose: prove the Agent actually understood the video type before expanding.
+Purpose: prove the Agent actually understood the video type before expanding. This family includes both registered Taste rules and narrow parser/validation issues such as `invalid_taste_dial`.
 
 Examples:
 
@@ -168,7 +168,157 @@ No product assets exist yet; user approved typography-led teaser for event count
 5. Path fields should be project-relative once they become action cards/events.
 6. Never hard-block directly from Taste; Taste requests a decision. Intervention handles the pullback.
 
-## 9. Current vertical slice status
+## 9. Detector lifecycle
+
+Taste rules are products, not loose regex snacks. Every detector should move through the same lifecycle so the layer grows like a calibrated palate, not a junk drawer.
+
+### 9.1 Proposal — why does this rule exist?
+
+Before adding a detector, write the rule's commercial failure in one sentence:
+
+```text
+When <input artifact> contains <observable signal>, the film risks <commercial failure>, unless <known legitimate exception>.
+```
+
+Examples:
+
+```text
+When expanded-prompt.md repeats centered headline + background in 3 scenes, the film risks feeling templated, unless the repetition is an intentional refrain with visible escalation.
+
+When product_launch direction contains only abstract gradients and no product/UI/logo/device scene, the film risks becoming brand filler instead of a product film, unless the user approved an abstract teaser.
+```
+
+Proposal checklist:
+
+- **Artifact**: `frame.md`, `.hyperframes/expanded-prompt.md`, `index.html`, proof frames, or a receipt file.
+- **Observable signal**: exact text/HTML/pixel evidence, not vibes.
+- **Commercial harm**: why users would care.
+- **Legitimate exceptions**: event teaser, kinetic type, luxury restraint, missing assets, approved waiver.
+- **Repair target**: where the Agent should fix it.
+- **Acceptance**: what makes the issue resolved.
+
+### 9.2 Registry contract — one rule, one source of truth
+
+Every user-facing Taste rule should have a `TasteRule` in `core/taste_rules.py` before it ships.
+
+There are two allowed code classes:
+
+| Code class | Registry requirement | Example |
+|---|---|---|
+| **Taste rule** | Must have a `TasteRule`; can appear in action cards, public detector inventories, severity policy, and retirement notes. | `product_presence_weak`, `copy_overcrowding`, `motion_claim_unproven` |
+| **Parser / validation issue** | May use fallback handling when it is a narrow input-shape error; should not be treated as a full commercial taste rule unless promoted later. | `invalid_taste_dial` |
+
+Required fields for registered Taste rules:
+
+| Field | Rule of thumb |
+|---|---|
+| `id` | Stable snake_case code; never encode severity in the name. |
+| `category` | One of the current taste families: `brief_read`, `asset_truth`, `motion_slop`, `composition_slop`, `copy_slop`, `implementation_slop`, `evidence_gap`. |
+| `default_severity` | Start conservative; promote only with evidence. |
+| `registers` | Encode known film-type exceptions here, not hidden in detector prose. |
+| `message` | What smells wrong and why it hurts. |
+| `acceptance` | Concrete repair condition. |
+| `repair_target` | The file or receipt the Agent should change/attach. |
+| `artifacts` | Inputs the rule depends on. |
+| `source_refs` | Why this rule exists: skill section, taste case, detector note, or review finding. |
+
+Rule drift guardrail:
+
+- If `registers` names an override, `_refine_issue_severities()` or the detector path must actually apply it.
+- If a detector emits `risk`, Quality Audit / Taste Control behavior must match the policy table.
+- If a parser / validation issue becomes user-facing enough to need acceptance text, register it or explicitly document why fallback handling is intentional.
+- Department docs may carry the full detector inventory; public README tables are capability highlights and must stay truthful, not necessarily exhaustive.
+
+### 9.3 Test matrix — prove both teeth and manners
+
+Every detector needs at least these tests:
+
+| Test kind | Purpose |
+|---|---|
+| Positive hit | A realistic bad artifact triggers the rule. |
+| Negative guard | A legitimate good/approved pattern does not trigger. |
+| Register tuning | Film-type override changes severity when applicable. |
+| Action-card path | `risk` / `blocker` produces the expected Taste Control card or Intervention event. |
+| Parser edge case | Regex/scanner handles realistic wording variants, negation, punctuation, repeated scenes, and malformed but common prose. |
+
+For text/prompt detectors, include false-positive and false-negative probes. The negated-product lesson is canonical:
+
+```text
+No product, UI, logo, device, or app screen appears.
+Logo: absent.
+UI screenshots are missing.
+Product shot is not shown.
+Device: none.
+Screenshot: absent.
+```
+
+All of those mean **no concrete product scene**. A detector that counts them as product presence is lying politely.
+
+### 9.4 Severity tuning — detector finds, refiner decides volume
+
+Detector code should answer: “Did this smell happen?”
+
+Severity refinement should answer: “How loud is this for this film type?”
+
+Use this split:
+
+- Detector emits the natural base severity for the finding.
+- `TasteRule.default_severity` and `registers` define the policy baseline.
+- `_refine_issue_severities()` applies register-aware overrides and dial-aware promotion/demotion.
+- Taste Control only turns `blocker` / `risk` into open decision cards.
+- Quality Audit maps Taste severity into P0/P1/P2/P3 consistently.
+
+Avoid hiding policy in ad-hoc detector branches unless the exception depends on local evidence that the registry cannot express, such as kinetic-type wording in a specific opening scene.
+
+### 9.5 Release gates — what must pass before a detector lands
+
+A detector change is not done until:
+
+1. RED test reproduced the intended miss or false positive.
+2. GREEN targeted tests pass.
+3. Focused Taste suite passes.
+4. Full plugin suite passes.
+5. If plugin runtime/code files changed, sync them to `F:/Hermes_windows/plugins/framepack/`.
+6. If runtime files were synced, MD5 proves source and deployed copies match.
+7. If plugin runtime behavior changed, deployed focused/full tests pass.
+8. Fresh `hermes-verify-*` ad-hoc script proves the changed behavior or documentation contract.
+9. Independent reviewer passes, or documented fallback is used without `[verified]` prefix.
+10. Public docs / bilingual README surfaces mention the active capability if it is user-facing; otherwise department docs are the full internal inventory.
+
+### 9.6 Tuning after real cases — detectors need receipts
+
+After a real commercial case, classify detector behavior:
+
+| Outcome | Action |
+|---|---|
+| True positive | Keep; optionally add the case shape to tests. |
+| False positive | Add a negative guard before changing detector logic. |
+| False negative | Add a positive regression before broadening detection. |
+| Noisy suggestion | Downgrade severity, narrow trigger, or require additional evidence. |
+| Repeated waiver | Turn the waiver reason into a register override or documented exception. |
+| Repeated user complaint | Promote severity or move the rule earlier in the workflow. |
+
+Do not tune from vibes. Tune from a concrete case, expected output, and a regression test.
+
+### 9.7 Retirement — stale rules should leave cleanly
+
+A detector should be retired or merged when:
+
+- another detector catches the same commercial failure with better precision;
+- a HyperFrames upstream feature makes the smell structurally impossible;
+- the rule creates repeated false positives in legitimate styles;
+- the rule has no active tests, no recent cases, and no clear acceptance path;
+- the finding cannot be explained to a user without sounding like internal lint trivia.
+
+Retirement procedure:
+
+1. Mark the rule as replaced in docs or merge its acceptance text into the successor rule.
+2. Remove detector code and tests in the same change.
+3. Keep historical mention only if it explains a migration.
+4. Verify no README / Quality Audit / Taste Control surface still names the removed rule.
+5. Run the same source/deploy/reviewer gates as an added detector.
+
+## 10. Current vertical slice status
 
 Implemented:
 
@@ -182,8 +332,9 @@ Implemented:
 - proof-frame evidence loop for significant motion claims
 - register-aware severity refinement from `taste_dials`
 - Director Bible detectors for repeated layouts, weak product presence, and copy overcrowding
+- detector lifecycle policy for proposing, testing, tuning, and retiring rules
 
 Next priority:
 
-1. detector lifecycle docs: how to add, test, tune, and retire rules
-2. richer Director Bible detectors for transition/rhythm genericness and product-presence quality scoring
+1. richer Director Bible detectors for transition/rhythm genericness and product-presence quality scoring
+2. first real-case scorecard archive: capture true/false positive receipts from commercial cases

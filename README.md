@@ -160,7 +160,7 @@ Current Taste Layer capabilities:
 | Taste read | The Agent must name the film type before judging it | `taste_read` in `frame.md` |
 | Taste dials | Taste becomes controllable instead of mystical | `taste_dials` + `control_profile` |
 | Rule registry | Taste rules are data-backed, not scattered hardcoded strings | `core/taste_rules.py` |
-| Prompt detectors | Catch weak direction before HTML exists | `opening_visual_absence`, `scene_layout_repetition`, `product_presence_weak`, `copy_overcrowding`, `copy_punctuation_slop`, `missing_taste_read`, `invalid_taste_dial` |
+| Prompt checks | Catch weak direction before HTML exists; highlights, not the full internal rule inventory | `opening_visual_absence`, `scene_layout_repetition`, `product_presence_weak`, `copy_overcrowding`, `copy_punctuation_slop`, `missing_taste_read`, `invalid_taste_dial` |
 | Taste Control cards | Open taste debt becomes concrete next action | `.framepack/taste-audit.json`, `.framepack/taste-debt.md` |
 
 ### Where the latest update fits
