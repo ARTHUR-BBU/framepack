@@ -109,7 +109,7 @@ def _refine_issue_severities(issues: list[TasteAuditIssue], taste_context: Taste
         except KeyError:
             continue
         priority = priority_for_audit_severity(issue.severity)
-        if issue.code in {"product_absence", "text_dominance", "opening_visual_absence"} and taste_context.register in rule.registers:
+        if issue.code in {"product_absence", "text_dominance", "opening_visual_absence", "product_presence_weak", "copy_overcrowding"} and taste_context.register in rule.registers:
             priority = severity_for(rule, register=taste_context.register, dials=taste_context.dials)
         priority = _dial_adjusted_priority(issue.code, priority, taste_context)
         issue.severity = _priority_to_severity(priority, issue.severity)

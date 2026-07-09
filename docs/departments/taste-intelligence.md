@@ -85,6 +85,9 @@ Examples:
 - `opening_visual_absence`
 - `text_dominance`
 - `product_absence`
+- `product_presence_weak`
+- `copy_overcrowding`
+- `scene_layout_repetition`
 - `static_mockup_risk`
 - `generic_fade_stack`
 - `missing_kinetic_continuity`
@@ -178,8 +181,9 @@ Implemented:
 - first HTML implementation slop detectors
 - proof-frame evidence loop for significant motion claims
 - register-aware severity refinement from `taste_dials`
+- Director Bible detectors for repeated layouts, weak product presence, and copy overcrowding
 
 Next priority:
 
-1. richer Director Bible detectors for scene layout repetition and product-presence quality
-2. detector lifecycle docs: how to add, test, tune, and retire rules
+1. detector lifecycle docs: how to add, test, tune, and retire rules
+2. richer Director Bible detectors for transition/rhythm genericness and product-presence quality scoring

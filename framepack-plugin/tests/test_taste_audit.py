@@ -567,3 +567,258 @@ Headline: Deploy faster — without chaos.
     report = audit_project(project)
 
     assert any(issue.code == "copy_punctuation_slop" for issue in report.issues)
+
+
+def test_director_bible_detects_repeated_scene_layout_grammar(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Layout: centered headline over animated gradient background.
+Headline: Work faster.
+CTA: Start now.
+
+## Scene 2 — Feature
+Layout: centered headline over animated gradient background.
+Headline: Automate every workflow.
+CTA: See how.
+
+## Scene 3 — Proof
+Layout: centered headline over animated gradient background.
+Headline: Trusted by teams.
+CTA: Join today.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "scene_layout_repetition")
+    assert issue.severity == "suggestion"
+    assert issue.path.endswith("expanded-prompt.md")
+    assert issue.details["repeated_layout"] == "centered_text_over_background"
+
+
+def test_director_bible_detects_weak_product_presence_for_product_launch(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Visual: abstract gradient waves and particles.
+Headline: Transform your workflow.
+
+## Scene 2 — Feature
+Visual: glowing cards and background ribbons.
+Copy: Fast, clear, intelligent.
+
+## Scene 3 — CTA
+Visual: luminous aura and animated dots.
+CTA: Start now.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "product_presence_weak")
+    assert issue.severity == "risk"
+    assert issue.details["product_scene_count"] == 0
+
+
+def test_director_bible_product_presence_weak_downgrades_for_brand_film(tmp_path):
+    frame = """
+taste_read:
+  register: brand_film
+  audience: culture audience
+  visual_family: atmospheric brand film
+"""
+    expanded = """
+## Scene 1 — Hook
+Visual: abstract gradient waves and particles.
+Headline: A calmer way to work.
+
+## Scene 2 — Mood
+Visual: glowing ribbons and ambient background.
+Copy: Tools can feel humane.
+
+## Scene 3 — Close
+Visual: luminous aura and animated dots.
+CTA: Learn more.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "product_presence_weak")
+    assert issue.severity == "suggestion"
+
+
+def test_director_bible_negated_product_mentions_do_not_count_as_product_presence(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Visual: abstract gradient waves and particles.
+Product: none. No product, UI, logo, device, or app screen appears.
+Headline: Transform your workflow.
+
+## Scene 2 — Feature
+Visual: glowing cards and background ribbons, without UI screenshots.
+Logo: absent. UI screenshots are missing.
+Copy: Fast, clear, intelligent.
+
+## Scene 3 — CTA
+Visual: luminous aura and animated dots, no dashboard screenshot.
+Product shot is not shown. Device: none. Screenshot: absent.
+CTA: Start now.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "product_presence_weak")
+    assert issue.severity == "risk"
+    assert issue.details["product_scene_count"] == 0
+
+
+def test_director_bible_negated_product_mentions_do_not_suppress_copy_overcrowding(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Product: none. No product, UI, logo, device, or app screen appears.
+Text: Transform your workflow with intelligent automation.
+Headline: More clarity for every team.
+Copy: Launch faster with less chaos.
+
+## Scene 2 — Feature
+Visual: glowing cards and background ribbons, without UI screenshots.
+Logo: absent. UI screenshots are missing.
+Text: One place for every operation.
+Headline: See everything instantly.
+Copy: Better decisions, better delivery, better growth.
+
+## Scene 3 — CTA
+Visual: luminous aura and animated dots, no dashboard screenshot.
+Product shot is not shown. Device: none. Screenshot: absent.
+Text: Start today.
+Headline: Join modern teams.
+CTA: Book a demo now.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "copy_overcrowding")
+    assert issue.severity == "risk"
+    assert issue.details["product_scene_count"] == 0
+
+
+def test_director_bible_detects_copy_overcrowding_across_scenes(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Text: Transform your workflow with intelligent automation.
+Headline: More clarity for every team.
+Copy: Launch faster with less chaos.
+
+## Scene 2 — Feature
+Text: One place for every operation.
+Headline: See everything instantly.
+Copy: Better decisions, better delivery, better growth.
+
+## Scene 3 — CTA
+Text: Start today.
+Headline: Join modern teams.
+CTA: Book a demo now.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "copy_overcrowding")
+    assert issue.severity == "risk"
+    assert issue.details["copy_line_count"] >= 8
+
+
+def test_director_bible_copy_overcrowding_is_risk_for_product_ui_register(tmp_path):
+    frame = """
+taste_read:
+  register: product_ui
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Hook
+Text: Transform your workflow with intelligent automation.
+Headline: More clarity for every team.
+Copy: Launch faster with less chaos.
+
+## Scene 2 — Feature
+Text: One place for every operation.
+Headline: See everything instantly.
+Copy: Better decisions, better delivery, better growth.
+
+## Scene 3 — CTA
+Text: Start today.
+Headline: Join modern teams.
+CTA: Book a demo now.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+
+    issue = next(issue for issue in report.issues if issue.code == "copy_overcrowding")
+    assert issue.severity == "risk"
+
+
+def test_director_bible_allows_varied_layout_and_concrete_product_scenes(tmp_path):
+    frame = """
+taste_read:
+  register: product_launch
+  audience: buyers
+  visual_family: product-led commercial
+"""
+    expanded = """
+## Scene 1 — Product reveal
+Product: real dashboard screenshot enters as the hero.
+Layout: device mockup left, proof metric right.
+Headline: Automate every workflow.
+
+## Scene 2 — Interface ballet
+Visual: UI cards orbit around the dashboard screenshot.
+Layout: card grid stack with product shadow.
+Copy: Clear work, fewer handoffs.
+
+## Scene 3 — Brand lockup
+Logo: product logo resolves from interface tiles.
+Layout: brand mark centered with restrained CTA.
+CTA: Book a demo.
+"""
+    project = write_project(tmp_path, frame=frame, expanded=expanded)
+
+    report = audit_project(project)
+    codes = {issue.code for issue in report.issues}
+
+    assert "scene_layout_repetition" not in codes
+    assert "product_presence_weak" not in codes
+    assert "copy_overcrowding" not in codes

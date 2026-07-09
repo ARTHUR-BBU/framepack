@@ -155,6 +155,39 @@ taste_dials:
     assert card.severity == "P0"
 
 
+def test_brand_film_product_presence_suggestion_does_not_create_open_p1_card(tmp_path):
+    project = write_project(
+        tmp_path,
+        """
+# Brand film
+## Scene 1 — Hook
+Visual: abstract gradient waves and particles.
+Headline: A calmer way to work.
+
+## Scene 2 — Mood
+Visual: glowing ribbons and ambient background.
+Copy: Tools can feel humane.
+
+## Scene 3 — Close
+Visual: luminous aura and animated dots.
+CTA: Learn more.
+""",
+    )
+    (project / "frame.md").write_text(
+        """
+taste_read:
+  register: brand_film
+  audience: culture audience
+  visual_family: atmospheric brand film
+""",
+        encoding="utf-8",
+    )
+
+    report = build_taste_control(project)
+
+    assert not any(card.code == "product_presence_weak" for card in report.cards)
+
+
 def test_matching_waiver_marks_card_waived(tmp_path):
     project = write_project(tmp_path, ppt_like_expanded())
     fp = project / ".framepack"
