@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from core.taste_control import build_taste_control, intervention_events_for_taste_report
 
 
@@ -48,6 +50,30 @@ Depth layers: product shadow, UI glow, restrained grid.
 
 def load_audit(project: Path) -> dict:
     return json.loads((project / ".framepack" / "taste-audit.json").read_text(encoding="utf-8"))
+
+
+def test_load_json_preserves_os_errors(monkeypatch, tmp_path):
+    from core import taste_control
+
+    path = tmp_path / "taste-audit.json"
+    path.write_text("{}", encoding="utf-8")
+
+    def raise_os_error(self, *args, **kwargs):
+        raise OSError("disk unavailable")
+
+    monkeypatch.setattr(Path, "read_text", raise_os_error)
+
+    with pytest.raises(OSError, match="disk unavailable"):
+        taste_control._load_json(path)
+
+
+def test_load_json_returns_empty_for_missing_or_invalid_json(tmp_path):
+    from core.taste_control import _load_json
+
+    assert _load_json(tmp_path / "missing.json") == {}
+    invalid = tmp_path / "invalid.json"
+    invalid.write_text("{bad json", encoding="utf-8")
+    assert _load_json(invalid) == {}
 
 
 def test_p1_taste_issue_generates_open_action_card(tmp_path):

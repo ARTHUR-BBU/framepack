@@ -111,6 +111,24 @@ def test_post_write_gate_blocks_when_weapons_missing(tmp_path):
     assert "weapon_not_called" in injected
 
 
+def test_post_write_gate_blocks_relative_index_html_path(tmp_path, monkeypatch):
+    """write_file(path='index.html') must gate the project cwd, not index.html/index.html."""
+    from hooks.on_post_tool_call import _enforce_weapon_implementation_gate
+
+    _make_project_with_plan(
+        tmp_path,
+        "<html><body><script>gsap.from('.title', {opacity:0})</script></body></html>",
+    )
+    monkeypatch.chdir(tmp_path)
+
+    ctx = Mock()
+    with pytest.raises(RuntimeError, match="weapon implementation"):
+        _enforce_weapon_implementation_gate(ctx, "index.html")
+
+    injected = ctx.inject_message.call_args.args[0]
+    assert "weapon_not_called" in injected
+
+
 def test_post_write_gate_passes_when_weapons_called_and_writes_receipt(tmp_path):
     """post_tool_call on index.html with real weapon usage → no error + fresh receipt."""
     from core.weapon_enforcement import is_weapon_enforcement_receipt_current

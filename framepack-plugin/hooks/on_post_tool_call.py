@@ -697,8 +697,7 @@ def _enforce_weapon_implementation_gate(ctx, file_path: str) -> None:
     except Exception:
         return
 
-    project_dir = Path(file_path).parent if Path(file_path).is_absolute() else Path(os.getcwd()) / file_path
-    project_dir = project_dir.resolve()
+    project_dir = Path(_project_dir_for_framepack_file(file_path)).resolve()
 
     try:
         violations = check_weapon_implementation(project_dir)

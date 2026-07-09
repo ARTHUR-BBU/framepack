@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from .intervention_events import InterventionEvent, make_event
+from .path_utils import to_posix_string
 from .taste_rules import acceptance_for, priority_for_audit_severity, repair_target_for
 
 
@@ -141,7 +142,7 @@ def _card_from_taste_issue(issue: Any) -> TasteActionCard:
 
 def _project_relative_target(project: Path, target: str) -> str:
     try:
-        return str(Path(target).relative_to(project)).replace("\\", "/")
+        return to_posix_string(Path(target).relative_to(project))
     except ValueError:
         return target
 
@@ -293,11 +294,7 @@ def intervention_events_for_taste_report(report: TasteControlReport) -> list[Int
     for card in report.cards:
         if card.status != "open":
             continue
-        artifact = card.repair_target
-        try:
-            artifact = str(Path(artifact).relative_to(project)).replace("\\", "/")
-        except ValueError:
-            pass
+        artifact = _project_relative_target(project, card.repair_target)
         events.append(
             make_event(
                 department="taste",
