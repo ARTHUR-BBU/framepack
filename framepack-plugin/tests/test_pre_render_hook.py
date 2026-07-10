@@ -88,7 +88,9 @@ def test_render_injects_taste_control_for_open_p1_taste_debt():
     taste_messages = [m for m in messages if "Framepack Taste Control" in m]
     assert taste_messages
     assert "text_dominance" in taste_messages[-1]
-    assert "revise / proof / waiver" in taste_messages[-1]
+    # Phase 6: message should be grouped by action, not flat list
+    assert "Revise now:" in taste_messages[-1]
+    assert "revise / proof / waiver" not in taste_messages[-1]
 
 
 def test_render_does_not_inject_taste_control_when_matching_waiver_exists():

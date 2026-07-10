@@ -255,35 +255,49 @@ def build_taste_control(project_dir: str | Path) -> TasteControlReport:
 
 
 def build_taste_control_message(report: TasteControlReport) -> str:
-    """Return a pre-render injection message for open taste debt, or ''."""
+    """Return a pre-render injection message for open taste debt, or ''.
+
+    Phase 6: message is grouped by action category, not flat list.
+    Groups: Revise now / Proof needed / Waiver possible.
+    """
     open_cards = [card for card in report.cards if card.status == "open"]
     if not open_cards:
         return ""
+
+    revise_cards = [c for c in open_cards if c.code != "motion_claim_unproven" and c.code != "no_proof_frames"]
+    proof_cards = [c for c in open_cards if c.code in ("motion_claim_unproven", "no_proof_frames")]
+
     lines = [
         "🎛️ **Framepack Taste Control — open taste debt needs a decision**",
         "",
         f"Open taste debt: {len(open_cards)}",
         "",
-        "Before preview/render, choose one per card: revise / proof / waiver.",
-        "",
-        "Top action cards:",
     ]
-    for card in open_cards[:5]:
-        scene = f" ({card.scene})" if card.scene else ""
-        lines.append(f"- `{card.code}`{scene}: {card.message}")
-        lines.append(f"  - target: `{card.repair_target}`")
-        lines.append(f"  - acceptance: {card.acceptance}")
-    if len(open_cards) > 5:
-        lines.append(f"- … {len(open_cards) - 5} more open card(s)")
-    lines.extend(
-        [
-            "",
-            "Receipts:",
-            "- `.framepack/taste-audit.json`",
-            "- `.framepack/taste-debt.md`",
-            "- waiver file: `.framepack/taste-waivers.json`",
-        ]
-    )
+
+    def _render_group(title: str, cards: list[TasteActionCard]) -> None:
+        if not cards:
+            return
+        lines.append(f"**{title}**")
+        for card in cards[:5]:
+            scene = f" ({card.scene})" if card.scene else ""
+            lines.append(f"- `{card.code}`{scene}: {card.message[:120]}")
+            lines.append(f"  - target: `{card.repair_target}`")
+        remaining = len(cards) - 5
+        if remaining > 0:
+            lines.append(f"- … {remaining} more")
+        lines.append("")
+
+    _render_group("Revise now:", revise_cards)
+    _render_group("Proof needed:", proof_cards)
+
+    lines.extend([
+        "Waiver possible for any card — record a reason in `.framepack/taste-waivers.json`.",
+        "",
+        "Receipts:",
+        "- `.framepack/taste-audit.json`",
+        "- `.framepack/taste-debt.md`",
+        "- waiver file: `.framepack/taste-waivers.json`",
+    ])
     return "\n".join(lines)
 
 
