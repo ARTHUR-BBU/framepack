@@ -46,7 +46,7 @@ _STORY_ROLE_RE = re.compile(r"\b(product|data|metric|topology|architecture|map|t
 
 _GRADIENT_TEXT_RE = re.compile(r"background-clip\s*:\s*text|-webkit-background-clip\s*:\s*text|-webkit-text-fill-color\s*:\s*transparent", re.I)
 _BOUNCE_ELASTIC_RE = re.compile(r"ease\s*[:('\"\s]*['\"]?(?:bounce|elastic)\b|cubic-bezier\s*\([^)]*1\.[0-9]+", re.I)
-_BORDER_RADIUS_RE = re.compile(r"border-radius\s*:\s*(\d+)", re.I)
+_BORDER_RADIUS_RE = re.compile(r"border-radius\s*:\s*(\d+)px\b", re.I)
 _BORDER_RE = re.compile(r"border\s*:\s*\d+px\s+solid", re.I)
 _DIFFUSE_SHADOW_RE = re.compile(r"box-shadow\s*:\s*[^;]*\b[3-9]\dpx\b[^;]*\b(?:rgba?\(|hsla?\()[^;]*0\.\d", re.I)
 

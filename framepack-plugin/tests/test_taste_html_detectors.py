@@ -160,6 +160,30 @@ def test_allows_moderate_radius():
     assert "over_rounded_codex_cards" not in codes_for(html)
 
 
+def test_allows_percent_radius_for_circular_dots():
+    html = """
+    <style>
+      .dot { width: 12px; height: 12px; border-radius: 50%; }
+    </style>
+    <div class="dot"></div>
+    """
+
+    assert "over_rounded_codex_cards" not in codes_for(html)
+
+
+def test_detects_large_pixel_radius_but_not_percent_radius():
+    html = """
+    <style>
+      .dot { border-radius: 50%; }
+      .card { border-radius: 40px; }
+    </style>
+    <div class="dot"></div>
+    <div class="card">Content</div>
+    """
+
+    assert "over_rounded_codex_cards" in codes_for(html)
+
+
 def test_detects_ghost_card_shadow_border():
     html = """
     <style>
