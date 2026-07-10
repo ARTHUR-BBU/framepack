@@ -28,7 +28,7 @@ def _ensure_plugin_root_on_path() -> None:
 def register(ctx):
     """Plugin entry point. Called once at Hermes startup."""
     _ensure_plugin_root_on_path()
-    logger.info("Framepack v0.18.0 Plugin registering")
+    logger.info("Framepack v0.19.0 Plugin registering")
 
     # Register skills (knowledge layer)
     _register_skills(ctx)

@@ -1,6 +1,6 @@
 # Framepack
 
-> **HyperFrames Director Workbench — v0.18.0**
+> **HyperFrames Director Workbench — v0.19.0**
 >
 > Framepack turns fuzzy video intent into a commercially usable HyperFrames production brief: it routes the job, asks for assets, defines the creative direction, chooses the right workflow/weapons, hands off cleanly, then taste-audits before render.
 
@@ -116,26 +116,32 @@ This boundary keeps the system complementary: Taste does not become a code check
 | Guardrail Hydrator | Keeps project `AGENTS.md` aligned with Framepack rules | managed block sync without overwriting user rules |
 | Pre-render Taste Audit | Reviews taste before render without blocking user agency | report-first findings and revise/add-assets/render-anyway advice |
 
-## v0.18.0: weapon quality engine
+## v0.19.0: Taste Layer 2.0 — commercial taste intelligence
 
-v0.18.0 moves Framepack from “use a weapon” to “use the right weapon with the right recipe.”
+v0.19.0 is the release where Framepack's Taste Layer grew from "a critic reading the script" into a **full commercial taste nervous system**.
 
-The important shift:
+The Taste Layer 2.0 initiative delivered 8 phases + 2 real-render dogfood stops:
 
 ```text
-Before:
-  Scene says “caption reveal” → Agent may call captionClipWipe(...) loosely.
+Phase 1: Rule registry + data-driven severity mapping
+Phase 2: Prompt-level taste detectors (frame.md + expanded-prompt.md)
+Phase 3: HTML-level implementation slop detectors
+Phase 4: Full slop coverage — gradient text, bounce/elastic, over-rounded cards, ghost shadows
+Phase 5: Proof-frame evidence system (ProofEvidence metadata)
+Phase 6: Action cards grouped by Revise / Proof / Waiver
+Phase 7: LF-normalized deploy sync script (eliminates CRLF MD5 drift)
+Phase 8: Full verification + real-render dogfood
 
-Now:
-  Scene says “premium lower-third caption”
-    → matcher selects caption-clip-wipe
-    → load plan records preset_id = editorial_lower_third
-    → scorecard reports class B and Studio editability
-    → params_hint defines target/duration/direction/stagger
-    → post-write gate rejects loose target+duration calls
+Dogfood stop 1: code-level slop/clean comparison — slop caught 6+ codes, clean 0 false positives
+Dogfood stop 2: real MP4 render + ffprobe + frame extraction + Taste Audit on actual pixels
 ```
 
-This is the foundation for commercial taste at scale: weapons become **operational assets** with recipes, ratings, contracts, and audit trails.
+What this means for production:
+
+- **Before**: the Agent could write technically valid HTML that felt like an animated slide deck — gradient text, bounce easing, fake dashboards, missing proof frames — and nothing caught it until a human watched the video.
+- **Now**: Framepack catches these symptoms as concrete action cards before render, with severity tuned by film register (luxury ≠ SaaS ≠ event teaser). The user still decides: revise, prove, waive, or render anyway.
+
+This release also carries the v0.18.0 weapon quality engine forward: post-write weapon gate, arsenal registry, preset/scorecard contracts, and the Intervention & Railguard layer that pulls the Agent back when it fakes a weapon call.
 
 ## Taste Layer: commercial taste nervous system
 
@@ -153,45 +159,46 @@ In plain language, the Taste Layer is Framepack's **chef's palate + kitchen tick
 
 ### What it does today
 
-Current Taste Layer capabilities:
+Current Taste Layer 2.0 capabilities:
 
 | Capability | Why it matters | Current artifact |
 |---|---|---|
 | Taste read | The Agent must name the film type before judging it | `taste_read` in `frame.md` |
 | Taste dials | Taste becomes controllable instead of mystical | `taste_dials` + `control_profile` |
 | Rule registry | Taste rules are data-backed, not scattered hardcoded strings | `core/taste_rules.py` |
-| Prompt checks | Catch weak direction before HTML exists; highlights, not the full internal rule inventory | `opening_visual_absence`, `scene_layout_repetition`, `product_presence_weak`, `copy_overcrowding`, `copy_punctuation_slop`, `missing_taste_read`, `invalid_taste_dial` |
-| Taste Control cards | Open taste debt becomes concrete next action | `.framepack/taste-audit.json`, `.framepack/taste-debt.md` |
+| Register-aware severity | Luxury object film ≠ SaaS launch ≠ event teaser — same symptom, different weight | `taste_rules.py` register mapping |
+| Prompt checks | Catch weak direction before HTML exists | `opening_visual_absence`, `scene_layout_repetition`, `product_presence_weak`, `copy_overcrowding`, `copy_punctuation_slop`, `fake_precision`, `ui_debris_copy`, `missing_taste_read`, `invalid_taste_dial` |
+| HTML slop checks | Catch implementation-level AI tells in rendered code | `gradient_text_slop`, `bounce_or_elastic_easing`, `over_rounded_codex_cards`, `ghost_card_shadow_border`, `fake_product_ui_divs`, `raw_scroll_listener`, `missing_reduced_motion`, `decorative_generated_surface` |
+| Proof-frame evidence | Motion claims must be backed by actual proof frames, not prose | `core/taste_proof_detectors.py` + `ProofEvidence` metadata |
+| Action cards | Open taste debt becomes concrete next actions, grouped by category | `.framepack/taste-audit.json` — Revise / Proof / Waiver cards |
+| Decision loop | Before render, user gets clear choices | revise, attach proof, waive intentionally, or render anyway |
 
-### Where the latest update fits
+### Where this release stands
 
-The current update is the **foundation pour** for the Taste Layer 2.0 system.
-
-Before this update, taste lived mostly as a report-first audit: useful, but closer to a critic reading the script. Now Framepack has a reusable taste grammar:
+The Taste Layer 2.0 system is **shipped and verified**:
 
 ```text
 brief/register/dials
-  → rule registry
-  → prompt detectors
-  → audit report
-  → Taste Control action cards
+  → rule registry with register-aware severity
+  → prompt detectors (frame.md + expanded-prompt.md)
+  → HTML implementation slop detectors
+  → proof-frame evidence system
+  → action cards grouped by Revise / Proof / Waiver
+  → pre-render decision loop
 ```
 
-That matters because future taste checks no longer need to be one-off rules. They can plug into the same registry, severity mapping, waiver logic, and pre-render decision loop.
+All 8 implementation phases are complete. Two real-render dogfood stops exercised the full pipeline against actual MP4 output with frame extraction and ffprobe verification. The slop sample triggered 6 taste codes; the clean sample produced 0 false positives.
 
 ### Roadmap
 
-The Taste Layer will grow in stages:
+The foundation is poured. Future growth directions:
 
-1. **Director Bible checks** — keep expanding prompt-level detectors so bad taste is caught before production starts.
-2. **HTML / implementation slop detectors** — catch fake dashboards, gradient text, decorative generated surfaces, bounce/elastic motion, raw scroll listeners, missing reduced-motion fallbacks.
-3. **Proof-frame evidence loop** — require contact sheets or sampled frames before final taste sign-off, so the system judges pixels instead of promises.
-4. **Register-aware severity** — a kinetic type event, luxury object film, and SaaS product launch should not be judged by the same ruler.
-5. **Rule-pack lifecycle** — every useful commercial case should feed back into the rule registry, presets, scorecards, and templates.
+1. **Expanded commercial case library** — each real case feeds back into rule registry, presets, scorecards, and templates.
+2. **Decimal-precision detector coverage** — currently handles integer px radii; extend to decimal CSS values.
+3. **Rule-pack lifecycle automation** — every useful commercial case should auto-suggest new rules or rule refinements.
+4. **Visual AI scoring integration** — connect taste detectors to pixel-level analysis for deeper slop detection.
 
-Long-term, the Taste Layer should become Framepack's **commercial video intelligence layer**: the part that helps an Agent not merely finish a video, but make something useful, usable, good, and occasionally surprising enough that a user says, “I did not expect AI to make that.”
-
-This section should be refreshed whenever a new Taste Layer capability lands.
+Long-term, the Taste Layer will become Framepack's **commercial video intelligence layer**: the part that helps an Agent not merely finish a video, but make something useful, usable, good, and occasionally surprising enough that a user says, "I did not expect AI to make that."
 
 ## What Framepack does
 
@@ -257,12 +264,12 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` enabled with version **0.18.0**.
+# You should see `framepack` enabled with version **0.19.0**.
 ```
 
 ## Compatibility
 
-Framepack v0.18.0 targets the HyperFrames 0.7 production line.
+Framepack v0.19.0 targets the HyperFrames 0.7 production line.
 
 - baseline production target: `HyperFrames 0.7.3+`
 - current workbench target: `HyperFrames 0.7.21` as declared by the plugin manifest

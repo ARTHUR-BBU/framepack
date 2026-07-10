@@ -7,7 +7,7 @@ generates a context-sync.md report.
 
 This solves the problem where test workbench files like
 F:/Framepack-01-test/AGENTS.md still say "version: 0.11.0" while the
-deployed plugin is v0.18.0.
+deployed plugin is v0.19.0.
 """
 
 from __future__ import annotations
@@ -145,7 +145,7 @@ def _check_one_file(
     else:
         # For AGENTS.md / Framepack-created CLAUDE.md, both version, block digest,
         # and stale body matter. Version-only checks miss same-version guardrail
-        # updates (for example v0.18.0 Template Menu First landing after release).
+        # updates (for example v0.19.0 Template Menu First landing after release).
         version_stale = detected != plugin_payload.version
         block_stale = bool(has_block and block_match and not _managed_block_matches(block_match, plugin_payload))
         is_stale = version_stale or block_stale or stale_body

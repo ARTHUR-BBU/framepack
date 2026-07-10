@@ -1,7 +1,7 @@
 # HyperFrames 0.7.3 → 0.7.33 Compatibility Assessment
 
 **Date**: 2026-07-04
-**Assessor**: Framepack v0.18.0 against HyperFrames v0.7.33
+**Assessor**: Framepack v0.19.0 against HyperFrames v0.7.33
 **Scope**: 30 versions of upstream changes, classified into 3 tiers.
 
 ---

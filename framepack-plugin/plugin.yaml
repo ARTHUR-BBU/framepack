@@ -1,7 +1,7 @@
 name: framepack
-version: "0.18.0"
+version: "0.19.0"
 description: >-
-  Framepack v0.18.0 is the HyperFrames 0.7.21 Director Workbench: it routes fuzzy video intent into the right HyperFrames workflow, injects creative authority overlay when workflow skills are loaded, asks for assets during co-creation, writes frame.md and expanded-prompt.md as the Director Story Bible, emits a Handoff Manifest for the official HyperFrames workflow layer, and adds a non-blocking Pre-render Taste Audit after Studio preview. HyperFrames owns HTML, Studio, lint, render, publish, catalog, media, and cloud execution; Framepack owns creative direction, asset awareness, dynamic arsenal guidance, and user-decision checkpoints.
+  Framepack v0.19.0 is the HyperFrames 0.7.21 Director Workbench: it routes fuzzy video intent into the right HyperFrames workflow, injects creative authority overlay when workflow skills are loaded, asks for assets during co-creation, writes frame.md and expanded-prompt.md as the Director Story Bible, emits a Handoff Manifest for the official HyperFrames workflow layer, and adds a non-blocking Pre-render Taste Audit after Studio preview. HyperFrames owns HTML, Studio, lint, render, publish, catalog, media, and cloud execution; Framepack owns creative direction, asset awareness, dynamic arsenal guidance, and user-decision checkpoints.
 author: Framepack Team
 license: MIT
 homepage: https://github.com/ARTHUR-BBU/framepack

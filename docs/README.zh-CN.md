@@ -1,6 +1,6 @@
 # Framepack
 
-> **HyperFrames 导演工作台 — v0.18.0**
+> **HyperFrames 导演工作台 — v0.19.0**
 >
 > Framepack 把模糊的视频想法，变成可以交给 HyperFrames 正式制作的商业视频生产简报：先分诊、问素材、定创意方向、选择 workflow 和武器、清晰交接，再在渲染前做口味审片。
 
@@ -116,26 +116,32 @@ Taste → Weapon → Audit → Intervention
 | Guardrail Hydrator | 保持项目 `AGENTS.md` 和 Framepack 铁律同步 | 只更新 managed block，不覆盖项目自己的规则 |
 | Pre-render Taste Audit | 渲染前审片，但不剥夺用户决策权 | report-first findings + 修改/补素材/render-anyway 建议 |
 
-## v0.18.0：武器质量引擎
+## v0.19.0：Taste Layer 2.0 — 商业口味智能
 
-v0.18.0 的核心变化，是 Framepack 从“用了武器吗？”升级为“有没有用对武器、有没有按菜谱用”。
+v0.19.0 是 Framepack 的 Taste Layer 从"影评人读剧本"升级为**完整商业口味神经系统**的发版。
 
-关键变化：
+Taste Layer 2.0 计划交付了 8 个阶段 + 2 个真实渲染验证停靠点：
 
 ```text
-以前：
-  场景说“字幕揭示” → Agent 可能随便 captionClipWipe(...)
+Phase 1：规则注册表 + 数据驱动的严重级别映射
+Phase 2：Prompt 级口味检测器（frame.md + expanded-prompt.md）
+Phase 3：HTML 级实现层 AI 味检测器
+Phase 4：全覆盖 AI 味检测 — 渐变文字、橡皮筋弹跳、超圆角卡片、幽灵阴影
+Phase 5：Proof-frame 证据系统（ProofEvidence 元数据）
+Phase 6：Action Card 按 Revise / Proof / Waiver 分组
+Phase 7：LF 归一化部署同步脚本（消除 CRLF 导致的 MD5 漂移）
+Phase 8：全量验证 + 真实渲染 dogfood
 
-现在：
-  场景说“高级 lower-third 字幕”
-    → matcher 选择 caption-clip-wipe
-    → load plan 记录 preset_id = editorial_lower_third
-    → scorecard 标明 B 级武器和 Studio 可编辑性
-    → params_hint 给出 target/duration/direction/stagger
-    → post-write gate 拒绝只有 target+duration 的松散调用
+停靠点 1：代码级 slop/clean 对照 — slop 被抓 6+ 种问题，clean 0 误报
+停靠点 2：真实 MP4 渲染 + ffprobe + 抽帧 + 基于真实像素的 Taste Audit
 ```
 
-这一步的意义：武器不再是一堆 JS 片段，而是带菜谱、评级、契约和验货小票的 **生产资产**。
+对生产意味着什么：
+
+- **以前**：Agent 可以写出技术上合法、但观感像"会动的 PPT"的 HTML — 渐变文字、bounce 缓动、假 dashboard、缺 proof frame — 没人能在渲染前抓住它。
+- **现在**：Framepack 在渲染前就把这些症状变成具体 action card，严重级别按片型调节（奢侈品 ≠ SaaS ≠ 活动预告）。用户仍然有最终决定权：改、补证据、waiver，还是 render anyway。
+
+这个版本同时继承了 v0.18.0 武器质量引擎的能力：post-write weapon gate、arsenal registry、preset/scorecard 契约，以及在 Agent 假装调用武器时把它拉回正轨的 Intervention & Railguard 层。
 
 ## Taste 层：商业视频的审美神经系统
 
@@ -153,45 +159,46 @@ Taste 层回答的是一个特别朴素、但特别产品的问题：**怎么阻
 
 ### 现在已经能做什么
 
-当前 Taste 层能力：
+当前 Taste Layer 2.0 能力：
 
 | 能力 | 为什么重要 | 当前产物 |
 |---|---|---|
-| Taste read | Agent 先说清“这是什么片”，再开始评判 | `frame.md` 里的 `taste_read` |
+| Taste read | Agent 先说清"这是什么片"，再开始评判 | `frame.md` 里的 `taste_read` |
 | Taste dials | 审美不再玄学，变成可调旋钮 | `taste_dials` + `control_profile` |
 | Rule registry | taste 规则不再散落硬编码，而是可演进资产 | `core/taste_rules.py` |
-| Prompt checks | HTML 还没写之前，就先抓方向上的廉价感；这里是能力摘要，不是内部规则全账本 | `opening_visual_absence`、`scene_layout_repetition`、`product_presence_weak`、`copy_overcrowding`、`copy_punctuation_slop`、`missing_taste_read`、`invalid_taste_dial` |
-| Taste Control cards | open 口味债变成下一步动作，而不是一句警告 | `.framepack/taste-audit.json`、`.framepack/taste-debt.md` |
+| 按片型调严重级别 | 奢侈品物件片 ≠ SaaS 发布 ≠ 活动预告 — 同一症状权重不同 | `taste_rules.py` register 映射 |
+| Prompt checks | HTML 还没写之前，就先抓方向上的廉价感 | `opening_visual_absence`、`scene_layout_repetition`、`product_presence_weak`、`copy_overcrowding`、`copy_punctuation_slop`、`fake_precision`、`ui_debris_copy`、`missing_taste_read`、`invalid_taste_dial` |
+| HTML slop checks | 在渲染代码里抓 AI 味的实现层症状 | `gradient_text_slop`、`bounce_or_elastic_easing`、`over_rounded_codex_cards`、`ghost_card_shadow_border`、`fake_product_ui_divs`、`raw_scroll_listener`、`missing_reduced_motion`、`decorative_generated_surface` |
+| Proof-frame 证据 | 动效声明必须有真实抽帧证据，不能只靠文字 | `core/taste_proof_detectors.py` + `ProofEvidence` 元数据 |
+| Action cards | open 口味债变成按行动类别分组的具体动作 | `.framepack/taste-audit.json` — Revise / Proof / Waiver 卡片 |
+| 决策闭环 | 渲染前给用户清楚选择 | 改、补证据、明确 waiver、或 render anyway |
 
-### 这次更新在整个 Taste 层里的位置
+### 这次发版的位置
 
-这次更新不是“又加几条检查规则”，而是给 Taste Layer 2.0 浇地基。
-
-以前的 Taste Audit 更像一个影评人读剧本：能指出问题，但还不够系统。现在 Framepack 开始有一套可复用的审美语法：
+Taste Layer 2.0 系统**已交付并验证**：
 
 ```text
-brief / register / dials
-  → rule registry
-  → prompt detectors
-  → audit report
-  → Taste Control action cards
+brief/register/dials
+  → 规则注册表（按片型调严重级别）
+  → prompt 检测器（frame.md + expanded-prompt.md）
+  → HTML 实现层 AI 味检测器
+  → proof-frame 证据系统
+  → 按 Revise / Proof / Waiver 分组的 action cards
+  → pre-render 决策闭环
 ```
 
-这很关键：以后新增 taste 检查，不需要东一条西一条地硬塞。它们可以挂进同一个规则注册表、严重级别映射、waiver 机制和 pre-render 决策链。
+8 个实现阶段全部完成。两个真实渲染 dogfood 停靠点对完整管线做了实测：真实 MP4 输出 + 抽帧 + ffprobe 验证。slop 样本触发 6 种 taste 问题码；clean 样本 0 误报。
 
 ### 规划和展望
 
-Taste 层会分几步长大：
+地基已经浇好。未来增长方向：
 
-1. **Director Bible 检查** — 继续扩展 prompt-level detectors，在制作前先抓坏方向。
-2. **HTML / 实现层 AI 味检查** — 抓假 dashboard、渐变字、装饰性发光网格、bounce/elastic 动画、裸 scroll listener、缺 reduced-motion fallback。
-3. **Proof-frame 证据闭环** — 最终审片不能只看文字，要看 contact sheet / sampled frames，让系统对像素负责。
-4. **按片型调严重级别** — 活动预告、奢侈品物件片、SaaS 产品发布，不能用同一把尺子打分。
-5. **规则资产生命周期** — 每个真实商业 case 的经验，都应该反哺 rule registry、preset、scorecard、template。
+1. **商业 case 库扩展** — 每个真实 case 反哺规则注册表、preset、scorecard、template。
+2. **小数精度检测覆盖** — 当前处理整数 px 圆角；扩展到小数 CSS 值。
+3. **规则包生命周期自动化** — 每个有用的商业 case 应该自动建议新规则或规则微调。
+4. **视觉 AI 评分集成** — 把 taste 检测器接入像素级分析，做更深的 AI 味识别。
 
-长期看，Taste 层会成为 Framepack 的 **商业视频智能层**：它帮 Agent 不只是“把视频做完”，而是做出有用、能用、好用，并且偶尔能让用户惊一下的东西。
-
-这个章节以后每次 Taste 层能力升级时都要同步更新。
+长期看，Taste 层会成为 Framepack 的 **商业视频智能层**：它帮 Agent 不只是"把视频做完"，而是做出有用、能用、好用，并且偶尔能让用户惊一下的东西。
 
 ## Framepack 做什么
 
@@ -257,12 +264,12 @@ hermes plugins enable framepack
 
 # 4. 验证
 hermes plugins list
-# 你应该看到 `framepack` 状态为 enabled，版本为 **0.18.0**。
+# 你应该看到 `framepack` 状态为 enabled，版本为 **0.19.0**。
 ```
 
 ## 兼容性
 
-Framepack v0.18.0 面向 HyperFrames 0.7 生产线。
+Framepack v0.19.0 面向 HyperFrames 0.7 生产线。
 
 - baseline production target：`HyperFrames 0.7.3+`
 - current workbench target：插件 manifest 声明的 `HyperFrames 0.7.21`

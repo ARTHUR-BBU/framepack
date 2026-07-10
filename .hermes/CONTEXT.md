@@ -7,10 +7,10 @@
 
 <!-- ⚠️ 此区块每次会话结束时整块替换。不要在上面追加。 -->
 
-**阶段**: v0.18.0 / Commercial Video Quality Engine Phase 3A 已完成；准备在新 session 试做 Phase 3B `Taste Control Loop`。
+**阶段**: v0.19.0 / Commercial Video Quality Engine Phase 3A 已完成；准备在新 session 试做 Phase 3B `Taste Control Loop`。
 **分支**: `main` 与 `origin/main` 对齐；handoff 前工作区无业务改动。
-**源码版本**: `framepack-plugin/plugin.yaml = 0.18.0`。
-**HyperFrames 窗口**: Framepack v0.18.0 描述仍以 HyperFrames 0.7.21 Director Workbench 为产品锚点；生产升级窗口另行 recon，不在本次 handoff 范围。
+**源码版本**: `framepack-plugin/plugin.yaml = 0.19.0`。
+**HyperFrames 窗口**: Framepack v0.19.0 描述仍以 HyperFrames 0.7.21 Director Workbench 为产品锚点；生产升级窗口另行 recon，不在本次 handoff 范围。
 **最后功能提交**: `1eb888d` (`feat: add commercial taste audit signals`)。
 **部署状态**: active plugin `F:/Hermes_windows/plugins/framepack/` 已在 Phase 3A 同步；关键文件 md5 已校验通过。
 **测试**: Phase 3A 源码全量 `1033 passed in 68.07s`；部署目录全量 `1033 passed in 103.99s`；focused taste/quality bridge `50 passed in 5.30s`；ad-hoc `ADHOC_PHASE3_COMMERCIAL_TASTE_VERIFY_PASSED=True`。
@@ -19,7 +19,7 @@
 
 - ✅ Phase 2 完成并推送：`07e15bb feat: add weapon preset registry`。把武器系统从“推荐武器”升级到“推荐武器 + preset + scorecard + params_hint + post-write gate”。
 - ✅ Phase 2 reviewer-mode 修复真实误报：`no caption or callout overlays` 不再误触发 `caption-clip-wipe` / captions skill。
-- ✅ 战略 README 更新并推送：`d4b12f2 docs: refresh Framepack strategy readmes`。中英文 README 已写入 v0.18.0 产品定位、设计哲学、架构、功能模块关系、武器质量引擎。
+- ✅ 战略 README 更新并推送：`d4b12f2 docs: refresh Framepack strategy readmes`。中英文 README 已写入 v0.19.0 产品定位、设计哲学、架构、功能模块关系、武器质量引擎。
 - ✅ 发布 README 规则沉淀：创建 `framepack-release-readme-refresh` skill，并提交 `de37599 docs: require release README refresh`。以后每个 Framepack 版本发布必须更新英文 `README.md` 与中文 `docs/README.zh-CN.md`。
 - ✅ Phase 3A 完成并推送：`1eb888d feat: add commercial taste audit signals`。`core/taste_audit.py` 新增商业视频廉价感信号：`text_dominance`、`product_absence`、`flat_background`、`weapon_preset_missing`、`bgm_unplanned`、`no_proof_frames`。
 - ✅ Phase 3A 已接入 quality bridge：`text_dominance` 等 taste issue 能进入主 `quality_audit`，例如映射为 P1。
