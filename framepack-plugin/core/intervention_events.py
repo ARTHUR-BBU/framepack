@@ -85,3 +85,64 @@ def summarize_events(events: Iterable[InterventionEvent]) -> dict[str, object]:
         "by_severity": dict(Counter(event.severity for event in materialized)),
         "by_action": dict(Counter(event.required_action for event in materialized)),
     }
+
+
+# ── Phase 5: Audit → Intervention bridge ──
+
+# Audit severity (P0-P3) → Intervention severity.
+# P0 = structural failure, must stop.
+# P1 = promise not kept, user must decide.
+# P2/P3 = advisory, FYI.
+_AUDIT_SEVERITY_MAP: dict[str, Severity] = {
+    "P0": "hard_stop",
+    "P1": "decision_required",
+    "P2": "advisory",
+    "P3": "advisory",
+}
+
+
+def _audit_severity(audit_severity: str) -> Severity:
+    mapped = _AUDIT_SEVERITY_MAP.get(audit_severity, "advisory")
+    return mapped  # type: ignore[return-value]
+
+
+def intervention_events_for_pre_render(findings: list) -> list[InterventionEvent]:
+    """Convert Pre-render Audit findings into reusable railguard events.
+
+    Audit reports the problem; Intervention decides how hard to pull back.
+    """
+    events: list[InterventionEvent] = []
+    for finding in findings:
+        events.append(
+            make_event(
+                department="audit",
+                code=finding.code,
+                severity=_audit_severity(finding.severity),
+                reason=finding.message,
+                required_action="revise",
+                artifact="pre-render-audit",
+                acceptance=finding.suggestion,
+            )
+        )
+    return events
+
+
+def intervention_events_for_quality_audit(issues: list) -> list[InterventionEvent]:
+    """Convert Quality Audit issues into reusable railguard events.
+
+    Audit reports the problem; Intervention decides how hard to pull back.
+    """
+    events: list[InterventionEvent] = []
+    for issue in issues:
+        events.append(
+            make_event(
+                department="audit",
+                code=issue.code,
+                severity=_audit_severity(issue.severity),
+                reason=issue.message,
+                required_action="revise",
+                artifact=issue.path or "quality-audit",
+                acceptance=f"Resolve {issue.code} before proceeding.",
+            )
+        )
+    return events

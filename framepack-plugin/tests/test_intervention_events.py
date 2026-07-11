@@ -124,3 +124,117 @@ def test_summarize_events_counts_by_severity_and_action():
         "by_severity": {"decision_required": 1, "hard_stop": 1},
         "by_action": {"attach_proof": 1, "stop": 1},
     }
+
+
+# ── Phase 5: Audit → Intervention bridge ──
+
+def test_pre_render_finding_p1_maps_to_decision_required():
+    from core.pre_render_audit import PreRenderFinding
+    from core.intervention_events import intervention_events_for_pre_render
+
+    findings = [
+        PreRenderFinding(
+            severity="P1",
+            code="missing_director_story_bible",
+            message="Director Story Bible is missing before render.",
+            suggestion="Create expanded-prompt.md.",
+        ),
+    ]
+
+    events = intervention_events_for_pre_render(findings)
+    assert len(events) == 1
+    assert events[0].department == "audit"
+    assert events[0].severity == "decision_required"
+    assert events[0].code == "missing_director_story_bible"
+    assert events[0].required_action == "revise"
+
+
+def test_pre_render_finding_p0_maps_to_hard_stop():
+    from core.pre_render_audit import PreRenderFinding
+    from core.intervention_events import intervention_events_for_pre_render
+
+    findings = [
+        PreRenderFinding(
+            severity="P0",
+            code="critical_structural_failure",
+            message="HTML is empty.",
+            suggestion="Write HTML.",
+        ),
+    ]
+
+    events = intervention_events_for_pre_render(findings)
+    assert len(events) == 1
+    assert events[0].severity == "hard_stop"
+
+
+def test_pre_render_finding_p2_maps_to_advisory():
+    from core.pre_render_audit import PreRenderFinding
+    from core.intervention_events import intervention_events_for_pre_render
+
+    findings = [
+        PreRenderFinding(
+            severity="P2",
+            code="optional_bgm_missing",
+            message="No BGM plan.",
+            suggestion="Ask about BGM.",
+        ),
+    ]
+
+    events = intervention_events_for_pre_render(findings)
+    assert len(events) == 1
+    assert events[0].severity == "advisory"
+
+
+def test_quality_issue_p1_maps_to_decision_required():
+    from core.quality_audit import QualityIssue
+    from core.intervention_events import intervention_events_for_quality_audit
+
+    issues = [
+        QualityIssue(
+            code="stale_arsenal_entry",
+            severity="P1",
+            message="Arsenal references a weapon not used in HTML.",
+            path="index.html",
+        ),
+    ]
+
+    events = intervention_events_for_quality_audit(issues)
+    assert len(events) == 1
+    assert events[0].department == "audit"
+    assert events[0].severity == "decision_required"
+    assert events[0].code == "stale_arsenal_entry"
+    assert events[0].required_action == "revise"
+
+
+def test_quality_issue_p0_maps_to_hard_stop():
+    from core.quality_audit import QualityIssue
+    from core.intervention_events import intervention_events_for_quality_audit
+
+    issues = [
+        QualityIssue(
+            code="manifest_html_drift",
+            severity="P0",
+            message="Execution manifest and HTML disagree on weapons.",
+        ),
+    ]
+
+    events = intervention_events_for_quality_audit(issues)
+    assert len(events) == 1
+    assert events[0].severity == "hard_stop"
+
+
+def test_quality_issue_p3_maps_to_advisory():
+    from core.quality_audit import QualityIssue
+    from core.intervention_events import intervention_events_for_quality_audit
+
+    issues = [
+        QualityIssue(
+            code="minor_naming",
+            severity="P3",
+            message="Inconsistent naming.",
+        ),
+    ]
+
+    events = intervention_events_for_quality_audit(issues)
+    assert len(events) == 1
+    assert events[0].severity == "advisory"
