@@ -320,21 +320,22 @@ Retirement procedure:
 
 ## 10. Current vertical slice status
 
-Implemented:
+Implemented (v0.19.0 shipped):
 
-- rule registry foundation
+- rule registry with register-aware severity mapping
 - taste_read / taste_dials parsing
-- prompt-level detectors
-- audit integration
-- Taste Control action cards
-- Taste → Intervention events
-- first HTML implementation slop detectors
-- proof-frame evidence loop for significant motion claims
-- register-aware severity refinement from `taste_dials`
+- 9 prompt-level detectors (opening_visual_absence through ui_debris_copy)
+- 8 HTML implementation slop detectors (gradient_text_slop through decorative_generated_surface)
+- proof-frame evidence loop with ProofEvidence metadata
+- Taste Control action cards grouped by Revise / Proof / Waiver
+- Taste → Intervention events bridge
+- register-aware severity refinement from taste_dials
 - Director Bible detectors for repeated layouts, weak product presence, and copy overcrowding
 - detector lifecycle policy for proposing, testing, tuning, and retiring rules
+- real-render dogfood verification: slop 6 codes caught, clean 0 false positives
 
 Next priority:
 
 1. richer Director Bible detectors for transition/rhythm genericness and product-presence quality scoring
 2. first real-case scorecard archive: capture true/false positive receipts from commercial cases
+3. decimal-precision detector coverage (extend border-radius to handle `32.5px` etc.)
