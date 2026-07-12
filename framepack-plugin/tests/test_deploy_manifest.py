@@ -52,7 +52,7 @@ def test_0120_release_version_is_synchronized_across_release_surfaces():
         PLUGIN_ROOT / "compat" / "hyperframes-support.json": [
             '"framepack_version": "0.19.0"',
             '"supported_min": "0.7.3"',
-            '"supported_max_tested": "0.7.33"',
+            '"supported_max_tested": "0.7.54"',
             '"soft_max": "0.7.x"',
             '"hard_block_below": "0.7.0"',
         ],

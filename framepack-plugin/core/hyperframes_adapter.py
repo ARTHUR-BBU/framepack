@@ -52,7 +52,7 @@ PROJECT_SCAFFOLD_COMMANDS = {"init"}
 REGISTRY_COMMANDS = {"catalog", "add", "capture"}
 MEDIA_PREPROCESS_COMMANDS = {"beats", "transcribe", "tts", "remove-background"}
 CLOUD_SIDE_EFFECT_COMMANDS = {"publish", "cloud", "lambda", "cloudrun"}
-REQUIRES_HANDOFF_COMMANDS = {"lint", "validate", "inspect", "snapshot", "preview", "present", "render"}
+REQUIRES_HANDOFF_COMMANDS = {"lint", "validate", "inspect", "snapshot", "preview", "present", "render", "grade-compare", "compare"}
 SIDE_EFFECTFUL_COMMANDS = {
     "init",
     "add",

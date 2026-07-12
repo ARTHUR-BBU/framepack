@@ -372,3 +372,11 @@ Use class=\"clip\".
     assert report["recommendation"] == "review_merge_do_not_overwrite"
     assert report["local_only_lines"]
     assert any("Root duration" in line for line in report["local_only_lines"])
+
+
+# ── HyperFrames 0.7.48-0.7.54 compat ──
+
+def test_classifies_new_0754_commands():
+    """grade-compare and compare are new rendering commands in 0.7.48+."""
+    assert classify_hyperframes_command("npx hyperframes grade-compare .").category is CommandCategory.REQUIRES_HANDOFF
+    assert classify_hyperframes_command("npx hyperframes compare .").category is CommandCategory.REQUIRES_HANDOFF
