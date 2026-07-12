@@ -1,7 +1,7 @@
 ---
 name: framepack-production-quality
-description: Operate Framepack v0.19.0 Production Quality Layer: timeline manifest, scene specs, proof frames, contact sheets, and report-first audit workflow.
-version: 0.19.0
+description: Operate Framepack v0.20.0 Production Quality Layer: timeline manifest, scene specs, proof frames, contact sheets, and report-first audit workflow.
+version: 0.20.0
 ---
 
 # Framepack Production Quality Layer

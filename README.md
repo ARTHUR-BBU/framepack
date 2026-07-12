@@ -1,6 +1,6 @@
 # Framepack
 
-> **HyperFrames Director Workbench — v0.19.0**
+> **HyperFrames Director Workbench — v0.20.0**
 >
 > Framepack turns fuzzy video intent into a commercially usable HyperFrames production brief: it routes the job, asks for assets, defines the creative direction, chooses the right workflow/weapons, hands off cleanly, then taste-audits before render.
 
@@ -116,32 +116,33 @@ This boundary keeps the system complementary: Taste does not become a code check
 | Guardrail Hydrator | Keeps project `AGENTS.md` aligned with Framepack rules | managed block sync without overwriting user rules |
 | Pre-render Taste Audit | Reviews taste before render without blocking user agency | report-first findings and revise/add-assets/render-anyway advice |
 
-## v0.19.0: Taste Layer 2.0 — commercial taste intelligence
+## v0.20.0: Department Architecture + HyperFrames 0.7.54 compat
 
-v0.19.0 is the release where Framepack's Taste Layer grew from "a critic reading the script" into a **full commercial taste nervous system**.
+v0.20.0 completes the **department rollout** and brings **HyperFrames 0.7.54 support**.
 
-The Taste Layer 2.0 initiative delivered 8 phases + 2 real-render dogfood stops:
+### Department governance chain complete
+
+All eight Framepack departments now have internal operating rules, and the governance chain `Taste → Weapon → Audit → Intervention` is fully wired from detection to hook injection:
 
 ```text
-Phase 1: Rule registry + data-driven severity mapping
-Phase 2: Prompt-level taste detectors (frame.md + expanded-prompt.md)
-Phase 3: HTML-level implementation slop detectors
-Phase 4: Full slop coverage — gradient text, bounce/elastic, over-rounded cards, ghost shadows
-Phase 5: Proof-frame evidence system (ProofEvidence metadata)
-Phase 6: Action cards grouped by Revise / Proof / Waiver
-Phase 7: LF-normalized deploy sync script (eliminates CRLF MD5 drift)
-Phase 8: Full verification + real-render dogfood
-
-Dogfood stop 1: code-level slop/clean comparison — slop caught 6+ codes, clean 0 false positives
-Dogfood stop 2: real MP4 render + ffprobe + frame extraction + Taste Audit on actual pixels
+Phase 5: Audit → Intervention bridge (was the missing link)
+Phase 6: 8/8 department operating rules documented
+Phase 7a: Pre-render hook now routes through Intervention bridge
+Phase 7b: Cross-department event correlation (same root cause merged)
+Phase 7c: Intervention ledger persistence (.framepack/intervention-ledger.json)
 ```
 
-What this means for production:
+Before v0.20.0: bridge functions existed but the hook bypassed them — departments injected messages directly. Now all three business departments (Taste, Weapon, Audit) report through the unified `InterventionEvent` contract, with severity-based grouping and cross-department deduplication.
 
-- **Before**: the Agent could write technically valid HTML that felt like an animated slide deck — gradient text, bounce easing, fake dashboards, missing proof frames — and nothing caught it until a human watched the video.
-- **Now**: Framepack catches these symptoms as concrete action cards before render, with severity tuned by film register (luxury ≠ SaaS ≠ event teaser). The user still decides: revise, prove, waive, or render anyway.
+### HyperFrames 0.7.54 compatibility
 
-This release also carries the v0.18.0 weapon quality engine forward: post-write weapon gate, arsenal registry, preset/scorecard contracts, and the Intervention & Railguard layer that pulls the Agent back when it fakes a weapon call.
+- `supported_max_tested` bumped from 0.7.33 to **0.7.54**
+- New commands registered: `grade-compare`, `compare`
+- Smoke verified: `init` + `lint` green on 0.7.54
+
+### Carries forward
+
+This release inherits all v0.19.0 Taste Layer 2.0 capabilities (9 prompt detectors, 8 HTML slop detectors, proof-frame evidence, action cards) and the v0.18.0 weapon quality engine.
 
 ## Taste Layer: commercial taste nervous system
 
@@ -264,12 +265,12 @@ hermes plugins enable framepack
 
 # 4. Verify
 hermes plugins list
-# You should see `framepack` enabled with version **0.19.0**.
+# You should see `framepack` enabled with version **0.20.0**.
 ```
 
 ## Compatibility
 
-Framepack v0.19.0 targets the HyperFrames 0.7 production line.
+Framepack v0.20.0 targets the HyperFrames 0.7 production line.
 
 - baseline production target: `HyperFrames 0.7.3+`
 - current workbench target: `HyperFrames 0.7.21` as declared by the plugin manifest

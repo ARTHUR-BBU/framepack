@@ -1,4 +1,4 @@
-<!-- FRAMEPACK MANAGED BLOCK START version=0.19.0 hash=sha256:1bff08f7851b9edf8486b193001e2e5c60709630704adac777ba99f82fc0bb03 source=plugin -->
+<!-- FRAMEPACK MANAGED BLOCK START version=0.20.0 hash=sha256:1bff08f7851b9edf8486b193001e2e5c60709630704adac777ba99f82fc0bb03 source=plugin -->
 # Framepack Guardrails
 
 Framepack is a **Hermes Agent Plugin** — a Prompt Factory for HyperFrames.

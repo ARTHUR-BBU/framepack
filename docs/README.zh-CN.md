@@ -1,6 +1,6 @@
 # Framepack
 
-> **HyperFrames 导演工作台 — v0.19.0**
+> **HyperFrames 导演工作台 — v0.20.0**
 >
 > Framepack 把模糊的视频想法，变成可以交给 HyperFrames 正式制作的商业视频生产简报：先分诊、问素材、定创意方向、选择 workflow 和武器、清晰交接，再在渲染前做口味审片。
 
@@ -116,32 +116,33 @@ Taste → Weapon → Audit → Intervention
 | Guardrail Hydrator | 保持项目 `AGENTS.md` 和 Framepack 铁律同步 | 只更新 managed block，不覆盖项目自己的规则 |
 | Pre-render Taste Audit | 渲染前审片，但不剥夺用户决策权 | report-first findings + 修改/补素材/render-anyway 建议 |
 
-## v0.19.0：Taste Layer 2.0 — 商业口味智能
+## v0.20.0：事业部架构落地 + HyperFrames 0.7.54 兼容
 
-v0.19.0 是 Framepack 的 Taste Layer 从"影评人读剧本"升级为**完整商业口味神经系统**的发版。
+v0.20.0 完成了**事业部 Rollout 全流程**，并带来 **HyperFrames 0.7.54 支持**。
 
-Taste Layer 2.0 计划交付了 8 个阶段 + 2 个真实渲染验证停靠点：
+### 治理链路完整闭环
+
+八个事业部全部拥有内部操作规则，治理链路 `Taste → Weapon → Audit → Intervention` 从检测到 hook 注入全链路通电：
 
 ```text
-Phase 1：规则注册表 + 数据驱动的严重级别映射
-Phase 2：Prompt 级口味检测器（frame.md + expanded-prompt.md）
-Phase 3：HTML 级实现层 AI 味检测器
-Phase 4：全覆盖 AI 味检测 — 渐变文字、橡皮筋弹跳、超圆角卡片、幽灵阴影
-Phase 5：Proof-frame 证据系统（ProofEvidence 元数据）
-Phase 6：Action Card 按 Revise / Proof / Waiver 分组
-Phase 7：LF 归一化部署同步脚本（消除 CRLF 导致的 MD5 漂移）
-Phase 8：全量验证 + 真实渲染 dogfood
-
-停靠点 1：代码级 slop/clean 对照 — slop 被抓 6+ 种问题，clean 0 误报
-停靠点 2：真实 MP4 渲染 + ffprobe + 抽帧 + 基于真实像素的 Taste Audit
+Phase 5：Audit → Intervention 桥接（之前缺失的环节）
+Phase 6：8/8 事业部内部操作规则文档完成
+Phase 7a：Pre-render hook 走 Intervention 统一通道
+Phase 7b：跨部门事件关联（同根因事件合并展示）
+Phase 7c：介入事件持久化（.framepack/intervention-ledger.json）
 ```
 
-对生产意味着什么：
+v0.20.0 之前：桥接函数建了但 hook 绕过它们——各部门各自直接注入消息。现在三个业务部门（Taste、Weapon、Audit）全部通过统一的 `InterventionEvent` 契约上报，按严重级别分组，跨部门去重。
 
-- **以前**：Agent 可以写出技术上合法、但观感像"会动的 PPT"的 HTML — 渐变文字、bounce 缓动、假 dashboard、缺 proof frame — 没人能在渲染前抓住它。
-- **现在**：Framepack 在渲染前就把这些症状变成具体 action card，严重级别按片型调节（奢侈品 ≠ SaaS ≠ 活动预告）。用户仍然有最终决定权：改、补证据、waiver，还是 render anyway。
+### HyperFrames 0.7.54 兼容
 
-这个版本同时继承了 v0.18.0 武器质量引擎的能力：post-write weapon gate、arsenal registry、preset/scorecard 契约，以及在 Agent 假装调用武器时把它拉回正轨的 Intervention & Railguard 层。
+- `supported_max_tested` 从 0.7.33 升级到 **0.7.54**
+- 新增命令注册：`grade-compare`、`compare`
+- 冒烟验证：`init` + `lint` 在 0.7.54 上全绿
+
+### 继承
+
+这个版本继承了 v0.19.0 Taste Layer 2.0 全部能力（9 个 prompt 检测器、8 个 HTML slop 检测器、proof-frame 证据系统、action cards）和 v0.18.0 武器质量引擎。
 
 ## Taste 层：商业视频的审美神经系统
 
@@ -264,12 +265,12 @@ hermes plugins enable framepack
 
 # 4. 验证
 hermes plugins list
-# 你应该看到 `framepack` 状态为 enabled，版本为 **0.19.0**。
+# 你应该看到 `framepack` 状态为 enabled，版本为 **0.20.0**。
 ```
 
 ## 兼容性
 
-Framepack v0.19.0 面向 HyperFrames 0.7 生产线。
+Framepack v0.20.0 面向 HyperFrames 0.7 生产线。
 
 - baseline production target：`HyperFrames 0.7.3+`
 - current workbench target：插件 manifest 声明的 `HyperFrames 0.7.21`

@@ -320,7 +320,7 @@ Retirement procedure:
 
 ## 10. Current vertical slice status
 
-Implemented (v0.19.0 shipped):
+Implemented (v0.20.0 shipped):
 
 - rule registry with register-aware severity mapping
 - taste_read / taste_dials parsing

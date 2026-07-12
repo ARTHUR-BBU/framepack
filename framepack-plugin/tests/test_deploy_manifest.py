@@ -38,30 +38,30 @@ def test_main_framepack_skill_version_matches_plugin_version():
 
 def test_0120_release_version_is_synchronized_across_release_surfaces():
     plugin_version = _plugin_version(PLUGIN_ROOT)
-    assert plugin_version == "0.19.0"
+    assert plugin_version == "0.20.0"
 
     release_files = {
-        REPO_ROOT / "README.md": ["version **0.19.0**", "Framepack v0.19.0"],
-        REPO_ROOT / "docs" / "README.zh-CN.md": ["版本为 **0.19.0**"],
-        REPO_ROOT / "AGENTS.md": ["version: 0.19.0", "v0.19.0 hooks", "Framepack v0.19.0 skills"],
-        PLUGIN_ROOT / "plugin.yaml": ["version: \"0.19.0\"", "Framepack v0.19.0 is the HyperFrames 0.7.21 Director Workbench"],
-        PLUGIN_ROOT / "skills" / "framepack" / "SKILL.md": ["# Framepack v0.19.0 — HyperFrames 0.7.21 Director Workbench", "Environment & Upgrade Manager"],
-        PLUGIN_ROOT / "__init__.py": ["Framepack v0.19.0 Plugin registering"],
-        PLUGIN_ROOT / "hooks" / "on_pre_tool_call.py": ["v0.19.0 philosophy", "Framepack v0.19.0 pre_tool_call hook registered"],
-        PLUGIN_ROOT / "hooks" / "on_post_tool_call.py": ["Framepack v0.19.0", "Framepack v0.19.0 post_tool_call hook registered"],
+        REPO_ROOT / "README.md": ["version **0.20.0**", "Framepack v0.20.0"],
+        REPO_ROOT / "docs" / "README.zh-CN.md": ["版本为 **0.20.0**"],
+        REPO_ROOT / "AGENTS.md": ["version: 0.20.0", "v0.20.0 hooks", "Framepack v0.20.0 skills"],
+        PLUGIN_ROOT / "plugin.yaml": ["version: \"0.20.0\"", "Framepack v0.20.0 is the HyperFrames 0.7.21 Director Workbench"],
+        PLUGIN_ROOT / "skills" / "framepack" / "SKILL.md": ["# Framepack v0.20.0 — HyperFrames 0.7.21 Director Workbench", "Environment & Upgrade Manager"],
+        PLUGIN_ROOT / "__init__.py": ["Framepack v0.20.0 Plugin registering"],
+        PLUGIN_ROOT / "hooks" / "on_pre_tool_call.py": ["v0.20.0 philosophy", "Framepack v0.20.0 pre_tool_call hook registered"],
+        PLUGIN_ROOT / "hooks" / "on_post_tool_call.py": ["Framepack v0.20.0", "Framepack v0.20.0 post_tool_call hook registered"],
         PLUGIN_ROOT / "compat" / "hyperframes-support.json": [
-            '"framepack_version": "0.19.0"',
+            '"framepack_version": "0.20.0"',
             '"supported_min": "0.7.3"',
             '"supported_max_tested": "0.7.54"',
             '"soft_max": "0.7.x"',
             '"hard_block_below": "0.7.0"',
         ],
-        PLUGIN_ROOT / "core" / "arsenal_registry.py": ['DEFAULT_PLUGIN_VERSION = "0.19.0"'],
-        PLUGIN_ROOT / "core" / "timeline_manifest.py": ['DEFAULT_PLUGIN_VERSION = "0.19.0"'],
-        PLUGIN_ROOT / "scripts" / "apply_skill_overlays.py": ['FRAMEPACK_VERSION = "0.19.0"'],
+        PLUGIN_ROOT / "core" / "arsenal_registry.py": ['DEFAULT_PLUGIN_VERSION = "0.20.0"'],
+        PLUGIN_ROOT / "core" / "timeline_manifest.py": ['DEFAULT_PLUGIN_VERSION = "0.20.0"'],
+        PLUGIN_ROOT / "scripts" / "apply_skill_overlays.py": ['FRAMEPACK_VERSION = "0.20.0"'],
         PLUGIN_ROOT / "templates" / "timeline-manifest.example.json": [
-            '"plugin_version_created": "0.19.0"',
-            '"plugin_version_updated": "0.19.0"',
+            '"plugin_version_created": "0.20.0"',
+            '"plugin_version_updated": "0.20.0"',
         ],
     }
     for path, needles in release_files.items():

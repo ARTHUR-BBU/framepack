@@ -1,6 +1,6 @@
 # Framepack Agent Guide
 
-<!-- version: 0.19.0 — sync with plugin.yaml and README -->
+<!-- version: 0.20.0 — sync with plugin.yaml and README -->
 
 > **新对话启动**: 先读 `.hermes/CONTEXT.md` 接上工作状态，再回来看本文。（3 秒交接）
 
@@ -189,7 +189,7 @@ HyperFrames 编译器做静态解析：
 
 ## Plugin Hooks
 
-v0.19.0 hooks do seven things for HyperFrames 0.7.3:
+v0.20.0 hooks do seven things for HyperFrames 0.7.3:
 
 ```text
 pre_tool_call:
@@ -272,7 +272,7 @@ Framepack 的武器库（animation-library, gsap skill）作为补充参考。
 
 ## Skills
 
-Framepack v0.19.0 skills:
+Framepack v0.20.0 skills:
 
 | Skill | 作用 | 介入时机 |
 |---|---|---|
@@ -347,7 +347,7 @@ cd framepack-plugin && python -m pytest tests/ -q -o "addopts="
 - 创意阶段与用户共创，不需要用户看 expanded-prompt.md 全文
 - **开发项目专属**：改 PLUGIN 文件必须同步部署，改 AGENTS.md 必须确认测试目录不需要同样改动
 
-<!-- FRAMEPACK MANAGED BLOCK START version=0.19.0 hash=sha256:1bff08f7851b9edf8486b193001e2e5c60709630704adac777ba99f82fc0bb03 source=plugin -->
+<!-- FRAMEPACK MANAGED BLOCK START version=0.20.0 hash=sha256:1bff08f7851b9edf8486b193001e2e5c60709630704adac777ba99f82fc0bb03 source=plugin -->
 # Framepack Guardrails
 
 Framepack is a **Hermes Agent Plugin** — a Prompt Factory for HyperFrames.
