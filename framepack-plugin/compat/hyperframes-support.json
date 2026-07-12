@@ -6,7 +6,7 @@
     "soft_max": "0.7.x",
     "hard_block_below": "0.7.0",
     "unknown_newer_policy": "warn_and_probe",
-    "latest_supported_for_downgrade": "0.7.21",
+    "latest_supported_for_downgrade": "0.7.54",
     "required_smoke_tests": [
       "version",
       "root_help",
