@@ -28,6 +28,7 @@ from core.pre_render_audit import audit_pre_render, build_pre_render_audit_messa
 from core.taste_control import build_taste_control, build_taste_control_message
 from core.timeline_manifest import parse_hyperframes_time_windows, sync_timeline_from_project
 from core.render_readiness import build_readiness_board, render_board_summary, render_board_markdown, GateStatus
+from core.intervention_events import group_events, InterventionEvent
 from core.context_hydrator import ensure_workbench_root_agents
 from core.weapon_load_plan import load_weapon_load_plan
 from core.weapon_matcher import match_weapons_for_project
@@ -104,6 +105,72 @@ def _sync_timeline_for_hyperframes(ctx, workdir: str) -> None:
     except Exception as exc:
         logger.warning("pre_tool_call timeline sync failed: %s", exc)
         _safe_inject(ctx, f"🎬 **Framepack Timeline Manifest Warning**\n- timeline_error: {exc}", role="user")
+
+
+def _inject_intervention_events(ctx, events: list) -> None:
+    """Format and inject InterventionEvents, grouped by severity.
+
+    hard_stop first, then decision_required, then advisory.
+    This is the unified path that replaces direct _safe_inject for
+    department findings routed through Intervention.
+    """
+    if not events:
+        return
+    grouped = group_events(events)
+    lines = ["🚦 **Framepack Intervention — advisory**", ""]
+    severity_order = ["hard_stop", "decision_required", "advisory"]
+    for severity in severity_order:
+        items = grouped.get(severity, [])
+        if not items:
+            continue
+        lines.append(f"**{severity.upper()}** ({len(items)}):")
+        for event in items:
+            lines.append(f"- [{event.department}] {event.code}: {event.reason}")
+            lines.append(f"  Action: {event.required_action} · Acceptance: {event.acceptance}")
+        lines.append("")
+    lines.append("Framepack advises; user decides.")
+    _safe_inject(ctx, "\n".join(lines), role="user")
+
+
+def _inject_unified_intervention(ctx, workdir: str) -> None:
+    """Collect events from all three business departments and inject through Intervention.
+
+    This is the 'last mile' that puts the Intervention bridge functions to work.
+    Taste, Weapon, and Audit each produce InterventionEvents; this collects them,
+    dedupes, groups, and injects a single unified message.
+    """
+    project_dir = Path(workdir)
+    all_events: list[InterventionEvent] = []
+
+    # Taste Intelligence
+    try:
+        if (project_dir / ".hyperframes" / "expanded-prompt.md").is_file():
+            report = build_taste_control(project_dir)
+            from core.taste_control import intervention_events_for_taste_report
+            all_events.extend(intervention_events_for_taste_report(report))
+    except Exception as exc:
+        logger.warning("intervention taste collection failed: %s", exc)
+
+    # Weapon Production: weapon violations are already handled by
+    # _enforce_weapon_receipt_before_render earlier in the pre-render path.
+    # That function uses the post_tool_call hook (on_post_tool_call.py) to
+    # emit weapon intervention events after HTML is written. Here we only
+    # collect Taste and Audit events, which have simple audit APIs.
+
+    # Production Audit — quality + pre-render
+    try:
+        if (project_dir / "index.html").is_file():
+            qa_report = audit_project(project_dir)
+            from core.intervention_events import intervention_events_for_quality_audit
+            all_events.extend(intervention_events_for_quality_audit(qa_report.issues))
+
+            pr_report = audit_pre_render(project_dir)
+            from core.intervention_events import intervention_events_for_pre_render
+            all_events.extend(intervention_events_for_pre_render(pr_report.findings))
+    except Exception as exc:
+        logger.warning("intervention audit collection failed: %s", exc)
+
+    _inject_intervention_events(ctx, all_events)
 
 
 def _build_quality_audit_message(report) -> str:
@@ -468,6 +535,7 @@ def register(ctx):
             _inject_taste_control(ctx, workdir)
             _inject_readiness_board(ctx, workdir)
             _audit_pre_render_for_hyperframes(ctx, workdir)
+            _inject_unified_intervention(ctx, workdir)
         _remind_lint_json_if_needed(ctx, command_for_detection)
 
         frame_md_path = os.path.join(workdir, "frame.md")

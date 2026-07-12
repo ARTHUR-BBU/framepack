@@ -132,3 +132,41 @@ def test_lint_does_not_inject_taste_control():
 
     messages = [call.args[0] for call in ctx.inject_message.call_args_list]
     assert not any("Framepack Taste Control" in m for m in messages)
+
+
+# ── Phase 7a: Intervention integration ──
+
+def test_inject_intervention_events_formats_hard_stop_first():
+    from core.intervention_events import make_event
+    from hooks.on_pre_tool_call import _inject_intervention_events
+
+    ctx = MagicMock()
+    events = [
+        make_event(
+            department="audit", code="optional_bgm", severity="advisory",
+            reason="No BGM", required_action="revise",
+            artifact="pre-render", acceptance="Add BGM plan",
+        ),
+        make_event(
+            department="weapon", code="fake_call", severity="hard_stop",
+            reason="Weapon only in comment", required_action="load_weapon",
+            artifact="index.html", acceptance="Call real weapon",
+        ),
+    ]
+    _inject_intervention_events(ctx, events)
+
+    messages = [call.args[0] for call in ctx.inject_message.call_args_list]
+    assert messages
+    msg = messages[0]
+    # hard_stop must appear before advisory
+    assert msg.index("HARD_STOP") < msg.index("ADVISORY")
+    assert "fake_call" in msg
+    assert "load_weapon" in msg
+
+
+def test_inject_intervention_events_empty_does_nothing():
+    from hooks.on_pre_tool_call import _inject_intervention_events
+
+    ctx = MagicMock()
+    _inject_intervention_events(ctx, [])
+    assert ctx.inject_message.call_count == 0
