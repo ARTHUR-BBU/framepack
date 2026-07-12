@@ -78,6 +78,61 @@ def group_events(events: Iterable[InterventionEvent]) -> dict[str, list[Interven
     return dict(grouped)
 
 
+# Codes from different departments that share the same root cause.
+# When these appear together, they should be correlated, not shown as
+# independent findings.
+_CORRELATION_FAMILIES: list[set[str]] = [
+    # Proof-frame evidence: Taste says "motion claim unproven",
+    # Audit says "no proof frames" — same root cause.
+    {"motion_claim_unproven", "no_proof_frames"},
+    # Weapon gate: Taste says "fake product UI", Weapon says "fake call" —
+    # both about implementation dishonesty. (Future expansion.)
+    # {"fake_product_ui_divs", "weapon_not_called"},
+]
+
+
+def _correlation_family(code: str) -> frozenset[str] | None:
+    for family in _CORRELATION_FAMILIES:
+        if code in family:
+            return frozenset(family)
+    return None
+
+
+def correlate_events(events: Iterable[InterventionEvent]) -> list[list[InterventionEvent]]:
+    """Group events that share a root-cause family.
+
+    Returns a list of groups. Events with no correlation family form
+    single-element groups. Events in the same family are merged into
+    one group, deduped by (department, code, artifact).
+    """
+    materialized = list(events)
+    # Dedupe first
+    seen: set[tuple[str, str, str]] = set()
+    deduped: list[InterventionEvent] = []
+    for event in materialized:
+        if event.key() in seen:
+            continue
+        seen.add(event.key())
+        deduped.append(event)
+
+    # Build correlation groups
+    uncorrelated: list[InterventionEvent] = []
+    family_buckets: dict[frozenset[str], list[InterventionEvent]] = {}
+    for event in deduped:
+        family = _correlation_family(event.code)
+        if family:
+            family_buckets.setdefault(family, []).append(event)
+        else:
+            uncorrelated.append(event)
+
+    result: list[list[InterventionEvent]] = []
+    for bucket in family_buckets.values():
+        result.append(bucket)
+    for event in uncorrelated:
+        result.append([event])
+    return result
+
+
 def summarize_events(events: Iterable[InterventionEvent]) -> dict[str, object]:
     materialized = list(events)
     return {

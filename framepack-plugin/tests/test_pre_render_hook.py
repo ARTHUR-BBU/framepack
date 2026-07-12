@@ -170,3 +170,54 @@ def test_inject_intervention_events_empty_does_nothing():
     ctx = MagicMock()
     _inject_intervention_events(ctx, [])
     assert ctx.inject_message.call_count == 0
+
+
+def test_inject_intervention_events_correlates_related_codes():
+    """When Taste and Audit both report proof-frame issues, the message
+    should surface them as correlated, not as two unrelated items."""
+    from core.intervention_events import make_event, correlate_events
+    from hooks.on_pre_tool_call import _inject_intervention_events
+
+    ctx = MagicMock()
+    events = [
+        make_event(
+            department="taste", code="motion_claim_unproven",
+            severity="decision_required",
+            reason="Motion claimed without proof",
+            required_action="attach_proof",
+            artifact=".framepack/proof-frames",
+            acceptance="Attach proof frames",
+        ),
+        make_event(
+            department="audit", code="no_proof_frames",
+            severity="decision_required",
+            reason="No proof frames found",
+            required_action="attach_proof",
+            artifact=".framepack/proof-frames",
+            acceptance="Add proof frames",
+        ),
+    ]
+
+    correlated = correlate_events(events)
+    # Both events should be in the same correlation group
+    assert len(correlated) == 1
+    group = correlated[0]
+    codes = {e.code for e in group}
+    assert "motion_claim_unproven" in codes
+    assert "no_proof_frames" in codes
+
+
+def test_persist_intervention_ledger_writes_json():
+    """_inject_unified_intervention should persist a receipt."""
+    import json
+    ctx, hook_fn = _hook()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        Path(tmpdir, "frame.md").write_text("# frame", encoding="utf-8")
+        Path(tmpdir, "index.html").write_text("<div data-composition-id='x'></div>", encoding="utf-8")
+        hook_fn(tool_name="terminal", args={"command": "npx hyperframes render", "workdir": tmpdir})
+
+        ledger_path = Path(tmpdir, ".framepack", "intervention-ledger.json")
+        assert ledger_path.is_file(), f"ledger not found at {ledger_path}"
+        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+        assert "events" in ledger
+        assert isinstance(ledger["events"], list)

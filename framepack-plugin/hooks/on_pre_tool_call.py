@@ -170,6 +170,23 @@ def _inject_unified_intervention(ctx, workdir: str) -> None:
     except Exception as exc:
         logger.warning("intervention audit collection failed: %s", exc)
 
+    # Persist ledger receipt
+    if all_events:
+        try:
+            import json
+            from core.intervention_events import summarize_events
+            fp_dir = project_dir / ".framepack"
+            fp_dir.mkdir(parents=True, exist_ok=True)
+            ledger = {
+                "events": [e.to_dict() for e in all_events],
+                "summary": summarize_events(all_events),
+            }
+            (fp_dir / "intervention-ledger.json").write_text(
+                json.dumps(ledger, indent=2, ensure_ascii=False), encoding="utf-8"
+            )
+        except Exception as exc:
+            logger.warning("intervention ledger persistence failed: %s", exc)
+
     _inject_intervention_events(ctx, all_events)
 
 
