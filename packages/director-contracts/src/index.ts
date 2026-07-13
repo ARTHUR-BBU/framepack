@@ -1,3 +1,59 @@
+import { z } from 'zod';
+
+export * from './markdown.js';
+
+export const AspectRatioSchema = z.enum(['16:9', '9:16']);
+export type AspectRatio = z.infer<typeof AspectRatioSchema>;
+
+export const TasteGateSchema = z.enum(['pass', 'fail', 'needs_review']);
+export const ApprovalSchema = z.object({
+  state: z.enum(['approved', 'waived']),
+  reason: z.string().min(1),
+  previewBuildId: z.string().min(1),
+  decidedAt: z.string().datetime(),
+});
+export type Approval = z.infer<typeof ApprovalSchema>;
+
+export const ProjectSpecSchema = z.object({
+  title: z.string().min(1),
+  aspectRatio: AspectRatioSchema,
+  durationSeconds: z.number().positive(),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  audioNeeded: z.boolean().default(false),
+  subtitleNeeded: z.boolean().default(false),
+  bgmNeeded: z.boolean().default(false),
+});
+export type ProjectSpec = z.infer<typeof ProjectSpecSchema>;
+
+export const HandoffManifestSchema = z.object({
+  handoffVersion: z.literal('1.0'),
+  source: z.literal('framepack-director-preview'),
+  aspectRatio: AspectRatioSchema,
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  durationSeconds: z.number().positive(),
+  htmlEntry: z.literal('index.html'),
+  previewApproved: z.boolean(),
+  tasteGate: TasteGateSchema,
+  audioNeeded: z.boolean(),
+  subtitleNeeded: z.boolean(),
+  bgmNeeded: z.boolean(),
+  hyperframesActions: z.array(z.string()).min(1),
+  knownRisks: z.array(z.string()),
+  renderNotes: z.string(),
+}).superRefine((manifest, ctx) => {
+  const expected = dimensionsForAspect(manifest.aspectRatio);
+  if (manifest.width !== expected.width || manifest.height !== expected.height) {
+    ctx.addIssue({ code: 'custom', path: ['width'], message: 'dimensions must match aspect ratio' });
+  }
+});
+export type HandoffManifest = z.infer<typeof HandoffManifestSchema>;
+
+export function dimensionsForAspect(aspectRatio: AspectRatio): { width: number; height: number } {
+  return aspectRatio === '16:9' ? { width: 1920, height: 1080 } : { width: 1080, height: 1920 };
+}
+
 export const PROJECT_FILES = {
   assetIntake: '.framepack/asset-intake.md',
   storyboard: '.framepack/storyboard.md',
