@@ -29,6 +29,7 @@ export {
   type SkillLoadReceipt,
 } from './skill-runtime.js';
 export { chooseDirection, loadStyleCatalog } from './style-catalog.js';
+export { generateStoryboard, persistStoryboard, reviseStoryboard } from './storyboard.js';
 
 const require = createRequire(import.meta.url);
 const PROJECT_SPEC_FILE = '.framepack/project.json';

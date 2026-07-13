@@ -7,6 +7,7 @@ export * from './direction.js';
 export * from './events.js';
 export * from './project.js';
 export * from './review.js';
+export * from './storyboard.js';
 
 export const AspectRatioSchema = z.enum(['16:9', '9:16']);
 export type AspectRatio = z.infer<typeof AspectRatioSchema>;
