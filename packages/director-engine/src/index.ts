@@ -78,7 +78,7 @@ export async function readProjectSpec(projectDir: string): Promise<ProjectSpec> 
 function runNpx(args: string[]): Promise<void> {
   return new Promise((resolveRun, rejectRun) => {
     const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-    const child = spawn(command, args, { stdio: 'inherit' });
+    const child = spawn(command, args, { stdio: 'inherit', shell: process.platform === 'win32' });
     child.once('error', rejectRun);
     child.once('exit', (code) => code === 0 ? resolveRun() : rejectRun(new Error(`hyperframes snapshot failed with exit code ${code}`)));
   });

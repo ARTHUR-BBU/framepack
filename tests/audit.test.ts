@@ -8,7 +8,7 @@ async function readyProject() {
   const project = mkdtempSync(join(tmpdir(), 'framepack-audit-'));
   await initProject(project, { title: 'Pulse', aspectRatio: '16:9', durationSeconds: 30 });
   await buildProject(project);
-  await snapshotProject(project);
+  await snapshotProject(project, { runner: async () => undefined });
   return project;
 }
 
