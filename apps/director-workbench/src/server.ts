@@ -13,6 +13,7 @@ export async function startWorkbenchServer(projectDir: string, port = 4173): Pro
   const server = createServer(async (request, response) => {
     const url = new URL(request.url ?? '/', 'http://127.0.0.1');
     try {
+      if (url.pathname === '/favicon.ico') { response.writeHead(204).end(); return; }
       if (url.pathname === '/api/project') {
         const spec = await readProjectSpec(root);
         response.writeHead(200, { 'content-type': 'application/json' });
@@ -30,6 +31,11 @@ export async function startWorkbenchServer(projectDir: string, port = 4173): Pro
         const body = JSON.parse(await readBody(request)) as { state: 'approved' | 'waived'; reason: string };
         const result = body.state === 'approved' ? await approveProject(root, body.reason) : await waiveProject(root, body.reason);
         response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ status: 'completed', result })); return;
+      }
+      if (url.pathname.startsWith('/preview/public/')) {
+        const asset = resolve(root, url.pathname.slice('/preview/'.length));
+        if (!asset.startsWith(resolve(root, 'public'))) { response.writeHead(403).end(); return; }
+        await serveFile(asset, response); return;
       }
       if (url.pathname.startsWith('/preview/')) {
         await serveFile(join(root, 'index.html'), response); return;
