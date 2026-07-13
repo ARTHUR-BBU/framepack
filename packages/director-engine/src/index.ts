@@ -16,6 +16,8 @@ import {
 import { generatePreviewHtml, inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
 
 export { approveProject, auditProject, handoffProject, waiveProject, type AuditResult } from './audit.js';
+export { contentHash, stableStringify, type ContentFingerprint } from './content-hash.js';
+export { createProjectStore, type ApprovalEvidence, type ProjectStore } from './project-store.js';
 
 const require = createRequire(import.meta.url);
 const PROJECT_SPEC_FILE = '.framepack/project.json';
