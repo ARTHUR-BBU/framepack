@@ -48,6 +48,12 @@
       "legacySource": "framepack-plugin/skills/framepack-reference-miner/SKILL.md",
       "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
       "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/styles/catalog.json",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/visual-styles.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
     }
   ]
 }

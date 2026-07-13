@@ -12,5 +12,6 @@
 | `packages/director-assets/skills/product-launch-video/SKILL.md` | `framepack-plugin/skills/framepack-animation-library/templates/saas-product-launch.md` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
 | `packages/director-assets/skills/framepack-arsenal/SKILL.md` | `framepack-plugin/skills/framepack-arsenal/SKILL.md` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
 | `packages/director-assets/skills/framepack-reference-miner/SKILL.md` | `framepack-plugin/skills/framepack-reference-miner/SKILL.md` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
+| `packages/director-assets/styles/catalog.json` | `framepack-plugin/skills/framepack-director/references/visual-styles.md` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
 
 `agents/openai.yaml` 为 Codex 新生成的界面元数据，不属于旧资产迁移项。

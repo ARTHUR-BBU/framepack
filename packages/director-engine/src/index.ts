@@ -28,6 +28,7 @@ export {
   type SkillLoadInput,
   type SkillLoadReceipt,
 } from './skill-runtime.js';
+export { chooseDirection, loadStyleCatalog } from './style-catalog.js';
 
 const require = createRequire(import.meta.url);
 const PROJECT_SPEC_FILE = '.framepack/project.json';
