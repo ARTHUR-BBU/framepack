@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
@@ -96,7 +97,9 @@ async function loadAudit(projectDir: string): Promise<AuditResult> {
 }
 
 async function writeApproval(projectDir: string, state: Approval['state'], reason: string): Promise<Approval> {
-  const approval = ApprovalSchema.parse({ state, reason, previewBuildId: 'current', decidedAt: new Date().toISOString() });
+  const html = await readFile(join(projectDir, 'index.html'));
+  const contentHash = createHash('sha256').update(html).digest('hex');
+  const approval = ApprovalSchema.parse({ state, reason, previewBuildId: 'current', contentHash, decidedAt: new Date().toISOString() });
   await writeFile(join(projectDir, PROJECT_FILES.approval), `${JSON.stringify(approval, null, 2)}\n`);
   return approval;
 }
