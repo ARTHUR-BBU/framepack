@@ -14,6 +14,8 @@ import {
 } from '@framepack/director-contracts';
 import { generatePreviewHtml, inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
 
+export { approveProject, auditProject, handoffProject, waiveProject, type AuditResult } from './audit.js';
+
 const require = createRequire(import.meta.url);
 const PROJECT_SPEC_FILE = '.framepack/project.json';
 

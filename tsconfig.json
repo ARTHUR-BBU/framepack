@@ -6,6 +6,7 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "types": ["node", "vitest/globals"],
     "paths": {
       "@framepack/director-contracts": ["./packages/director-contracts/src/index.ts"]
     }
