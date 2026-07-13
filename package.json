@@ -21,7 +21,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "plugin:validate": "tsx scripts/validate-no-legacy.ts",
-    "verify": "npm run typecheck && npm test && npm run plugin:validate",
+    "migration:validate": "tsx scripts/validate-migration-ledger.ts",
+    "verify": "npm run typecheck && npm test && npm run plugin:validate && npm run migration:validate",
     "director": "tsx packages/director-engine/src/cli.ts",
     "director:serve": "tsx apps/director-workbench/src/server.ts"
   }

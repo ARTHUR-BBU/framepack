@@ -1,0 +1,53 @@
+{
+  "version": "1.0",
+  "entries": [
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/SKILL.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/SKILL.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/references/asset-intake.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/asset-intake-checklist.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/references/visual-styles.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/visual-styles.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/references/kinetic-grammar.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/kinetic-grammar.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/references/taste-moves.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/taste-moves.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/product-launch-video/SKILL.md",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/templates/saas-product-launch.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-arsenal/SKILL.md",
+      "legacySource": "framepack-plugin/skills/framepack-arsenal/SKILL.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-reference-miner/SKILL.md",
+      "legacySource": "framepack-plugin/skills/framepack-reference-miner/SKILL.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    }
+  ]
+}

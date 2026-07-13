@@ -19,6 +19,15 @@ export { approveProject, auditProject, handoffProject, waiveProject, type AuditR
 export { confirmAssetAssignment, inspectAssets, type AssetInspectionOptions, type UrlCapture } from './asset-intake.js';
 export { contentHash, stableStringify, type ContentFingerprint } from './content-hash.js';
 export { createProjectStore, type ApprovalEvidence, type ProjectStore } from './project-store.js';
+export {
+  applySkillPlan,
+  loadSkills,
+  type ApplySkillInput,
+  type LoadedSkill,
+  type SkillApplicationReceipt,
+  type SkillLoadInput,
+  type SkillLoadReceipt,
+} from './skill-runtime.js';
 
 const require = createRequire(import.meta.url);
 const PROJECT_SPEC_FILE = '.framepack/project.json';

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Framepack 动画武器库"
+  short_description: "为确认分镜选择有来源有证据并适配双画幅的可复用动画武器"
+  default_prompt: "使用 $framepack-arsenal 为已确认分镜匹配可验证的动画武器。"
