@@ -12,6 +12,7 @@ import {
 } from '@framepack/director-contracts';
 import { inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
 import { readProjectSpec } from './index.js';
+import { createResponsesTasteEvaluator } from './taste-evaluator.js';
 
 const AUDIT_FILE = '.framepack/taste-audit.json';
 
@@ -40,7 +41,8 @@ export async function auditProject(projectDir: string, options: { evaluator?: Ta
     recommendation: technical.status === 'pass',
     revisionNotes: hasMedia ? ['Confirm material crop and visibility in rendered snapshots.'] : ['Attach a real product asset before final render.'],
   };
-  const evaluation = technical.status === 'pass' && options.evaluator ? await options.evaluator.evaluate(projectDir) : undefined;
+  const evaluator = options.evaluator ?? createResponsesTasteEvaluator({ apiKey: process.env.FRAMEPACK_TASTE_API_KEY ?? '', model: process.env.FRAMEPACK_TASTE_MODEL ?? '' });
+  const evaluation = technical.status === 'pass' && evaluator ? await evaluator.evaluate(projectDir) : undefined;
   if (evaluation) {
     taste.gate = evaluation.gate;
     taste.motionQuality = evaluation.motionQuality;
