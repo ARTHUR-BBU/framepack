@@ -16,6 +16,7 @@ import {
 import { generatePreviewHtml, inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
 
 export { approveProject, auditProject, handoffProject, waiveProject, type AuditResult } from './audit.js';
+export { confirmAssetAssignment, inspectAssets, type AssetInspectionOptions, type UrlCapture } from './asset-intake.js';
 export { contentHash, stableStringify, type ContentFingerprint } from './content-hash.js';
 export { createProjectStore, type ApprovalEvidence, type ProjectStore } from './project-store.js';
 

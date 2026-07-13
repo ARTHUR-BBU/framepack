@@ -49,6 +49,8 @@ describe('versioned director contracts', () => {
       version: '1.0',
       id: 'asset-1',
       kind: 'image',
+      mediaType: 'image/png',
+      status: 'available',
       source: 'user',
       sourcePath: 'assets/product.png',
       sha256: 'a'.repeat(64),
