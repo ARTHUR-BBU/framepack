@@ -43,6 +43,7 @@ export async function buildProject(projectDir: string): Promise<{ inspection: Re
   const inspection = inspectPreviewHtml(html);
   if (inspection.codes.length) throw new Error(`preview HTML violates HyperFrames contract: ${inspection.codes.join(', ')}`);
   await cp(require.resolve('gsap/dist/gsap.min.js'), join(projectDir, 'public', 'vendor', 'gsap.min.js'));
+  await cp(require.resolve('@fontsource/inter/files/inter-latin-400-normal.woff2'), join(projectDir, 'public', 'fonts', 'Inter-Regular.woff2'));
   await writeFile(join(projectDir, 'index.html'), html);
   const buildId = `${spec.aspectRatio}-${spec.durationSeconds}s`;
   await writeFile(join(projectDir, PROJECT_FILES.buildReport), `# HTML Build Report\n\n- build_id: ${buildId}\n- structural_contract: pass\n- local_gsap: public/vendor/gsap.min.js\n`);

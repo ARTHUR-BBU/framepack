@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@fontsource/inter": "^5.2.8",
     "gsap": "^3.15.0",
     "hyperframes": "0.7.56",
     "sharp": "^0.34.5",

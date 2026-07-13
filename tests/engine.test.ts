@@ -15,6 +15,7 @@ test('initializes, builds, and plans proof frames for a director preview', async
   expect(existsSync(join(project, 'frame.md'))).toBe(true);
   expect(existsSync(join(project, '.framepack', 'storyboard.md'))).toBe(true);
   expect(existsSync(join(project, 'public', 'vendor', 'gsap.min.js'))).toBe(true);
+  expect(existsSync(join(project, 'public', 'fonts', 'Inter-Regular.woff2'))).toBe(true);
   expect(readFileSync(join(project, 'index.html'), 'utf8')).toContain('window.__timelines[\'main\']');
   expect(build.inspection.codes).toEqual([]);
   expect(snapshot.frames.map((frame) => frame.label)).toEqual(['scene-1-settled', 'transition-1-midpoint', 'scene-2-settled', 'transition-2-midpoint', 'scene-3-settled', 'final-hold']);
