@@ -91,8 +91,8 @@ function reviewScorecard(buildId: string) {
 
 function revisedScorecardId(aspect: '16:9' | '9:16'): string {
   return aspect === '16:9'
-    ? 'ab4cd793574c353bbcf220d9b9b1c0f7a5bf4050f9354333dc050270cf55d889'
-    : 'e701ab7253b0707d351d4cca9f407f4078c5beebb6ea250ed22c33d76b7afdab';
+    ? '66c6a861655ceb157585689877219386b4a695e727512d9a101a6f989397174e'
+    : '67736b0cc0b0c08e53825c83079079bea442d8567f31b78d77f73dabbaf615a9';
 }
 
 function snapshotHashes(project: string): string[] {

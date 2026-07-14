@@ -37,3 +37,5 @@ npm run director:serve -- C:\work\my-preview
 技术问题不能豁免；审美问题必须返工，或由用户留下明确豁免理由。系统绝不擅自把“看起来差不多”当作批准。
 
 详见 [Codex 工作台说明](codex-director-workbench.md) 与 [历史资产继承记录](migration/legacy-inheritance.md)。
+
+部署到其他 Codex 环境请看 [Codex 部署说明](codex-deployment.zh-CN.md)。

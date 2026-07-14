@@ -37,3 +37,5 @@ Open the printed local URL in Codex's in-app browser. The workbench provides a d
 Technical problems cannot be waived. Taste failures require revision or a persisted user waiver. A handoff is never silently inferred.
 
 See [the Codex workbench guide](docs/codex-director-workbench.md) and [legacy inheritance record](docs/migration/legacy-inheritance.md).
+
+Deployment details: [中文 Codex 部署说明](docs/codex-deployment.zh-CN.md).
