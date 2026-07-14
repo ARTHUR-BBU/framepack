@@ -3,6 +3,7 @@ import {
   createHandoffManifest,
   createSnapshotPlan,
   inspectPreviewHtml,
+  resolveNpxInvocation,
   runHyperframes,
 } from '../packages/hyperframes-bridge/src/index.js';
 
@@ -38,4 +39,10 @@ test('inspects production CSS alongside HTML', () => {
 test('flags nested audio and protocol-relative external resources', () => {
   const invalid = `<div id="root" data-start="0" data-duration="10" data-width="1920" data-height="1080"><div class="clip" data-start="0" data-duration="10" data-track-index="0"><div class="scene-inner"><audio src="//cdn.example/music.mp3"></audio></div></div></div><script src="public/vendor/gsap.min.js"></script><script>const tl=gsap.timeline({paused:true});window.__timelines['main']=tl;</script>`;
   expect(inspectPreviewHtml(invalid).codes).toEqual(expect.arrayContaining(['audio-nested', 'external-resource']));
+});
+
+test('Windows npx invocation preserves shell metacharacters as one argument', () => {
+  const invocation = resolveNpxInvocation(['--no-install', 'hyperframes', 'lint', 'C:/work/demo & proof'], 'win32');
+  expect(invocation.shell).toBe(false);
+  expect(invocation.args.at(-1)).toBe('C:/work/demo & proof');
 });

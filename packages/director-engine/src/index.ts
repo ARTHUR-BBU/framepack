@@ -1,6 +1,5 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -15,7 +14,7 @@ import {
   type AspectRatio,
   type ProjectSpec,
 } from '@framepack/director-contracts';
-import { inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
+import { inspectPreviewHtml, runHyperframes } from '../../hyperframes-bridge/src/index.js';
 import { composePreview } from './preview-composer.js';
 import { chooseDirection } from './style-catalog.js';
 import { generateStoryboard } from './storyboard.js';
@@ -106,9 +105,8 @@ export async function snapshotProject(projectDir: string, options: { runner?: (a
   const rows = frames.map((frame) => `| ${frame.timeSeconds.toFixed(2)} | ${frame.label} | pending snapshot capture | pending |`).join('\n');
   await writeFile(join(projectDir, PROJECT_FILES.previewReport), `${renderPreviewReportMarkdown()}\n${rows}\n`);
   await writeFile(join(projectDir, '.framepack', 'preview-snapshots', 'snapshot-plan.json'), `${JSON.stringify({ frames }, null, 2)}\n`);
-  const args = ['--no-install', 'hyperframes', 'snapshot', projectDir, '--output', join(projectDir, '.framepack', 'preview-snapshots'), '--at', frames.map((frame) => frame.timeSeconds.toFixed(2)).join(','), '--no-end'];
-  if (options.runner) await options.runner(['snapshot', projectDir, '--output', join(projectDir, '.framepack', 'preview-snapshots'), '--at', frames.map((frame) => frame.timeSeconds.toFixed(2)).join(','), '--no-end']);
-  else await runNpx(args);
+  const snapshotArgs = ['--output', join(projectDir, '.framepack', 'preview-snapshots'), '--at', frames.map((frame) => frame.timeSeconds.toFixed(2)).join(','), '--no-end'];
+  await runHyperframes('snapshot', projectDir, { runner: options.runner, args: snapshotArgs });
   return { frames };
 }
 
@@ -118,12 +116,4 @@ export async function readProjectSpec(projectDir: string): Promise<ProjectSpec> 
   return ProjectSpecSchema.parse(JSON.parse(await readFile(path, 'utf8')));
 }
 
-function runNpx(args: string[]): Promise<void> {
-  return new Promise((resolveRun, rejectRun) => {
-    const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-    const child = spawn(command, args, { stdio: 'inherit', shell: process.platform === 'win32' });
-    child.once('error', rejectRun);
-    child.once('exit', (code) => code === 0 ? resolveRun() : rejectRun(new Error(`hyperframes snapshot failed with exit code ${code}`)));
-  });
-}
 export { composePreview, type ComposePreviewInput, type PreviewBuild } from './preview-composer.js';

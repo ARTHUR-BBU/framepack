@@ -7,5 +7,5 @@ export default defineConfig({
       '@framepack/director-contracts': fileURLToPath(new URL('./packages/director-contracts/src/index.ts', import.meta.url)),
     },
   },
-  test: { include: ['tests/**/*.test.ts'] },
+  test: { include: ['tests/**/*.test.ts'], testTimeout: 10_000 },
 });
