@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { stableStringify } from './content-hash.js';
+import { z } from 'zod';
 
 type SkillIntent = 'product-launch-video' | 'reference-video' | 'general-video';
 
@@ -21,12 +22,20 @@ export type LoadedSkill = {
   reason: string;
 };
 
-export type SkillLoadReceipt = {
-  version: '1.0';
-  intent: SkillIntent;
-  loaded: LoadedSkill[];
-  completedAt: string;
-};
+export const SkillLoadReceiptSchema = z.object({
+  version: z.literal('1.0'),
+  intent: z.enum(['product-launch-video', 'reference-video', 'general-video']),
+  loaded: z.array(z.object({
+    id: z.string().min(1),
+    resolvedSource: z.string().min(1),
+    portablePath: z.string().min(1),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/i),
+    loadedAt: z.string().datetime(),
+    reason: z.string().min(1),
+  })).min(1),
+  completedAt: z.string().datetime(),
+});
+export type SkillLoadReceipt = z.infer<typeof SkillLoadReceiptSchema>;
 
 type RuntimeRules = {
   assetPolicy?: string;

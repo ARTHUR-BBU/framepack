@@ -11,7 +11,7 @@ import {
 import { inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
 import { stableStringify } from './content-hash.js';
 import { vendorNotoSansSc } from './font-vendor.js';
-import type { SkillLoadReceipt } from './skill-runtime.js';
+import { SkillLoadReceiptSchema, type SkillLoadReceipt } from './skill-runtime.js';
 import { loadStyleCatalog } from './style-catalog.js';
 import { persistWeaponEvidence, renderWeaponInvocation, verifyWeaponCalls } from './weapon-runtime.js';
 
@@ -39,12 +39,14 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
   const direction = DirectionSelectionSchema.parse(input.direction);
   const storyboard = StoryboardSchema.parse(input.storyboard);
   const weaponPlan = WeaponLoadPlanSchema.parse(input.weaponPlan);
+  const skillReceiptResult = SkillLoadReceiptSchema.safeParse(input.skillReceipt);
+  if (!skillReceiptResult.success) throw new Error(`invalid skill load receipt: ${skillReceiptResult.error.message}`);
+  const skillReceipt = skillReceiptResult.data;
   const dimensions = dimensionsForAspect(spec.aspectRatio);
   if (spec.width !== dimensions.width || spec.height !== dimensions.height) throw new Error('preview dimensions do not match aspect ratio');
   if (storyboard.durationSeconds !== spec.durationSeconds) throw new Error('storyboard duration does not match project spec');
   if (stableStringify(storyboard.direction) !== stableStringify(direction)) throw new Error('storyboard direction is stale');
-  if (!input.skillReceipt.loaded.length) throw new Error('skill receipt has no loaded workflow');
-  for (const loaded of input.skillReceipt.loaded) {
+  for (const loaded of skillReceipt.loaded) {
     let content: Buffer;
     try { content = await readFile(loaded.resolvedSource); }
     catch { throw new Error(`skill unavailable after receipt: ${loaded.id}`); }
@@ -108,7 +110,7 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
   const { createdAt: _createdAt, ...semanticStoryboard } = storyboard;
   const buildId = sha256(stableStringify({
     spec, assets: assets.assets.map(({ id, sha256: hash, sourcePath }) => ({ id, hash, sourcePath })), direction,
-    storyboard: semanticStoryboard, skills: input.skillReceipt.loaded.map(({ id, sha256: hash }) => ({ id, hash })), weaponPlan, feedback: input.feedback, html, css,
+    storyboard: semanticStoryboard, skills: skillReceipt.loaded.map(({ id, sha256: hash }) => ({ id, hash })), weaponPlan, feedback: input.feedback, html, css,
   }));
   await Promise.all([
     writeFile(join(projectDir, 'index.html'), html, 'utf8'),

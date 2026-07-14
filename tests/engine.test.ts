@@ -15,10 +15,12 @@ test('initializes, builds, and plans proof frames for a director preview', async
   expect(existsSync(join(project, 'frame.md'))).toBe(true);
   expect(existsSync(join(project, '.framepack', 'storyboard.md'))).toBe(true);
   expect(existsSync(join(project, 'public', 'vendor', 'gsap.min.js'))).toBe(true);
-  expect(existsSync(join(project, 'public', 'fonts', 'Inter-Regular.woff2'))).toBe(true);
+  expect(existsSync(join(project, 'public', 'fonts', 'noto-sans-sc', 'wght.css'))).toBe(true);
   expect(readFileSync(join(project, 'index.html'), 'utf8')).toContain('window.__timelines[\'main\']');
   expect(build.inspection.codes).toEqual([]);
   expect(readFileSync(join(project, 'index.html'), 'utf8')).toContain('Pulse');
+  expect(readFileSync(join(project, '.framepack', 'html-build-report.md'), 'utf8')).toContain('content_source: validated_storyboard');
+  expect(existsSync(join(project, '.framepack', 'skill-load-receipt.json'))).toBe(true);
   expect(readFileSync(join(project, 'index.html'), 'utf8')).not.toMatch(/Make it felt|Show the proof|Ready to render/);
   expect(snapshot.frames.map((frame) => frame.label)).toEqual(['scene-1-settled', 'transition-1-midpoint', 'scene-2-settled', 'transition-2-midpoint', 'scene-3-settled', 'final-hold']);
   expect(calls[0]).toEqual(expect.arrayContaining(['snapshot', project, '--no-end']));

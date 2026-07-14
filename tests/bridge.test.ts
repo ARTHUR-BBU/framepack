@@ -2,23 +2,10 @@ import { expect, test } from 'vitest';
 import {
   createHandoffManifest,
   createSnapshotPlan,
-  generatePreviewHtml,
   inspectPreviewHtml,
   runHyperframes,
 } from '../packages/hyperframes-bridge/src/index.js';
 
-const spec = { title: 'Pulse', aspectRatio: '16:9' as const, durationSeconds: 30, width: 1920, height: 1080 };
-
-test('generated 16:9 and 9:16 previews satisfy every structural rule', () => {
-  expect(inspectPreviewHtml(generatePreviewHtml(spec)).codes).toEqual([]);
-  expect(inspectPreviewHtml(generatePreviewHtml({ ...spec, aspectRatio: '9:16', width: 1080, height: 1920 })).codes).toEqual([]);
-});
-
-test('compatibility preview is project-specific and contains no fixed English fallback', () => {
-  const html = generatePreviewHtml({ ...spec, title: '让每一次协作更轻松' });
-  expect(html).toContain('让每一次协作更轻松');
-  expect(html).not.toMatch(/Make it felt|Show the proof|Ready to render|programmable moving image/i);
-});
 
 test('flags the known HyperFrames structural hazards', () => {
   const invalid = `<div id="root" data-duration="30"><div class="clip"><video src="https://cdn.example/video.mp4"></video></div></div>
@@ -45,6 +32,10 @@ test('bridge exposes deterministic runner, snapshot planning, and handoff record
   expect(createHandoffManifest({ buildId: 'b1', contentHash: 'a'.repeat(64), hyperframesVersion: '0.7.56' })).toMatchObject({ version: '1.0', buildId: 'b1' });
 });
 test('inspects production CSS alongside HTML', () => {
-  const html = generatePreviewHtml(spec);
+  const html = `<div id="root" data-start="0" data-duration="10" data-width="1920" data-height="1080"><div class="clip" data-start="0" data-duration="10" data-track-index="0"><div class="scene-inner"></div></div></div><script src="public/vendor/gsap.min.js"></script><script>const tl=gsap.timeline({paused:true});window.__timelines['main']=tl;</script>`;
   expect(inspectPreviewHtml(html, `.clip{transform:scale(.9)} .x{font-family:var(--heading);background:url(https://cdn.example/x.png)}`).codes).toEqual(expect.arrayContaining(['clip-root-animation', 'font-variable', 'external-resource']));
+});
+test('flags nested audio and protocol-relative external resources', () => {
+  const invalid = `<div id="root" data-start="0" data-duration="10" data-width="1920" data-height="1080"><div class="clip" data-start="0" data-duration="10" data-track-index="0"><div class="scene-inner"><audio src="//cdn.example/music.mp3"></audio></div></div></div><script src="public/vendor/gsap.min.js"></script><script>const tl=gsap.timeline({paused:true});window.__timelines['main']=tl;</script>`;
+  expect(inspectPreviewHtml(invalid).codes).toEqual(expect.arrayContaining(['audio-nested', 'external-resource']));
 });

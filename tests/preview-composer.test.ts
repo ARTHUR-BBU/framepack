@@ -88,6 +88,12 @@ describe('project-specific preview composer', () => {
     await writeFile(input.skillReceipt.loaded[0].resolvedSource, 'changed', 'utf8');
     await expect(composePreview(input)).rejects.toThrow(/skill.*hash|skill.*changed/i);
   });
+  test('malformed skill receipts stop composition before loaded items are consumed', async () => {
+    const input = await fixture();
+    input.skillReceipt = { ...input.skillReceipt, completedAt: 'not-a-date', loaded: [{ id: '', resolvedSource: '', portablePath: '', sha256: 'nope', loadedAt: 'yesterday', reason: '' }] } as typeof input.skillReceipt;
+    await expect(composePreview(input)).rejects.toThrow(/invalid skill load receipt/i);
+  });
+
   test('unconfirmed unreferenced root media never enters the preview', async () => {
     const input = await fixture();
     input.assets = AssetLedgerSchema.parse({ ...input.assets, assets: [...input.assets.assets, { version: '1.0', id: 'draft-video', kind: 'video', mediaType: 'video/mp4', status: 'available', source: 'user', sourcePath: 'public/assets/draft.mp4', sha256: 'b'.repeat(64), bytes: 10, assignedSceneIds: [], confirmed: false }] });

@@ -1,11 +1,2 @@
-export type PreviewTemplateSpec = { title: string; aspectRatio: '16:9' | '9:16'; durationSeconds: number; width: number; height: number };
 export type HandoffManifestInput = { buildId: string; contentHash: string; hyperframesVersion: string };
 export function createHandoffManifest(input: HandoffManifestInput) { return { version: '1.0' as const, ...input }; }
-
-/** Compatibility-only preview for initialized projects; production builds use composePreview. */
-export function generatePreviewHtml(spec: PreviewTemplateSpec): string {
-  const sceneDuration = spec.durationSeconds / 3;
-  const scene = (number: number, start: number) => `<div id="s${number}" class="clip" data-start="${start}" data-duration="${sceneDuration}" data-track-index="0"><div id="s${number}-inner" class="scene-inner"><p class="eyebrow">${escapeHtml(spec.title)}</p><h1>${escapeHtml(spec.title)}</h1></div></div>`;
-  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>${escapeHtml(spec.title)}</title><style>@font-face{font-family:'Inter';src:url('public/fonts/Inter-Regular.woff2')}*{box-sizing:border-box}.clip,.scene-inner{position:absolute;inset:0;overflow:hidden}.scene-inner{font-family:'Inter',sans-serif;padding:9%;display:flex;flex-direction:column;justify-content:center}h1{font-size:8vw}</style></head><body><div id="root" data-composition-id="main" data-start="0" data-duration="${spec.durationSeconds}" data-width="${spec.width}" data-height="${spec.height}">${scene(1,0)}${scene(2,sceneDuration)}${scene(3,sceneDuration*2)}</div><script src="public/vendor/gsap.min.js"></script><script>window.__timelines=window.__timelines||{};const tl=gsap.timeline({paused:true});tl.fromTo('#s1-inner h1',{autoAlpha:0,y:70},{autoAlpha:1,y:0,duration:.8},.15).fromTo('#s2-inner h1',{autoAlpha:0,x:-90},{autoAlpha:1,x:0,duration:.8},${sceneDuration}).fromTo('#s3-inner h1',{autoAlpha:0,scale:.92},{autoAlpha:1,scale:1,duration:.8},${sceneDuration*2});window.__timelines['main']=tl;</script></body></html>`;
-}
-function escapeHtml(value: string): string { return value.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
