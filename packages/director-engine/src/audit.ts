@@ -1,17 +1,23 @@
 import { existsSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import {
   ApprovalSchema,
+  DeterministicReviewEvidenceSchema,
   HandoffManifestSchema,
   PROJECT_FILES,
+  ReviewScorecardSchema,
+  SubjectiveReviewEvidenceSchema,
   renderRenderPlanMarkdown,
   renderTasteAuditMarkdown,
   type Approval,
+  type DeterministicReviewEvidence,
   type HandoffManifest,
+  type ReviewScorecard,
+  type SubjectiveReviewEvidence,
 } from '@framepack/director-contracts';
 import { inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
+import { assertApprovalCurrent, readCurrentBuildEvidence } from './approval.js';
 import { readProjectSpec } from './index.js';
 import { createResponsesTasteEvaluator } from './taste-evaluator.js';
 
@@ -19,27 +25,57 @@ const AUDIT_FILE = '.framepack/taste-audit.json';
 
 export type AuditResult = {
   technical: { status: 'pass' | 'fail'; issues: string[] };
+  materialUsage: 'missing' | 'available';
+  deterministic: DeterministicReviewEvidence;
+  subjective: SubjectiveReviewEvidence;
   taste: { gate: 'pass' | 'fail' | 'needs_review'; pptFeel: 'low' | 'medium' | 'high'; motionQuality: 'poor' | 'acceptable' | 'strong'; visualDensity: 'sparse' | 'balanced' | 'cluttered'; materialUsage: 'weak' | 'acceptable' | 'strong'; recommendation: boolean; revisionNotes: string[] };
 };
 
 export type TasteEvaluator = { evaluate(projectDir: string): Promise<{ gate: 'pass' | 'fail' | 'needs_review'; motionQuality: 'poor' | 'acceptable' | 'strong'; note: string }> };
 
-export async function auditProject(projectDir: string, options: { evaluator?: TasteEvaluator } = {}): Promise<AuditResult> {
+export async function auditProject(projectDir: string, options: { evaluator?: TasteEvaluator; scorecard?: ReviewScorecard } = {}): Promise<AuditResult> {
   const htmlPath = join(projectDir, 'index.html');
+  const cssPath = join(projectDir, 'public', 'preview.css');
   const previewPlanPath = join(projectDir, '.framepack', 'preview-snapshots', 'snapshot-plan.json');
+  const assetLedgerPath = join(projectDir, '.framepack', 'asset-ledger.json');
   const issues: string[] = [];
   if (!existsSync(htmlPath)) issues.push('index.html is missing');
   if (!existsSync(previewPlanPath)) issues.push('preview snapshot plan is missing');
-  if (existsSync(htmlPath)) issues.push(...inspectPreviewHtml(await readFile(htmlPath, 'utf8')).codes);
+  if (existsSync(htmlPath)) {
+    const [html, css] = await Promise.all([readFile(htmlPath, 'utf8'), existsSync(cssPath) ? readFile(cssPath, 'utf8') : Promise.resolve('')]);
+    issues.push(...inspectPreviewHtml(html, css).codes);
+  }
   const technical = { status: issues.length ? 'fail' as const : 'pass' as const, issues };
-  const hasMedia = existsSync(join(projectDir, 'public', 'assets')) && (await import('node:fs/promises')).readdir(join(projectDir, 'public', 'assets')).then((items) => items.length > 0);
+  const assetLedger = existsSync(assetLedgerPath) ? JSON.parse(await readFile(assetLedgerPath, 'utf8')) as { assets?: Array<{ status?: string; confirmed?: boolean }> } : { assets: [] };
+  const hasMedia = (assetLedger.assets ?? []).some((asset) => asset.status === 'available' && asset.confirmed === true);
+  const materialUsage = hasMedia ? 'available' as const : 'missing' as const;
+  const snapshotPlan = existsSync(previewPlanPath) ? JSON.parse(await readFile(previewPlanPath, 'utf8')) as { frames?: Array<{ timeSeconds?: number }> } : { frames: [] };
+  const frameTimes = (snapshotPlan.frames ?? []).map((frame) => frame.timeSeconds).filter((time): time is number => typeof time === 'number');
+  const css = existsSync(cssPath) ? await readFile(cssPath, 'utf8') : '';
+  const deterministic = DeterministicReviewEvidenceSchema.parse({
+    material: { status: materialUsage, files: ['.framepack/asset-ledger.json'] },
+    contrast: { status: deterministicContrastStatus(css), files: ['public/preview.css'] },
+    safeArea: { status: deterministicSafeAreaStatus(css), files: ['public/preview.css', '.framepack/preview-snapshots/snapshot-plan.json'], frameTimes: frameTimes.length ? frameTimes : [0] },
+  });
+  let subjective: SubjectiveReviewEvidence = SubjectiveReviewEvidenceSchema.parse({ status: 'needs_review' });
+  if (options.scorecard) {
+    const scorecard = ReviewScorecardSchema.parse(options.scorecard);
+    const current = await readCurrentBuildEvidence(projectDir);
+    if (scorecard.buildId !== current.buildId || scorecard.contentHash !== current.contentHash) throw new Error('review scorecard is stale for the current build');
+    const root = resolve(projectDir);
+    for (const frame of scorecard.evidenceFrames) {
+      const evidencePath = resolve(root, frame);
+      if (!evidencePath.startsWith(`${root}${sep}`) || !existsSync(evidencePath)) throw new Error(`review evidence frame is missing or outside the project: ${frame}`);
+    }
+    subjective = SubjectiveReviewEvidenceSchema.parse({ status: 'reviewed', scorecard });
+  }
   const taste: AuditResult['taste'] = {
-    gate: technical.status === 'fail' ? 'fail' as const : 'needs_review' as const,
-    pptFeel: hasMedia ? 'medium' as const : 'medium' as const,
-    motionQuality: technical.status === 'pass' ? 'acceptable' as const : 'poor' as const,
-    visualDensity: technical.status === 'pass' ? 'balanced' as const : 'sparse' as const,
-    materialUsage: hasMedia ? 'strong' as const : 'weak' as const,
-    recommendation: technical.status === 'pass',
+    gate: technical.status === 'fail' ? 'fail' : 'needs_review',
+    pptFeel: 'medium',
+    motionQuality: technical.status === 'pass' ? 'acceptable' : 'poor',
+    visualDensity: technical.status === 'pass' ? 'balanced' : 'sparse',
+    materialUsage: hasMedia ? 'strong' : 'weak',
+    recommendation: false,
     revisionNotes: hasMedia ? ['Confirm material crop and visibility in rendered snapshots.'] : ['Attach a real product asset before final render.'],
   };
   const evaluator = options.evaluator ?? createResponsesTasteEvaluator({ apiKey: process.env.FRAMEPACK_TASTE_API_KEY ?? '', model: process.env.FRAMEPACK_TASTE_MODEL ?? '' });
@@ -48,11 +84,14 @@ export async function auditProject(projectDir: string, options: { evaluator?: Ta
     taste.gate = evaluation.gate;
     taste.motionQuality = evaluation.motionQuality;
     taste.revisionNotes = [evaluation.note];
-    taste.recommendation = evaluation.gate !== 'fail';
   }
-  const result: AuditResult = { technical, taste };
+  if (subjective.status === 'reviewed' && subjective.scorecard) {
+    taste.gate = subjective.scorecard.verdict;
+  }
+  taste.recommendation = technical.status === 'pass' && subjective.status === 'reviewed' && taste.gate !== 'fail';
+  const result: AuditResult = { technical, materialUsage, deterministic, subjective, taste };
   await writeFile(join(projectDir, AUDIT_FILE), `${JSON.stringify(result, null, 2)}\n`);
-  await writeFile(join(projectDir, PROJECT_FILES.tasteAudit), `${renderTasteAuditMarkdown()}\n\n- commercial_quality: ${taste.gate}\n- ppt_feel: ${taste.pptFeel}\n- motion_quality: ${taste.motionQuality}\n- visual_density: ${taste.visualDensity}\n- material_usage: ${taste.materialUsage}\n- recommend_handoff_to_hyperframes: ${taste.recommendation}\n\n## Revision notes\n${taste.revisionNotes.map((note) => `- ${note}`).join('\n')}\n`);
+  await writeFile(join(projectDir, PROJECT_FILES.tasteAudit), `${renderTasteAuditMarkdown()}\n\n- commercial_quality: ${taste.gate}\n- ppt_feel: ${taste.pptFeel}\n- motion_quality: ${taste.motionQuality}\n- visual_density: ${taste.visualDensity}\n- material_usage: ${materialUsage}\n- subjective_review: ${subjective.status}\n- recommend_handoff_to_hyperframes: ${taste.recommendation}\n\n## Revision notes\n${taste.revisionNotes.map((note) => `- ${note}`).join('\n')}\n`);
   return result;
 }
 
@@ -74,7 +113,7 @@ export async function handoffProject(projectDir: string): Promise<HandoffManifes
   if (audit.technical.status !== 'pass') throw new Error('technical audit must pass before handoff');
   const approvalPath = join(projectDir, PROJECT_FILES.approval);
   if (!existsSync(approvalPath)) throw new Error('approval required before handoff');
-  const approval = ApprovalSchema.parse(JSON.parse(await readFile(approvalPath, 'utf8')));
+  const approval = await assertApprovalCurrent(projectDir, JSON.parse(await readFile(approvalPath, 'utf8')));
   const spec = await readProjectSpec(projectDir);
   const manifest = HandoffManifestSchema.parse({
     handoffVersion: '1.0', source: 'framepack-director-preview', aspectRatio: spec.aspectRatio,
@@ -97,9 +136,30 @@ async function loadAudit(projectDir: string): Promise<AuditResult> {
 }
 
 async function writeApproval(projectDir: string, state: Approval['state'], reason: string): Promise<Approval> {
-  const html = await readFile(join(projectDir, 'index.html'));
-  const contentHash = createHash('sha256').update(html).digest('hex');
-  const approval = ApprovalSchema.parse({ state, reason, previewBuildId: 'current', contentHash, decidedAt: new Date().toISOString() });
+  const current = await readCurrentBuildEvidence(projectDir);
+  const approval = ApprovalSchema.parse({ state, reason, previewBuildId: current.buildId, contentHash: current.contentHash, decidedAt: new Date().toISOString() });
   await writeFile(join(projectDir, PROJECT_FILES.approval), `${JSON.stringify(approval, null, 2)}\n`);
   return approval;
+}
+function deterministicContrastStatus(css: string): 'pass' | 'fail' | 'needs_review' {
+  const rule = css.match(/html,body\{([^}]*)\}/)?.[1] ?? '';
+  const background = rule.match(/background:\s*(#[0-9a-f]{6})/i)?.[1];
+  const foreground = rule.match(/color:\s*(#[0-9a-f]{6})/i)?.[1];
+  if (!background || !foreground) return 'needs_review';
+  return contrastRatio(background, foreground) >= 4.5 ? 'pass' : 'fail';
+}
+
+function deterministicSafeAreaStatus(css: string): 'pass' | 'fail' | 'needs_review' {
+  const padding = css.match(/\.scene-inner\{[^}]*padding:\s*([0-9.]+)%/i)?.[1];
+  if (!padding) return 'needs_review';
+  return Number(padding) >= 5 ? 'pass' : 'fail';
+}
+
+function contrastRatio(left: string, right: string): number {
+  const luminance = (hex: string) => {
+    const channels = [1, 3, 5].map((index) => Number.parseInt(hex.slice(index, index + 2), 16) / 255).map((value) => value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  };
+  const [bright, dark] = [luminance(left), luminance(right)].sort((a, b) => b - a);
+  return (bright + 0.05) / (dark + 0.05);
 }

@@ -48,3 +48,20 @@ export const ReviewScorecardSchema = z.object({
 });
 
 export type ReviewScorecard = z.infer<typeof ReviewScorecardSchema>;
+
+export const DeterministicReviewEvidenceSchema = z.object({
+  material: z.object({ status: z.enum(['missing', 'available']), files: z.array(z.string().min(1)).min(1) }),
+  contrast: z.object({ status: z.enum(['pass', 'fail', 'needs_review']), files: z.array(z.string().min(1)).min(1) }),
+  safeArea: z.object({ status: z.enum(['pass', 'fail', 'needs_review']), files: z.array(z.string().min(1)).min(1), frameTimes: z.array(z.number().nonnegative()).min(1) }),
+});
+
+export const SubjectiveReviewEvidenceSchema = z.object({
+  status: z.enum(['needs_review', 'reviewed']),
+  scorecard: ReviewScorecardSchema.optional(),
+}).superRefine((value, ctx) => {
+  if (value.status === 'reviewed' && !value.scorecard) ctx.addIssue({ code: 'custom', path: ['scorecard'], message: 'reviewed evidence requires an identified scorecard' });
+  if (value.status === 'needs_review' && value.scorecard) ctx.addIssue({ code: 'custom', path: ['scorecard'], message: 'needs_review cannot claim a scorecard' });
+});
+
+export type DeterministicReviewEvidence = z.infer<typeof DeterministicReviewEvidenceSchema>;
+export type SubjectiveReviewEvidence = z.infer<typeof SubjectiveReviewEvidenceSchema>;
