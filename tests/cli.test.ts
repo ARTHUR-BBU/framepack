@@ -46,7 +46,7 @@ test('brief and assets commands preserve Chinese text and local files', () => {
   writeFileSync(source, '品牌语气：温暖、克制');
   const assets = spawnSync(process.execPath, [...cli, 'assets', project, 'add', source], { cwd: process.cwd(), encoding: 'utf8' });
   expect(assets.status).toBe(0);
-  expect(existsSync(join(project, 'public', 'assets', '品牌资料.txt'))).toBe(true);
+  expect(existsSync(join(project, 'assets', '品牌资料.txt'))).toBe(true);
 }, 30_000);
 
 test('cancelled revise records cancellation without changing feedback', () => {

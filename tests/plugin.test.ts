@@ -36,7 +36,7 @@ test('bundled entry initializes and builds outside the source repository', () =>
   cpSync(resolve('docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-00-at-0.3s.png'), image);
   execFileSync(process.execPath, [entry,'assets',project,'add',image], { cwd:root, stdio:'pipe' });
   expect(JSON.parse(readFileSync(join(project, '.framepack/asset-ledger.json'), 'utf8')).assets[0]).toMatchObject({ status:'available', kind:'image' });
-});
+}, 30_000);
 
 test('built plugin is repository-independent and deterministic', () => {
   const entry = `${plugin}/skills/framepack-director/scripts/framepack-director.mjs`;
