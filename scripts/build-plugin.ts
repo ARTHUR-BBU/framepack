@@ -31,6 +31,7 @@ await Promise.all([
   cp(join(root, 'apps', 'director-workbench', 'public'), join(skill, 'public'), { recursive:true }),
   cp(join(root, 'packages', 'director-assets', 'skills'), join(directorAssets, 'skills'), { recursive:true }),
   cp(join(root, 'packages', 'director-assets', 'styles'), join(directorAssets, 'styles'), { recursive:true }),
+  cp(join(root, 'packages', 'director-assets', 'specimens'), join(directorAssets, 'specimens'), { recursive:true }),
   cp(join(root, 'packages', 'director-assets', 'weapons'), join(directorAssets, 'weapons'), { recursive:true }),
   cp(join(root, 'packages', 'director-assets', 'fonts'), join(directorAssets, 'fonts'), { recursive:true }),
   cp(join(root, 'docs', 'evidence', 'weapons'), join(plugin, 'docs', 'evidence', 'weapons'), { recursive:true }),

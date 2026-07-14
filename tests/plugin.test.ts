@@ -14,6 +14,8 @@ test('plugin manifest, executable skill, runtime assets, and repo marketplace re
   expect(existsSync(`${plugin}/skills/framepack-director/scripts/framepack-director.mjs`)).toBe(true);
   expect(existsSync(`${plugin}/assets/runtime/fonts/NotoSansSC-Regular.woff2`)).toBe(true);
   expect(existsSync(`${plugin}/assets/runtime/fonts/OFL-1.1.txt`)).toBe(true);
+  expect(existsSync(`${plugin}/assets/runtime/specimens/styles/swiss-pulse/index.html`)).toBe(true);
+  expect(existsSync(`${plugin}/assets/runtime/specimens/styles/shadow-cut/snapshots/contact-sheet.jpg`)).toBe(true);
   const gsapRegistry = JSON.parse(readFileSync(`${plugin}/assets/runtime/skills/greensock-gsap-skills.json`, 'utf8'));
   expect(gsapRegistry.modules).toHaveLength(8);
   for (const skill of gsapRegistry.modules) {
