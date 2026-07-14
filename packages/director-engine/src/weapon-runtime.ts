@@ -92,8 +92,9 @@ export function verifyWeaponCalls(planInput: WeaponLoadPlan, html: string): stri
     const errors: string[] = [];
     if (call.functionName !== selection.functionName) errors.push(`weapon_function_missing:${selection.weaponId}`);
     if (!html.includes(selection.entry)) errors.push(`weapon_entry_missing:${selection.weaponId}`);
-    const expectedEntryTag = `src="${selection.entry}" data-sha256="${selection.entryHash}"`;
-    if (!html.includes(expectedEntryTag)) errors.push(`weapon_entry_hash_mismatch:${selection.weaponId}`);
+    const expectedModuleReceipt = `framepack-weapon-module:${JSON.stringify({ entry: selection.entry, sha256: selection.entryHash })}`;
+    const legacyEntryTag = `src="${selection.entry}" data-sha256="${selection.entryHash}"`;
+    if (!html.includes(expectedModuleReceipt) && !html.includes(legacyEntryTag)) errors.push(`weapon_entry_hash_mismatch:${selection.weaponId}`);
     if (call.inputHash !== plan.inputHash) errors.push(`weapon_stale_input:${selection.weaponId}`);
     if (stableStringify(call.params) !== stableStringify(selection.params)) errors.push(`weapon_params_mismatch:${selection.weaponId}`);
     const expectedInvocation = renderWeaponInvocation(selection, plan.inputHash);

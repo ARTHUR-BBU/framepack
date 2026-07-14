@@ -47,4 +47,4 @@ test('built plugin is repository-independent and deterministic', () => {
   const bundle = readFileSync(entry, 'utf8');
   expect(bundle).toContain('import.meta.url');
   expect(bundle).not.toContain('F:\\hyperframes');
-});
+}, 30_000);

@@ -78,13 +78,14 @@ describe('project-specific preview composer', () => {
     await expect(composePreview(await fixture({ missingAsset: true }))).rejects.toThrow(/asset.*missing/i);
   });
 
-  test('selected ESM weapons are imported into the seek-safe module timeline', async () => {
+  test('selected ESM weapons are embedded into the seek-safe production timeline', async () => {
     const input = await fixture();
     const entry = await readFile(join(process.cwd(), 'packages', 'director-assets', 'weapons', 'text-split-enter', 'index.js'));
     input.weaponPlan = WeaponLoadPlanSchema.parse({ ...input.weaponPlan, selected: [{ sceneId: input.storyboard.scenes[0].id, weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: createHash('sha256').update(entry).digest('hex'), params: {} }] });
     const build = await composePreview(input);
-    expect(build.html).toContain(`<script type="module" src="text-split-enter/index.js"`);
-    expect(build.html).toContain(`import { textSplitEnter } from './text-split-enter/index.js'`);
+    expect(build.html).toContain('framepack-weapon-module:{"entry":"text-split-enter/index.js"');
+    expect(build.html).toContain('function textSplitEnter(');
+    expect(build.html).not.toContain(`import { textSplitEnter } from './text-split-enter/index.js'`);
   });
 
   test('a skill changed after its receipt stops composition', async () => {
@@ -131,6 +132,34 @@ describe('project-specific preview composer', () => {
       selected: [{ sceneId: input.storyboard.scenes[0].id, weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: 'a'.repeat(64), params: {} }],
     });
     await expect(composePreview({ ...input, weaponRoot: join(input.projectDir, 'missing-weapons') })).rejects.toThrow(/planned weapon unavailable/i);
+  });
+
+  test('weapon embedding rejects script-boundary injection even when the hash matches', async () => {
+    const input = await fixture();
+    const weaponRoot = join(input.projectDir, 'unsafe-weapons');
+    const entry = 'text-split-enter/index.js';
+    const source = `export function textSplitEnter() { return "</script>"; }`;
+    await mkdir(join(weaponRoot, 'text-split-enter'), { recursive: true });
+    await writeFile(join(weaponRoot, entry), source, 'utf8');
+    input.weaponPlan = WeaponLoadPlanSchema.parse({
+      ...input.weaponPlan,
+      selected: [{ sceneId: input.storyboard.scenes[0].id, weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry, entryHash: createHash('sha256').update(source).digest('hex'), params: {} }],
+    });
+    await expect(composePreview({ ...input, weaponRoot })).rejects.toThrow(/unsafe script boundary/i);
+  });
+
+  test('weapon embedding rejects dynamic imports even when the hash matches', async () => {
+    const input = await fixture();
+    const weaponRoot = join(input.projectDir, 'dynamic-import-weapons');
+    const entry = 'text-split-enter/index.js';
+    const source = `export function textSplitEnter() { return import('./unlocked.js'); }`;
+    await mkdir(join(weaponRoot, 'text-split-enter'), { recursive: true });
+    await writeFile(join(weaponRoot, entry), source, 'utf8');
+    input.weaponPlan = WeaponLoadPlanSchema.parse({
+      ...input.weaponPlan,
+      selected: [{ sceneId: input.storyboard.scenes[0].id, weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry, entryHash: createHash('sha256').update(source).digest('hex'), params: {} }],
+    });
+    await expect(composePreview({ ...input, weaponRoot })).rejects.toThrow(/imports are not supported/i);
   });
 
   test('stale weapon plans stop composition', async () => {

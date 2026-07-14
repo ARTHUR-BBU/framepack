@@ -16480,8 +16480,9 @@ function verifyWeaponCalls(planInput, html) {
     const errors = [];
     if (call.functionName !== selection.functionName) errors.push(`weapon_function_missing:${selection.weaponId}`);
     if (!html.includes(selection.entry)) errors.push(`weapon_entry_missing:${selection.weaponId}`);
-    const expectedEntryTag = `src="${selection.entry}" data-sha256="${selection.entryHash}"`;
-    if (!html.includes(expectedEntryTag)) errors.push(`weapon_entry_hash_mismatch:${selection.weaponId}`);
+    const expectedModuleReceipt = `framepack-weapon-module:${JSON.stringify({ entry: selection.entry, sha256: selection.entryHash })}`;
+    const legacyEntryTag = `src="${selection.entry}" data-sha256="${selection.entryHash}"`;
+    if (!html.includes(expectedModuleReceipt) && !html.includes(legacyEntryTag)) errors.push(`weapon_entry_hash_mismatch:${selection.weaponId}`);
     if (call.inputHash !== plan.inputHash) errors.push(`weapon_stale_input:${selection.weaponId}`);
     if (stableStringify(call.params) !== stableStringify(selection.params)) errors.push(`weapon_params_mismatch:${selection.weaponId}`);
     const expectedInvocation = renderWeaponInvocation(selection, plan.inputHash);
@@ -16621,6 +16622,7 @@ async function composePreview(input) {
     }
   }
   const weaponRoot = resolve7(input.weaponRoot ?? DEFAULT_WEAPON_ROOT2);
+  const weaponSources = /* @__PURE__ */ new Map();
   for (const selection of weaponPlan.selected) {
     let content;
     try {
@@ -16629,12 +16631,13 @@ async function composePreview(input) {
       throw new Error(`planned weapon unavailable: ${selection.weaponId}`);
     }
     if (sha2563(content) !== selection.entryHash) throw new Error(`planned weapon hash mismatch: ${selection.weaponId}`);
+    weaponSources.set(selection.entry, content.toString("utf8"));
   }
   const style2 = loadStyleCatalog().styles.find((item) => item.id === direction.primaryStyle);
   if (!style2) throw new Error(`selected style unavailable: ${direction.primaryStyle}`);
   const sceneText = storyboard.scenes.flatMap((scene) => [scene.title, scene.narrativeBeat, scene.visualFocus]).join(" ");
   const css = previewCss(style2.palette, style2.fontFamily, spec.aspectRatio);
-  const html = previewHtml({ spec, assets, direction, storyboard, weaponPlan, feedback: input.feedback, styleName: style2.chineseName });
+  const html = previewHtml({ spec, assets, direction, storyboard, weaponPlan, weaponSources, feedback: input.feedback, styleName: style2.chineseName });
   const weaponErrors = verifyWeaponCalls(weaponPlan, html);
   if (weaponErrors.length) throw new Error(`planned weapon verification failed: ${weaponErrors.join(", ")}`);
   const inspection = inspectPreviewHtml(html, css);
@@ -16689,8 +16692,14 @@ function previewHtml(input) {
     const media = scene.assetIds.map((id) => assetById.get(id)).filter((asset) => asset?.kind === "image").map((asset) => `<img class="product-asset" src="${escapeAttribute(asset.sourcePath)}" alt="${escapeAttribute(scene.visualFocus)}">`).join("");
     return `<div id="${escapeAttribute(scene.id)}" class="clip" data-start="${number4(scene.startSeconds)}" data-duration="${number4(scene.durationSeconds)}" data-track-index="0"><div class="scene-inner scene-${index + 1}"><div class="signal signal-a"></div><div class="signal signal-b"></div><p class="purpose">${purposeLabel(scene.purpose)} · ${escapeHtml(input.styleName)}</p><div class="scene-copy" data-framepack-weapon-target="${escapeAttribute(scene.id)}">${weaponMarkup(selection?.weaponId, scene.title)}</div><p class="narrative">${escapeHtml(scene.narrativeBeat)}</p>${media}<p class="direction-note">${escapeHtml(input.feedback.length ? `导演反馈 · ${input.feedback.join(" · ")}` : input.direction.rationale)}</p></div></div>`;
   }).join("");
-  const scripts = [...new Map(input.weaponPlan.selected.map((selection) => [selection.entry, selection])).values()].map((selection) => `<script type="module" src="${selection.entry}" data-sha256="${selection.entryHash}"></script>`).join("");
-  const imports = [...new Map(input.weaponPlan.selected.map((selection) => [selection.entry, selection])).values()].map((selection) => `import { ${selection.functionName} } from './${selection.entry}';`).join("");
+  const modules = [...new Map(input.weaponPlan.selected.map((selection) => [selection.entry, selection])).values()];
+  if (new Set(modules.map((selection) => selection.functionName)).size !== modules.length) throw new Error("planned weapon function names must be unique");
+  const moduleReceipts = modules.map((selection) => `/*framepack-weapon-module:${JSON.stringify({ entry: selection.entry, sha256: selection.entryHash })}*/`).join("\n");
+  const embeddedWeapons = modules.map((selection) => {
+    const source2 = input.weaponSources.get(selection.entry);
+    if (!source2) throw new Error(`planned weapon source unavailable: ${selection.weaponId}`);
+    return embedWeaponSource(source2, selection.functionName, selection.weaponId);
+  }).join("\n");
   const animations = input.storyboard.scenes.map((scene) => {
     const selection = selectedByScene.get(scene.id);
     if (selection) return renderWeaponInvocation(selection, input.weaponPlan.inputHash, number4(scene.startSeconds + 0.18));
@@ -16698,15 +16707,16 @@ function previewHtml(input) {
   }).join("");
   const assignedIds = new Set(input.storyboard.scenes.flatMap((scene) => scene.assetIds));
   const rootMedia = input.assets.assets.filter((asset) => assignedIds.has(asset.id) && asset.confirmed && asset.status === "available" && (asset.kind === "video" || asset.kind === "audio")).map((asset) => asset.kind === "video" ? `<video class="media-proof" src="${escapeAttribute(asset.sourcePath)}" data-start="0" data-duration="${number4(input.spec.durationSeconds)}" style="z-index:0"></video>` : `<audio src="${escapeAttribute(asset.sourcePath)}" data-start="0" data-duration="${number4(input.spec.durationSeconds)}"></audio>`).join("");
-  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=${input.spec.width},height=${input.spec.height}"><title>${escapeHtml(input.spec.title)}</title><link rel="stylesheet" href="public/fonts/noto-sans-sc/wght.css"><link rel="stylesheet" href="public/preview.css"></head><body><div id="root" data-composition-id="main" data-start="0" data-duration="${number4(input.spec.durationSeconds)}" data-width="${input.spec.width}" data-height="${input.spec.height}">${scenes}</div>${rootMedia}<script src="public/vendor/gsap.min.js"></script>${scripts}<script type="module">${imports}const gsap=window.gsap;window.__timelines=window.__timelines||{};window.__framepackTimeline=gsap.timeline({paused:true,defaults:{ease:'power2.out'}});const tl=window.__framepackTimeline;${animations}window.__timelines['main']=tl;</script></body></html>`;
+  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=${input.spec.width},height=${input.spec.height}"><title>${escapeHtml(input.spec.title)}</title><link rel="stylesheet" href="public/fonts/noto-sans-sc/wght.css"><link rel="stylesheet" href="public/preview.css"></head><body><div id="root" data-composition-id="main" data-start="0" data-duration="${number4(input.spec.durationSeconds)}" data-width="${input.spec.width}" data-height="${input.spec.height}">${scenes}</div>${rootMedia}<script src="public/vendor/gsap.min.js"></script><script>${moduleReceipts}${embeddedWeapons}const gsap=window.gsap;window.__timelines=window.__timelines||{};window.__framepackTimeline=gsap.timeline({paused:true,defaults:{ease:'power2.out'}});const tl=window.__framepackTimeline;${animations}window.__timelines['main']=tl;</script></body></html>`;
 }
 function previewCss(palette, fontFamily, aspect) {
   const portrait = aspect === "9:16";
-  return `*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:${palette.background};color:${palette.primary};font-family:"${fontFamily}",sans-serif}#root{position:relative;width:100vw;height:100vh;overflow:hidden}.clip{position:absolute;inset:0;overflow:hidden}.scene-inner{position:absolute;inset:0;overflow:hidden;padding:${portrait ? "10% 8%" : "7% 8%"};display:flex;flex-direction:column;justify-content:center;background:linear-gradient(135deg,${palette.background},${palette.surface})}.scene-inner>*{position:relative;z-index:2}.purpose{font-size:${portrait ? 26 : 22}px;letter-spacing:.16em;color:${palette.accent}}.scene-copy{font-size:${portrait ? 88 : 118}px;line-height:.96;letter-spacing:-.055em;font-weight:900;max-width:${portrait ? "9ch" : "12ch"};will-change:transform,opacity;position:relative}.narrative{font-size:${portrait ? 34 : 30}px;line-height:1.45;max-width:26ch}.direction-note{position:absolute;left:8%;bottom:7%;font-size:${portrait ? 24 : 18}px;color:${palette.accent}}.product-asset{position:absolute;z-index:1;right:${portrait ? "7%" : "6%"};bottom:${portrait ? "15%" : "10%"};width:${portrait ? "62%" : "42%"};height:${portrait ? "36%" : "64%"};object-fit:contain}.signal{position:absolute;z-index:0;border-radius:50%;background:${palette.accent};filter:blur(80px);will-change:transform,opacity}.signal-a{width:42%;aspect-ratio:1;right:3%;top:4%;opacity:.18}.signal-b{width:28%;aspect-ratio:1;left:4%;bottom:3%;opacity:.1}.split-left,.split-right,.word{display:inline-block}.split-right{position:absolute;inset:0}.metric{color:${palette.accent}}`;
+  const labelColor = contrastRatio(palette.accent, palette.background) >= 4.5 ? palette.accent : palette.primary;
+  return `*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:${palette.background};color:${palette.primary};font-family:"${fontFamily}",sans-serif}#root{position:relative;width:100vw;height:100vh;overflow:hidden}.clip{position:absolute;inset:0;overflow:hidden}.scene-inner{position:absolute;inset:0;overflow:hidden;padding:${portrait ? "10% 8%" : "7% 8%"};display:flex;flex-direction:column;justify-content:center;background:linear-gradient(135deg,${palette.background},${palette.surface})}.scene-inner>*{position:relative;z-index:2}.purpose{font-size:${portrait ? 26 : 22}px;letter-spacing:.16em;color:${labelColor}}.scene-copy{font-size:${portrait ? 88 : 118}px;line-height:.96;letter-spacing:-.055em;font-weight:900;max-width:${portrait ? "9ch" : "12ch"};will-change:transform,opacity;position:relative}.narrative{font-size:${portrait ? 34 : 30}px;line-height:1.45;max-width:26ch}.direction-note{position:absolute;left:8%;bottom:7%;font-size:${portrait ? 24 : 18}px;color:${labelColor}}.product-asset{position:absolute;z-index:1;right:${portrait ? "7%" : "6%"};bottom:${portrait ? "15%" : "10%"};width:${portrait ? "62%" : "42%"};height:${portrait ? "36%" : "64%"};object-fit:contain}.signal{position:absolute;z-index:0;border-radius:50%;background:${palette.accent};filter:blur(80px);will-change:transform,opacity}.signal-a{width:42%;aspect-ratio:1;right:3%;top:4%;opacity:.18}.signal-b{width:28%;aspect-ratio:1;left:4%;bottom:3%;opacity:.1}.split-left,.split-right,.word{display:inline-block}.split-right{position:absolute;inset:0}.metric{color:${palette.accent}}`;
 }
 function weaponMarkup(weaponId, title) {
   const text = escapeHtml(title);
-  if (weaponId === "text-split-enter") return `<span class="split-left">${text}</span><span class="split-right">${text}</span>`;
+  if (weaponId === "text-split-enter") return `<span class="split-left" data-layout-allow-overlap>${text}</span><span class="split-right" data-layout-allow-overlap>${text}</span>`;
   if (weaponId === "caption-clip-wipe") return title.split(/\s+/).map((word) => `<span class="word">${escapeHtml(word)}</span>`).join(" ");
   if (weaponId === "number-count-up") return '<span class="metric">0</span>';
   return text;
@@ -16732,6 +16742,25 @@ function escapeAttribute(value) {
 }
 function cssEscape(value) {
   return value.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+}
+function contrastRatio(left, right) {
+  const luminance = (hex3) => {
+    const channels = [1, 3, 5].map((index) => parseInt(hex3.slice(index, index + 2), 16) / 255).map((value) => value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+  };
+  const [a, b] = [luminance(left), luminance(right)].sort((x, y) => y - x);
+  return (a + 0.05) / (b + 0.05);
+}
+function embedWeaponSource(source2, functionName, weaponId) {
+  if (/<\/script/i.test(source2)) throw new Error(`planned weapon contains unsafe script boundary: ${weaponId}`);
+  if (/\bimport\s*(?:\(|[\w*{])/m.test(source2)) throw new Error(`planned weapon imports are not supported for embedding: ${weaponId}`);
+  const exports = [...source2.matchAll(/\bexport\s+(?:default\s+)?(?:async\s+)?(function|const|let|var|class)\s+([\w$]+)/g)];
+  if (exports.length !== 1 || exports[0][1] !== "function" || exports[0][2] !== functionName || /\bexport\s*\{/.test(source2)) {
+    throw new Error(`planned weapon must expose exactly one named function: ${weaponId}`);
+  }
+  const embedded = source2.replace(/\bexport\s+(?=function\s)/, "");
+  if (/\b(?:import|export)\b/.test(embedded)) throw new Error(`planned weapon contains unsupported module syntax: ${weaponId}`);
+  return embedded;
 }
 var require3, DEFAULT_WEAPON_ROOT2, BUNDLED_GSAP;
 var init_preview_composer = __esm({
@@ -17083,14 +17112,14 @@ function deterministicContrastStatus(css) {
   const background = rule.match(/background:\s*(#[0-9a-f]{6})/i)?.[1];
   const foreground = rule.match(/color:\s*(#[0-9a-f]{6})/i)?.[1];
   if (!background || !foreground) return "needs_review";
-  return contrastRatio(background, foreground) >= 4.5 ? "pass" : "fail";
+  return contrastRatio2(background, foreground) >= 4.5 ? "pass" : "fail";
 }
 function deterministicSafeAreaStatus(css) {
   const padding = css.match(/\.scene-inner\{[^}]*padding:\s*([0-9.]+)%/i)?.[1];
   if (!padding) return "needs_review";
   return Number(padding) >= 5 ? "pass" : "fail";
 }
-function contrastRatio(left, right) {
+function contrastRatio2(left, right) {
   const luminance = (hex3) => {
     const channels = [1, 3, 5].map((index) => Number.parseInt(hex3.slice(index, index + 2), 16) / 255).map((value) => value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
     return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
@@ -22326,11 +22355,11 @@ var require_color = __commonJS({
         return (lum2 + 0.05) / (lum1 + 0.05);
       },
       level(color2) {
-        const contrastRatio3 = this.contrast(color2);
-        if (contrastRatio3 >= 7) {
+        const contrastRatio4 = this.contrast(color2);
+        if (contrastRatio4 >= 7) {
           return "AAA";
         }
-        return contrastRatio3 >= 4.5 ? "AA" : "";
+        return contrastRatio4 >= 4.5 ? "AA" : "";
       },
       isDark() {
         const rgb = this.rgb().color;
@@ -24211,7 +24240,7 @@ function HSLToRGB(hsl, output) {
 function computeLuminance(x) {
   return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4;
 }
-function contrastRatio2(hsl1, hsl2, output) {
+function contrastRatio3(hsl1, hsl2, output) {
   HSLToRGB(hsl1, output);
   output.map(computeLuminance);
   const lum1 = 0.2126 * output[0] + 0.7152 * output[1] + 0.0722 * output[2];
@@ -24235,7 +24264,7 @@ function findContrastColor(baseColor, fixedColor) {
   const isFixedColorDark = fixedHSL[2] < 0.5;
   const minContrast = isFixedColorDark ? 12 : 4.5;
   baseHSL[2] = isFixedColorDark ? Math.sqrt(baseHSL[2]) : 1 - Math.sqrt(1 - baseHSL[2]);
-  if (contrastRatio2(baseHSL, fixedHSL, output) < minContrast) {
+  if (contrastRatio3(baseHSL, fixedHSL, output) < minContrast) {
     let start, end;
     if (isFixedColorDark) {
       start = baseHSL[2];
@@ -24247,7 +24276,7 @@ function findContrastColor(baseColor, fixedColor) {
     const PRECISION = 5e-3;
     while (end - start > PRECISION) {
       const mid = baseHSL[2] = (start + end) / 2;
-      if (isFixedColorDark === contrastRatio2(baseHSL, fixedHSL, output) < minContrast) {
+      if (isFixedColorDark === contrastRatio3(baseHSL, fixedHSL, output) < minContrast) {
         start = mid;
       } else {
         end = mid;
@@ -55853,20 +55882,16 @@ async function runProjectProposal(input) {
       const ledger = AssetLedgerSchema.parse(assets);
       const requested = new Set(proposal.assetIds);
       for (const id of requested) if (!ledger.assets.some((asset) => asset.id === id && asset.status === "available" && asset.confirmed)) throw new Error(`proposal asset is unavailable or unconfirmed: ${id}`);
-      const storyboard = StoryboardSchema.parse({
-        ...current,
-        title: proposal.title,
-        direction,
-        createdAt: (/* @__PURE__ */ new Date()).toISOString(),
-        sourceBrief: { ...current.sourceBrief, title: proposal.title, corePromise: proposal.summary },
-        scenes: current.scenes.map((scene, index) => ({
-          ...scene,
-          title: index === 0 ? proposal.title : scene.title,
-          narrativeBeat: index === 0 ? proposal.summary : scene.narrativeBeat,
-          motionGrammar: proposal.rhythm.includes("punch") ? "breath-punch-silence" : scene.motionGrammar,
-          assetIds: ledger.assets.filter((asset) => requested.has(asset.id) && asset.assignedSceneIds.includes(scene.id)).map((asset) => asset.id)
-        }))
-      });
+      const sourceBrief = StoryboardSchema.parse(current).sourceBrief;
+      const nextBrief = { ...sourceBrief, title: proposal.title, corePromise: proposal.summary, assetIds: proposal.assetIds };
+      const semanticBase = StoryboardSchema.parse({ ...current, sourceBrief: nextBrief });
+      const regenerated = input.feedback ? reviseStoryboard(semanticBase, input.feedback, DirectionSelectionSchema.parse(direction)) : generateStoryboard(nextBrief, DirectionSelectionSchema.parse(direction));
+      const storyboard = StoryboardSchema.parse({ ...regenerated, scenes: regenerated.scenes.map((scene, index) => ({
+        ...scene,
+        title: index === 0 ? proposal.title : scene.title,
+        motionGrammar: proposal.rhythm.includes("punch") ? "breath-punch-silence" : scene.motionGrammar,
+        assetIds: ledger.assets.filter((asset) => requested.has(asset.id) && asset.assignedSceneIds.includes(scene.id)).map((asset) => asset.id)
+      })) });
       await writeFile10(join12(input.projectDir, ".framepack", "storyboard.json"), `${JSON.stringify(storyboard, null, 2)}
 `, "utf8");
       return storyboard;
@@ -55896,6 +55921,7 @@ var init_orchestrator = __esm({
     init_content_hash();
     init_skill_runtime();
     init_weapon_runtime();
+    init_storyboard2();
   }
 });
 

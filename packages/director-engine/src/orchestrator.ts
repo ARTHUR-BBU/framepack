@@ -5,6 +5,7 @@ import { AssetLedgerSchema, BriefSchema, DirectionProposalSchema, DirectionSelec
 import { stableStringify } from './content-hash.js';
 import { SkillLoadReceiptSchema } from './skill-runtime.js';
 import { loadWeaponRegistry, resolveWeapons } from './weapon-runtime.js';
+import { generateStoryboard, reviseStoryboard } from './storyboard.js';
 
 export type DirectorTaskInput = { projectDir: string; brief: Brief; proposal?: unknown; command?: 'direct' | 'revise'; retryCount?: number; cancelled?: boolean };
 export type DirectorServices = {
@@ -99,16 +100,18 @@ export async function runProjectProposal(input: { projectDir: string; brief: Bri
       const ledger = AssetLedgerSchema.parse(assets);
       const requested = new Set(proposal.assetIds);
       for (const id of requested) if (!ledger.assets.some((asset) => asset.id === id && asset.status === 'available' && asset.confirmed)) throw new Error(`proposal asset is unavailable or unconfirmed: ${id}`);
-      const storyboard = StoryboardSchema.parse({
-        ...current, title: proposal.title, direction, createdAt: new Date().toISOString(),
-        sourceBrief: { ...current.sourceBrief, title: proposal.title, corePromise: proposal.summary },
-        scenes: current.scenes.map((scene, index) => ({ ...scene,
-          title: index === 0 ? proposal.title : scene.title,
-          narrativeBeat: index === 0 ? proposal.summary : scene.narrativeBeat,
-          motionGrammar: proposal.rhythm.includes('punch') ? 'breath-punch-silence' : scene.motionGrammar,
-          assetIds: ledger.assets.filter((asset) => requested.has(asset.id) && asset.assignedSceneIds.includes(scene.id)).map((asset) => asset.id),
-        })),
-      });
+      const sourceBrief = StoryboardSchema.parse(current).sourceBrief;
+      const nextBrief = { ...sourceBrief, title: proposal.title, corePromise: proposal.summary, assetIds: proposal.assetIds };
+      const semanticBase = StoryboardSchema.parse({ ...current, sourceBrief: nextBrief });
+      const regenerated = input.feedback
+        ? reviseStoryboard(semanticBase, input.feedback, DirectionSelectionSchema.parse(direction))
+        : generateStoryboard(nextBrief, DirectionSelectionSchema.parse(direction));
+      const storyboard = StoryboardSchema.parse({ ...regenerated, scenes: regenerated.scenes.map((scene, index) => ({
+        ...scene,
+        title: index === 0 ? proposal.title : scene.title,
+        motionGrammar: proposal.rhythm.includes('punch') ? 'breath-punch-silence' : scene.motionGrammar,
+        assetIds: ledger.assets.filter((asset) => requested.has(asset.id) && asset.assignedSceneIds.includes(scene.id)).map((asset) => asset.id),
+      })) });
       await writeFile(join(input.projectDir, '.framepack', 'storyboard.json'), `${JSON.stringify(storyboard, null, 2)}\n`, 'utf8');
       return storyboard;
     },
