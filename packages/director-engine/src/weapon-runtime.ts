@@ -7,6 +7,7 @@ import {
   CaptionClipWipeParametersSchema,
   NumberCountUpParametersSchema,
   TextSplitEnterParametersSchema,
+  ElasticScaleEnterParametersSchema, GradientShiftParametersSchema, StaggerGridRevealParametersSchema,
   WeaponCallSchema,
   WeaponLoadPlanSchema,
   WeaponManifestSchema,
@@ -24,7 +25,7 @@ import { promoteWeapon, verifyWeaponProofFiles } from './weapon-bench.js';
 import { runtimeAssetRoot } from './runtime-assets.js';
 
 const DEFAULT_WEAPON_ROOT = resolve(runtimeAssetRoot, 'weapons');
-const WEAPON_IDS = ['text-split-enter', 'caption-clip-wipe', 'number-count-up'] as const;
+const WEAPON_IDS = ['text-split-enter', 'caption-clip-wipe', 'number-count-up', 'elastic-scale-enter', 'gradient-shift', 'stagger-grid-reveal'] as const;
 
 export type RuntimeWeapon = WeaponManifest & { parameters: ZodType; entryHash: string; evidence?: WeaponBenchEvidence; scorecard?: WeaponScorecard };
 export type WeaponRegistry = { version: '1.0'; weapons: RuntimeWeapon[] };
@@ -33,6 +34,9 @@ const PARAMETER_SCHEMAS: Record<(typeof WEAPON_IDS)[number], ZodType> = {
   'text-split-enter': TextSplitEnterParametersSchema,
   'caption-clip-wipe': CaptionClipWipeParametersSchema,
   'number-count-up': NumberCountUpParametersSchema,
+  'elastic-scale-enter': ElasticScaleEnterParametersSchema,
+  'gradient-shift': GradientShiftParametersSchema,
+  'stagger-grid-reveal': StaggerGridRevealParametersSchema,
 };
 
 export async function loadWeaponRegistry(root = DEFAULT_WEAPON_ROOT, proofRoot = resolve(root, '../../..')): Promise<WeaponRegistry> {
@@ -64,7 +68,7 @@ export async function resolveWeapons(storyboard: Storyboard, registry: WeaponReg
       if (!matches(weapon, scene.purpose, text)) continue;
       const candidate = { sceneId: scene.id, weaponId: weapon.id, reason: matchReason(weapon.id), maturity: weapon.maturity };
       candidates.push(candidate);
-      if (weapon.maturity === 'proven') {
+      if (weapon.maturity === 'proven' && !selected.some((selection) => selection.sceneId === scene.id)) {
         selected.push(selectionFor(weapon, scene.id, text));
       }
     }
@@ -145,6 +149,9 @@ function matches(weapon: RuntimeWeapon, purpose: Storyboard['scenes'][number]['p
 
 function matchReason(id: WeaponManifest['id']): string {
   if (id === 'number-count-up') return '场景包含可视化的数字证据';
+  if (id === 'elastic-scale-enter') return '核心产品或行动按钮适合弹性聚焦入场';
+  if (id === 'gradient-shift') return '场景需要可控的品牌渐变氛围变化';
+  if (id === 'stagger-grid-reveal') return '多项功能或证据适合网格级联揭示';
   if (id === 'caption-clip-wipe') return '场景需要逐词揭示说明或行动文案';
   return '开场核心承诺适合标题分裂入场';
 }
@@ -152,6 +159,9 @@ function matchReason(id: WeaponManifest['id']): string {
 function defaultParams(id: WeaponManifest['id'], text: string): Record<string, unknown> {
   if (id === 'number-count-up') return NumberCountUpParametersSchema.parse({ targetValue: Number(text.match(/\d+(?:\.\d+)?/)?.[0] ?? 0) });
   if (id === 'caption-clip-wipe') return CaptionClipWipeParametersSchema.parse({});
+  if (id === 'elastic-scale-enter') return ElasticScaleEnterParametersSchema.parse({});
+  if (id === 'gradient-shift') return GradientShiftParametersSchema.parse({});
+  if (id === 'stagger-grid-reveal') return StaggerGridRevealParametersSchema.parse({});
   return TextSplitEnterParametersSchema.parse({});
 }
 
@@ -159,6 +169,9 @@ function selectionFor(weapon: RuntimeWeapon, sceneId: string, text: string): Wea
   const evidence = { sceneId, entryHash: weapon.entryHash };
   if (weapon.id === 'number-count-up') return { ...evidence, weaponId: weapon.id, functionName: 'numberCountUp', entry: 'number-count-up/index.js', params: NumberCountUpParametersSchema.parse(defaultParams(weapon.id, text)) };
   if (weapon.id === 'caption-clip-wipe') return { ...evidence, weaponId: weapon.id, functionName: 'captionClipWipe', entry: 'caption-clip-wipe/index.js', params: CaptionClipWipeParametersSchema.parse(defaultParams(weapon.id, text)) };
+  if (weapon.id === 'elastic-scale-enter') return { ...evidence, weaponId: weapon.id, functionName:'elasticScaleEnter', entry:'elastic-scale-enter/index.js', params:ElasticScaleEnterParametersSchema.parse(defaultParams(weapon.id,text)) };
+  if (weapon.id === 'gradient-shift') return { ...evidence, weaponId: weapon.id, functionName:'gradientShift', entry:'gradient-shift/index.js', params:GradientShiftParametersSchema.parse(defaultParams(weapon.id,text)) };
+  if (weapon.id === 'stagger-grid-reveal') return { ...evidence, weaponId: weapon.id, functionName:'staggerGridReveal', entry:'stagger-grid-reveal/index.js', params:StaggerGridRevealParametersSchema.parse(defaultParams(weapon.id,text)) };
   return { ...evidence, weaponId: weapon.id, functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', params: TextSplitEnterParametersSchema.parse(defaultParams(weapon.id, text)) };
 }
 

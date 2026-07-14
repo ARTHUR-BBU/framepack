@@ -15179,13 +15179,13 @@ var init_approval = __esm({
 });
 
 // packages/director-contracts/src/arsenal.ts
-var WeaponMaturitySchema, WeaponIdSchema, PortablePathSchema, WeaponManifestSchema, TextSplitEnterParametersSchema, CaptionClipWipeParametersSchema, NumberCountUpParametersSchema, WeaponCandidateSchema, HashSchema, SelectionEvidenceShape, WeaponSelectionSchema, WeaponLoadPlanSchema, WeaponCallSchema, WeaponBenchEvidenceSchema, WeaponScoreDimensionIdSchema, WeaponScorecardSchema;
+var WeaponMaturitySchema, WeaponIdSchema, PortablePathSchema, WeaponManifestSchema, TextSplitEnterParametersSchema, CaptionClipWipeParametersSchema, NumberCountUpParametersSchema, ElasticScaleEnterParametersSchema, GradientShiftParametersSchema, StaggerGridRevealParametersSchema, WeaponCandidateSchema, HashSchema, SelectionEvidenceShape, WeaponSelectionSchema, WeaponLoadPlanSchema, WeaponCallSchema, WeaponBenchEvidenceSchema, WeaponScoreDimensionIdSchema, WeaponScorecardSchema;
 var init_arsenal = __esm({
   "packages/director-contracts/src/arsenal.ts"() {
     "use strict";
     init_zod();
     WeaponMaturitySchema = external_exports.enum(["candidate", "compatible", "proven", "deprecated"]);
-    WeaponIdSchema = external_exports.enum(["text-split-enter", "caption-clip-wipe", "number-count-up"]);
+    WeaponIdSchema = external_exports.enum(["text-split-enter", "caption-clip-wipe", "number-count-up", "elastic-scale-enter", "gradient-shift", "stagger-grid-reveal"]);
     PortablePathSchema = external_exports.string().regex(
       /^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\/)(?!.*\/\/)(?!.*(?:^|\/)\.\.?(?:\/|$))[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/,
       "path must be a canonical portable project-relative path without a URI scheme"
@@ -15229,6 +15229,9 @@ var init_arsenal = __esm({
       duration: external_exports.number().positive().max(30).default(1.5),
       ease: external_exports.string().min(1).default("power2.out")
     }).strict();
+    ElasticScaleEnterParametersSchema = external_exports.object({ fromScale: external_exports.number().positive().max(2).default(0.6), duration: external_exports.number().positive().max(10).default(0.55), ease: external_exports.string().min(1).default("back.out(1.4)"), fade: external_exports.boolean().default(true) }).strict();
+    GradientShiftParametersSchema = external_exports.object({ fromColors: external_exports.tuple([external_exports.string().min(1), external_exports.string().min(1)]).default(["#667eea", "#764ba2"]), toColors: external_exports.tuple([external_exports.string().min(1), external_exports.string().min(1)]).default(["#f093fb", "#f5576c"]), angle: external_exports.number().min(-360).max(360).default(135), duration: external_exports.number().positive().max(30).default(3) }).strict();
+    StaggerGridRevealParametersSchema = external_exports.object({ rows: external_exports.number().int().positive().max(20).default(3), cols: external_exports.number().int().positive().max(20).default(3), from: external_exports.enum(["start", "center", "end", "edges"]).default("center"), staggerEach: external_exports.number().nonnegative().max(2).default(0.05), animation: external_exports.enum(["fade-up", "scale-in", "slide-left"]).default("fade-up"), duration: external_exports.number().positive().max(10).default(0.5) }).strict();
     WeaponCandidateSchema = external_exports.object({
       sceneId: external_exports.string().min(1),
       weaponId: WeaponIdSchema,
@@ -15243,7 +15246,10 @@ var init_arsenal = __esm({
     WeaponSelectionSchema = external_exports.discriminatedUnion("weaponId", [
       external_exports.object({ ...SelectionEvidenceShape, weaponId: external_exports.literal("text-split-enter"), functionName: external_exports.literal("textSplitEnter"), entry: external_exports.literal("text-split-enter/index.js"), params: TextSplitEnterParametersSchema }),
       external_exports.object({ ...SelectionEvidenceShape, weaponId: external_exports.literal("caption-clip-wipe"), functionName: external_exports.literal("captionClipWipe"), entry: external_exports.literal("caption-clip-wipe/index.js"), params: CaptionClipWipeParametersSchema }),
-      external_exports.object({ ...SelectionEvidenceShape, weaponId: external_exports.literal("number-count-up"), functionName: external_exports.literal("numberCountUp"), entry: external_exports.literal("number-count-up/index.js"), params: NumberCountUpParametersSchema })
+      external_exports.object({ ...SelectionEvidenceShape, weaponId: external_exports.literal("number-count-up"), functionName: external_exports.literal("numberCountUp"), entry: external_exports.literal("number-count-up/index.js"), params: NumberCountUpParametersSchema }),
+      external_exports.object({ ...SelectionEvidenceShape, weaponId: external_exports.literal("elastic-scale-enter"), functionName: external_exports.literal("elasticScaleEnter"), entry: external_exports.literal("elastic-scale-enter/index.js"), params: ElasticScaleEnterParametersSchema }),
+      external_exports.object({ ...SelectionEvidenceShape, weaponId: external_exports.literal("gradient-shift"), functionName: external_exports.literal("gradientShift"), entry: external_exports.literal("gradient-shift/index.js"), params: GradientShiftParametersSchema }),
+      external_exports.object({ ...SelectionEvidenceShape, weaponId: external_exports.literal("stagger-grid-reveal"), functionName: external_exports.literal("staggerGridReveal"), entry: external_exports.literal("stagger-grid-reveal/index.js"), params: StaggerGridRevealParametersSchema })
     ]);
     WeaponLoadPlanSchema = external_exports.object({
       version: external_exports.literal("1.0"),
@@ -16208,9 +16214,8 @@ function promoteWeapon(evidenceInput, scorecardInput) {
   const evidenceFrames = new Set(evidence.ratios.flatMap((ratio) => ratio.snapshots.map((snapshot) => snapshot.path)));
   if (scorecard.citedFrames.some((path) => !evidenceFrames.has(path))) throw new Error("reviewer cited frame is not part of checked bench evidence");
   for (const ratio of evidence.ratios) {
-    if (!scorecard.citedFrames.some((path) => ratio.snapshots.some((snapshot) => snapshot.path === path))) {
-      throw new Error(`reviewer scorecard does not cite the ${ratio.ratio} bench`);
-    }
+    const cited = scorecard.citedFrames.filter((path) => ratio.snapshots.some((snapshot) => snapshot.path === path));
+    if (cited.length < 2) throw new Error(`reviewer scorecard must cite at least two temporal frames from the ${ratio.ratio} bench`);
   }
   return { maturity: "proven", evidence, scorecard };
 }
@@ -16265,7 +16270,10 @@ async function runWeaponBenchEvidence(options) {
     const snapshotDir = join4(bench.projectDir, "snapshots");
     const snapshotNames = (await readdir(snapshotDir)).filter((name) => /\.(?:png|jpe?g)$/i.test(name)).sort();
     if (snapshotNames.length === 0) throw new Error(`snapshot command produced no frames for ${options.weaponId} ${ratio}`);
-    const buildPaths = (await listFiles(bench.projectDir)).filter((path) => !path.includes("/command-output/") && !path.includes("/snapshots/")).sort();
+    const buildPaths = (await listFiles(bench.projectDir)).filter((path) => {
+      const normalized = portable(path);
+      return !normalized.includes("/command-output/") && !normalized.includes("/snapshots/");
+    }).sort();
     const buildFiles = await Promise.all(buildPaths.map(async (path) => ({ path: portable(relative2(options.repoRoot, path)), hash: sha256(await readFile3(path)) })));
     const snapshots = await Promise.all(snapshotNames.map(async (name) => {
       const path = join4(snapshotDir, name);
@@ -16316,7 +16324,7 @@ function benchHtml(weaponId, width, height) {
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=${width},height=${height}">
 <title>${weaponId} 武器试片</title><link rel="stylesheet" href="./fonts/wght.css"><script src="./vendor/gsap.min.js"></script><script src="./vendor/weapon.js"></script>
-<style>@font-face{font-family:'Noto Sans SC Variable';src:url('./fonts/files/noto-sans-sc-4-wght-normal.woff2') format('woff2-variations');font-weight:100 900;unicode-range:U+1F300}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b10;color:#f5f0e8;font-family:"Noto Sans SC Variable",sans-serif}#root{position:relative;width:${width}px;height:${height}px;overflow:hidden}.clip{position:absolute;inset:0}.scene-inner{position:absolute;inset:0;display:grid;place-items:center;padding:${portrait ? 96 : 120}px;background:radial-gradient(circle at 70% 22%,rgba(227,76,45,.22),transparent 34%),linear-gradient(135deg,#10131b,#07080c)}.scene-inner:before{content:"";position:absolute;inset:5%;border:1px solid rgba(245,240,232,.13)}.kicker{position:absolute;top:7%;left:7%;font-size:${portrait ? 28 : 24}px;letter-spacing:.18em;color:#e34c2d}.demo{position:relative;width:100%;display:grid;place-items:center;text-align:center}.split{position:relative;font-size:${portrait ? 104 : 132}px;font-weight:900;letter-spacing:-.05em;line-height:.95}.split-left,.split-right{display:block}.split-left{clip-path:inset(0 50% 0 0)}.split-right{position:absolute;inset:0;clip-path:inset(0 0 0 50%)}.caption{display:flex;flex-wrap:wrap;justify-content:center;gap:.22em;max-width:${portrait ? 760 : 1250}px;font-size:${portrait ? 72 : 92}px;font-weight:800;line-height:1.15}.word{display:inline-block}.metric{font-size:${portrait ? 210 : 250}px;font-weight:900;letter-spacing:-.07em;color:#ff6847}.proof{margin-top:32px;font-size:${portrait ? 34 : 30}px;color:rgba(245,240,232,.65)}</style></head>
+<style>@font-face{font-family:'Noto Sans SC Variable';src:url('./fonts/files/noto-sans-sc-4-wght-normal.woff2') format('woff2-variations');font-weight:100 900;unicode-range:U+1F300}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b10;color:#f5f0e8;font-family:"Noto Sans SC Variable",sans-serif}#root{position:relative;width:${width}px;height:${height}px;overflow:hidden}.clip{position:absolute;inset:0}.scene-inner{position:absolute;inset:0;display:grid;place-items:center;padding:${portrait ? 96 : 120}px;background:radial-gradient(circle at 70% 22%,rgba(227,76,45,.22),transparent 34%),linear-gradient(135deg,#10131b,#07080c)}.scene-inner:before{content:"";position:absolute;inset:5%;border:1px solid rgba(245,240,232,.13)}.kicker{position:absolute;top:7%;left:7%;font-size:${portrait ? 28 : 24}px;letter-spacing:.18em;color:#e34c2d}.demo{position:relative;width:100%;display:grid;place-items:center;text-align:center}.split{position:relative;font-size:${portrait ? 104 : 132}px;font-weight:900;letter-spacing:-.05em;line-height:.95}.split-left,.split-right{display:block}.split-left{clip-path:inset(0 50% 0 0)}.split-right{position:absolute;inset:0;clip-path:inset(0 0 0 50%)}.caption{display:flex;flex-wrap:wrap;justify-content:center;gap:.22em;max-width:${portrait ? 760 : 1250}px;font-size:${portrait ? 72 : 92}px;font-weight:800;line-height:1.15}.word{display:inline-block}.metric{font-size:${portrait ? 210 : 250}px;font-weight:900;letter-spacing:-.07em;color:#ff6847}.focus{padding:.45em .7em;border-radius:.25em;background:#f5f0e8;color:#11131a;font-size:${portrait ? 96 : 120}px;font-weight:900}.gradient{width:${portrait ? 760 : 1250}px;height:${portrait ? 760 : 560}px;border-radius:48px;display:grid;place-items:center;font-size:${portrait ? 72 : 86}px;font-weight:900}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:${portrait ? 22 : 28}px;width:${portrait ? 760 : 1200}px}.grid>span{display:grid;place-items:center;min-height:${portrait ? 190 : 150}px;border:1px solid rgba(245,240,232,.24);background:rgba(245,240,232,.08);font-size:${portrait ? 34 : 30}px;font-weight:700}.proof{margin-top:32px;font-size:${portrait ? 34 : 30}px;color:rgba(245,240,232,.65)}</style></head>
 <body><div id="root" data-composition-id="weapon-bench" data-start="0" data-width="${width}" data-height="${height}" data-duration="5">
 <section id="weapon-scene" class="clip" data-start="0" data-duration="5" data-track-index="0"><div class="scene-inner"><div class="kicker">FRAMEPACK / WEAPON PROOF</div><div class="demo">${demo}</div></div></section></div>
 <script>window.__timelines=window.__timelines||{};window.__framepackTimeline=gsap.timeline({paused:true});const tl=window.__framepackTimeline;${invocation}window.__timelines['weapon-bench']=tl;</script></body></html>`;
@@ -16324,12 +16332,18 @@ function benchHtml(weaponId, width, height) {
 function demoMarkup(id) {
   if (id === "text-split-enter") return '<div id="target" class="split" data-layout-allow-overlap><span class="split-left" data-layout-allow-overlap>让想法发生</span><span class="split-right" data-layout-allow-overlap>让想法发生</span></div><div class="proof">标题分裂入场 · 左右动因合拢</div>';
   if (id === "caption-clip-wipe") return '<div id="target" class="caption"><span class="word">真实</span><span class="word">产品</span><span class="word">值得</span><span class="word">被看见</span></div><div class="proof">逐词裁切 · 信息按阅读节奏展开</div>';
-  return '<div id="target" class="metric">0%</div><div class="proof">真实指标 · 数字递增形成证据重音</div>';
+  if (id === "number-count-up") return '<div id="target" class="metric">0%</div><div class="proof">真实指标 · 数字递增形成证据重音</div>';
+  if (id === "elastic-scale-enter") return '<div id="target" class="focus">现在，就开始</div><div class="proof">弹性聚焦 · 为主视觉建立明确重音</div>';
+  if (id === "gradient-shift") return '<div id="target" class="gradient" style="color:#27232c">品牌氛围正在流动</div><div class="proof">渐变移色 · 确定性时间轴驱动</div>';
+  return '<div id="target" class="grid"><span>洞察</span><span>脚本</span><span>分镜</span><span>动画</span><span>声音</span><span>交付</span></div><div class="proof">网格级联 · 多项能力按秩序出现</div>';
 }
 function demoInvocation(id) {
   if (id === "text-split-enter") return "textSplitEnter(tl,document.querySelector('#target'),{duration:.8,travelDistance:120},.45);";
   if (id === "caption-clip-wipe") return "captionClipWipe(tl,document.querySelector('#target'),{durationPerWord:.55,staggerPerWord:.12},.45);";
-  return "numberCountUp(tl,document.querySelector('#target'),{targetValue:87,suffix:'%',duration:2.2},.45);";
+  if (id === "number-count-up") return "numberCountUp(tl,document.querySelector('#target'),{targetValue:87,suffix:'%',duration:2.2},.45);";
+  if (id === "elastic-scale-enter") return "elasticScaleEnter(tl,document.querySelector('#target'),{fromScale:.55,duration:1.1},.45);";
+  if (id === "gradient-shift") return "gradientShift(tl,document.querySelector('#target'),{duration:3},.45);";
+  return "staggerGridReveal(tl,document.querySelector('#target'),{rows:2,cols:3,staggerEach:.14,duration:.7},.45);";
 }
 function sha256(value) {
   return createHash3("sha256").update(value).digest("hex");
@@ -16451,7 +16465,7 @@ async function resolveWeapons(storyboard, registry2) {
       if (!matches(weapon, scene.purpose, text)) continue;
       const candidate = { sceneId: scene.id, weaponId: weapon.id, reason: matchReason(weapon.id), maturity: weapon.maturity };
       candidates.push(candidate);
-      if (weapon.maturity === "proven") {
+      if (weapon.maturity === "proven" && !selected.some((selection) => selection.sceneId === scene.id)) {
         selected.push(selectionFor(weapon, scene.id, text));
       }
     }
@@ -16536,18 +16550,27 @@ function matches(weapon, purpose, text) {
 }
 function matchReason(id) {
   if (id === "number-count-up") return "场景包含可视化的数字证据";
+  if (id === "elastic-scale-enter") return "核心产品或行动按钮适合弹性聚焦入场";
+  if (id === "gradient-shift") return "场景需要可控的品牌渐变氛围变化";
+  if (id === "stagger-grid-reveal") return "多项功能或证据适合网格级联揭示";
   if (id === "caption-clip-wipe") return "场景需要逐词揭示说明或行动文案";
   return "开场核心承诺适合标题分裂入场";
 }
 function defaultParams(id, text) {
   if (id === "number-count-up") return NumberCountUpParametersSchema.parse({ targetValue: Number(text.match(/\d+(?:\.\d+)?/)?.[0] ?? 0) });
   if (id === "caption-clip-wipe") return CaptionClipWipeParametersSchema.parse({});
+  if (id === "elastic-scale-enter") return ElasticScaleEnterParametersSchema.parse({});
+  if (id === "gradient-shift") return GradientShiftParametersSchema.parse({});
+  if (id === "stagger-grid-reveal") return StaggerGridRevealParametersSchema.parse({});
   return TextSplitEnterParametersSchema.parse({});
 }
 function selectionFor(weapon, sceneId, text) {
   const evidence = { sceneId, entryHash: weapon.entryHash };
   if (weapon.id === "number-count-up") return { ...evidence, weaponId: weapon.id, functionName: "numberCountUp", entry: "number-count-up/index.js", params: NumberCountUpParametersSchema.parse(defaultParams(weapon.id, text)) };
   if (weapon.id === "caption-clip-wipe") return { ...evidence, weaponId: weapon.id, functionName: "captionClipWipe", entry: "caption-clip-wipe/index.js", params: CaptionClipWipeParametersSchema.parse(defaultParams(weapon.id, text)) };
+  if (weapon.id === "elastic-scale-enter") return { ...evidence, weaponId: weapon.id, functionName: "elasticScaleEnter", entry: "elastic-scale-enter/index.js", params: ElasticScaleEnterParametersSchema.parse(defaultParams(weapon.id, text)) };
+  if (weapon.id === "gradient-shift") return { ...evidence, weaponId: weapon.id, functionName: "gradientShift", entry: "gradient-shift/index.js", params: GradientShiftParametersSchema.parse(defaultParams(weapon.id, text)) };
+  if (weapon.id === "stagger-grid-reveal") return { ...evidence, weaponId: weapon.id, functionName: "staggerGridReveal", entry: "stagger-grid-reveal/index.js", params: StaggerGridRevealParametersSchema.parse(defaultParams(weapon.id, text)) };
   return { ...evidence, weaponId: weapon.id, functionName: "textSplitEnter", entry: "text-split-enter/index.js", params: TextSplitEnterParametersSchema.parse(defaultParams(weapon.id, text)) };
 }
 function sha2562(value) {
@@ -16562,11 +16585,14 @@ var init_weapon_runtime = __esm({
     init_weapon_bench();
     init_runtime_assets();
     DEFAULT_WEAPON_ROOT = resolve6(runtimeAssetRoot, "weapons");
-    WEAPON_IDS = ["text-split-enter", "caption-clip-wipe", "number-count-up"];
+    WEAPON_IDS = ["text-split-enter", "caption-clip-wipe", "number-count-up", "elastic-scale-enter", "gradient-shift", "stagger-grid-reveal"];
     PARAMETER_SCHEMAS = {
       "text-split-enter": TextSplitEnterParametersSchema,
       "caption-clip-wipe": CaptionClipWipeParametersSchema,
-      "number-count-up": NumberCountUpParametersSchema
+      "number-count-up": NumberCountUpParametersSchema,
+      "elastic-scale-enter": ElasticScaleEnterParametersSchema,
+      "gradient-shift": GradientShiftParametersSchema,
+      "stagger-grid-reveal": StaggerGridRevealParametersSchema
     };
   }
 });

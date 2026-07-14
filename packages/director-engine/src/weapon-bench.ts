@@ -35,9 +35,8 @@ export function promoteWeapon(evidenceInput: WeaponBenchEvidence, scorecardInput
   const evidenceFrames = new Set(evidence.ratios.flatMap((ratio) => ratio.snapshots.map((snapshot) => snapshot.path)));
   if (scorecard.citedFrames.some((path) => !evidenceFrames.has(path))) throw new Error('reviewer cited frame is not part of checked bench evidence');
   for (const ratio of evidence.ratios) {
-    if (!scorecard.citedFrames.some((path) => ratio.snapshots.some((snapshot) => snapshot.path === path))) {
-      throw new Error(`reviewer scorecard does not cite the ${ratio.ratio} bench`);
-    }
+    const cited = scorecard.citedFrames.filter((path) => ratio.snapshots.some((snapshot) => snapshot.path === path));
+    if (cited.length < 2) throw new Error(`reviewer scorecard must cite at least two temporal frames from the ${ratio.ratio} bench`);
   }
   return { maturity: 'proven', evidence, scorecard };
 }
@@ -102,7 +101,7 @@ export async function runWeaponBenchEvidence(options: {
     const snapshotNames = (await readdir(snapshotDir)).filter((name) => /\.(?:png|jpe?g)$/i.test(name)).sort();
     if (snapshotNames.length === 0) throw new Error(`snapshot command produced no frames for ${options.weaponId} ${ratio}`);
     const buildPaths = (await listFiles(bench.projectDir))
-      .filter((path) => !path.includes('/command-output/') && !path.includes('/snapshots/'))
+      .filter((path) => { const normalized = portable(path); return !normalized.includes('/command-output/') && !normalized.includes('/snapshots/'); })
       .sort();
     const buildFiles = await Promise.all(buildPaths.map(async (path) => ({ path: portable(relative(options.repoRoot, path)), hash: sha256(await readFile(path)) })));
     const snapshots = await Promise.all(snapshotNames.map(async (name) => {
@@ -151,7 +150,7 @@ function benchHtml(weaponId: WeaponManifest['id'], width: number, height: number
   return `<!doctype html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=${width},height=${height}">
 <title>${weaponId} 武器试片</title><link rel="stylesheet" href="./fonts/wght.css"><script src="./vendor/gsap.min.js"></script><script src="./vendor/weapon.js"></script>
-<style>@font-face{font-family:'Noto Sans SC Variable';src:url('./fonts/files/noto-sans-sc-4-wght-normal.woff2') format('woff2-variations');font-weight:100 900;unicode-range:U+1F300}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b10;color:#f5f0e8;font-family:"Noto Sans SC Variable",sans-serif}#root{position:relative;width:${width}px;height:${height}px;overflow:hidden}.clip{position:absolute;inset:0}.scene-inner{position:absolute;inset:0;display:grid;place-items:center;padding:${portrait ? 96 : 120}px;background:radial-gradient(circle at 70% 22%,rgba(227,76,45,.22),transparent 34%),linear-gradient(135deg,#10131b,#07080c)}.scene-inner:before{content:"";position:absolute;inset:5%;border:1px solid rgba(245,240,232,.13)}.kicker{position:absolute;top:7%;left:7%;font-size:${portrait ? 28 : 24}px;letter-spacing:.18em;color:#e34c2d}.demo{position:relative;width:100%;display:grid;place-items:center;text-align:center}.split{position:relative;font-size:${portrait ? 104 : 132}px;font-weight:900;letter-spacing:-.05em;line-height:.95}.split-left,.split-right{display:block}.split-left{clip-path:inset(0 50% 0 0)}.split-right{position:absolute;inset:0;clip-path:inset(0 0 0 50%)}.caption{display:flex;flex-wrap:wrap;justify-content:center;gap:.22em;max-width:${portrait ? 760 : 1250}px;font-size:${portrait ? 72 : 92}px;font-weight:800;line-height:1.15}.word{display:inline-block}.metric{font-size:${portrait ? 210 : 250}px;font-weight:900;letter-spacing:-.07em;color:#ff6847}.proof{margin-top:32px;font-size:${portrait ? 34 : 30}px;color:rgba(245,240,232,.65)}</style></head>
+<style>@font-face{font-family:'Noto Sans SC Variable';src:url('./fonts/files/noto-sans-sc-4-wght-normal.woff2') format('woff2-variations');font-weight:100 900;unicode-range:U+1F300}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#090b10;color:#f5f0e8;font-family:"Noto Sans SC Variable",sans-serif}#root{position:relative;width:${width}px;height:${height}px;overflow:hidden}.clip{position:absolute;inset:0}.scene-inner{position:absolute;inset:0;display:grid;place-items:center;padding:${portrait ? 96 : 120}px;background:radial-gradient(circle at 70% 22%,rgba(227,76,45,.22),transparent 34%),linear-gradient(135deg,#10131b,#07080c)}.scene-inner:before{content:"";position:absolute;inset:5%;border:1px solid rgba(245,240,232,.13)}.kicker{position:absolute;top:7%;left:7%;font-size:${portrait ? 28 : 24}px;letter-spacing:.18em;color:#e34c2d}.demo{position:relative;width:100%;display:grid;place-items:center;text-align:center}.split{position:relative;font-size:${portrait ? 104 : 132}px;font-weight:900;letter-spacing:-.05em;line-height:.95}.split-left,.split-right{display:block}.split-left{clip-path:inset(0 50% 0 0)}.split-right{position:absolute;inset:0;clip-path:inset(0 0 0 50%)}.caption{display:flex;flex-wrap:wrap;justify-content:center;gap:.22em;max-width:${portrait ? 760 : 1250}px;font-size:${portrait ? 72 : 92}px;font-weight:800;line-height:1.15}.word{display:inline-block}.metric{font-size:${portrait ? 210 : 250}px;font-weight:900;letter-spacing:-.07em;color:#ff6847}.focus{padding:.45em .7em;border-radius:.25em;background:#f5f0e8;color:#11131a;font-size:${portrait ? 96 : 120}px;font-weight:900}.gradient{width:${portrait ? 760 : 1250}px;height:${portrait ? 760 : 560}px;border-radius:48px;display:grid;place-items:center;font-size:${portrait ? 72 : 86}px;font-weight:900}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:${portrait ? 22 : 28}px;width:${portrait ? 760 : 1200}px}.grid>span{display:grid;place-items:center;min-height:${portrait ? 190 : 150}px;border:1px solid rgba(245,240,232,.24);background:rgba(245,240,232,.08);font-size:${portrait ? 34 : 30}px;font-weight:700}.proof{margin-top:32px;font-size:${portrait ? 34 : 30}px;color:rgba(245,240,232,.65)}</style></head>
 <body><div id="root" data-composition-id="weapon-bench" data-start="0" data-width="${width}" data-height="${height}" data-duration="5">
 <section id="weapon-scene" class="clip" data-start="0" data-duration="5" data-track-index="0"><div class="scene-inner"><div class="kicker">FRAMEPACK / WEAPON PROOF</div><div class="demo">${demo}</div></div></section></div>
 <script>window.__timelines=window.__timelines||{};window.__framepackTimeline=gsap.timeline({paused:true});const tl=window.__framepackTimeline;${invocation}window.__timelines['weapon-bench']=tl;</script></body></html>`;
@@ -160,13 +159,19 @@ function benchHtml(weaponId: WeaponManifest['id'], width: number, height: number
 function demoMarkup(id: WeaponManifest['id']): string {
   if (id === 'text-split-enter') return '<div id="target" class="split" data-layout-allow-overlap><span class="split-left" data-layout-allow-overlap>让想法发生</span><span class="split-right" data-layout-allow-overlap>让想法发生</span></div><div class="proof">标题分裂入场 · 左右动因合拢</div>';
   if (id === 'caption-clip-wipe') return '<div id="target" class="caption"><span class="word">真实</span><span class="word">产品</span><span class="word">值得</span><span class="word">被看见</span></div><div class="proof">逐词裁切 · 信息按阅读节奏展开</div>';
-  return '<div id="target" class="metric">0%</div><div class="proof">真实指标 · 数字递增形成证据重音</div>';
+  if (id === 'number-count-up') return '<div id="target" class="metric">0%</div><div class="proof">真实指标 · 数字递增形成证据重音</div>';
+  if (id === 'elastic-scale-enter') return '<div id="target" class="focus">现在，就开始</div><div class="proof">弹性聚焦 · 为主视觉建立明确重音</div>';
+  if (id === 'gradient-shift') return '<div id="target" class="gradient" style="color:#27232c">品牌氛围正在流动</div><div class="proof">渐变移色 · 确定性时间轴驱动</div>';
+  return '<div id="target" class="grid"><span>洞察</span><span>脚本</span><span>分镜</span><span>动画</span><span>声音</span><span>交付</span></div><div class="proof">网格级联 · 多项能力按秩序出现</div>';
 }
 
 function demoInvocation(id: WeaponManifest['id']): string {
   if (id === 'text-split-enter') return "textSplitEnter(tl,document.querySelector('#target'),{duration:.8,travelDistance:120},.45);";
   if (id === 'caption-clip-wipe') return "captionClipWipe(tl,document.querySelector('#target'),{durationPerWord:.55,staggerPerWord:.12},.45);";
-  return "numberCountUp(tl,document.querySelector('#target'),{targetValue:87,suffix:'%',duration:2.2},.45);";
+  if (id === 'number-count-up') return "numberCountUp(tl,document.querySelector('#target'),{targetValue:87,suffix:'%',duration:2.2},.45);";
+  if (id === 'elastic-scale-enter') return "elasticScaleEnter(tl,document.querySelector('#target'),{fromScale:.55,duration:1.1},.45);";
+  if (id === 'gradient-shift') return "gradientShift(tl,document.querySelector('#target'),{duration:3},.45);";
+  return "staggerGridReveal(tl,document.querySelector('#target'),{rows:2,cols:3,staggerEach:.14,duration:.7},.45);";
 }
 
 function sha256(value: string | Buffer): string { return createHash('sha256').update(value).digest('hex'); }

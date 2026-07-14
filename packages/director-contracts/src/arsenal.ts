@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const WeaponMaturitySchema = z.enum(['candidate', 'compatible', 'proven', 'deprecated']);
-export const WeaponIdSchema = z.enum(['text-split-enter', 'caption-clip-wipe', 'number-count-up']);
+export const WeaponIdSchema = z.enum(['text-split-enter', 'caption-clip-wipe', 'number-count-up', 'elastic-scale-enter', 'gradient-shift', 'stagger-grid-reveal']);
 
 const PortablePathSchema = z.string().regex(
   /^(?![A-Za-z][A-Za-z0-9+.-]*:)(?!\/)(?!.*\/\/)(?!.*(?:^|\/)\.\.?(?:\/|$))[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/,
@@ -51,6 +51,10 @@ export const NumberCountUpParametersSchema = z.object({
   ease: z.string().min(1).default('power2.out'),
 }).strict();
 
+export const ElasticScaleEnterParametersSchema = z.object({ fromScale:z.number().positive().max(2).default(0.6), duration:z.number().positive().max(10).default(0.55), ease:z.string().min(1).default('back.out(1.4)'), fade:z.boolean().default(true) }).strict();
+export const GradientShiftParametersSchema = z.object({ fromColors:z.tuple([z.string().min(1),z.string().min(1)]).default(['#667eea','#764ba2']), toColors:z.tuple([z.string().min(1),z.string().min(1)]).default(['#f093fb','#f5576c']), angle:z.number().min(-360).max(360).default(135), duration:z.number().positive().max(30).default(3) }).strict();
+export const StaggerGridRevealParametersSchema = z.object({ rows:z.number().int().positive().max(20).default(3), cols:z.number().int().positive().max(20).default(3), from:z.enum(['start','center','end','edges']).default('center'), staggerEach:z.number().nonnegative().max(2).default(0.05), animation:z.enum(['fade-up','scale-in','slide-left']).default('fade-up'), duration:z.number().positive().max(10).default(0.5) }).strict();
+
 export const WeaponCandidateSchema = z.object({
   sceneId: z.string().min(1),
   weaponId: WeaponIdSchema,
@@ -68,6 +72,9 @@ export const WeaponSelectionSchema = z.discriminatedUnion('weaponId', [
   z.object({ ...SelectionEvidenceShape, weaponId: z.literal('text-split-enter'), functionName: z.literal('textSplitEnter'), entry: z.literal('text-split-enter/index.js'), params: TextSplitEnterParametersSchema }),
   z.object({ ...SelectionEvidenceShape, weaponId: z.literal('caption-clip-wipe'), functionName: z.literal('captionClipWipe'), entry: z.literal('caption-clip-wipe/index.js'), params: CaptionClipWipeParametersSchema }),
   z.object({ ...SelectionEvidenceShape, weaponId: z.literal('number-count-up'), functionName: z.literal('numberCountUp'), entry: z.literal('number-count-up/index.js'), params: NumberCountUpParametersSchema }),
+  z.object({ ...SelectionEvidenceShape, weaponId: z.literal('elastic-scale-enter'), functionName: z.literal('elasticScaleEnter'), entry: z.literal('elastic-scale-enter/index.js'), params: ElasticScaleEnterParametersSchema }),
+  z.object({ ...SelectionEvidenceShape, weaponId: z.literal('gradient-shift'), functionName: z.literal('gradientShift'), entry: z.literal('gradient-shift/index.js'), params: GradientShiftParametersSchema }),
+  z.object({ ...SelectionEvidenceShape, weaponId: z.literal('stagger-grid-reveal'), functionName: z.literal('staggerGridReveal'), entry: z.literal('stagger-grid-reveal/index.js'), params: StaggerGridRevealParametersSchema }),
 ]);
 
 export const WeaponLoadPlanSchema = z.object({

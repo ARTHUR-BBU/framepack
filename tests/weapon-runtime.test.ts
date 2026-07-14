@@ -36,7 +36,7 @@ afterEach(async () => {
 describe('Codex weapon runtime', () => {
   test('bundled manifests are proven only by checked evidence and identified reviews', async () => {
     const registry = await loadWeaponRegistry();
-    expect(registry.weapons.map((weapon) => weapon.id).sort()).toEqual(['caption-clip-wipe', 'number-count-up', 'text-split-enter']);
+    expect(registry.weapons.map((weapon) => weapon.id).sort()).toEqual(['caption-clip-wipe', 'elastic-scale-enter', 'gradient-shift', 'number-count-up', 'stagger-grid-reveal', 'text-split-enter']);
     expect(registry.weapons.every((weapon) => weapon.maturity === 'proven')).toBe(true);
     expect(registry.weapons.every((weapon) => weapon.evidence && weapon.scorecard)).toBe(true);
     expect(registry.weapons.every((weapon) => weapon.source.commit.length === 40 && !weapon.entry.startsWith('/'))).toBe(true);
@@ -48,6 +48,7 @@ describe('Codex weapon runtime', () => {
     expect(result.selected.every((selection) => selection.entryHash.length === 64)).toBe(true);
     expect(result.candidates.map((candidate) => candidate.weaponId)).toContain('text-split-enter');
     expect(result.candidates.map((candidate) => candidate.weaponId)).toContain('number-count-up');
+    expect(new Set(result.selected.map((selection) => selection.sceneId)).size).toBe(result.selected.length);
   });
 
   test('a load plan without an HTML invocation receipt fails', () => {
@@ -80,7 +81,7 @@ describe('Codex weapon runtime', () => {
   });
 
   test('bundled GSAP weapons follow official transform and visibility conventions', async () => {
-    const roots = ['text-split-enter', 'caption-clip-wipe'];
+    const roots = ['text-split-enter', 'caption-clip-wipe', 'elastic-scale-enter', 'stagger-grid-reveal'];
     for (const id of roots) {
       const source = await readFile(join(process.cwd(), 'packages', 'director-assets', 'weapons', id, 'index.js'), 'utf8');
       expect(source).toContain('autoAlpha');

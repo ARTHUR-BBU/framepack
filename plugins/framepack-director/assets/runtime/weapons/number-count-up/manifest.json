@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "id": "number-count-up",
+  "chineseName": "数字证据递增",
+  "maturity": "proven",
+  "functionName": "numberCountUp",
+  "entry": "number-count-up/index.js",
+  "engine": "gsap",
+  "purposes": ["proof"],
+  "signals": ["数字", "数据", "指标", "%", "小时"],
+  "source": { "asset": "animation-library/number-count-up.js", "commit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" },
+  "proof": { "evidence": "evidence.json", "scorecard": "scorecard.json" }
+}

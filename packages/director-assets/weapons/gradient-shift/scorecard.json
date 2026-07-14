@@ -1,0 +1,42 @@
+{
+  "version": "1.0",
+  "weaponId": "gradient-shift",
+  "reviewer": { "source": "codex", "id": "codex:gpt-5" },
+  "reviewedAt": "2026-07-14T13:00:00.000Z",
+  "buildHashes": [
+    "6cf4e4f8efadff4e803101ad5c9231209ff41fbb44cc5e239973f2237e6671ce",
+    "ab0d846d436e6de9f28a8606f14df840fce981d79b667db5b972bc6ebdb334fb"
+  ],
+  "citedFrames": [
+    "docs/evidence/weapons/gradient-shift/16x9/snapshots/frame-00-at-0.3s.png",
+    "docs/evidence/weapons/gradient-shift/16x9/snapshots/frame-02-at-3.5s.png",
+    "docs/evidence/weapons/gradient-shift/9x16/snapshots/frame-00-at-0.3s.png",
+    "docs/evidence/weapons/gradient-shift/9x16/snapshots/frame-02-at-3.5s.png"
+  ],
+  "dimensions": [
+    { "id": "clarity", "score": 4, "reason": "色彩迁移在连续关键帧中清晰可见" },
+    {
+      "id": "composition",
+      "score": 5,
+      "reason": "渐变容器在横竖构图中比例稳定"
+    },
+    {
+      "id": "motion",
+      "score": 4,
+      "reason": "移色搭配极轻呼吸缩放自然且可检测"
+    },
+    { "id": "rhythm", "score": 4, "reason": "三秒渐变适合氛围段落而不抢信息" },
+    { "id": "craft", "score": 4, "reason": "确定性插值与深色文字保证可读性" },
+    {
+      "id": "adaptability",
+      "score": 5,
+      "reason": "颜色角度时长均可参数化适配品牌"
+    },
+    {
+      "id": "commercialValue",
+      "score": 4,
+      "reason": "适合品牌背景产品卡片和段落转调"
+    }
+  ],
+  "verdict": "proven"
+}

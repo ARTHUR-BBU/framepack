@@ -16,5 +16,8 @@
 | `packages/director-assets/weapons/text-split-enter/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/text-split-enter.js` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
 | `packages/director-assets/weapons/caption-clip-wipe/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/caption-clip-wipe.js` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
 | `packages/director-assets/weapons/number-count-up/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/number-count-up.js` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
+| `packages/director-assets/weapons/elastic-scale-enter/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/elastic-scale-enter.js` | `dfafc6c0af3f58d838c4bc4590278989ab00cf4e` | `MIT` |
+| `packages/director-assets/weapons/gradient-shift/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/gradient-shift.js` | `01a6fe8ac5d6dcef061bf41ae5f9aeb35aa66e82` | `MIT` |
+| `packages/director-assets/weapons/stagger-grid-reveal/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/stagger-grid-reveal.js` | `01a6fe8ac5d6dcef061bf41ae5f9aeb35aa66e82` | `MIT` |
 
 `agents/openai.yaml` 为 Codex 新生成的界面元数据，不属于旧资产迁移项。
