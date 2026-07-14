@@ -12,7 +12,13 @@ test('serves the director cockpit, project summary, and preview only inside its 
   await buildProject(project);
   const server = await startWorkbenchServer(project, 0);
   try {
-    expect((await fetch(`${server.url}/api/project`)).status).toBe(200);
+    const projectResponse = await fetch(`${server.url}/api/project`);
+    expect(projectResponse.status).toBe(200);
+    expect((await projectResponse.json())).toMatchObject({
+      currentBuild: { buildId: expect.any(String), contentHash: expect.stringMatching(/^[a-f0-9]{64}$/) },
+      provenance: { skills: { loaded: expect.any(Array) }, weapons: { selected: expect.any(Array) } },
+      decision: null,
+    });
     expect((await fetch(`${server.url}/`)).headers.get('content-type')).toContain('text/html');
     expect((await fetch(`${server.url}/preview/`)).status).toBe(200);
     expect((await fetch(`${server.url}/preview/public/vendor/gsap.min.js`)).headers.get('content-type')).toContain('javascript');

@@ -55,6 +55,10 @@ describe('project-specific preview composer', () => {
     expect(build.html).not.toContain('Make it felt.');
     expect(await readFile(join(input.projectDir, 'index.html'), 'utf8')).toBe(build.html);
     expect(await readFile(join(input.projectDir, 'public', 'preview.css'), 'utf8')).toContain('Noto Sans SC');
+    const css = await readFile(join(input.projectDir, 'public', 'preview.css'), 'utf8');
+    expect(css).toContain('#root{position:relative;width:100vw;height:100vh;overflow:hidden}');
+    expect(css).toMatch(/\.purpose\{[^}]+\}\.scene-copy\{/);
+    expect(css).toMatch(/\.direction-note\{[^}]+\}\.product-asset\{/);
     expect(await readFile(join(input.projectDir, '.framepack', 'html-build-report.md'), 'utf8')).toContain('structural_contract: pass');
     expect(JSON.parse(await readFile(join(input.projectDir, '.framepack', 'weapon-call-receipt.json'), 'utf8'))).toMatchObject({ verificationErrors: [] });
     expect(inspectPreviewHtml(build.html).codes).toEqual([]);

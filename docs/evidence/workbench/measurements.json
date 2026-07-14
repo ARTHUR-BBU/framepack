@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "browser": "Chromium via Playwright CLI",
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 900,
+      "mainWorkspaceWidth": 1440,
+      "previewStageWidth": 796.953125,
+      "previewStageRatio": 0.55344,
+      "consoleErrors": 0
+    },
+    {
+      "width": 1280,
+      "height": 800,
+      "mainWorkspaceWidth": 1280,
+      "previewStageWidth": 708.40625,
+      "previewStageRatio": 0.55344,
+      "undersizedVisibleTargets": [],
+      "consoleErrors": 0
+    },
+    {
+      "width": 430,
+      "height": 932,
+      "contentOrder": ["导演上下文", "主预览舞台", "导演判断", "分镜时间线"],
+      "orderValid": true,
+      "undersizedVisibleTargets": [],
+      "consoleErrors": 0
+    }
+  ],
+  "contrast": {
+    "normalText": 16.87,
+    "mutedText": 6.25,
+    "smallEyebrowText": 5.27,
+    "requiredNormal": 4.5,
+    "requiredLarge": 3.0,
+    "status": "pass"
+  },
+  "states": {
+    "phaseLabels": 9,
+    "reachablePhaseBranches": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+    "visiblePrimaryActions": 1,
+    "connectionLossVerified": true,
+    "loadedPreviewEmptyOverlayHidden": true
+  }
+}
