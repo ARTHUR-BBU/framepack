@@ -6,7 +6,10 @@ const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../dire
 
 export async function vendorNotoSansSc(targetRoot: string, text: string): Promise<string[]> {
   const css = await readFile(join(SOURCE_ROOT, 'wght.css'), 'utf8');
-  const codePoints = [...`${text} 🌀`].map((char) => char.codePointAt(0)!);
+  // Font subsetting depends on which characters occur, not how often they occur.
+  // Deduplication keeps large briefs linear instead of rescanning every Unicode block
+  // for tens of thousands of repeated Chinese characters.
+  const codePoints = [...new Set([...`${text} 🌀`].map((char) => char.codePointAt(0)!))];
   const blocks = [...css.matchAll(/@font-face\s*\{[\s\S]*?\}/g)].map((match) => match[0]);
   const selected = blocks.filter((block) => {
     const ranges = block.match(/unicode-range:\s*([^;]+)/)?.[1] ?? '';

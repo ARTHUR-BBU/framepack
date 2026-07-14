@@ -117,3 +117,5 @@ export async function readProjectSpec(projectDir: string): Promise<ProjectSpec> 
 }
 
 export { composePreview, type ComposePreviewInput, type PreviewBuild } from './preview-composer.js';
+export { runDirectorTask, runProjectProposal, type DirectorServices, type DirectorTaskInput, type HostRunReceipt } from './orchestrator.js';
+export { doctor, renderDoctorChinese, type DoctorCheck, type DoctorReport } from './doctor.js';
