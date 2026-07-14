@@ -1,0 +1,16 @@
+{
+  "version": "1.0", "weaponId": "caption-clip-wipe",
+  "reviewer": { "source": "codex", "id": "codex:gpt-5" }, "reviewedAt": "2026-07-14T03:25:00.000Z",
+  "buildHashes": ["d819254d8e0439dc8b42a07f55b88520ec00696db146e2e30da52e3cfd95cf10", "8ed6883fd3b4882a96ea2bc3b4008e59a660d86beb2ae5db3bca64ee7c63f482"],
+  "citedFrames": ["docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/contact-sheet.jpg", "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/contact-sheet.jpg"],
+  "dimensions": [
+    { "id": "clarity", "score": 5, "reason": "逐词揭示保留完整阅读顺序，最终文案非常清楚" },
+    { "id": "composition", "score": 4, "reason": "长句在横竖画幅均居中且没有超出安全区域" },
+    { "id": "motion", "score": 4, "reason": "裁切擦入干净克制，动作直接服务信息揭示" },
+    { "id": "rhythm", "score": 4, "reason": "逐词间隔形成自然阅读拍点，没有拖沓感" },
+    { "id": "craft", "score": 4, "reason": "词块边缘稳定，快照未见重叠、闪动或残影" },
+    { "id": "adaptability", "score": 5, "reason": "能够适配说明、字幕与行动文案，并通过双画幅" },
+    { "id": "commercialValue", "score": 5, "reason": "适合产品卖点和行动号召，是高频商业表达武器" }
+  ],
+  "verdict": "proven"
+}

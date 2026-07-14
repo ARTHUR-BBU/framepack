@@ -10,17 +10,22 @@ import {
   WeaponCallSchema,
   WeaponLoadPlanSchema,
   WeaponManifestSchema,
+  WeaponBenchEvidenceSchema,
+  WeaponScorecardSchema,
   type Storyboard,
   type WeaponCall,
   type WeaponLoadPlan,
   type WeaponManifest,
+  type WeaponBenchEvidence,
+  type WeaponScorecard,
 } from '@framepack/director-contracts';
 import { stableStringify } from './content-hash.js';
+import { promoteWeapon, verifyWeaponProofFiles } from './weapon-bench.js';
 
 const DEFAULT_WEAPON_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../director-assets/weapons');
 const WEAPON_IDS = ['text-split-enter', 'caption-clip-wipe', 'number-count-up'] as const;
 
-export type RuntimeWeapon = WeaponManifest & { parameters: ZodType; entryHash: string };
+export type RuntimeWeapon = WeaponManifest & { parameters: ZodType; entryHash: string; evidence?: WeaponBenchEvidence; scorecard?: WeaponScorecard };
 export type WeaponRegistry = { version: '1.0'; weapons: RuntimeWeapon[] };
 
 const PARAMETER_SCHEMAS: Record<(typeof WEAPON_IDS)[number], ZodType> = {
@@ -29,12 +34,20 @@ const PARAMETER_SCHEMAS: Record<(typeof WEAPON_IDS)[number], ZodType> = {
   'number-count-up': NumberCountUpParametersSchema,
 };
 
-export async function loadWeaponRegistry(root = DEFAULT_WEAPON_ROOT): Promise<WeaponRegistry> {
+export async function loadWeaponRegistry(root = DEFAULT_WEAPON_ROOT, proofRoot = resolve(root, '../../..')): Promise<WeaponRegistry> {
   const weapons = await Promise.all(WEAPON_IDS.map(async (id): Promise<RuntimeWeapon> => {
     const raw = JSON.parse(await readFile(join(root, id, 'manifest.json'), 'utf8'));
     const manifest = WeaponManifestSchema.parse(raw);
+    if (manifest.id !== id) throw new Error(`weapon directory and manifest id mismatch: ${id}`);
     const entryContent = await readFile(join(root, ...manifest.entry.split('/')), 'utf8');
-    return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: sha256(entryContent) };
+    if (manifest.maturity !== 'proven') return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: sha256(entryContent) };
+    const evidence = WeaponBenchEvidenceSchema.parse(JSON.parse(await readFile(join(root, id, ...manifest.proof!.evidence.split('/')), 'utf8')));
+    const scorecard = WeaponScorecardSchema.parse(JSON.parse(await readFile(join(root, id, ...manifest.proof!.scorecard.split('/')), 'utf8')));
+    if (evidence.weaponId !== manifest.id || scorecard.weaponId !== manifest.id) throw new Error(`weapon proof id mismatch: ${id}`);
+    await verifyWeaponProofFiles(proofRoot, evidence);
+    promoteWeapon(evidence, scorecard);
+    if (evidence.entryHash !== sha256(entryContent)) throw new Error(`proven weapon entry hash mismatch: ${id}`);
+    return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: evidence.entryHash, evidence, scorecard };
   }));
   return { version: '1.0', weapons };
 }

@@ -34,16 +34,18 @@ afterEach(async () => {
 });
 
 describe('Codex weapon runtime', () => {
-  test('bundled manifests start as honest candidates with portable provenance', async () => {
+  test('bundled manifests are proven only by checked evidence and identified reviews', async () => {
     const registry = await loadWeaponRegistry();
     expect(registry.weapons.map((weapon) => weapon.id).sort()).toEqual(['caption-clip-wipe', 'number-count-up', 'text-split-enter']);
-    expect(registry.weapons.every((weapon) => weapon.maturity === 'candidate')).toBe(true);
+    expect(registry.weapons.every((weapon) => weapon.maturity === 'proven')).toBe(true);
+    expect(registry.weapons.every((weapon) => weapon.evidence && weapon.scorecard)).toBe(true);
     expect(registry.weapons.every((weapon) => weapon.source.commit.length === 40 && !weapon.entry.startsWith('/'))).toBe(true);
   });
 
-  test('candidate weapons are suggested but cannot be auto-selected', async () => {
+  test('proven weapons can be auto-selected with exact invocation evidence', async () => {
     const result = await resolveWeapons(storyboard(), await loadWeaponRegistry());
-    expect(result.selected).toEqual([]);
+    expect(result.selected.length).toBeGreaterThan(0);
+    expect(result.selected.every((selection) => selection.entryHash.length === 64)).toBe(true);
     expect(result.candidates.map((candidate) => candidate.weaponId)).toContain('text-split-enter');
     expect(result.candidates.map((candidate) => candidate.weaponId)).toContain('number-count-up');
   });
@@ -77,6 +79,16 @@ describe('Codex weapon runtime', () => {
     })).toThrow();
   });
 
+  test('bundled GSAP weapons follow official transform and visibility conventions', async () => {
+    const roots = ['text-split-enter', 'caption-clip-wipe'];
+    for (const id of roots) {
+      const source = await readFile(join(process.cwd(), 'packages', 'director-assets', 'weapons', id, 'index.js'), 'utf8');
+      expect(source).toContain('autoAlpha');
+      expect(source).not.toMatch(/\bopacity\s*:/);
+      expect(source).not.toContain('rotateX');
+    }
+  });
+
   test('portable manifest paths reject URLs and file URIs', () => {
     const valid = {
       version: '1.0', id: 'text-split-enter', chineseName: '标题', maturity: 'candidate', functionName: 'textSplitEnter',
@@ -89,7 +101,10 @@ describe('Codex weapon runtime', () => {
 
   test('fallback evidence is recorded separately for every unresolved scene', async () => {
     const result = await resolveWeapons(storyboard(), await loadWeaponRegistry());
-    expect(result.fallbacks.map((fallback) => fallback.sceneId).sort()).toEqual([...new Set(result.candidates.map((candidate) => candidate.sceneId))].sort());
+    const unresolved = [...new Set(result.candidates
+      .filter((candidate) => !result.selected.some((selection) => selection.sceneId === candidate.sceneId))
+      .map((candidate) => candidate.sceneId))].sort();
+    expect(result.fallbacks.map((fallback) => fallback.sceneId).sort()).toEqual(unresolved);
     expect(result.fallbacks.every((fallback) => fallback.checkedSources.length > 0 && fallback.reason.length > 0)).toBe(true);
   });
 

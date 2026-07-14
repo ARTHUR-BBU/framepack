@@ -2,11 +2,12 @@
   "version": "1.0",
   "id": "text-split-enter",
   "chineseName": "标题分裂入场",
-  "maturity": "candidate",
+  "maturity": "proven",
   "functionName": "textSplitEnter",
   "entry": "text-split-enter/index.js",
   "engine": "gsap",
   "purposes": ["hook"],
   "signals": ["标题", "核心承诺", "大字"],
-  "source": { "asset": "animation-library/text-split-enter.js", "commit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+  "source": { "asset": "animation-library/text-split-enter.js", "commit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" },
+  "proof": { "evidence": "evidence.json", "scorecard": "scorecard.json" }
 }

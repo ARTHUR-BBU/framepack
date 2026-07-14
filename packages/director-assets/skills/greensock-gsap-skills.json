@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "upstream": "https://github.com/greensock/gsap-skills",
+  "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+  "license": "MIT",
+  "installedFor": ["codex"],
+  "modules": [
+    { "id": "gsap-core", "framepackRole": "所有 GSAP 武器的基础写法、缓动、stagger 与 reduced-motion" },
+    { "id": "gsap-timeline", "framepackRole": "多段动画编排与可读的时间位置参数" },
+    { "id": "gsap-scrolltrigger", "framepackRole": "未来网页捕获和滚动叙事；不直接用于离线视频时间轴" },
+    { "id": "gsap-plugins", "framepackRole": "SplitText、MorphSVG、Flip 等未来高级武器的官方用法" },
+    { "id": "gsap-utils", "framepackRole": "映射、约束、插值、随机与选择器工具" },
+    { "id": "gsap-react", "framepackRole": "未来 React 宿主中的作用域与销毁规范" },
+    { "id": "gsap-performance", "framepackRole": "transform 优先、避免布局抖动和资源清理" },
+    { "id": "gsap-frameworks", "framepackRole": "未来 Vue/Svelte 宿主生命周期适配" }
+  ],
+  "hyperframesOverrides": [
+    "视频武器必须创建 paused timeline 并注册到 window.__timelines",
+    "所有动画必须能被 HyperFrames 确定性 seek",
+    "不得动画化 clip 根节点，只动画 scene-inner 或内部元素",
+    "生产试片使用本地 vendored GSAP 与字体，不依赖 live CDN",
+    "ScrollTrigger 不用于离线视频主时间轴；滚动叙事必须先转换为确定性时间线"
+  ]
+}

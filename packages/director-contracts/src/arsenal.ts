@@ -23,6 +23,9 @@ export const WeaponManifestSchema = z.object({
     commit: z.string().regex(/^[a-f0-9]{40}$/),
     license: z.string().min(1),
   }),
+  proof: z.object({ evidence: PortablePathSchema, scorecard: PortablePathSchema }).optional(),
+}).superRefine((manifest, ctx) => {
+  if (manifest.maturity === 'proven' && !manifest.proof) ctx.addIssue({ code: 'custom', path: ['proof'], message: 'proven weapons require evidence and scorecard paths' });
 });
 
 export const TextSplitEnterParametersSchema = z.object({
@@ -92,3 +95,47 @@ export const WeaponCallSchema = z.object({
 export type WeaponManifest = z.infer<typeof WeaponManifestSchema>;
 export type WeaponLoadPlan = z.infer<typeof WeaponLoadPlanSchema>;
 export type WeaponCall = z.infer<typeof WeaponCallSchema>;
+
+export const WeaponBenchEvidenceSchema = z.object({
+  version: z.literal('1.0'),
+  weaponId: WeaponIdSchema,
+  entryHash: HashSchema,
+  ratios: z.array(z.object({
+    ratio: z.enum(['16:9', '9:16']),
+    projectPath: PortablePathSchema,
+    hyperframesVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+    buildHash: HashSchema,
+    buildFiles: z.array(z.object({ path: PortablePathSchema, hash: HashSchema })).min(1),
+    lint: z.literal('pass'),
+    check: z.literal('pass'),
+    snapshots: z.array(z.object({ path: PortablePathSchema, hash: HashSchema })).min(1),
+    commandOutputHashes: z.object({ lint: HashSchema, check: HashSchema, snapshot: HashSchema }),
+  }).superRefine((ratio, ctx) => {
+    const prefix = `${ratio.projectPath}/`;
+    const paths = ratio.buildFiles.map((file) => file.path);
+    if (paths.some((path) => !path.startsWith(prefix))) ctx.addIssue({ code: 'custom', path: ['buildFiles'], message: 'build files must stay inside the ratio project' });
+    if (new Set(paths).size !== paths.length || paths.join('\n') !== [...paths].sort().join('\n')) ctx.addIssue({ code: 'custom', path: ['buildFiles'], message: 'build files must be unique and canonically sorted' });
+    for (const required of ['index.html', 'frame.md', 'vendor/weapon.js', 'vendor/gsap.min.js', 'fonts/wght.css']) {
+      if (!paths.includes(`${prefix}${required}`)) ctx.addIssue({ code: 'custom', path: ['buildFiles'], message: `missing required build file: ${required}` });
+    }
+    if (!paths.some((path) => path.startsWith(`${prefix}fonts/files/`))) ctx.addIssue({ code: 'custom', path: ['buildFiles'], message: 'missing vendored font files' });
+    if (ratio.snapshots.some((snapshot) => !snapshot.path.startsWith(`${prefix}snapshots/`))) ctx.addIssue({ code: 'custom', path: ['snapshots'], message: 'snapshots must stay inside the ratio project' });
+  })).length(2).refine((ratios) => new Set(ratios.map((item) => item.ratio)).size === 2, 'both ratios are required'),
+  generatedAt: z.string().datetime(),
+});
+
+export const WeaponScoreDimensionIdSchema = z.enum(['clarity', 'composition', 'motion', 'rhythm', 'craft', 'adaptability', 'commercialValue']);
+export const WeaponScorecardSchema = z.object({
+  version: z.literal('1.0'),
+  weaponId: WeaponIdSchema,
+  reviewer: z.object({ source: z.enum(['codex', 'independent_model', 'human']), id: z.string().min(1) }),
+  reviewedAt: z.string().datetime(),
+  buildHashes: z.array(HashSchema).min(2).refine((items) => new Set(items).size === items.length, 'build hashes must be unique'),
+  citedFrames: z.array(PortablePathSchema).min(2).refine((items) => new Set(items).size === items.length, 'cited frames must be unique'),
+  dimensions: z.array(z.object({ id: WeaponScoreDimensionIdSchema, score: z.number().min(1).max(5), reason: z.string().min(8) }))
+    .length(7).refine((items) => new Set(items.map((item) => item.id)).size === 7, 'all seven dimensions must be unique'),
+  verdict: z.literal('proven'),
+});
+
+export type WeaponBenchEvidence = z.infer<typeof WeaponBenchEvidenceSchema>;
+export type WeaponScorecard = z.infer<typeof WeaponScorecardSchema>;

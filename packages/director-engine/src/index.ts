@@ -40,6 +40,7 @@ export {
   type RuntimeWeapon,
   type WeaponRegistry,
 } from './weapon-runtime.js';
+export { classifyWeaponBench, generateWeaponBench, promoteWeapon, runWeaponBenchEvidence, verifyWeaponProofFiles } from './weapon-bench.js';
 
 const require = createRequire(import.meta.url);
 const PROJECT_SPEC_FILE = '.framepack/project.json';
