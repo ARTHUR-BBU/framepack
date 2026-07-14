@@ -95,7 +95,9 @@ export function verifyWeaponCalls(planInput: WeaponLoadPlan, html: string): stri
     if (!html.includes(expectedEntryTag)) errors.push(`weapon_entry_hash_mismatch:${selection.weaponId}`);
     if (call.inputHash !== plan.inputHash) errors.push(`weapon_stale_input:${selection.weaponId}`);
     if (stableStringify(call.params) !== stableStringify(selection.params)) errors.push(`weapon_params_mismatch:${selection.weaponId}`);
-    if (!html.includes(renderWeaponInvocation(selection, plan.inputHash))) errors.push(`weapon_invocation_mismatch:${selection.weaponId}`);
+    const expectedInvocation = renderWeaponInvocation(selection, plan.inputHash);
+    const positionedPrefix = expectedInvocation.slice(0, -2);
+    if (!html.includes(expectedInvocation) && !html.includes(`${positionedPrefix},`)) errors.push(`weapon_invocation_mismatch:${selection.weaponId}`);
     return errors;
   });
 }
@@ -108,7 +110,7 @@ export function extractWeaponCalls(html: string): WeaponCall[] {
   return calls;
 }
 
-export function renderWeaponInvocation(selection: WeaponLoadPlan['selected'][number], inputHash: string): string {
+export function renderWeaponInvocation(selection: WeaponLoadPlan['selected'][number], inputHash: string, position?: string): string {
   const call = WeaponCallSchema.parse({
     sceneId: selection.sceneId,
     weaponId: selection.weaponId,
@@ -118,7 +120,7 @@ export function renderWeaponInvocation(selection: WeaponLoadPlan['selected'][num
   });
   const selector = `[data-framepack-weapon-target="${selection.sceneId}"]`;
   const paramExpression = `JSON.parse(${JSON.stringify(JSON.stringify(selection.params))})`;
-  return `/*framepack-weapon-call:${JSON.stringify(call)}*/${selection.functionName}(window.__framepackTimeline,document.querySelector(${JSON.stringify(selector)}),${paramExpression});`;
+  return `/*framepack-weapon-call:${JSON.stringify(call)}*/${selection.functionName}(window.__framepackTimeline,document.querySelector(${JSON.stringify(selector)}),${paramExpression}${position === undefined ? '' : `,${position}`});`;
 }
 
 export async function persistWeaponEvidence(projectDir: string, planInput: WeaponLoadPlan, html: string): Promise<void> {

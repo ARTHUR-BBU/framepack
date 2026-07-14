@@ -109,3 +109,4 @@ function runNpx(args: string[]): Promise<void> {
     child.once('exit', (code) => code === 0 ? resolveRun() : rejectRun(new Error(`hyperframes snapshot failed with exit code ${code}`)));
   });
 }
+export { composePreview, type ComposePreviewInput, type PreviewBuild } from './preview-composer.js';

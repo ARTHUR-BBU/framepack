@@ -18,6 +18,8 @@ test('initializes, builds, and plans proof frames for a director preview', async
   expect(existsSync(join(project, 'public', 'fonts', 'Inter-Regular.woff2'))).toBe(true);
   expect(readFileSync(join(project, 'index.html'), 'utf8')).toContain('window.__timelines[\'main\']');
   expect(build.inspection.codes).toEqual([]);
+  expect(readFileSync(join(project, 'index.html'), 'utf8')).toContain('Pulse');
+  expect(readFileSync(join(project, 'index.html'), 'utf8')).not.toMatch(/Make it felt|Show the proof|Ready to render/);
   expect(snapshot.frames.map((frame) => frame.label)).toEqual(['scene-1-settled', 'transition-1-midpoint', 'scene-2-settled', 'transition-2-midpoint', 'scene-3-settled', 'final-hold']);
   expect(calls[0]).toEqual(expect.arrayContaining(['snapshot', project, '--no-end']));
 });
