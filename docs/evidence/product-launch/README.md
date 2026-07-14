@@ -15,8 +15,8 @@
 
 | 画幅 | Build ID | HTML SHA-256 | 联系表 SHA-256 |
 |---|---|---|---|
-| 16:9 | `1d45da44169b4d1d942758f06788a5804d36e3ba8c8e2d0cdbb9e9a6db2180c6` | `06fad8ceba08f9c4eff8ca5d208744ce27121f28ff265a7839b72db29179fc40` | `95daafce592e4a1f103afbb14442bdf7cbed503611e42fcde8454209a1e8ab0c` |
-| 9:16 | `29270871162f84e39eebb0a450bf84c40d82ffcd8a27433ef69fd786cc07e3e8` | `27b6653b4fc961b1e113420c6079539768fa7c3cad98c26aff95673bcfc7dc3f` | `4e70b6de27a0940c546c87d6857d53a64f6d5b5ebfe21a77013cb0e89990c75c` |
+| 16:9 | `ab4cd793574c353bbcf220d9b9b1c0f7a5bf4050f9354333dc050270cf55d889` | `06fad8ceba08f9c4eff8ca5d208744ce27121f28ff265a7839b72db29179fc40` | `95daafce592e4a1f103afbb14442bdf7cbed503611e42fcde8454209a1e8ab0c` |
+| 9:16 | `e701ab7253b0707d351d4cca9f407f4078c5beebb6ea250ed22c33d76b7afdab` | `27b6653b4fc961b1e113420c6079539768fa7c3cad98c26aff95673bcfc7dc3f` | `4e70b6de27a0940c546c87d6857d53a64f6d5b5ebfe21a77013cb0e89990c75c` |
 
 详细七维理由见 `review-scorecards.json`。E2E 会直接读取这两份归档审片单作为批准的唯一依据；其中 `evidenceFrames` 是相对于当次导演项目的路径。每个画幅目录还保存了 `hyperframes-lint.json`、`hyperframes-check.json`、`e2e-evidence.json` 与 `handoff-manifest.json`；其中 `e2e-evidence.json` 逐一列出修改前后六个采样点的 SHA-256，可证明每个对应帧都发生了变化。
 

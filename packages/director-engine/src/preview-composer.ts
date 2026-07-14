@@ -16,6 +16,7 @@ import { SkillLoadReceiptSchema, type SkillLoadReceipt } from './skill-runtime.j
 import { runtimeAssetRoot } from './runtime-assets.js';
 import { loadStyleCatalog } from './style-catalog.js';
 import { persistWeaponEvidence, renderWeaponInvocation, verifyWeaponCalls } from './weapon-runtime.js';
+import { auditGsapSource, gsapCapabilityFingerprintInput, loadGsapCapabilities, persistGsapCapabilityReceipt, routeGsapCapabilities } from './gsap-capabilities.js';
 
 const require = createRequire(import.meta.url);
 const DEFAULT_WEAPON_ROOT = resolve(runtimeAssetRoot, 'weapons');
@@ -85,8 +86,13 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
     try { content = await readFile(resolve(weaponRoot, ...selection.entry.split('/'))); }
     catch { throw new Error(`planned weapon unavailable: ${selection.weaponId}`); }
     if (sha256(content) !== selection.entryHash) throw new Error(`planned weapon hash mismatch: ${selection.weaponId}`);
-    weaponSources.set(selection.entry, content.toString('utf8'));
+    const source = content.toString('utf8');
+    const gsapIssues = auditGsapSource(source);
+    if (gsapIssues.length) throw new Error(`planned weapon violates official GSAP production rules: ${selection.weaponId}:${gsapIssues.join(',')}`);
+    weaponSources.set(selection.entry, source);
   }
+  const gsapRegistry = await loadGsapCapabilities();
+  const gsapRoute = routeGsapCapabilities(gsapRegistry, { target: 'offline-video', needsPlugins: [...weaponSources.values()].some((source) => /\b(?:SplitText|MorphSVG|Flip|Draggable)\b/.test(source)) });
 
   const style = loadStyleCatalog().styles.find((item) => item.id === direction.primaryStyle);
   if (!style) throw new Error(`selected style unavailable: ${direction.primaryStyle}`);
@@ -115,7 +121,7 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
   const { createdAt: _createdAt, ...semanticStoryboard } = storyboard;
   const buildId = sha256(stableStringify({
     spec, assets: assets.assets.map(({ id, sha256: hash, sourcePath }) => ({ id, hash, sourcePath })), direction,
-    storyboard: semanticStoryboard, skills: skillReceipt.loaded.map(({ id, sha256: hash }) => ({ id, hash })), weaponPlan, feedback: input.feedback, html, css,
+    storyboard: semanticStoryboard, skills: skillReceipt.loaded.map(({ id, sha256: hash }) => ({ id, hash })), gsapSkills: gsapCapabilityFingerprintInput(gsapRegistry, gsapRoute), weaponPlan, feedback: input.feedback, html, css,
   }));
   await Promise.all([
     writeFile(join(projectDir, 'index.html'), html, 'utf8'),
@@ -123,6 +129,7 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
     writeFile(join(projectDir, '.framepack', 'html-build-report.md'), `# HTML Build Report\n\n- build_id: ${buildId}\n- content_source: validated_storyboard\n- style: ${style.chineseName}\n- scenes: ${storyboard.scenes.length}\n- weapons: ${weaponPlan.selected.map((item) => item.weaponId).join(', ') || 'HANDWRITE'}\n- structural_contract: pass\n`, 'utf8'),
   ]);
   await persistWeaponEvidence(projectDir, weaponPlan, html);
+  await persistGsapCapabilityReceipt(projectDir, gsapRoute);
   return { buildId, html, inspection };
 }
 

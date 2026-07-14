@@ -86,6 +86,9 @@ describe('project-specific preview composer', () => {
     expect(build.html).toContain('framepack-weapon-module:{"entry":"text-split-enter/index.js"');
     expect(build.html).toContain('function textSplitEnter(');
     expect(build.html).not.toContain(`import { textSplitEnter } from './text-split-enter/index.js'`);
+    const gsapReceipt = JSON.parse(await readFile(join(input.projectDir, '.framepack', 'gsap-capability-receipt.json'), 'utf8'));
+    expect(gsapReceipt.loaded.map((item: { id: string }) => item.id)).toEqual(['gsap-core', 'gsap-timeline', 'gsap-utils', 'gsap-performance']);
+    expect(gsapReceipt.excluded).toContain('gsap-scrolltrigger');
   });
 
   test('a skill changed after its receipt stops composition', async () => {

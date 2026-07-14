@@ -14,6 +14,13 @@ test('plugin manifest, executable skill, runtime assets, and repo marketplace re
   expect(existsSync(`${plugin}/skills/framepack-director/scripts/framepack-director.mjs`)).toBe(true);
   expect(existsSync(`${plugin}/assets/runtime/fonts/NotoSansSC-Regular.woff2`)).toBe(true);
   expect(existsSync(`${plugin}/assets/runtime/fonts/OFL-1.1.txt`)).toBe(true);
+  const gsapRegistry = JSON.parse(readFileSync(`${plugin}/assets/runtime/skills/greensock-gsap-skills.json`, 'utf8'));
+  expect(gsapRegistry.modules).toHaveLength(8);
+  for (const skill of gsapRegistry.modules) {
+    const snapshot = `${plugin}/assets/runtime/${skill.snapshotPath}`;
+    expect(existsSync(snapshot), `${skill.id} snapshot should be packaged`).toBe(true);
+    expect(createHash('sha256').update(readFileSync(snapshot)).digest('hex')).toBe(skill.sha256);
+  }
   const marketplace = JSON.parse(readFileSync('.agents/plugins/marketplace.json', 'utf8'));
   expect(marketplace.plugins.find((item: { name: string }) => item.name === 'framepack-director').source.path).toBe('./plugins/framepack-director');
 });

@@ -15768,10 +15768,10 @@ async function runHyperframes(command, projectDir, options = {}) {
   const args = [command, projectDir, ...options.args ?? []];
   if (options.runner) return options.runner(args);
   const invocation = resolveNpxInvocation(["--no-install", "hyperframes", ...args]);
-  await new Promise((resolve13, reject) => {
+  await new Promise((resolve14, reject) => {
     const child = spawn(invocation.executable, invocation.args, { stdio: "inherit", shell: invocation.shell });
     child.once("error", reject);
-    child.once("exit", (code) => code === 0 ? resolve13() : reject(new Error(`hyperframes ${command} failed with exit code ${code}`)));
+    child.once("exit", (code) => code === 0 ? resolve14() : reject(new Error(`hyperframes ${command} failed with exit code ${code}`)));
   });
 }
 var init_runner = __esm({
@@ -16571,14 +16571,90 @@ var init_weapon_runtime = __esm({
   }
 });
 
-// packages/director-engine/src/preview-composer.ts
+// packages/director-engine/src/gsap-capabilities.ts
 import { createHash as createHash5 } from "node:crypto";
+import { mkdir as mkdir5, readFile as readFile5, realpath, writeFile as writeFile5 } from "node:fs/promises";
+import { isAbsolute as isAbsolute2, join as join6, relative as relative3, resolve as resolve7 } from "node:path";
+async function loadGsapCapabilities(root = runtimeAssetRoot) {
+  const raw = RegistryFileSchema.parse(JSON.parse(await readFile5(join6(root, "skills", "greensock-gsap-skills.json"), "utf8")));
+  const allowedRoot = await realpath(join6(root, "skills", "greensock-official"));
+  const modules = await Promise.all(raw.modules.map(async (item) => {
+    if (isAbsolute2(item.snapshotPath)) throw new Error(`official GSAP skill path escapes snapshot root: ${item.id}`);
+    const resolvedPath = await realpath(resolve7(root, ...item.snapshotPath.split("/")));
+    const within = relative3(allowedRoot, resolvedPath);
+    if (within.startsWith("..") || isAbsolute2(within)) throw new Error(`official GSAP skill path escapes snapshot root: ${item.id}`);
+    const actual = createHash5("sha256").update(await readFile5(resolvedPath)).digest("hex");
+    if (actual !== item.sha256) throw new Error(`official GSAP skill hash mismatch: ${item.id}`);
+    return { ...item, verified: true, resolvedPath };
+  }));
+  return { ...raw, modules };
+}
+function gsapCapabilityFingerprintInput(registry2, route) {
+  return {
+    registry: {
+      version: registry2.version,
+      upstream: registry2.upstream,
+      commit: registry2.commit,
+      license: registry2.license,
+      installedFor: registry2.installedFor,
+      hyperframesOverrides: registry2.hyperframesOverrides,
+      modules: registry2.modules.map(({ id, scope, snapshotPath, sha256: sha2564, framepackRole }) => ({ id, scope, snapshotPath, sha256: sha2564, framepackRole }))
+    },
+    route: { target: route.target, required: route.required, excluded: route.excluded }
+  };
+}
+function routeGsapCapabilities(registry2, input) {
+  const base = ["gsap-core", "gsap-timeline", "gsap-utils", "gsap-performance"];
+  const host = input.target === "react-host" ? ["gsap-react"] : input.target === "framework-host" ? ["gsap-frameworks"] : [];
+  const capture = input.target === "website-capture" ? ["gsap-scrolltrigger"] : [];
+  const required2 = [...base, ...input.needsPlugins ? ["gsap-plugins"] : [], ...capture, ...host];
+  const excluded = registry2.modules.map((item) => item.id).filter((id) => !required2.includes(id));
+  return { target: input.target, required: required2, excluded, modules: registry2.modules.filter((item) => required2.includes(item.id)) };
+}
+async function persistGsapCapabilityReceipt(projectDir, route) {
+  const receipt2 = {
+    version: "1.0",
+    target: route.target,
+    loaded: route.modules.map(({ id, sha256: sha2564, snapshotPath }) => ({ id, sha256: sha2564, snapshotPath })),
+    excluded: route.excluded
+  };
+  await mkdir5(join6(projectDir, ".framepack"), { recursive: true });
+  await writeFile5(join6(projectDir, ".framepack", "gsap-capability-receipt.json"), `${JSON.stringify(receipt2, null, 2)}
+`, "utf8");
+  return receipt2;
+}
+function auditGsapSource(source2) {
+  const issues = [];
+  if (/ScrollTrigger\s*\.|scrollTrigger\s*:/.test(source2)) issues.push("scrolltrigger-offline");
+  for (const match of source2.matchAll(/\b(width|height|top|left|right|bottom|margin|padding)\s*:/g)) issues.push(`layout-property:${match[1]}`);
+  if (/repeat\s*:\s*-1/.test(source2)) issues.push("infinite-repeat");
+  if (/\btransform\s*:/.test(source2)) issues.push("raw-transform");
+  return [...new Set(issues)];
+}
+var IdSchema, ModuleSchema, ALL_IDS, RegistryFileSchema;
+var init_gsap_capabilities = __esm({
+  "packages/director-engine/src/gsap-capabilities.ts"() {
+    "use strict";
+    init_zod();
+    init_runtime_assets();
+    IdSchema = external_exports.enum(["gsap-core", "gsap-timeline", "gsap-scrolltrigger", "gsap-plugins", "gsap-utils", "gsap-react", "gsap-performance", "gsap-frameworks"]);
+    ModuleSchema = external_exports.object({ id: IdSchema, scope: external_exports.enum(["production", "conditional", "capture-only", "host-only"]), snapshotPath: external_exports.string().min(1), sha256: external_exports.string().regex(/^[a-f0-9]{64}$/), framepackRole: external_exports.string().min(1) });
+    ALL_IDS = IdSchema.options;
+    RegistryFileSchema = external_exports.object({ version: external_exports.literal("1.0"), upstream: external_exports.string().url(), commit: external_exports.string().regex(/^[a-f0-9]{40}$/), license: external_exports.literal("MIT"), installedFor: external_exports.array(external_exports.literal("codex")), modules: external_exports.array(ModuleSchema).length(8), hyperframesOverrides: external_exports.array(external_exports.string().min(1)).min(1) }).superRefine((registry2, context) => {
+      const ids = registry2.modules.map((item) => item.id);
+      if (new Set(ids).size !== ALL_IDS.length || ALL_IDS.some((id) => !ids.includes(id))) context.addIssue({ code: "custom", path: ["modules"], message: "official GSAP registry must contain each supported module exactly once" });
+    });
+  }
+});
+
+// packages/director-engine/src/preview-composer.ts
+import { createHash as createHash6 } from "node:crypto";
 import { existsSync as existsSync2 } from "node:fs";
-import { cp as cp3, mkdir as mkdir5, readFile as readFile5, writeFile as writeFile5 } from "node:fs/promises";
+import { cp as cp3, mkdir as mkdir6, readFile as readFile6, writeFile as writeFile6 } from "node:fs/promises";
 import { createRequire as createRequire2 } from "node:module";
-import { dirname as dirname6, join as join6, resolve as resolve7 } from "node:path";
+import { dirname as dirname6, join as join7, resolve as resolve8 } from "node:path";
 async function composePreview(input) {
-  const projectDir = resolve7(input.projectDir);
+  const projectDir = resolve8(input.projectDir);
   const spec = ProjectSpecSchema.parse(input.spec);
   const assets = AssetLedgerSchema.parse(input.assets);
   const direction = DirectionSelectionSchema.parse(input.direction);
@@ -16594,7 +16670,7 @@ async function composePreview(input) {
   for (const loaded of skillReceipt.loaded) {
     let content;
     try {
-      content = await readFile5(loaded.resolvedSource);
+      content = await readFile6(loaded.resolvedSource);
     } catch {
       throw new Error(`skill unavailable after receipt: ${loaded.id}`);
     }
@@ -16617,25 +16693,30 @@ async function composePreview(input) {
       if (!asset || asset.status !== "available" || !asset.confirmed) throw new Error(`assigned asset missing: ${assetId}`);
       let content;
       try {
-        content = await readFile5(resolve7(projectDir, ...asset.sourcePath.split("/")));
+        content = await readFile6(resolve8(projectDir, ...asset.sourcePath.split("/")));
       } catch {
         throw new Error(`assigned asset missing: ${assetId}`);
       }
       if (sha2563(content) !== asset.sha256.toLowerCase()) throw new Error(`assigned asset hash mismatch: ${assetId}`);
     }
   }
-  const weaponRoot = resolve7(input.weaponRoot ?? DEFAULT_WEAPON_ROOT2);
+  const weaponRoot = resolve8(input.weaponRoot ?? DEFAULT_WEAPON_ROOT2);
   const weaponSources = /* @__PURE__ */ new Map();
   for (const selection of weaponPlan.selected) {
     let content;
     try {
-      content = await readFile5(resolve7(weaponRoot, ...selection.entry.split("/")));
+      content = await readFile6(resolve8(weaponRoot, ...selection.entry.split("/")));
     } catch {
       throw new Error(`planned weapon unavailable: ${selection.weaponId}`);
     }
     if (sha2563(content) !== selection.entryHash) throw new Error(`planned weapon hash mismatch: ${selection.weaponId}`);
-    weaponSources.set(selection.entry, content.toString("utf8"));
+    const source2 = content.toString("utf8");
+    const gsapIssues = auditGsapSource(source2);
+    if (gsapIssues.length) throw new Error(`planned weapon violates official GSAP production rules: ${selection.weaponId}:${gsapIssues.join(",")}`);
+    weaponSources.set(selection.entry, source2);
   }
+  const gsapRegistry = await loadGsapCapabilities();
+  const gsapRoute = routeGsapCapabilities(gsapRegistry, { target: "offline-video", needsPlugins: [...weaponSources.values()].some((source2) => /\b(?:SplitText|MorphSVG|Flip|Draggable)\b/.test(source2)) });
   const style2 = loadStyleCatalog().styles.find((item) => item.id === direction.primaryStyle);
   if (!style2) throw new Error(`selected style unavailable: ${direction.primaryStyle}`);
   const sceneText = storyboard.scenes.flatMap((scene) => [scene.title, scene.narrativeBeat, scene.visualFocus]).join(" ");
@@ -16646,17 +16727,17 @@ async function composePreview(input) {
   const inspection = inspectPreviewHtml(html, css);
   if (inspection.codes.length) throw new Error(`preview HTML violates HyperFrames contract: ${inspection.codes.join(", ")}`);
   await Promise.all([
-    mkdir5(join6(projectDir, "public", "vendor"), { recursive: true }),
-    mkdir5(join6(projectDir, "public", "fonts", "noto-sans-sc"), { recursive: true }),
-    mkdir5(join6(projectDir, ".framepack"), { recursive: true })
+    mkdir6(join7(projectDir, "public", "vendor"), { recursive: true }),
+    mkdir6(join7(projectDir, "public", "fonts", "noto-sans-sc"), { recursive: true }),
+    mkdir6(join7(projectDir, ".framepack"), { recursive: true })
   ]);
   await Promise.all([
-    cp3(existsSync2(BUNDLED_GSAP) ? BUNDLED_GSAP : require3.resolve("gsap/dist/gsap.min.js"), join6(projectDir, "public", "vendor", "gsap.min.js")),
-    vendorNotoSansSc(join6(projectDir, "public", "fonts", "noto-sans-sc"), `${spec.title} ${sceneText} ${style2.chineseName} ${input.feedback.join(" ")}`),
+    cp3(existsSync2(BUNDLED_GSAP) ? BUNDLED_GSAP : require3.resolve("gsap/dist/gsap.min.js"), join7(projectDir, "public", "vendor", "gsap.min.js")),
+    vendorNotoSansSc(join7(projectDir, "public", "fonts", "noto-sans-sc"), `${spec.title} ${sceneText} ${style2.chineseName} ${input.feedback.join(" ")}`),
     ...weaponPlan.selected.map(async (selection) => {
-      const target = join6(projectDir, ...selection.entry.split("/"));
-      await mkdir5(dirname6(target), { recursive: true });
-      await cp3(resolve7(weaponRoot, ...selection.entry.split("/")), target);
+      const target = join7(projectDir, ...selection.entry.split("/"));
+      await mkdir6(dirname6(target), { recursive: true });
+      await cp3(resolve8(weaponRoot, ...selection.entry.split("/")), target);
     })
   ]);
   const { createdAt: _createdAt, ...semanticStoryboard } = storyboard;
@@ -16666,15 +16747,16 @@ async function composePreview(input) {
     direction,
     storyboard: semanticStoryboard,
     skills: skillReceipt.loaded.map(({ id, sha256: hash3 }) => ({ id, hash: hash3 })),
+    gsapSkills: gsapCapabilityFingerprintInput(gsapRegistry, gsapRoute),
     weaponPlan,
     feedback: input.feedback,
     html,
     css
   }));
   await Promise.all([
-    writeFile5(join6(projectDir, "index.html"), html, "utf8"),
-    writeFile5(join6(projectDir, "public", "preview.css"), css, "utf8"),
-    writeFile5(join6(projectDir, ".framepack", "html-build-report.md"), `# HTML Build Report
+    writeFile6(join7(projectDir, "index.html"), html, "utf8"),
+    writeFile6(join7(projectDir, "public", "preview.css"), css, "utf8"),
+    writeFile6(join7(projectDir, ".framepack", "html-build-report.md"), `# HTML Build Report
 
 - build_id: ${buildId}
 - content_source: validated_storyboard
@@ -16685,6 +16767,7 @@ async function composePreview(input) {
 `, "utf8")
   ]);
   await persistWeaponEvidence(projectDir, weaponPlan, html);
+  await persistGsapCapabilityReceipt(projectDir, gsapRoute);
   return { buildId, html, inspection };
 }
 function previewHtml(input) {
@@ -16729,7 +16812,7 @@ function storyboardInputHash(storyboard) {
   return sha2563(stableStringify(semantic));
 }
 function sha2563(value) {
-  return createHash5("sha256").update(value).digest("hex");
+  return createHash6("sha256").update(value).digest("hex");
 }
 function number4(value) {
   return Number(value.toFixed(3)).toString();
@@ -16777,16 +16860,17 @@ var init_preview_composer = __esm({
     init_runtime_assets();
     init_style_catalog();
     init_weapon_runtime();
+    init_gsap_capabilities();
     require3 = createRequire2(import.meta.url);
-    DEFAULT_WEAPON_ROOT2 = resolve7(runtimeAssetRoot, "weapons");
-    BUNDLED_GSAP = resolve7(runtimeAssetRoot, "vendor", "gsap.min.js");
+    DEFAULT_WEAPON_ROOT2 = resolve8(runtimeAssetRoot, "weapons");
+    BUNDLED_GSAP = resolve8(runtimeAssetRoot, "vendor", "gsap.min.js");
   }
 });
 
 // packages/director-engine/src/storyboard.ts
-import { createHash as createHash6 } from "node:crypto";
-import { mkdir as mkdir6, writeFile as writeFile6 } from "node:fs/promises";
-import { join as join7 } from "node:path";
+import { createHash as createHash7 } from "node:crypto";
+import { mkdir as mkdir7, writeFile as writeFile7 } from "node:fs/promises";
+import { join as join8 } from "node:path";
 function generateStoryboard(input, direction) {
   const brief = StoryboardBriefSchema.parse(input);
   const purposes = brief.scenePurposes ?? ["hook", "proof", "cta"];
@@ -16820,7 +16904,7 @@ function generateStoryboard(input, direction) {
   const payload = { brief, direction, scenes };
   return StoryboardSchema.parse({
     version: "1.0",
-    id: `storyboard-${createHash6("sha256").update(stableStringify(payload)).digest("hex").slice(0, 12)}`,
+    id: `storyboard-${createHash7("sha256").update(stableStringify(payload)).digest("hex").slice(0, 12)}`,
     title: brief.title,
     durationSeconds: brief.durationSeconds,
     direction,
@@ -16836,7 +16920,7 @@ function reviseStoryboard(before, feedback, direction) {
   const revised = generateStoryboard(source2.sourceBrief, direction);
   return StoryboardSchema.parse({
     ...revised,
-    id: `storyboard-${createHash6("sha256").update(stableStringify({ source: source2.id, feedback, direction })).digest("hex").slice(0, 12)}`,
+    id: `storyboard-${createHash7("sha256").update(stableStringify({ source: source2.id, feedback, direction })).digest("hex").slice(0, 12)}`,
     revisionOf: source2.id,
     revisionReason: feedback,
     scenes: revised.scenes.map((scene, index) => ({
@@ -16848,12 +16932,12 @@ function reviseStoryboard(before, feedback, direction) {
 }
 async function persistStoryboard(projectDir, input, store) {
   const storyboard = StoryboardSchema.parse(input);
-  const framepackDir = join7(projectDir, ".framepack");
-  await mkdir6(framepackDir, { recursive: true });
+  const framepackDir = join8(projectDir, ".framepack");
+  await mkdir7(framepackDir, { recursive: true });
   await Promise.all([
-    writeFile6(join7(framepackDir, "storyboard.json"), `${JSON.stringify(storyboard, null, 2)}
+    writeFile7(join8(framepackDir, "storyboard.json"), `${JSON.stringify(storyboard, null, 2)}
 `),
-    writeFile6(join7(framepackDir, "storyboard.md"), renderChineseStoryboard(storyboard))
+    writeFile7(join8(framepackDir, "storyboard.md"), renderChineseStoryboard(storyboard))
   ]);
   const fingerprint = await store.readFingerprint();
   const { createdAt: _createdAt, ...semanticStoryboard } = storyboard;
@@ -16927,17 +17011,17 @@ var init_storyboard2 = __esm({
 });
 
 // packages/director-engine/src/approval.ts
-import { createHash as createHash7 } from "node:crypto";
-import { readFile as readFile6 } from "node:fs/promises";
-import { join as join8 } from "node:path";
+import { createHash as createHash8 } from "node:crypto";
+import { readFile as readFile7 } from "node:fs/promises";
+import { join as join9 } from "node:path";
 async function readCurrentBuildEvidence(projectDir) {
   const [report, html] = await Promise.all([
-    readFile6(join8(projectDir, PROJECT_FILES.buildReport), "utf8"),
-    readFile6(join8(projectDir, "index.html"))
+    readFile7(join9(projectDir, PROJECT_FILES.buildReport), "utf8"),
+    readFile7(join9(projectDir, "index.html"))
   ]);
   const buildId = report.match(/^- build_id:\s*(\S+)\s*$/m)?.[1];
   if (!buildId) throw new Error("current build report has no build_id");
-  return { buildId, contentHash: createHash7("sha256").update(html).digest("hex") };
+  return { buildId, contentHash: createHash8("sha256").update(html).digest("hex") };
 }
 async function assertApprovalCurrent(projectDir, input) {
   const approval = ApprovalSchema.parse(input);
@@ -16981,27 +17065,27 @@ var init_taste_evaluator = __esm({
 
 // packages/director-engine/src/audit.ts
 import { existsSync as existsSync3 } from "node:fs";
-import { readFile as readFile7, writeFile as writeFile7 } from "node:fs/promises";
-import { join as join9, resolve as resolve8, sep } from "node:path";
+import { readFile as readFile8, writeFile as writeFile8 } from "node:fs/promises";
+import { join as join10, resolve as resolve9, sep } from "node:path";
 async function auditProject(projectDir, options = {}) {
-  const htmlPath = join9(projectDir, "index.html");
-  const cssPath = join9(projectDir, "public", "preview.css");
-  const previewPlanPath = join9(projectDir, ".framepack", "preview-snapshots", "snapshot-plan.json");
-  const assetLedgerPath = join9(projectDir, ".framepack", "asset-ledger.json");
+  const htmlPath = join10(projectDir, "index.html");
+  const cssPath = join10(projectDir, "public", "preview.css");
+  const previewPlanPath = join10(projectDir, ".framepack", "preview-snapshots", "snapshot-plan.json");
+  const assetLedgerPath = join10(projectDir, ".framepack", "asset-ledger.json");
   const issues = [];
   if (!existsSync3(htmlPath)) issues.push("index.html is missing");
   if (!existsSync3(previewPlanPath)) issues.push("preview snapshot plan is missing");
   if (existsSync3(htmlPath)) {
-    const [html, css2] = await Promise.all([readFile7(htmlPath, "utf8"), existsSync3(cssPath) ? readFile7(cssPath, "utf8") : Promise.resolve("")]);
+    const [html, css2] = await Promise.all([readFile8(htmlPath, "utf8"), existsSync3(cssPath) ? readFile8(cssPath, "utf8") : Promise.resolve("")]);
     issues.push(...inspectPreviewHtml(html, css2).codes);
   }
   const technical = { status: issues.length ? "fail" : "pass", issues };
-  const assetLedger = existsSync3(assetLedgerPath) ? JSON.parse(await readFile7(assetLedgerPath, "utf8")) : { assets: [] };
+  const assetLedger = existsSync3(assetLedgerPath) ? JSON.parse(await readFile8(assetLedgerPath, "utf8")) : { assets: [] };
   const hasMedia = (assetLedger.assets ?? []).some((asset) => asset.status === "available" && asset.confirmed === true);
   const materialUsage = hasMedia ? "available" : "missing";
-  const snapshotPlan = existsSync3(previewPlanPath) ? JSON.parse(await readFile7(previewPlanPath, "utf8")) : { frames: [] };
+  const snapshotPlan = existsSync3(previewPlanPath) ? JSON.parse(await readFile8(previewPlanPath, "utf8")) : { frames: [] };
   const frameTimes = (snapshotPlan.frames ?? []).map((frame) => frame.timeSeconds).filter((time3) => typeof time3 === "number");
-  const css = existsSync3(cssPath) ? await readFile7(cssPath, "utf8") : "";
+  const css = existsSync3(cssPath) ? await readFile8(cssPath, "utf8") : "";
   const deterministic = DeterministicReviewEvidenceSchema.parse({
     material: { status: materialUsage, files: [".framepack/asset-ledger.json"] },
     contrast: { status: deterministicContrastStatus(css), files: ["public/preview.css"] },
@@ -17012,9 +17096,9 @@ async function auditProject(projectDir, options = {}) {
     const scorecard = ReviewScorecardSchema.parse(options.scorecard);
     const current = await readCurrentBuildEvidence(projectDir);
     if (scorecard.buildId !== current.buildId || scorecard.contentHash !== current.contentHash) throw new Error("review scorecard is stale for the current build");
-    const root = resolve8(projectDir);
+    const root = resolve9(projectDir);
     for (const frame of scorecard.evidenceFrames) {
-      const evidencePath = resolve8(root, frame);
+      const evidencePath = resolve9(root, frame);
       if (!evidencePath.startsWith(`${root}${sep}`) || !existsSync3(evidencePath)) throw new Error(`review evidence frame is missing or outside the project: ${frame}`);
     }
     subjective = SubjectiveReviewEvidenceSchema.parse({ status: "reviewed", scorecard });
@@ -17040,9 +17124,9 @@ async function auditProject(projectDir, options = {}) {
   }
   taste.recommendation = technical.status === "pass" && subjective.status === "reviewed" && taste.gate !== "fail";
   const result = { technical, materialUsage, deterministic, subjective, taste };
-  await writeFile7(join9(projectDir, AUDIT_FILE), `${JSON.stringify(result, null, 2)}
+  await writeFile8(join10(projectDir, AUDIT_FILE), `${JSON.stringify(result, null, 2)}
 `);
-  await writeFile7(join9(projectDir, PROJECT_FILES.tasteAudit), `${renderTasteAuditMarkdown()}
+  await writeFile8(join10(projectDir, PROJECT_FILES.tasteAudit), `${renderTasteAuditMarkdown()}
 
 - commercial_quality: ${taste.gate}
 - ppt_feel: ${taste.pptFeel}
@@ -17071,9 +17155,9 @@ async function waiveProject(projectDir, reason) {
 async function handoffProject(projectDir) {
   const audit = await loadAudit(projectDir);
   if (audit.technical.status !== "pass") throw new Error("technical audit must pass before handoff");
-  const approvalPath = join9(projectDir, PROJECT_FILES.approval);
+  const approvalPath = join10(projectDir, PROJECT_FILES.approval);
   if (!existsSync3(approvalPath)) throw new Error("approval required before handoff");
-  const approval = await assertApprovalCurrent(projectDir, JSON.parse(await readFile7(approvalPath, "utf8")));
+  const approval = await assertApprovalCurrent(projectDir, JSON.parse(await readFile8(approvalPath, "utf8")));
   const spec = await readProjectSpec(projectDir);
   const manifest = HandoffManifestSchema.parse({
     handoffVersion: "1.0",
@@ -17092,21 +17176,21 @@ async function handoffProject(projectDir) {
     knownRisks: approval.state === "waived" ? audit.taste.revisionNotes : [],
     renderNotes: "Render at 30fps, SDR, high quality. Preserve HTML timing windows."
   });
-  await writeFile7(join9(projectDir, PROJECT_FILES.handoffManifest), `${JSON.stringify(manifest, null, 2)}
+  await writeFile8(join10(projectDir, PROJECT_FILES.handoffManifest), `${JSON.stringify(manifest, null, 2)}
 `);
-  await writeFile7(join9(projectDir, PROJECT_FILES.renderPlan), `${renderRenderPlanMarkdown()}
+  await writeFile8(join10(projectDir, PROJECT_FILES.renderPlan), `${renderRenderPlanMarkdown()}
 `);
   return manifest;
 }
 async function loadAudit(projectDir) {
-  const path = join9(projectDir, AUDIT_FILE);
+  const path = join10(projectDir, AUDIT_FILE);
   if (!existsSync3(path)) return auditProject(projectDir);
-  return JSON.parse(await readFile7(path, "utf8"));
+  return JSON.parse(await readFile8(path, "utf8"));
 }
 async function writeApproval(projectDir, state, reason) {
   const current = await readCurrentBuildEvidence(projectDir);
   const approval = ApprovalSchema.parse({ state, reason, previewBuildId: current.buildId, contentHash: current.contentHash, decidedAt: (/* @__PURE__ */ new Date()).toISOString() });
-  await writeFile7(join9(projectDir, PROJECT_FILES.approval), `${JSON.stringify(approval, null, 2)}
+  await writeFile8(join10(projectDir, PROJECT_FILES.approval), `${JSON.stringify(approval, null, 2)}
 `);
   return approval;
 }
@@ -17241,14 +17325,14 @@ var require_filesystem = __commonJS({
       });
       return buffer.subarray(0, bytesRead);
     };
-    var readFile15 = (path) => new Promise((resolve13, reject) => {
+    var readFile16 = (path) => new Promise((resolve14, reject) => {
       fs.open(path, "r", (err, fd) => {
         if (err) {
           reject(err);
         } else {
           const buffer = Buffer.alloc(MAX_LENGTH);
           fs.read(fd, buffer, 0, MAX_LENGTH, 0, (_, bytesRead) => {
-            resolve13(buffer.subarray(0, bytesRead));
+            resolve14(buffer.subarray(0, bytesRead));
             fs.close(fd, () => {
             });
           });
@@ -17259,7 +17343,7 @@ var require_filesystem = __commonJS({
       LDD_PATH,
       SELF_PATH,
       readFileSync: readFileSync2,
-      readFile: readFile15
+      readFile: readFile16
     };
   }
 });
@@ -17307,7 +17391,7 @@ var require_detect_libc = __commonJS({
     "use strict";
     var childProcess = __require("child_process");
     var { isLinux, getReport } = require_process();
-    var { LDD_PATH, SELF_PATH, readFile: readFile15, readFileSync: readFileSync2 } = require_filesystem();
+    var { LDD_PATH, SELF_PATH, readFile: readFile16, readFileSync: readFileSync2 } = require_filesystem();
     var { interpreterPath } = require_elf();
     var cachedFamilyInterpreter;
     var cachedFamilyFilesystem;
@@ -17316,10 +17400,10 @@ var require_detect_libc = __commonJS({
     var commandOut = "";
     var safeCommand = () => {
       if (!commandOut) {
-        return new Promise((resolve13) => {
+        return new Promise((resolve14) => {
           childProcess.exec(command, (err, out) => {
             commandOut = err ? " " : out;
-            resolve13(commandOut);
+            resolve14(commandOut);
           });
         });
       }
@@ -17387,7 +17471,7 @@ var require_detect_libc = __commonJS({
       }
       cachedFamilyFilesystem = null;
       try {
-        const lddContent = await readFile15(LDD_PATH);
+        const lddContent = await readFile16(LDD_PATH);
         cachedFamilyFilesystem = getFamilyFromLddContent(lddContent);
       } catch (e) {
       }
@@ -17411,7 +17495,7 @@ var require_detect_libc = __commonJS({
       }
       cachedFamilyInterpreter = null;
       try {
-        const selfContent = await readFile15(SELF_PATH);
+        const selfContent = await readFile16(SELF_PATH);
         const path = interpreterPath(selfContent);
         cachedFamilyInterpreter = familyFromInterpreterPath(path);
       } catch (e) {
@@ -17473,7 +17557,7 @@ var require_detect_libc = __commonJS({
       }
       cachedVersionFilesystem = null;
       try {
-        const lddContent = await readFile15(LDD_PATH);
+        const lddContent = await readFile16(LDD_PATH);
         const versionMatch = lddContent.match(RE_GLIBC_VERSION);
         if (versionMatch) {
           cachedVersionFilesystem = versionMatch[1];
@@ -18954,7 +19038,7 @@ var require_package = __commonJS({
 var require_libvips = __commonJS({
   "node_modules/sharp/lib/libvips.js"(exports, module) {
     var { spawnSync } = __require("node:child_process");
-    var { createHash: createHash11 } = __require("node:crypto");
+    var { createHash: createHash12 } = __require("node:crypto");
     var semverCoerce = require_coerce();
     var semverGreaterThanOrEqualTo = require_gte();
     var semverSatisfies = require_satisfies();
@@ -19045,7 +19129,7 @@ var require_libvips = __commonJS({
       }
       return false;
     };
-    var sha512 = (s) => createHash11("sha512").update(s).digest("hex");
+    var sha512 = (s) => createHash12("sha512").update(s).digest("hex");
     var yarnLocator = () => {
       try {
         const identHash = sha512(`imgsharp-libvips-${buildPlatformArch()}`);
@@ -19995,14 +20079,14 @@ var require_input = __commonJS({
         return this;
       } else {
         if (this._isStreamInput()) {
-          return new Promise((resolve13, reject) => {
+          return new Promise((resolve14, reject) => {
             const finished = () => {
               this._flattenBufferIn();
               sharp2.metadata(this.options, (err, metadata2) => {
                 if (err) {
                   reject(is.nativeError(err, stack));
                 } else {
-                  resolve13(metadata2);
+                  resolve14(metadata2);
                 }
               });
             };
@@ -20013,12 +20097,12 @@ var require_input = __commonJS({
             }
           });
         } else {
-          return new Promise((resolve13, reject) => {
+          return new Promise((resolve14, reject) => {
             sharp2.metadata(this.options, (err, metadata2) => {
               if (err) {
                 reject(is.nativeError(err, stack));
               } else {
-                resolve13(metadata2);
+                resolve14(metadata2);
               }
             });
           });
@@ -20051,25 +20135,25 @@ var require_input = __commonJS({
         return this;
       } else {
         if (this._isStreamInput()) {
-          return new Promise((resolve13, reject) => {
+          return new Promise((resolve14, reject) => {
             this.on("finish", function() {
               this._flattenBufferIn();
               sharp2.stats(this.options, (err, stats2) => {
                 if (err) {
                   reject(is.nativeError(err, stack));
                 } else {
-                  resolve13(stats2);
+                  resolve14(stats2);
                 }
               });
             });
           });
         } else {
-          return new Promise((resolve13, reject) => {
+          return new Promise((resolve14, reject) => {
             sharp2.stats(this.options, (err, stats2) => {
               if (err) {
                 reject(is.nativeError(err, stack));
               } else {
-                resolve13(stats2);
+                resolve14(stats2);
               }
             });
           });
@@ -23485,7 +23569,7 @@ var require_output = __commonJS({
         return this;
       } else {
         if (this._isStreamInput()) {
-          return new Promise((resolve13, reject) => {
+          return new Promise((resolve14, reject) => {
             this.once("finish", () => {
               this._flattenBufferIn();
               sharp2.pipeline(this.options, (err, data, info2) => {
@@ -23493,24 +23577,24 @@ var require_output = __commonJS({
                   reject(is.nativeError(err, stack));
                 } else {
                   if (this.options.resolveWithObject) {
-                    resolve13({ data, info: info2 });
+                    resolve14({ data, info: info2 });
                   } else {
-                    resolve13(data);
+                    resolve14(data);
                   }
                 }
               });
             });
           });
         } else {
-          return new Promise((resolve13, reject) => {
+          return new Promise((resolve14, reject) => {
             sharp2.pipeline(this.options, (err, data, info2) => {
               if (err) {
                 reject(is.nativeError(err, stack));
               } else {
                 if (this.options.resolveWithObject) {
-                  resolve13({ data, info: info2 });
+                  resolve14({ data, info: info2 });
                 } else {
-                  resolve13(data);
+                  resolve14(data);
                 }
               }
             });
@@ -23967,7 +24051,7 @@ async function fetchData(url2, type = "text") {
     }
     return response.text();
   }
-  return new Promise((resolve13, reject) => {
+  return new Promise((resolve14, reject) => {
     const request = new XMLHttpRequest();
     request.open("GET", url2, true);
     request.responseType = type === "bytes" ? "arraybuffer" : type;
@@ -23978,14 +24062,14 @@ async function fetchData(url2, type = "text") {
       if (request.status === 200 || request.status === 0) {
         switch (type) {
           case "bytes":
-            resolve13(new Uint8Array(request.response));
+            resolve14(new Uint8Array(request.response));
             return;
           case "blob":
           case "json":
-            resolve13(request.response);
+            resolve14(request.response);
             return;
         }
-        resolve13(request.responseText);
+        resolve14(request.responseText);
         return;
       }
       reject(new Error(request.statusText));
@@ -26815,7 +26899,7 @@ var init_pdf = __esm({
         var defineProperty = Object.defineProperty;
         var stringSlice = uncurryThis("".slice);
         var replace = uncurryThis("".replace);
-        var join18 = uncurryThis([].join);
+        var join19 = uncurryThis([].join);
         var CONFIGURABLE_LENGTH = DESCRIPTORS && !fails(function() {
           return defineProperty(function() {
           }, "length", { value: 8 }).length !== 8;
@@ -26842,7 +26926,7 @@ var init_pdf = __esm({
           }
           var state = enforceInternalState(value);
           if (!hasOwn(state, "source")) {
-            state.source = join18(TEMPLATE, typeof name == "string" ? name : "");
+            state.source = join19(TEMPLATE, typeof name == "string" ? name : "");
           }
           return value;
         };
@@ -26887,13 +26971,13 @@ var init_pdf = __esm({
         var aCallable = __webpack_require__2(9306);
         var $TypeError = TypeError;
         var PromiseCapability = function(C) {
-          var resolve13, reject;
+          var resolve14, reject;
           this.promise = new C(function($$resolve, $$reject) {
-            if (resolve13 !== void 0 || reject !== void 0) throw new $TypeError("Bad Promise constructor");
-            resolve13 = $$resolve;
+            if (resolve14 !== void 0 || reject !== void 0) throw new $TypeError("Bad Promise constructor");
+            resolve14 = $$resolve;
             reject = $$reject;
           });
-          this.resolve = aCallable(resolve13);
+          this.resolve = aCallable(resolve14);
           this.reject = aCallable(reject);
         };
         module.exports.f = function(C) {
@@ -29262,7 +29346,7 @@ var init_pdf = __esm({
         var anUint8Array = __webpack_require__2(4154);
         var notDetached = __webpack_require__2(5169);
         var numberToString = uncurryThis(1.1.toString);
-        var join18 = uncurryThis([].join);
+        var join19 = uncurryThis([].join);
         var $Array = Array;
         var Uint8Array2 = globalThis2.Uint8Array;
         var INCORRECT_BEHAVIOR_OR_DOESNT_EXISTS = !Uint8Array2 || !Uint8Array2.prototype.toHex || !(function() {
@@ -29282,7 +29366,7 @@ var init_pdf = __esm({
               var hex3 = numberToString(this[i], 16);
               result[i] = hex3.length === 1 ? "0" + hex3 : hex3;
             }
-            return join18(result, "");
+            return join19(result, "");
           }
         });
       },
@@ -30889,11 +30973,11 @@ var init_pdf = __esm({
             const mustRemoveAspectRatioPromise = _ImageManager._isSVGFittingCanvas;
             const fileReader = new FileReader();
             const imageElement = new Image();
-            const imagePromise = new Promise((resolve13, reject) => {
+            const imagePromise = new Promise((resolve14, reject) => {
               imageElement.onload = () => {
                 data.bitmap = imageElement;
                 data.isSvg = true;
-                resolve13();
+                resolve14();
               };
               fileReader.onload = async () => {
                 const url2 = data.svgUrl = fileReader.result;
@@ -31578,13 +31662,13 @@ var init_pdf = __esm({
           return;
         }
         const {
-          resolve: resolve13,
+          resolve: resolve14,
           promise: promise2
         } = Promise.withResolvers();
         const onEditorsRendered = (evt) => {
           if (evt.pageNumber === pageNumber) {
             this._eventBus.off("editorsrendered", onEditorsRendered);
-            resolve13();
+            resolve14();
           }
         };
         this._eventBus.on("editorsrendered", onEditorsRendered, internalOpt);
@@ -36510,8 +36594,8 @@ var init_pdf = __esm({
           if (this.isSyncFontLoadingSupported) {
             return;
           }
-          await new Promise((resolve13) => {
-            const request = this._queueLoadingCallback(resolve13);
+          await new Promise((resolve14) => {
+            const request = this._queueLoadingCallback(resolve14);
             this._prepareFontLoadEvent(font, request);
           });
         }
@@ -53448,7 +53532,7 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
         input.type = "file";
         input.accept = SupportedImageMimeTypes.join(",");
         const signal = this._uiManager._signal;
-        this.#bitmapPromise = new Promise((resolve13) => {
+        this.#bitmapPromise = new Promise((resolve14) => {
           input.addEventListener("change", async () => {
             if (!input.files || input.files.length === 0) {
               this.remove();
@@ -53463,13 +53547,13 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
               });
               this.#getBitmapFetched(data);
             }
-            resolve13();
+            resolve14();
           }, {
             signal
           });
           input.addEventListener("cancel", () => {
             this.remove();
-            resolve13();
+            resolve14();
           }, {
             signal
           });
@@ -55398,14 +55482,14 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
 });
 
 // packages/director-engine/src/asset-intake.ts
-import { createHash as createHash8 } from "node:crypto";
+import { createHash as createHash9 } from "node:crypto";
 import { spawn as spawn3 } from "node:child_process";
 import { existsSync as existsSync4 } from "node:fs";
-import { mkdir as mkdir7, readFile as readFile8, readdir as readdir2, stat, writeFile as writeFile8 } from "node:fs/promises";
-import { extname, isAbsolute as isAbsolute2, join as join10, relative as relative3, resolve as resolve9 } from "node:path";
+import { mkdir as mkdir8, readFile as readFile9, readdir as readdir2, stat, writeFile as writeFile9 } from "node:fs/promises";
+import { extname, isAbsolute as isAbsolute3, join as join11, relative as relative4, resolve as resolve10 } from "node:path";
 function portablePath(projectDir, file2) {
-  const path = relative3(projectDir, file2);
-  if (!path || path.startsWith("..") || isAbsolute2(path)) {
+  const path = relative4(projectDir, file2);
+  if (!path || path.startsWith("..") || isAbsolute3(path)) {
     throw new Error("asset path must stay inside the project");
   }
   return path.split("\\").join("/");
@@ -55414,7 +55498,7 @@ async function filesBelow(directory) {
   if (!existsSync4(directory)) return [];
   const entries = await readdir2(directory, { withFileTypes: true });
   const nested = await Promise.all(entries.map(async (entry) => {
-    const path = join10(directory, entry.name);
+    const path = join11(directory, entry.name);
     return entry.isDirectory() ? filesBelow(path) : entry.isFile() ? [path] : [];
   }));
   return nested.flat().sort();
@@ -55512,7 +55596,7 @@ async function inspectFile(projectDir, file2, source2, maxBytes, sourceUrl) {
   if (details.size > maxBytes) throw new Error(`素材超过大小限制：${sourcePath}`);
   let buffer;
   try {
-    buffer = await readFile8(file2);
+    buffer = await readFile9(file2);
   } catch {
     throw new Error(`无法读取素材：${sourcePath}`);
   }
@@ -55524,8 +55608,8 @@ async function inspectFile(projectDir, file2, source2, maxBytes, sourceUrl) {
     throw error51;
   }
   if (!valid) throw new Error(`素材内容损坏或格式不符：${sourcePath}`);
-  const sha2564 = createHash8("sha256").update(buffer).digest("hex");
-  const id = `asset-${createHash8("sha256").update(`${source2}:${sourcePath}:${sha2564}`).digest("hex").slice(0, 16)}`;
+  const sha2564 = createHash9("sha256").update(buffer).digest("hex");
+  const id = `asset-${createHash9("sha256").update(`${source2}:${sourcePath}:${sha2564}`).digest("hex").slice(0, 16)}`;
   return AssetRecordSchema.parse({
     version: "1.0",
     id,
@@ -55553,23 +55637,23 @@ ${rows}` : "请添加产品图片、视频或品牌资料后重新检查。"}
 `;
 }
 async function writeLedger(projectDir, ledger) {
-  const directory = join10(projectDir, ".framepack");
-  await mkdir7(directory, { recursive: true });
+  const directory = join11(projectDir, ".framepack");
+  await mkdir8(directory, { recursive: true });
   await Promise.all([
-    writeFile8(join10(directory, "assets.json"), `${JSON.stringify(ledger, null, 2)}
+    writeFile9(join11(directory, "assets.json"), `${JSON.stringify(ledger, null, 2)}
 `, "utf8"),
-    writeFile8(join10(directory, "asset-ledger.json"), `${JSON.stringify(ledger, null, 2)}
+    writeFile9(join11(directory, "asset-ledger.json"), `${JSON.stringify(ledger, null, 2)}
 `, "utf8")
   ]);
-  await writeFile8(join10(directory, "asset-intake.md"), renderLedger(ledger), "utf8");
+  await writeFile9(join11(directory, "asset-intake.md"), renderLedger(ledger), "utf8");
 }
 async function inspectAssetsUnsafe(root, options) {
   const maxBytes = options.maxBytes ?? DEFAULT_MAX_BYTES;
   if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0) throw new Error("maxBytes must be a positive integer");
-  const userFiles = await filesBelow(join10(root, "assets"));
+  const userFiles = await filesBelow(join11(root, "assets"));
   const userAssets = await Promise.all(userFiles.map((file2) => inspectFile(root, file2, "user", maxBytes)));
   const capturedAssets = await Promise.all((options.urlCaptures ?? []).map((capture) => {
-    const localPath = isAbsolute2(capture.localPath) ? resolve9(capture.localPath) : resolve9(root, capture.localPath);
+    const localPath = isAbsolute3(capture.localPath) ? resolve10(capture.localPath) : resolve10(root, capture.localPath);
     return inspectFile(root, localPath, "captured", maxBytes, capture.url);
   }));
   const assets = [...userAssets, ...capturedAssets];
@@ -55587,7 +55671,7 @@ function portableError(error51, root) {
   return new Error(message.split(root).join("."));
 }
 async function inspectAssets(projectDir, options = {}) {
-  const root = resolve9(projectDir);
+  const root = resolve10(projectDir);
   try {
     return await inspectAssetsUnsafe(root, options);
   } catch (error51) {
@@ -55596,8 +55680,8 @@ async function inspectAssets(projectDir, options = {}) {
 }
 async function confirmAssetAssignmentUnsafe(root, assetId, sceneIds) {
   if (!sceneIds.length || sceneIds.some((id) => !id.trim())) throw new Error("at least one scene ID is required");
-  const path = join10(root, ".framepack", "assets.json");
-  const ledger = AssetLedgerSchema.parse(JSON.parse(await readFile8(path, "utf8")));
+  const path = join11(root, ".framepack", "assets.json");
+  const ledger = AssetLedgerSchema.parse(JSON.parse(await readFile9(path, "utf8")));
   const asset = ledger.assets.find((item) => item.id === assetId);
   if (!asset) throw new Error(`unknown asset: ${assetId}`);
   asset.assignedSceneIds = [...new Set(sceneIds)];
@@ -55607,7 +55691,7 @@ async function confirmAssetAssignmentUnsafe(root, assetId, sceneIds) {
   return AssetRecordSchema.parse(asset);
 }
 async function confirmAssetAssignment(projectDir, assetId, sceneIds) {
-  const root = resolve9(projectDir);
+  const root = resolve10(projectDir);
   try {
     return await confirmAssetAssignmentUnsafe(root, assetId, sceneIds);
   } catch (error51) {
@@ -55640,30 +55724,30 @@ var init_asset_intake = __esm({
 
 // packages/director-engine/src/project-store.ts
 import { randomUUID } from "node:crypto";
-import { appendFile, mkdir as mkdir8, readFile as readFile9, rename, writeFile as writeFile9 } from "node:fs/promises";
+import { appendFile, mkdir as mkdir9, readFile as readFile10, rename, writeFile as writeFile10 } from "node:fs/promises";
 import { existsSync as existsSync5 } from "node:fs";
-import { basename, join as join11, resolve as resolve10 } from "node:path";
+import { basename, join as join12, resolve as resolve11 } from "node:path";
 function isRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 async function writeJsonAtomic(path, value) {
   const temporary = `${path}.${process.pid}.${randomUUID()}.tmp`;
-  await writeFile9(temporary, `${JSON.stringify(value, null, 2)}
+  await writeFile10(temporary, `${JSON.stringify(value, null, 2)}
 `, "utf8");
   await rename(temporary, path);
 }
 async function readJson(path) {
-  return JSON.parse(await readFile9(path, "utf8"));
+  return JSON.parse(await readFile10(path, "utf8"));
 }
 async function createProjectStore(projectDir, initialFingerprint) {
-  const root = resolve10(projectDir);
-  const framepackDir = join11(root, FRAMEPACK_DIR);
-  const statePath = join11(framepackDir, STATE_FILE);
-  const eventsPath = join11(framepackDir, EVENTS_FILE);
-  const fingerprintPath = join11(framepackDir, FINGERPRINT_FILE);
-  const approvalPath = join11(framepackDir, APPROVAL_FILE);
+  const root = resolve11(projectDir);
+  const framepackDir = join12(root, FRAMEPACK_DIR);
+  const statePath = join12(framepackDir, STATE_FILE);
+  const eventsPath = join12(framepackDir, EVENTS_FILE);
+  const fingerprintPath = join12(framepackDir, FINGERPRINT_FILE);
+  const approvalPath = join12(framepackDir, APPROVAL_FILE);
   let appendQueue = Promise.resolve();
-  await mkdir8(framepackDir, { recursive: true });
+  await mkdir9(framepackDir, { recursive: true });
   if (!existsSync5(statePath)) {
     const now = (/* @__PURE__ */ new Date()).toISOString();
     const initialState = ProjectStateSchema.parse({
@@ -55796,12 +55880,12 @@ var init_project_store = __esm({
 });
 
 // packages/director-engine/src/orchestrator.ts
-import { createHash as createHash9 } from "node:crypto";
-import { mkdir as mkdir9, readFile as readFile10, writeFile as writeFile10 } from "node:fs/promises";
-import { join as join12 } from "node:path";
+import { createHash as createHash10 } from "node:crypto";
+import { mkdir as mkdir10, readFile as readFile11, writeFile as writeFile11 } from "node:fs/promises";
+import { join as join13 } from "node:path";
 async function runDirectorTask(raw, services) {
   const input = { ...raw, brief: BriefSchema.parse(raw.brief) };
-  await mkdir9(join12(input.projectDir, ".framepack"), { recursive: true });
+  await mkdir10(join13(input.projectDir, ".framepack"), { recursive: true });
   if (input.cancelled) {
     await persistReceipt(input.projectDir, receipt(input, "cancelled", null, null, {}, 0));
     throw new Error("director task cancelled");
@@ -55828,7 +55912,7 @@ async function runDirectorTask(raw, services) {
   }
 }
 function receipt(input, status, buildId, error51, evidence = {}, retriesPerformed = 0) {
-  const hash3 = (value) => createHash9("sha256").update(stableStringify(value)).digest("hex");
+  const hash3 = (value) => createHash10("sha256").update(stableStringify(value)).digest("hex");
   const loaded = evidence && typeof evidence.skills === "object" && evidence.skills && "loaded" in evidence.skills ? evidence.skills.loaded ?? [] : [];
   const stageResults = Object.fromEntries(Object.entries(evidence).map(([key, value]) => [key, hash3(value)]));
   const appliedOutputPaths = [
@@ -55855,7 +55939,7 @@ function receipt(input, status, buildId, error51, evidence = {}, retriesPerforme
 }
 async function runProjectProposal(input) {
   const proposal = DirectionProposalSchema.parse(input.proposal);
-  const json3 = async (name) => JSON.parse(await readFile10(join12(input.projectDir, ".framepack", name), "utf8"));
+  const json3 = async (name) => JSON.parse(await readFile11(join13(input.projectDir, ".framepack", name), "utf8"));
   const services = {
     assets: async () => AssetLedgerSchema.parse(await json3("asset-ledger.json")),
     skills: async () => SkillLoadReceiptSchema.parse(await json3("skill-load-receipt.json")),
@@ -55865,16 +55949,16 @@ async function runProjectProposal(input) {
       const direction = DirectionSelectionSchema.parse({ ...current, primaryStyle: proposal.visualStyleId, supportingStyle, rationale: `${proposal.summary}
 节奏：${proposal.rhythm}` });
       const writes = [
-        writeFile10(join12(input.projectDir, ".framepack", "direction.json"), `${JSON.stringify(direction, null, 2)}
+        writeFile11(join13(input.projectDir, ".framepack", "direction.json"), `${JSON.stringify(direction, null, 2)}
 `, "utf8"),
-        writeFile10(join12(input.projectDir, ".framepack", "direction-proposal.json"), `${JSON.stringify(proposal, null, 2)}
+        writeFile11(join13(input.projectDir, ".framepack", "direction-proposal.json"), `${JSON.stringify(proposal, null, 2)}
 `, "utf8")
       ];
       if (input.feedback) {
-        const feedbackPath = join12(input.projectDir, ".framepack", "feedback.json");
-        const feedbackItems = JSON.parse(await readFile10(feedbackPath, "utf8"));
+        const feedbackPath = join13(input.projectDir, ".framepack", "feedback.json");
+        const feedbackItems = JSON.parse(await readFile11(feedbackPath, "utf8"));
         appendFeedbackOnce(feedbackItems, input.feedback);
-        writes.push(writeFile10(feedbackPath, `${JSON.stringify(feedbackItems, null, 2)}
+        writes.push(writeFile11(feedbackPath, `${JSON.stringify(feedbackItems, null, 2)}
 `, "utf8"));
       }
       await Promise.all(writes);
@@ -55895,13 +55979,13 @@ async function runProjectProposal(input) {
         motionGrammar: proposal.rhythm.includes("punch") ? "breath-punch-silence" : scene.motionGrammar,
         assetIds: ledger.assets.filter((asset) => requested.has(asset.id) && asset.assignedSceneIds.includes(scene.id)).map((asset) => asset.id)
       })) });
-      await writeFile10(join12(input.projectDir, ".framepack", "storyboard.json"), `${JSON.stringify(storyboard, null, 2)}
+      await writeFile11(join13(input.projectDir, ".framepack", "storyboard.json"), `${JSON.stringify(storyboard, null, 2)}
 `, "utf8");
       return storyboard;
     },
     weapons: async ({ storyboard }) => {
       const plan = await resolveWeapons(StoryboardSchema.parse(storyboard), await loadWeaponRegistry());
-      await writeFile10(join12(input.projectDir, ".framepack", "weapon-load-plan.json"), `${JSON.stringify(plan, null, 2)}
+      await writeFile11(join13(input.projectDir, ".framepack", "weapon-load-plan.json"), `${JSON.stringify(plan, null, 2)}
 `, "utf8");
       return plan;
     },
@@ -55914,7 +55998,7 @@ function appendFeedbackOnce(items, feedback) {
   return items;
 }
 async function persistReceipt(projectDir, value) {
-  await writeFile10(join12(projectDir, ".framepack", "host-run-receipt.json"), `${JSON.stringify(value, null, 2)}
+  await writeFile11(join13(projectDir, ".framepack", "host-run-receipt.json"), `${JSON.stringify(value, null, 2)}
 `, "utf8");
 }
 var init_orchestrator = __esm({
@@ -55934,7 +56018,7 @@ import { constants } from "node:fs";
 import { existsSync as existsSync6 } from "node:fs";
 import { access } from "node:fs/promises";
 import { createServer } from "node:net";
-import { join as join13 } from "node:path";
+import { join as join14 } from "node:path";
 async function doctor(projectRoot) {
   const checks = [];
   checks.push({ id: "node", status: Number(process.versions.node.split(".")[0]) >= 20 ? "pass" : "warn", detail: `Node ${process.versions.node}`, remediation: "请安装 Node.js 20 或更高版本。" });
@@ -55946,7 +56030,7 @@ async function doctor(projectRoot) {
   }
   checks.push(await commandCheck("hyperframes", resolveNpxInvocation(["--no-install", "hyperframes", "--version"]).executable, resolveNpxInvocation(["--no-install", "hyperframes", "--version"]).args, "请在当前环境安装 HyperFrames 0.7.56。", /0\.7\.56/));
   checks.push(await commandCheck("ffprobe", process.env.HYPERFRAMES_FFPROBE_PATH?.trim() || "ffprobe", ["-version"], "请安装 ffmpeg/ffprobe，或设置 HYPERFRAMES_FFPROBE_PATH。"));
-  const runtimeAssetsReady = existsSync6(join13(projectRoot, "public", "vendor", "gsap.min.js")) && existsSync6(join13(projectRoot, "public", "fonts"));
+  const runtimeAssetsReady = existsSync6(join14(projectRoot, "public", "vendor", "gsap.min.js")) && existsSync6(join14(projectRoot, "public", "fonts"));
   checks.push(runtimeAssetsReady ? { id: "runtime-assets", status: "pass", detail: "本地 GSAP 与字体目录已就绪" } : { id: "runtime-assets", status: "warn", detail: "项目尚无本地 GSAP 或字体", remediation: "先运行 init/direct；Framepack 会把运行时资源放进项目，不依赖 CDN。" });
   checks.push({ id: "browser-port", status: await portAvailable() ? "pass" : "warn", detail: "本地浏览器端口探测完成", remediation: "请关闭占用端口的程序后重试。" });
   return { status: checks.every((check2) => check2.status === "pass") ? "ready" : "attention", checks };
@@ -55957,7 +56041,7 @@ ${report.checks.map((check2) => `${check2.status === "pass" ? "✓" : "△"} ${c
   处理办法：${check2.remediation}` : ""}`).join("\n")}`;
 }
 function commandCheck(id, executable, args, remediation, expected) {
-  return new Promise((resolve13) => {
+  return new Promise((resolve14) => {
     const child = spawn4(executable, args, { windowsHide: true, shell: false });
     let output = "";
     child.stdout?.on("data", (chunk) => {
@@ -55966,15 +56050,15 @@ function commandCheck(id, executable, args, remediation, expected) {
     child.stderr?.on("data", (chunk) => {
       output += chunk.toString("utf8");
     });
-    child.once("error", () => resolve13({ id, status: "warn", detail: `${id} 不可用`, remediation }));
-    child.once("exit", (code) => resolve13(code === 0 && (!expected || expected.test(output)) ? { id, status: "pass", detail: output.trim().split(/\r?\n/)[0] || `${id} 可用` } : { id, status: "warn", detail: output.trim().split(/\r?\n/)[0] || `${id} 版本不符合要求`, remediation }));
+    child.once("error", () => resolve14({ id, status: "warn", detail: `${id} 不可用`, remediation }));
+    child.once("exit", (code) => resolve14(code === 0 && (!expected || expected.test(output)) ? { id, status: "pass", detail: output.trim().split(/\r?\n/)[0] || `${id} 可用` } : { id, status: "warn", detail: output.trim().split(/\r?\n/)[0] || `${id} 版本不符合要求`, remediation }));
   });
 }
 function portAvailable() {
-  return new Promise((resolve13) => {
+  return new Promise((resolve14) => {
     const server = createServer();
-    server.once("error", () => resolve13(false));
-    server.listen(0, "127.0.0.1", () => server.close(() => resolve13(true)));
+    server.once("error", () => resolve14(false));
+    server.listen(0, "127.0.0.1", () => server.close(() => resolve14(true)));
   });
 }
 var init_doctor = __esm({
@@ -55989,6 +56073,7 @@ var index_exports = {};
 __export(index_exports, {
   applySkillPlan: () => applySkillPlan,
   approveProject: () => approveProject,
+  auditGsapSource: () => auditGsapSource,
   auditProject: () => auditProject,
   buildProject: () => buildProject,
   chooseDirection: () => chooseDirection,
@@ -56004,9 +56089,11 @@ __export(index_exports, {
   handoffProject: () => handoffProject,
   initProject: () => initProject,
   inspectAssets: () => inspectAssets,
+  loadGsapCapabilities: () => loadGsapCapabilities,
   loadSkills: () => loadSkills,
   loadStyleCatalog: () => loadStyleCatalog,
   loadWeaponRegistry: () => loadWeaponRegistry,
+  persistGsapCapabilityReceipt: () => persistGsapCapabilityReceipt,
   persistStoryboard: () => persistStoryboard,
   persistWeaponEvidence: () => persistWeaponEvidence,
   promoteWeapon: () => promoteWeapon,
@@ -56015,6 +56102,7 @@ __export(index_exports, {
   renderWeaponInvocation: () => renderWeaponInvocation,
   resolveWeapons: () => resolveWeapons,
   reviseStoryboard: () => reviseStoryboard,
+  routeGsapCapabilities: () => routeGsapCapabilities,
   runDirectorTask: () => runDirectorTask,
   runProjectProposal: () => runProjectProposal,
   runWeaponBenchEvidence: () => runWeaponBenchEvidence,
@@ -56024,49 +56112,49 @@ __export(index_exports, {
   verifyWeaponProofFiles: () => verifyWeaponProofFiles,
   waiveProject: () => waiveProject
 });
-import { mkdir as mkdir10, readFile as readFile11, writeFile as writeFile11 } from "node:fs/promises";
-import { createHash as createHash10 } from "node:crypto";
+import { mkdir as mkdir11, readFile as readFile12, writeFile as writeFile12 } from "node:fs/promises";
+import { createHash as createHash11 } from "node:crypto";
 import { existsSync as existsSync7 } from "node:fs";
-import { join as join14, resolve as resolve11 } from "node:path";
+import { join as join15, resolve as resolve12 } from "node:path";
 async function initProject(projectDir, input) {
   const dimensions = dimensionsForAspect(input.aspectRatio);
   const spec = ProjectSpecSchema.parse({ ...input, ...dimensions, audioNeeded: false, subtitleNeeded: false, bgmNeeded: false });
   await Promise.all([
-    mkdir10(join14(projectDir, ".framepack", "preview-snapshots"), { recursive: true }),
-    mkdir10(join14(projectDir, ".hyperframes"), { recursive: true }),
-    mkdir10(join14(projectDir, "public", "assets"), { recursive: true }),
-    mkdir10(join14(projectDir, "public", "fonts"), { recursive: true }),
-    mkdir10(join14(projectDir, "public", "vendor"), { recursive: true })
+    mkdir11(join15(projectDir, ".framepack", "preview-snapshots"), { recursive: true }),
+    mkdir11(join15(projectDir, ".hyperframes"), { recursive: true }),
+    mkdir11(join15(projectDir, "public", "assets"), { recursive: true }),
+    mkdir11(join15(projectDir, "public", "fonts"), { recursive: true }),
+    mkdir11(join15(projectDir, "public", "vendor"), { recursive: true })
   ]);
-  await writeFile11(join14(projectDir, PROJECT_SPEC_FILE), `${JSON.stringify(spec, null, 2)}
+  await writeFile12(join15(projectDir, PROJECT_SPEC_FILE), `${JSON.stringify(spec, null, 2)}
 `);
-  await writeFile11(join14(projectDir, "frame.md"), `# ${spec.title}
+  await writeFile12(join15(projectDir, "frame.md"), `# ${spec.title}
 
 - aspect_ratio: ${spec.aspectRatio}
 - motion: deliberate, layered, seek-safe
 - avoid: empty PPT cards and external runtime dependencies
 `);
-  await writeFile11(join14(projectDir, PROJECT_FILES.assetIntake), renderAssetIntakeMarkdown(spec.title));
-  await writeFile11(join14(projectDir, PROJECT_FILES.storyboard), renderStoryboardMarkdown({ title: spec.title, scenes: ["Hook", "Proof", "CTA"] }));
+  await writeFile12(join15(projectDir, PROJECT_FILES.assetIntake), renderAssetIntakeMarkdown(spec.title));
+  await writeFile12(join15(projectDir, PROJECT_FILES.storyboard), renderStoryboardMarkdown({ title: spec.title, scenes: ["Hook", "Proof", "CTA"] }));
   const feedback = [];
   const direction = chooseDirection({ goal: spec.title, feedback });
   const storyboard = generateStoryboard({ title: spec.title, durationSeconds: spec.durationSeconds, corePromise: spec.title, benefits: ["呈现真实价值"], cta: "了解更多", assetIds: [] }, direction);
   const assets = AssetLedgerSchema.parse({ version: "1.0", summary: "available", assets: [], inspectedAt: (/* @__PURE__ */ new Date()).toISOString() });
   await loadSkills({ projectDir, skillRoot: DEFAULT_SKILL_ROOT, intent: "general-video", assets: [] });
   const { createdAt: _createdAt, ...semanticStoryboard } = storyboard;
-  const weaponPlan = { version: "1.0", storyboardId: storyboard.id, inputHash: createHash10("sha256").update(stableStringify(semanticStoryboard)).digest("hex"), selected: [], candidates: [], fallbacks: [] };
+  const weaponPlan = { version: "1.0", storyboardId: storyboard.id, inputHash: createHash11("sha256").update(stableStringify(semanticStoryboard)).digest("hex"), selected: [], candidates: [], fallbacks: [] };
   await Promise.all([
-    writeFile11(join14(projectDir, ".framepack", "asset-ledger.json"), JSON.stringify(assets, null, 2) + "\n"),
-    writeFile11(join14(projectDir, ".framepack", "direction.json"), JSON.stringify(direction, null, 2) + "\n"),
-    writeFile11(join14(projectDir, ".framepack", "storyboard.json"), JSON.stringify(storyboard, null, 2) + "\n"),
-    writeFile11(join14(projectDir, ".framepack", "weapon-load-plan.json"), JSON.stringify(weaponPlan, null, 2) + "\n"),
-    writeFile11(join14(projectDir, ".framepack", "feedback.json"), JSON.stringify(feedback, null, 2) + "\n")
+    writeFile12(join15(projectDir, ".framepack", "asset-ledger.json"), JSON.stringify(assets, null, 2) + "\n"),
+    writeFile12(join15(projectDir, ".framepack", "direction.json"), JSON.stringify(direction, null, 2) + "\n"),
+    writeFile12(join15(projectDir, ".framepack", "storyboard.json"), JSON.stringify(storyboard, null, 2) + "\n"),
+    writeFile12(join15(projectDir, ".framepack", "weapon-load-plan.json"), JSON.stringify(weaponPlan, null, 2) + "\n"),
+    writeFile12(join15(projectDir, ".framepack", "feedback.json"), JSON.stringify(feedback, null, 2) + "\n")
   ]);
   return projectDir;
 }
 async function buildProject(projectDir) {
   const spec = await readProjectSpec(projectDir);
-  const readJson2 = async (name) => JSON.parse(await readFile11(join14(projectDir, ".framepack", name), "utf8"));
+  const readJson2 = async (name) => JSON.parse(await readFile12(join15(projectDir, ".framepack", name), "utf8"));
   const [assets, direction, storyboard, skillReceipt, weaponPlan, feedback] = await Promise.all([
     readJson2("asset-ledger.json"),
     readJson2("direction.json"),
@@ -56089,19 +56177,19 @@ async function snapshotProject(projectDir, options = {}) {
     { label: "final-hold", timeSeconds: Math.max(0, spec.durationSeconds - 0.25) }
   ];
   const rows = frames.map((frame) => `| ${frame.timeSeconds.toFixed(2)} | ${frame.label} | pending snapshot capture | pending |`).join("\n");
-  await writeFile11(join14(projectDir, PROJECT_FILES.previewReport), `${renderPreviewReportMarkdown()}
+  await writeFile12(join15(projectDir, PROJECT_FILES.previewReport), `${renderPreviewReportMarkdown()}
 ${rows}
 `);
-  await writeFile11(join14(projectDir, ".framepack", "preview-snapshots", "snapshot-plan.json"), `${JSON.stringify({ frames }, null, 2)}
+  await writeFile12(join15(projectDir, ".framepack", "preview-snapshots", "snapshot-plan.json"), `${JSON.stringify({ frames }, null, 2)}
 `);
-  const snapshotArgs = ["--output", join14(projectDir, ".framepack", "preview-snapshots"), "--at", frames.map((frame) => frame.timeSeconds.toFixed(2)).join(","), "--no-end"];
+  const snapshotArgs = ["--output", join15(projectDir, ".framepack", "preview-snapshots"), "--at", frames.map((frame) => frame.timeSeconds.toFixed(2)).join(","), "--no-end"];
   await runHyperframes("snapshot", projectDir, { runner: options.runner, args: snapshotArgs });
   return { frames };
 }
 async function readProjectSpec(projectDir) {
-  const path = join14(projectDir, PROJECT_SPEC_FILE);
+  const path = join15(projectDir, PROJECT_SPEC_FILE);
   if (!existsSync7(path)) throw new Error(`director project is not initialized: ${projectDir}`);
-  return ProjectSpecSchema.parse(JSON.parse(await readFile11(path, "utf8")));
+  return ProjectSpecSchema.parse(JSON.parse(await readFile12(path, "utf8")));
 }
 var PROJECT_SPEC_FILE, DEFAULT_SKILL_ROOT;
 var init_index = __esm({
@@ -56125,10 +56213,11 @@ var init_index = __esm({
     init_weapon_runtime();
     init_weapon_bench();
     init_preview_composer();
+    init_gsap_capabilities();
     init_orchestrator();
     init_doctor();
     PROJECT_SPEC_FILE = ".framepack/project.json";
-    DEFAULT_SKILL_ROOT = resolve11(runtimeAssetRoot, "skills");
+    DEFAULT_SKILL_ROOT = resolve12(runtimeAssetRoot, "skills");
   }
 });
 
@@ -56185,8 +56274,8 @@ var init_event_stream = __esm({
 // apps/director-workbench/src/api.ts
 import { randomUUID as randomUUID2 } from "node:crypto";
 import { existsSync as existsSync8 } from "node:fs";
-import { readFile as readFile12 } from "node:fs/promises";
-import { join as join15 } from "node:path";
+import { readFile as readFile13 } from "node:fs/promises";
+import { join as join16 } from "node:path";
 function json2(response, status, value) {
   response.writeHead(status, { "content-type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(value));
@@ -56216,9 +56305,9 @@ async function body(request) {
   }
 }
 async function readArtifact(root, name) {
-  const path = join15(root, ".framepack", name);
+  const path = join16(root, ".framepack", name);
   if (!existsSync8(path)) return null;
-  return JSON.parse(await readFile12(path, "utf8"));
+  return JSON.parse(await readFile13(path, "utf8"));
 }
 function createWorkbenchApi(root, stream = createEventStream()) {
   const jobs = /* @__PURE__ */ new Map();
@@ -56255,10 +56344,10 @@ function createWorkbenchApi(root, stream = createEventStream()) {
     try {
       if (request.method === "GET" && url2.pathname === "/api/project") {
         const spec = await readProjectSpec(root);
-        const built = existsSync8(join15(root, "index.html"));
+        const built = existsSync8(join16(root, "index.html"));
         const currentBuild = built ? await readCurrentBuildEvidence(root) : null;
         const [skills, weapons, decision] = await Promise.all([readArtifact(root, "skill-load-receipt.json"), readArtifact(root, "weapon-load-plan.json"), readArtifact(root, "approval.json")]);
-        json2(response, 200, { version: "1.0", spec, currentBuild, decision, provenance: { skills, weapons }, files: { built, audited: existsSync8(join15(root, ".framepack", "taste-audit.json")), handedOff: existsSync8(join15(root, ".framepack", "handoff-manifest.json")) } });
+        json2(response, 200, { version: "1.0", spec, currentBuild, decision, provenance: { skills, weapons }, files: { built, audited: existsSync8(join16(root, ".framepack", "taste-audit.json")), handedOff: existsSync8(join16(root, ".framepack", "handoff-manifest.json")) } });
         return true;
       }
       const artifact = { "/api/assets": "asset-ledger.json", "/api/direction": "direction.json", "/api/storyboard": "storyboard.json", "/api/review": "taste-audit.json" };
@@ -56337,12 +56426,12 @@ __export(server_exports, {
   startWorkbenchServer: () => startWorkbenchServer
 });
 import { createServer as createServer2 } from "node:http";
-import { readFile as readFile13, realpath } from "node:fs/promises";
+import { readFile as readFile14, realpath as realpath2 } from "node:fs/promises";
 import { existsSync as existsSync9 } from "node:fs";
-import { join as join16, normalize, relative as relative4, resolve as resolve12 } from "node:path";
+import { join as join17, normalize, relative as relative5, resolve as resolve13 } from "node:path";
 import { fileURLToPath as fileURLToPath2 } from "node:url";
 async function startWorkbenchServer(projectDir, port = 4173) {
-  const root = resolve12(projectDir);
+  const root = resolve13(projectDir);
   const api = createWorkbenchApi(root);
   const server = createServer2(async (request, response) => {
     const url2 = new URL(request.url ?? "/", "http://127.0.0.1");
@@ -56353,12 +56442,12 @@ async function startWorkbenchServer(projectDir, port = 4173) {
       }
       if (await api(request, response, url2)) return;
       if (url2.pathname.startsWith("/preview/public/")) {
-        const asset = resolve12(root, url2.pathname.slice("/preview/".length));
-        if (!isInside(resolve12(root, "public"), asset)) {
+        const asset = resolve13(root, url2.pathname.slice("/preview/".length));
+        if (!isInside(resolve13(root, "public"), asset)) {
           response.writeHead(403).end();
           return;
         }
-        if (!existsSync9(asset) || !isInside(await realpath(resolve12(root, "public")), await realpath(asset))) {
+        if (!existsSync9(asset) || !isInside(await realpath2(resolve13(root, "public")), await realpath2(asset))) {
           response.writeHead(403).end();
           return;
         }
@@ -56366,11 +56455,11 @@ async function startWorkbenchServer(projectDir, port = 4173) {
         return;
       }
       if (url2.pathname === "/preview/" || url2.pathname === "/preview/index.html") {
-        await serveFile(join16(root, "index.html"), response);
+        await serveFile(join17(root, "index.html"), response);
         return;
       }
       const requested = url2.pathname === "/" ? "index.html" : url2.pathname.slice(1);
-      const candidate = resolve12(publicDir, normalize(requested));
+      const candidate = resolve13(publicDir, normalize(requested));
       if (!isInside(publicDir, candidate)) {
         response.writeHead(403).end();
         return;
@@ -56392,10 +56481,10 @@ async function serveFile(path, response) {
     return;
   }
   response.writeHead(200, { "content-type": contentType(path) });
-  response.end(await readFile13(path));
+  response.end(await readFile14(path));
 }
 function isInside(parent, candidate) {
-  const path = relative4(parent, candidate);
+  const path = relative5(parent, candidate);
   return path === "" || !path.startsWith("..") && !path.startsWith("/") && !path.startsWith("\\");
 }
 var publicDir, contentType;
@@ -56403,7 +56492,7 @@ var init_server = __esm({
   "apps/director-workbench/src/server.ts"() {
     "use strict";
     init_api2();
-    publicDir = resolve12(fileURLToPath2(new URL("../public/", import.meta.url)));
+    publicDir = resolve13(fileURLToPath2(new URL("../public/", import.meta.url)));
     contentType = (path) => path.endsWith(".html") ? "text/html; charset=utf-8" : path.endsWith(".css") ? "text/css; charset=utf-8" : path.endsWith(".js") ? "text/javascript; charset=utf-8" : "application/octet-stream";
     if (process.argv[1]?.endsWith("server.ts")) {
       const project = process.argv[2];
@@ -56417,8 +56506,8 @@ var init_server = __esm({
 init_src();
 init_index();
 init_doctor();
-import { cp as cp4, mkdir as mkdir11, readFile as readFile14, writeFile as writeFile12 } from "node:fs/promises";
-import { join as join17 } from "node:path";
+import { cp as cp4, mkdir as mkdir12, readFile as readFile15, writeFile as writeFile13 } from "node:fs/promises";
+import { join as join18 } from "node:path";
 function option(args, name, fallback) {
   const index = args.indexOf(name);
   return index >= 0 ? args[index + 1] : fallback;
@@ -56442,7 +56531,7 @@ async function run() {
   }
   if (command === "brief") {
     const brief = BriefSchema.parse({ goal: option(process.argv, "--goal"), audience: option(process.argv, "--audience", "未指定受众"), constraints: [] });
-    await writeFile12(join17(project, ".framepack", "brief.json"), `${JSON.stringify(brief, null, 2)}
+    await writeFile13(join18(project, ".framepack", "brief.json"), `${JSON.stringify(brief, null, 2)}
 `, "utf8");
     console.log(JSON.stringify(brief));
     return;
@@ -56451,15 +56540,15 @@ async function run() {
     if (process.argv[4] !== "add") throw new Error("assets requires: assets <project> add <paths...>");
     const sources = process.argv.slice(5);
     if (!sources.length) throw new Error("assets add requires at least one path");
-    await mkdir11(join17(project, "assets"), { recursive: true });
-    for (const source2 of sources) await cp4(source2, join17(project, "assets", source2.split(/[\\/]/).at(-1)));
+    await mkdir12(join18(project, "assets"), { recursive: true });
+    for (const source2 of sources) await cp4(source2, join18(project, "assets", source2.split(/[\\/]/).at(-1)));
     console.log(JSON.stringify(await inspectAssets(project)));
     return;
   }
   if (command === "direct") {
     const proposalPath = option(process.argv, "--proposal-file");
     if (!proposalPath) throw new Error("direct requires --proposal-file <UTF-8 JSON path>");
-    const proposalText = await readFile14(proposalPath, "utf8");
+    const proposalText = await readFile15(proposalPath, "utf8");
     const proposal = DirectionProposalSchema.parse(JSON.parse(proposalText));
     const brief = await readBriefOrProposal(project, proposal);
     const result = await runProjectProposal({ projectDir: project, brief, proposal, retryCount: Number(option(process.argv, "--retry-count", "0")), cancelled: process.argv.includes("--cancelled") });
@@ -56470,7 +56559,7 @@ async function run() {
     const feedback = option(process.argv, "--feedback");
     const proposalPath = option(process.argv, "--proposal-file");
     if (!feedback || !proposalPath) throw new Error("revise requires --feedback and --proposal-file");
-    const proposalText = await readFile14(proposalPath, "utf8");
+    const proposalText = await readFile15(proposalPath, "utf8");
     const proposal = DirectionProposalSchema.parse(JSON.parse(proposalText));
     const result = await runProjectProposal({ projectDir: project, brief: await readBriefOrProposal(project, proposal), proposal, feedback, retryCount: Number(option(process.argv, "--retry-count", "0")), cancelled: process.argv.includes("--cancelled") });
     console.log(JSON.stringify(result));
@@ -56479,7 +56568,7 @@ async function run() {
   if (command === "review") {
     const scorecardPath = option(process.argv, "--scorecard");
     if (!scorecardPath) throw new Error("review requires --scorecard <JSON path>");
-    const scorecard = ReviewScorecardSchema.parse(JSON.parse(await readFile14(scorecardPath, "utf8")));
+    const scorecard = ReviewScorecardSchema.parse(JSON.parse(await readFile15(scorecardPath, "utf8")));
     console.log(JSON.stringify(await auditProject(project, { scorecard })));
     return;
   }
@@ -56513,7 +56602,7 @@ async function run() {
 }
 async function readBriefOrProposal(project, proposal) {
   try {
-    return BriefSchema.parse(JSON.parse(await readFile14(join17(project, ".framepack", "brief.json"), "utf8")));
+    return BriefSchema.parse(JSON.parse(await readFile15(join18(project, ".framepack", "brief.json"), "utf8")));
   } catch {
     return BriefSchema.parse({ goal: proposal.summary, audience: "未指定受众", constraints: [] });
   }
