@@ -6,12 +6,14 @@ import {
   type StyleCatalog,
   type VisualStyle,
 } from '@framepack/director-contracts';
+import { join } from 'node:path';
+import { runtimeAssetRoot } from './runtime-assets.js';
 
 let cachedCatalog: StyleCatalog | undefined;
 
 export function loadStyleCatalog(): StyleCatalog {
   if (!cachedCatalog) {
-    const path = new URL('../../director-assets/styles/catalog.json', import.meta.url);
+    const path = join(runtimeAssetRoot, 'styles', 'catalog.json');
     cachedCatalog = StyleCatalogSchema.parse(JSON.parse(readFileSync(path, 'utf8')));
   }
   return cachedCatalog;

@@ -1,0 +1,17 @@
+{
+  "name": "framepack-director",
+  "version": "0.1.0",
+  "description": "中文编程式视频导演工作台，为 HyperFrames 生成可审片样片与生产交接包。",
+  "author": { "name": "Framepack Project" },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Framepack 导演台",
+    "shortDescription": "把想法和素材变成可审片的动态样片",
+    "longDescription": "在 Codex 中完成中文需求分诊、素材整理、导演方向、动态样片、审片证据与 HyperFrames 生产交接。",
+    "developerName": "Framepack Project",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Write"],
+    "defaultPrompt": ["帮我做一支产品发布视频", "根据这些素材给我一版导演方案", "打开 Framepack 导演台继续审片"],
+    "brandColor": "#B4472D"
+  }
+}

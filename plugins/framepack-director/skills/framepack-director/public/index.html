@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Framepack 导演工作台</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>[hidden]{display:none!important}.stage-tools button,.stage-tools a{min-height:40px}.eyebrow{color:#89847e}#provenance-copy{white-space:pre-wrap}</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="wordmark">FRAMEPACK <span>导演工作台</span></div>
+    <nav class="phase-nav" aria-label="制作阶段">
+      <span>素材待补</span><span>方向共创</span><span>分镜编排</span><span>武器匹配</span><span>预览生成</span><span>证据抽取</span><span>导演审片</span><span>决策确认</span><span>已交接</span>
+    </nav>
+    <div id="connection" class="connection"><i></i><span>正在连接</span></div>
+  </header>
+
+  <main class="cockpit">
+    <section class="director-context" aria-labelledby="context-title">
+      <div>
+        <p class="eyebrow">导演上下文</p>
+        <h1 id="context-title">今天想做一支什么样的片子？</h1>
+        <p class="codex-hint">请在当前 Codex 对话中告诉我，创意修改会由 Codex 与你共同完成。</p>
+      </div>
+      <div class="brief-facts">
+        <h2 id="title">正在读取项目</h2>
+        <p id="meta">时长与画幅稍后出现</p>
+        <p id="direction-copy">导演正在理解你的方向。</p>
+      </div>
+      <div class="brief-facts asset-status">
+        <p class="eyebrow">素材与缺口</p>
+        <div id="asset-copy">正在检查素材是否足够支撑画面。</div>
+      </div>
+      <details class="provenance">
+        <summary>技能与武器依据 <span>展开</span></summary>
+        <div id="provenance-copy">等待导演引擎回传依据。</div>
+      </details>
+      <button class="codex-action" type="button" data-codex>回到 Codex 调整创意 <span>↗</span></button>
+    </section>
+
+    <section class="preview-stage" aria-labelledby="stage-title">
+      <div class="section-head">
+        <div><p class="eyebrow">主预览舞台</p><h2 id="stage-title">导演监视器</h2></div>
+        <div class="stage-tools"><button id="compare" type="button">与上一版比较</button><a href="/preview/" target="_blank" rel="noreferrer">全屏查看 ↗</a></div>
+      </div>
+      <div class="monitor">
+        <iframe id="preview" title="当前导演预览"></iframe>
+        <div id="empty-stage" class="empty-stage"><b>画面尚未生成</b><span>先让导演引擎制作一版可审片预览。</span></div>
+        <div class="monitor-corners" aria-hidden="true"></div>
+      </div>
+      <div class="transport">
+        <button type="button" data-job="build" id="build-action">生成当前预览</button>
+        <button type="button" data-job="snapshot" id="snapshot-action">抽取审片证据</button>
+        <button type="button" data-job="audit" id="audit-action">开始导演审片</button>
+        <button type="button" data-job="handoff" id="handoff-action">交接 HyperFrames</button>
+        <button type="button" id="cancel-job" hidden>取消任务</button>
+      </div>
+    </section>
+
+    <aside class="judgment" aria-labelledby="judgment-title">
+      <div class="section-head"><div><p class="eyebrow">导演判断</p><h2 id="judgment-title">这一版，值不值得继续？</h2></div><span id="phase" class="phase">方向共创</span></div>
+      <div id="stale" class="stale" hidden>证据已过期，请重新抽帧审片。</div>
+      <div class="verdict" id="review-copy"><strong>等待第一版画面</strong><p>有了预览后，这里会说明技术质量、视觉口味和风险。</p></div>
+      <div id="scorecard" class="scorecard" aria-label="审片评分"></div>
+      <label class="reason"><span>决定理由</span><textarea id="reason" rows="3" placeholder="例如：视觉方向准确，可以进入正式制作"></textarea></label>
+      <div class="decision-actions">
+        <button id="approve" type="button">批准当前版本</button>
+        <button id="waive" type="button">风险放行</button>
+      </div>
+      <pre id="log" aria-live="polite"></pre>
+    </aside>
+
+    <section class="timeline" aria-labelledby="timeline-title">
+      <div class="timeline-label"><p class="eyebrow">分镜时间线</p><h2 id="timeline-title">故事节奏</h2></div>
+      <ol id="scenes"><li><span>01</span><b>等待分镜</b><small>导演引擎会把故事拆成连续场景</small></li></ol>
+    </section>
+  </main>
+
+  <div id="offline" class="offline" hidden><b>连接已断开</b><span>工作台没有丢失项目，请检查本地服务后重试。</span><button id="retry" type="button">重新连接</button></div>
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

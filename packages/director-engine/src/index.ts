@@ -20,6 +20,7 @@ import { chooseDirection } from './style-catalog.js';
 import { generateStoryboard } from './storyboard.js';
 import { loadSkills, type SkillLoadReceipt } from './skill-runtime.js';
 import { stableStringify } from './content-hash.js';
+import { runtimeAssetRoot } from './runtime-assets.js';
 
 export { approveProject, auditProject, handoffProject, waiveProject, type AuditResult } from './audit.js';
 export { confirmAssetAssignment, inspectAssets, type AssetInspectionOptions, type UrlCapture } from './asset-intake.js';
@@ -49,7 +50,7 @@ export {
 export { classifyWeaponBench, generateWeaponBench, promoteWeapon, runWeaponBenchEvidence, verifyWeaponProofFiles } from './weapon-bench.js';
 
 const PROJECT_SPEC_FILE = '.framepack/project.json';
-const DEFAULT_SKILL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../director-assets/skills');
+const DEFAULT_SKILL_ROOT = resolve(runtimeAssetRoot, 'skills');
 
 export async function initProject(projectDir: string, input: { title: string; aspectRatio: AspectRatio; durationSeconds: number }): Promise<string> {
   const dimensions = dimensionsForAspect(input.aspectRatio);

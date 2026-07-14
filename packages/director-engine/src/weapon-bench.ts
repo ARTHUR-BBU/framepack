@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { runtimeAssetRoot } from './runtime-assets.js';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -13,8 +14,8 @@ import {
 } from '@framepack/director-contracts';
 
 const require = createRequire(import.meta.url);
-const WEAPON_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../director-assets/weapons');
-const FONT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../director-assets/fonts/noto-sans-sc');
+const WEAPON_ROOT = resolve(runtimeAssetRoot, 'weapons');
+const FONT_ROOT = resolve(runtimeAssetRoot, 'fonts', 'noto-sans-sc');
 
 export function classifyWeaponBench(evidenceInput: WeaponBenchEvidence, scorecardInput: WeaponScorecard | null): 'candidate' | 'compatible' | 'proven' {
   const evidence = WeaponBenchEvidenceSchema.parse(evidenceInput);

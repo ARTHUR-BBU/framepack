@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
@@ -12,11 +13,13 @@ import { inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
 import { stableStringify } from './content-hash.js';
 import { vendorNotoSansSc } from './font-vendor.js';
 import { SkillLoadReceiptSchema, type SkillLoadReceipt } from './skill-runtime.js';
+import { runtimeAssetRoot } from './runtime-assets.js';
 import { loadStyleCatalog } from './style-catalog.js';
 import { persistWeaponEvidence, renderWeaponInvocation, verifyWeaponCalls } from './weapon-runtime.js';
 
 const require = createRequire(import.meta.url);
-const DEFAULT_WEAPON_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../director-assets/weapons');
+const DEFAULT_WEAPON_ROOT = resolve(runtimeAssetRoot, 'weapons');
+const BUNDLED_GSAP = resolve(runtimeAssetRoot, 'vendor', 'gsap.min.js');
 
 export type ComposePreviewInput = {
   projectDir: string;
@@ -99,7 +102,7 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
     mkdir(join(projectDir, '.framepack'), { recursive: true }),
   ]);
   await Promise.all([
-    cp(require.resolve('gsap/dist/gsap.min.js'), join(projectDir, 'public', 'vendor', 'gsap.min.js')),
+    cp(existsSync(BUNDLED_GSAP) ? BUNDLED_GSAP : require.resolve('gsap/dist/gsap.min.js'), join(projectDir, 'public', 'vendor', 'gsap.min.js')),
     vendorNotoSansSc(join(projectDir, 'public', 'fonts', 'noto-sans-sc'), `${spec.title} ${sceneText} ${style.chineseName} ${input.feedback.join(' ')}`),
     ...weaponPlan.selected.map(async (selection) => {
       const target = join(projectDir, ...selection.entry.split('/'));

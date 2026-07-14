@@ -29,8 +29,8 @@ async function run(): Promise<void> {
     if (process.argv[4] !== 'add') throw new Error('assets requires: assets <project> add <paths...>');
     const sources = process.argv.slice(5);
     if (!sources.length) throw new Error('assets add requires at least one path');
-    await mkdir(join(project, 'public', 'assets'), { recursive: true });
-    for (const source of sources) await cp(source, join(project, 'public', 'assets', source.split(/[\\/]/).at(-1)!));
+    await mkdir(join(project, 'assets'), { recursive: true });
+    for (const source of sources) await cp(source, join(project, 'assets', source.split(/[\\/]/).at(-1)!));
     console.log(JSON.stringify(await inspectAssets(project))); return;
   }
   if (command === 'direct') {

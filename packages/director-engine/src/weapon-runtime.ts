@@ -21,8 +21,9 @@ import {
 } from '@framepack/director-contracts';
 import { stableStringify } from './content-hash.js';
 import { promoteWeapon, verifyWeaponProofFiles } from './weapon-bench.js';
+import { runtimeAssetRoot } from './runtime-assets.js';
 
-const DEFAULT_WEAPON_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../director-assets/weapons');
+const DEFAULT_WEAPON_ROOT = resolve(runtimeAssetRoot, 'weapons');
 const WEAPON_IDS = ['text-split-enter', 'caption-clip-wipe', 'number-count-up'] as const;
 
 export type RuntimeWeapon = WeaponManifest & { parameters: ZodType; entryHash: string; evidence?: WeaponBenchEvidence; scorecard?: WeaponScorecard };

@@ -1,0 +1,13 @@
+{
+  "command": [
+    "npx",
+    "hyperframes",
+    "lint",
+    ".",
+    "--json"
+  ],
+  "cwd": "docs/evidence/weapons/text-split-enter/16x9",
+  "exitCode": 0,
+  "stdout": "{\n  \"ok\": true,\n  \"errorCount\": 0,\n  \"warningCount\": 0,\n  \"infoCount\": 0,\n  \"findings\": [],\n  \"filesScanned\": 1,\n  \"_meta\": {\n    \"version\": \"0.7.56\",\n    \"latestVersion\": \"0.7.56\",\n    \"updateAvailable\": false\n  }\n}\n",
+  "stderr": ""
+}

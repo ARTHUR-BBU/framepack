@@ -1,8 +1,9 @@
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runtimeAssetRoot } from './runtime-assets.js';
 
-const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../director-assets/fonts/noto-sans-sc');
+const SOURCE_ROOT = resolve(runtimeAssetRoot, 'fonts', 'noto-sans-sc');
 
 export async function vendorNotoSansSc(targetRoot: string, text: string): Promise<string[]> {
   const css = await readFile(join(SOURCE_ROOT, 'wght.css'), 'utf8');

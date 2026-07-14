@@ -190,7 +190,10 @@ function renderLedger(ledger: AssetLedger): string {
 async function writeLedger(projectDir: string, ledger: AssetLedger): Promise<void> {
   const directory = join(projectDir, '.framepack');
   await mkdir(directory, { recursive: true });
-  await writeFile(join(directory, 'assets.json'), `${JSON.stringify(ledger, null, 2)}\n`, 'utf8');
+  await Promise.all([
+    writeFile(join(directory, 'assets.json'), `${JSON.stringify(ledger, null, 2)}\n`, 'utf8'),
+    writeFile(join(directory, 'asset-ledger.json'), `${JSON.stringify(ledger, null, 2)}\n`, 'utf8'),
+  ]);
   await writeFile(join(directory, 'asset-intake.md'), renderLedger(ledger), 'utf8');
 }
 
