@@ -14,7 +14,7 @@ afterEach(async () => {
 
 test('every migrated playbook asset has provenance in the inheritance ledger', async () => {
   const result = await validateMigrationLedger({ repoRoot });
-  expect(result.entries).toBe(9);
+  expect(result.entries).toBe(12);
   expect(result.errors).toEqual([]);
 });
 

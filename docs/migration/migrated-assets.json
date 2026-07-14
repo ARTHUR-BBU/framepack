@@ -54,6 +54,24 @@
       "legacySource": "framepack-plugin/skills/framepack-director/references/visual-styles.md",
       "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
       "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/text-split-enter/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/text-split-enter.js",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/caption-clip-wipe/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/caption-clip-wipe.js",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/number-count-up/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/number-count-up.js",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
     }
   ]
 }

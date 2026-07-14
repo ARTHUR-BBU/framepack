@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "id": "caption-clip-wipe",
+  "chineseName": "字幕裁切擦入",
+  "maturity": "candidate",
+  "functionName": "captionClipWipe",
+  "entry": "caption-clip-wipe/index.js",
+  "engine": "gsap",
+  "purposes": ["proof", "cta"],
+  "signals": ["字幕", "行动", "功能说明"],
+  "source": { "asset": "animation-library/caption-clip-wipe.js", "commit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+}

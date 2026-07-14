@@ -30,6 +30,16 @@ export {
 } from './skill-runtime.js';
 export { chooseDirection, loadStyleCatalog } from './style-catalog.js';
 export { generateStoryboard, persistStoryboard, reviseStoryboard } from './storyboard.js';
+export {
+  loadWeaponRegistry,
+  extractWeaponCalls,
+  persistWeaponEvidence,
+  resolveWeapons,
+  renderWeaponInvocation,
+  verifyWeaponCalls,
+  type RuntimeWeapon,
+  type WeaponRegistry,
+} from './weapon-runtime.js';
 
 const require = createRequire(import.meta.url);
 const PROJECT_SPEC_FILE = '.framepack/project.json';

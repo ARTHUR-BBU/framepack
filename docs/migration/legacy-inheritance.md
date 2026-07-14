@@ -13,5 +13,8 @@
 | `packages/director-assets/skills/framepack-arsenal/SKILL.md` | `framepack-plugin/skills/framepack-arsenal/SKILL.md` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
 | `packages/director-assets/skills/framepack-reference-miner/SKILL.md` | `framepack-plugin/skills/framepack-reference-miner/SKILL.md` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
 | `packages/director-assets/styles/catalog.json` | `framepack-plugin/skills/framepack-director/references/visual-styles.md` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
+| `packages/director-assets/weapons/text-split-enter/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/text-split-enter.js` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
+| `packages/director-assets/weapons/caption-clip-wipe/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/caption-clip-wipe.js` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
+| `packages/director-assets/weapons/number-count-up/index.js` | `framepack-plugin/skills/framepack-animation-library/parts/references/number-count-up.js` | `f7c7bae792a825eb68fb45112c7133070defa1f5` | `MIT` |
 
 `agents/openai.yaml` 为 Codex 新生成的界面元数据，不属于旧资产迁移项。
