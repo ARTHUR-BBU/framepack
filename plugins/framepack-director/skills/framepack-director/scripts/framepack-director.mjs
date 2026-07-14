@@ -15905,6 +15905,9 @@ function routeSkills(intent) {
   if (intent === "reference-video") {
     return [director, { id: "framepack-reference-miner", reason: "extract transferable reference DNA" }, arsenal];
   }
+  if (intent === "faceless-explainer" || intent === "website-to-video") {
+    return [director, { id: intent, reason: `apply the ${intent} workflow` }, arsenal];
+  }
   return [director, arsenal];
 }
 function hash2(value) {
@@ -16074,7 +16077,7 @@ var init_skill_runtime = __esm({
     init_zod();
     SkillLoadReceiptSchema = external_exports.object({
       version: external_exports.literal("1.0"),
-      intent: external_exports.enum(["product-launch-video", "reference-video", "general-video"]),
+      intent: external_exports.enum(["product-launch-video", "faceless-explainer", "website-to-video", "reference-video", "general-video"]),
       loaded: external_exports.array(external_exports.object({
         id: external_exports.string().min(1),
         resolvedSource: external_exports.string().min(1),

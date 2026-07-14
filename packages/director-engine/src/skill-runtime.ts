@@ -4,7 +4,7 @@ import { isAbsolute, join, relative, resolve } from 'node:path';
 import { stableStringify } from './content-hash.js';
 import { z } from 'zod';
 
-type SkillIntent = 'product-launch-video' | 'reference-video' | 'general-video';
+type SkillIntent = 'product-launch-video' | 'faceless-explainer' | 'website-to-video' | 'reference-video' | 'general-video';
 
 export type SkillLoadInput = {
   projectDir: string;
@@ -24,7 +24,7 @@ export type LoadedSkill = {
 
 export const SkillLoadReceiptSchema = z.object({
   version: z.literal('1.0'),
-  intent: z.enum(['product-launch-video', 'reference-video', 'general-video']),
+  intent: z.enum(['product-launch-video', 'faceless-explainer', 'website-to-video', 'reference-video', 'general-video']),
   loaded: z.array(z.object({
     id: z.string().min(1),
     resolvedSource: z.string().min(1),
@@ -79,6 +79,9 @@ function routeSkills(intent: SkillIntent): SkillRequest[] {
   }
   if (intent === 'reference-video') {
     return [director, { id: 'framepack-reference-miner', reason: 'extract transferable reference DNA' }, arsenal];
+  }
+  if (intent === 'faceless-explainer' || intent === 'website-to-video') {
+    return [director, { id: intent, reason: `apply the ${intent} workflow` }, arsenal];
   }
   return [director, arsenal];
 }

@@ -133,4 +133,20 @@ describe('Codex skill runtime', () => {
     const afterApplication = after.applicationReceipt.applied.find((item) => item.skillId === 'product-launch-video');
     expect(afterApplication?.valueHashes).not.toEqual(beforeApplication?.valueHashes);
   });
+
+  for (const [intent, workflow, rhythm] of [
+    ['faceless-explainer', 'faceless-explainer', 'question-context-proof-synthesis'],
+    ['website-to-video', 'website-to-video', 'capture-orient-tour-cta'],
+  ] as const) {
+    test(`${intent} loads and applies its own observable workflow`, async () => {
+      const projectDir = await temporary(`framepack-${intent}-`);
+      const result = await applySkillPlan({
+        projectDir, skillRoot: bundledSkillRoot, intent, assets: ['asset-1'],
+        brief: { goal: intent === 'website-to-video' ? '展示 https://example.com 的真实页面' : '解释一个复杂概念', audience: '新手' },
+      });
+      expect(result.loadReceipt.loaded.map((item) => item.id)).toContain(workflow);
+      expect(result.direction.rhythm).toBe(rhythm);
+      expect(result.applicationReceipt.applied).toContainEqual(expect.objectContaining({ skillId: workflow }));
+    });
+  }
 });
