@@ -1,0 +1,218 @@
+{
+  "version": "1.0",
+  "weaponId": "stagger-grid-reveal",
+  "entryHash": "f83936f906a1070734cf3f0b31910579fa9d1aa6285c3cbbedf8fd6d6f99b974",
+  "ratios": [
+    {
+      "ratio": "16:9",
+      "projectPath": "docs/evidence/weapons/stagger-grid-reveal/16x9",
+      "hyperframesVersion": "0.7.56",
+      "buildHash": "79409543f34ec371e5591680bdf1fc631e1057af6bd4ca45624a7fb4f36ed438",
+      "buildFiles": [
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-102-wght-normal.woff2",
+          "hash": "941c0c2971fc1d6d1e36c3d40d74e6a133ad02f58f0bc3a9cb265d8a60f3eb31"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-110-wght-normal.woff2",
+          "hash": "bbca9081655c45233a25c4cca030c47ebcf2e156eeedd48110836658adb31fa0"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-111-wght-normal.woff2",
+          "hash": "372be010ac0e87cb12065a861da39821104a43d68345a62ca95d3d3e2fb2c269"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-112-wght-normal.woff2",
+          "hash": "34a4580239eae8dc54b726a1e1e9fec266e74225b112063ed93b412d54b97ccd"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-113-wght-normal.woff2",
+          "hash": "614ab8f616352583f92cc2130fe8812c5aaaa8560b3828de45eefb318be7b503"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-115-wght-normal.woff2",
+          "hash": "fb29957c7adccb9a89e34fb28d3d1c7d12bd7401f80c0dba6e1c9e5259cb3262"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-116-wght-normal.woff2",
+          "hash": "a98dc5a726f82141f74a827c443e120709a12fe737fabacf2530927a275fce0d"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-117-wght-normal.woff2",
+          "hash": "d94b5af0c14838af99bf9855f91e851878726558531ddef5bd2100b70dfbe90c"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-118-wght-normal.woff2",
+          "hash": "76c9ddb85ae4578cccd35ae4f6e6bbffaa2c8c2aec0fea17d3c17c84a3c6f7d1"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-119-wght-normal.woff2",
+          "hash": "b3b2374881f4cd93f239820dfd91f0fde8d52f8f92ba2888f7ab9cba21e4d7eb"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-4-wght-normal.woff2",
+          "hash": "9fafd93ac77b81ffdeeb30c31e7d5911eb5b6a0a976b54c6e418eec8701a97e2"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/files/noto-sans-sc-latin-wght-normal.woff2",
+          "hash": "c1d919c8701a86ed7f33a8044f7c4e5675db2fce8b754091e97b2c0792f9782c"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/fonts/wght.css",
+          "hash": "c4b729a2101d69c46a578590da7d0c39ec0b5017b6b1e557cf4390c6c4e2ce98"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/frame.md",
+          "hash": "dcbada49bcb0c89f58c10599a088611b8aa8a04519aa87a94606dd5bffcbb03f"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/index.html",
+          "hash": "7f39110717aa857ddda4568e70a76ce1095fab4fda2fcbba69acb643dba9e6f1"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/vendor/gsap.min.js",
+          "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/vendor/weapon.js",
+          "hash": "1e92f82eb70b64eee51db92b1067b0faede881f3d9a73851f35c7fc5f38b023d"
+        }
+      ],
+      "lint": "pass",
+      "check": "pass",
+      "snapshots": [
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/snapshots/contact-sheet.jpg",
+          "hash": "9de35471ab3bd401751c6493de4f957bce9a2859755229ea30e33596890591df"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/snapshots/frame-00-at-0.3s.png",
+          "hash": "7ffb7cd8b8a181d62398bbb3eaebd8ddc6a948d06b2deca9ac5e1c213d64d280"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/snapshots/frame-01-at-1.3s.png",
+          "hash": "341abcf6d7714f4df56fd271d0698594b5dcea704c58fec1e65b9b1bceb4eebc"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/snapshots/frame-02-at-3.5s.png",
+          "hash": "39274dbf36e31b3c65c3e2e4c0a37b689a9dd5951e82d6695482a181ded611da"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/16x9/snapshots/frame-03-at-4.8s.png",
+          "hash": "39274dbf36e31b3c65c3e2e4c0a37b689a9dd5951e82d6695482a181ded611da"
+        }
+      ],
+      "commandOutputHashes": {
+        "lint": "f5cf00f7425a5123efb50b5346ca06c19d3c82426a4e57e6f74b098341d96f31",
+        "check": "b032a6aa0a7bfa7cb4aaad46be26847fbb6bcd0bce3d84708909a862961c863a",
+        "snapshot": "255294da5512e79b8f5ee7905ca8ed838fe9f4ae6c4c9cf11e0d98484567f4ae"
+      }
+    },
+    {
+      "ratio": "9:16",
+      "projectPath": "docs/evidence/weapons/stagger-grid-reveal/9x16",
+      "hyperframesVersion": "0.7.56",
+      "buildHash": "4d5f90bddddd8966f50b85cb38e75674fcebc29ac465fa3667d01bfb568d6b4a",
+      "buildFiles": [
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-102-wght-normal.woff2",
+          "hash": "941c0c2971fc1d6d1e36c3d40d74e6a133ad02f58f0bc3a9cb265d8a60f3eb31"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-110-wght-normal.woff2",
+          "hash": "bbca9081655c45233a25c4cca030c47ebcf2e156eeedd48110836658adb31fa0"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-111-wght-normal.woff2",
+          "hash": "372be010ac0e87cb12065a861da39821104a43d68345a62ca95d3d3e2fb2c269"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-112-wght-normal.woff2",
+          "hash": "34a4580239eae8dc54b726a1e1e9fec266e74225b112063ed93b412d54b97ccd"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-113-wght-normal.woff2",
+          "hash": "614ab8f616352583f92cc2130fe8812c5aaaa8560b3828de45eefb318be7b503"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-115-wght-normal.woff2",
+          "hash": "fb29957c7adccb9a89e34fb28d3d1c7d12bd7401f80c0dba6e1c9e5259cb3262"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-116-wght-normal.woff2",
+          "hash": "a98dc5a726f82141f74a827c443e120709a12fe737fabacf2530927a275fce0d"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-117-wght-normal.woff2",
+          "hash": "d94b5af0c14838af99bf9855f91e851878726558531ddef5bd2100b70dfbe90c"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-118-wght-normal.woff2",
+          "hash": "76c9ddb85ae4578cccd35ae4f6e6bbffaa2c8c2aec0fea17d3c17c84a3c6f7d1"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-119-wght-normal.woff2",
+          "hash": "b3b2374881f4cd93f239820dfd91f0fde8d52f8f92ba2888f7ab9cba21e4d7eb"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-4-wght-normal.woff2",
+          "hash": "9fafd93ac77b81ffdeeb30c31e7d5911eb5b6a0a976b54c6e418eec8701a97e2"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/files/noto-sans-sc-latin-wght-normal.woff2",
+          "hash": "c1d919c8701a86ed7f33a8044f7c4e5675db2fce8b754091e97b2c0792f9782c"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/fonts/wght.css",
+          "hash": "c4b729a2101d69c46a578590da7d0c39ec0b5017b6b1e557cf4390c6c4e2ce98"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/frame.md",
+          "hash": "21c7044ce5f8e6514df3d37b20e44c0e028e2801f33171d1fe57ab80a3ab4ad0"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/index.html",
+          "hash": "0f2f09263befe5d353d682f4735dc4574326fb0c1f54496f6ee96f158dc67461"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/vendor/gsap.min.js",
+          "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/vendor/weapon.js",
+          "hash": "1e92f82eb70b64eee51db92b1067b0faede881f3d9a73851f35c7fc5f38b023d"
+        }
+      ],
+      "lint": "pass",
+      "check": "pass",
+      "snapshots": [
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/snapshots/contact-sheet.jpg",
+          "hash": "92101dccd40341e0e96e5cceaf29de7df0778426c76413b9f5ba5002789cef6b"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/snapshots/frame-00-at-0.3s.png",
+          "hash": "a98b9d40e8aef85fb27feccf4fdbc59e4baf92c90151336b87d6cfad863d2f77"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/snapshots/frame-01-at-1.3s.png",
+          "hash": "58e6e2cfb35c02e54c809931ee8fe8d004491d857358ea60ba31bd55dfbf4719"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/snapshots/frame-02-at-3.5s.png",
+          "hash": "af885ac5fa424b1fdf1b929a6355d7840687d6a7ebf3fc86bee253a3c1613419"
+        },
+        {
+          "path": "docs/evidence/weapons/stagger-grid-reveal/9x16/snapshots/frame-03-at-4.8s.png",
+          "hash": "af885ac5fa424b1fdf1b929a6355d7840687d6a7ebf3fc86bee253a3c1613419"
+        }
+      ],
+      "commandOutputHashes": {
+        "lint": "94abd50bf29c20fa80a395ce465716d582cbb2310cfd576f3cb8258fbd8dbd5f",
+        "check": "e4a54608092505939ed75bab78f0a035ce50bb0c34984006374a6c9599bc68b9",
+        "snapshot": "fab2b2148885e78390d2e2b9f48b8d2f20a36763dd74ee07c8f5c5f7f4ea8d74"
+      }
+    }
+  ],
+  "generatedAt": "2026-07-14T13:20:07.044Z"
+}

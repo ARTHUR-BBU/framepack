@@ -1,0 +1,44 @@
+[
+  {
+    "version": "1.0",
+    "buildId": "66c6a861655ceb157585689877219386b4a695e727512d9a101a6f989397174e",
+    "contentHash": "06fad8ceba08f9c4eff8ca5d208744ce27121f28ff265a7839b72db29179fc40",
+    "source": "codex",
+    "reviewer": "codex:gpt-5:/root:2026-07-14",
+    "reviewedAt": "2026-07-14T11:40:00.000Z",
+    "scores": { "intentClarity": 4, "productFocus": 3, "visualHierarchy": 4, "materialQuality": 3, "motionChoreography": 3, "rhythm": 4, "restraint": 5 },
+    "reasons": {
+      "intentClarity": "三幕结构与中文承诺清楚，第一次观看即可理解导演意图。",
+      "productFocus": "产品画面在证据幕持续可见，但当前测试素材本身偏暗，主体信息仍不够突出。",
+      "visualHierarchy": "标题、解释、产品和反馈注记层级明确，横屏左右关系稳定。",
+      "materialQuality": "使用了真实可解析 PNG 与品牌文档，但样片素材只覆盖一个产品画面。",
+      "motionChoreography": "六个时间采样点稳定且武器调用可复现，但联系表不足以证明全部转场细节。",
+      "rhythm": "开场、长证据段、行动收束的时长关系清楚，产品证明获得最多时间。",
+      "restraint": "暖灰背景、少量信号光与粗体中文保持克制，没有重新堆回科技装饰。"
+    },
+    "evidenceFrames": [".framepack/preview-snapshots/contact-sheet.jpg", ".framepack/preview-snapshots/frame-02-at-9.6s.png"],
+    "average": 3.71,
+    "verdict": "pass"
+  },
+  {
+    "version": "1.0",
+    "buildId": "67736b0cc0b0c08e53825c83079079bea442d8567f31b78d77f73dabbaf615a9",
+    "contentHash": "27b6653b4fc961b1e113420c6079539768fa7c3cad98c26aff95673bcfc7dc3f",
+    "source": "codex",
+    "reviewer": "codex:gpt-5:/root:2026-07-14",
+    "reviewedAt": "2026-07-14T11:40:00.000Z",
+    "scores": { "intentClarity": 4, "productFocus": 3, "visualHierarchy": 4, "materialQuality": 3, "motionChoreography": 3, "rhythm": 4, "restraint": 5 },
+    "reasons": {
+      "intentClarity": "竖屏三幕含义清楚，中文标题断行后仍能快速读懂。",
+      "productFocus": "产品画面获得独立下半区，但当前素材的内部细节偏暗且尺寸仍可加强。",
+      "visualHierarchy": "竖屏从标题到说明再到产品的纵向阅读顺序稳定，没有越过安全区。",
+      "materialQuality": "真实 PNG 在六个采样点均成功渲染，品牌资料进入语气约束，但素材丰富度有限。",
+      "motionChoreography": "标题武器和 CTA 武器运行无错误，静态采样不能替代完整实时动作审片。",
+      "rhythm": "竖屏的留白与证据段节奏从容，最终行动幕具有明确停顿。",
+      "restraint": "画面只保留必要文字、产品与淡色氛围，符合降低科技感的反馈。"
+    },
+    "evidenceFrames": [".framepack/preview-snapshots/contact-sheet.jpg", ".framepack/preview-snapshots/frame-02-at-9.6s.png"],
+    "average": 3.71,
+    "verdict": "pass"
+  }
+]

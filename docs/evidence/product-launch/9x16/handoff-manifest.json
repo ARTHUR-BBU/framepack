@@ -1,0 +1,23 @@
+{
+  "handoffVersion": "1.0",
+  "source": "framepack-director-preview",
+  "aspectRatio": "9:16",
+  "width": 1080,
+  "height": 1920,
+  "durationSeconds": 18,
+  "htmlEntry": "index.html",
+  "previewApproved": true,
+  "tasteGate": "pass",
+  "audioNeeded": false,
+  "subtitleNeeded": false,
+  "bgmNeeded": false,
+  "hyperframesActions": [
+    "lint",
+    "check",
+    "render",
+    "ffprobe",
+    "snapshot-review"
+  ],
+  "knownRisks": [],
+  "renderNotes": "Render at 30fps, SDR, high quality. Preserve HTML timing windows."
+}

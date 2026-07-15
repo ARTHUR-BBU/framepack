@@ -1,0 +1,282 @@
+{
+  "version": "1.0",
+  "weaponId": "caption-clip-wipe",
+  "entryHash": "aa9b9830f38ec4144bbf4602699078b7abd411c8b7bfdb44d114b5ce3b0d6daa",
+  "ratios": [
+    {
+      "ratio": "16:9",
+      "projectPath": "docs/evidence/weapons/caption-clip-wipe/16x9",
+      "hyperframesVersion": "0.7.56",
+      "buildHash": "d819254d8e0439dc8b42a07f55b88520ec00696db146e2e30da52e3cfd95cf10",
+      "buildFiles": [
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/command-output/check.json",
+          "hash": "94b11fd6bf3c12697a33df5264ff143c3d4610008457a04c7495bd087e483b8a"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/command-output/lint.json",
+          "hash": "92681adcd38b6858c64d5ad333320bec22678f30ff4dc0a41acc47de8623ffe0"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/command-output/snapshot.json",
+          "hash": "37ec637e7a43629a7e76a57a278bae7a2f1daffa867a2fb3f3934fd01488a1aa"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-102-wght-normal.woff2",
+          "hash": "941c0c2971fc1d6d1e36c3d40d74e6a133ad02f58f0bc3a9cb265d8a60f3eb31"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-110-wght-normal.woff2",
+          "hash": "bbca9081655c45233a25c4cca030c47ebcf2e156eeedd48110836658adb31fa0"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-111-wght-normal.woff2",
+          "hash": "372be010ac0e87cb12065a861da39821104a43d68345a62ca95d3d3e2fb2c269"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-112-wght-normal.woff2",
+          "hash": "34a4580239eae8dc54b726a1e1e9fec266e74225b112063ed93b412d54b97ccd"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-113-wght-normal.woff2",
+          "hash": "614ab8f616352583f92cc2130fe8812c5aaaa8560b3828de45eefb318be7b503"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-115-wght-normal.woff2",
+          "hash": "fb29957c7adccb9a89e34fb28d3d1c7d12bd7401f80c0dba6e1c9e5259cb3262"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-116-wght-normal.woff2",
+          "hash": "a98dc5a726f82141f74a827c443e120709a12fe737fabacf2530927a275fce0d"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-117-wght-normal.woff2",
+          "hash": "d94b5af0c14838af99bf9855f91e851878726558531ddef5bd2100b70dfbe90c"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-118-wght-normal.woff2",
+          "hash": "76c9ddb85ae4578cccd35ae4f6e6bbffaa2c8c2aec0fea17d3c17c84a3c6f7d1"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-119-wght-normal.woff2",
+          "hash": "b3b2374881f4cd93f239820dfd91f0fde8d52f8f92ba2888f7ab9cba21e4d7eb"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-4-wght-normal.woff2",
+          "hash": "9fafd93ac77b81ffdeeb30c31e7d5911eb5b6a0a976b54c6e418eec8701a97e2"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/files/noto-sans-sc-latin-wght-normal.woff2",
+          "hash": "c1d919c8701a86ed7f33a8044f7c4e5675db2fce8b754091e97b2c0792f9782c"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/fonts/wght.css",
+          "hash": "c4b729a2101d69c46a578590da7d0c39ec0b5017b6b1e557cf4390c6c4e2ce98"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/frame.md",
+          "hash": "1cd7173c8325620ad66eb1a6ec9816fc061015984e2f817dacdb6b06461a6717"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/index.html",
+          "hash": "7b5f181c39d2c80497cbf8f7b29dc405a789771a650fc44b389173603f2ab7de"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/contact-sheet.jpg",
+          "hash": "986a7dfa1cbf5d06f68afae5d4c97a70e4f62220f33dbc4a0b8cade5fd5bf015"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/frame-00-at-0.3s.png",
+          "hash": "75834fe913d3de6ee7af3786558687638ea84ad399f6b9ea8824aecbd43c4333"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/frame-01-at-1.3s.png",
+          "hash": "d1ca76d40ada520ff5de9a8cf056106ed2e4b437693f0836ae1811419e19798e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/frame-02-at-3.5s.png",
+          "hash": "d1ca76d40ada520ff5de9a8cf056106ed2e4b437693f0836ae1811419e19798e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/frame-03-at-4.8s.png",
+          "hash": "d1ca76d40ada520ff5de9a8cf056106ed2e4b437693f0836ae1811419e19798e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/vendor/gsap.min.js",
+          "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/vendor/weapon.js",
+          "hash": "b182fb710d4b739332ec0cec1d6a8bb49935c2bed76f53f702debd5445ce9b28"
+        }
+      ],
+      "lint": "pass",
+      "check": "pass",
+      "snapshots": [
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/contact-sheet.jpg",
+          "hash": "986a7dfa1cbf5d06f68afae5d4c97a70e4f62220f33dbc4a0b8cade5fd5bf015"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/frame-00-at-0.3s.png",
+          "hash": "75834fe913d3de6ee7af3786558687638ea84ad399f6b9ea8824aecbd43c4333"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/frame-01-at-1.3s.png",
+          "hash": "d1ca76d40ada520ff5de9a8cf056106ed2e4b437693f0836ae1811419e19798e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/frame-02-at-3.5s.png",
+          "hash": "d1ca76d40ada520ff5de9a8cf056106ed2e4b437693f0836ae1811419e19798e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/16x9/snapshots/frame-03-at-4.8s.png",
+          "hash": "d1ca76d40ada520ff5de9a8cf056106ed2e4b437693f0836ae1811419e19798e"
+        }
+      ],
+      "commandOutputHashes": {
+        "lint": "92681adcd38b6858c64d5ad333320bec22678f30ff4dc0a41acc47de8623ffe0",
+        "check": "94b11fd6bf3c12697a33df5264ff143c3d4610008457a04c7495bd087e483b8a",
+        "snapshot": "37ec637e7a43629a7e76a57a278bae7a2f1daffa867a2fb3f3934fd01488a1aa"
+      }
+    },
+    {
+      "ratio": "9:16",
+      "projectPath": "docs/evidence/weapons/caption-clip-wipe/9x16",
+      "hyperframesVersion": "0.7.56",
+      "buildHash": "8ed6883fd3b4882a96ea2bc3b4008e59a660d86beb2ae5db3bca64ee7c63f482",
+      "buildFiles": [
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/command-output/check.json",
+          "hash": "28c001ff2fa168a65f6c34566339c4bcbf21c7ea992007549d89508d77dcb071"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/command-output/lint.json",
+          "hash": "4c5a8da1cc6c9eaa72d47b7b96b8eeb92a075c5022df1571e6485d5c6d43b50c"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/command-output/snapshot.json",
+          "hash": "01ae6929ca27ed7d0069ad58289ea4bb7c908ce23aa3e78cc1a8014cc068a924"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-102-wght-normal.woff2",
+          "hash": "941c0c2971fc1d6d1e36c3d40d74e6a133ad02f58f0bc3a9cb265d8a60f3eb31"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-110-wght-normal.woff2",
+          "hash": "bbca9081655c45233a25c4cca030c47ebcf2e156eeedd48110836658adb31fa0"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-111-wght-normal.woff2",
+          "hash": "372be010ac0e87cb12065a861da39821104a43d68345a62ca95d3d3e2fb2c269"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-112-wght-normal.woff2",
+          "hash": "34a4580239eae8dc54b726a1e1e9fec266e74225b112063ed93b412d54b97ccd"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-113-wght-normal.woff2",
+          "hash": "614ab8f616352583f92cc2130fe8812c5aaaa8560b3828de45eefb318be7b503"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-115-wght-normal.woff2",
+          "hash": "fb29957c7adccb9a89e34fb28d3d1c7d12bd7401f80c0dba6e1c9e5259cb3262"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-116-wght-normal.woff2",
+          "hash": "a98dc5a726f82141f74a827c443e120709a12fe737fabacf2530927a275fce0d"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-117-wght-normal.woff2",
+          "hash": "d94b5af0c14838af99bf9855f91e851878726558531ddef5bd2100b70dfbe90c"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-118-wght-normal.woff2",
+          "hash": "76c9ddb85ae4578cccd35ae4f6e6bbffaa2c8c2aec0fea17d3c17c84a3c6f7d1"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-119-wght-normal.woff2",
+          "hash": "b3b2374881f4cd93f239820dfd91f0fde8d52f8f92ba2888f7ab9cba21e4d7eb"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-4-wght-normal.woff2",
+          "hash": "9fafd93ac77b81ffdeeb30c31e7d5911eb5b6a0a976b54c6e418eec8701a97e2"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/files/noto-sans-sc-latin-wght-normal.woff2",
+          "hash": "c1d919c8701a86ed7f33a8044f7c4e5675db2fce8b754091e97b2c0792f9782c"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/fonts/wght.css",
+          "hash": "c4b729a2101d69c46a578590da7d0c39ec0b5017b6b1e557cf4390c6c4e2ce98"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/frame.md",
+          "hash": "77e6fa791edb7524dbac7e9bf4c4bee88d101a22150bf553231afd366f824cb7"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/index.html",
+          "hash": "5be1b5e5abad214aecdd99cb5b604ffd196c09475a8fb4e7d6cd724f077db170"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/contact-sheet.jpg",
+          "hash": "556e105753926312215f1811056132234d28a7e18a7e2829b5c250d460280369"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/frame-00-at-0.3s.png",
+          "hash": "6131d8926ae6b87613a0a1e72006f7e9de2fe318a015690975eb549a545ee5df"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/frame-01-at-1.3s.png",
+          "hash": "6c5d64e5cdccc0c41e1458adc1be20f4502d977c173b7c21a27dae0a8598ce6e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/frame-02-at-3.5s.png",
+          "hash": "6c5d64e5cdccc0c41e1458adc1be20f4502d977c173b7c21a27dae0a8598ce6e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/frame-03-at-4.8s.png",
+          "hash": "6c5d64e5cdccc0c41e1458adc1be20f4502d977c173b7c21a27dae0a8598ce6e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/vendor/gsap.min.js",
+          "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/vendor/weapon.js",
+          "hash": "b182fb710d4b739332ec0cec1d6a8bb49935c2bed76f53f702debd5445ce9b28"
+        }
+      ],
+      "lint": "pass",
+      "check": "pass",
+      "snapshots": [
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/contact-sheet.jpg",
+          "hash": "556e105753926312215f1811056132234d28a7e18a7e2829b5c250d460280369"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/frame-00-at-0.3s.png",
+          "hash": "6131d8926ae6b87613a0a1e72006f7e9de2fe318a015690975eb549a545ee5df"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/frame-01-at-1.3s.png",
+          "hash": "6c5d64e5cdccc0c41e1458adc1be20f4502d977c173b7c21a27dae0a8598ce6e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/frame-02-at-3.5s.png",
+          "hash": "6c5d64e5cdccc0c41e1458adc1be20f4502d977c173b7c21a27dae0a8598ce6e"
+        },
+        {
+          "path": "docs/evidence/weapons/caption-clip-wipe/9x16/snapshots/frame-03-at-4.8s.png",
+          "hash": "6c5d64e5cdccc0c41e1458adc1be20f4502d977c173b7c21a27dae0a8598ce6e"
+        }
+      ],
+      "commandOutputHashes": {
+        "lint": "4c5a8da1cc6c9eaa72d47b7b96b8eeb92a075c5022df1571e6485d5c6d43b50c",
+        "check": "28c001ff2fa168a65f6c34566339c4bcbf21c7ea992007549d89508d77dcb071",
+        "snapshot": "01ae6929ca27ed7d0069ad58289ea4bb7c908ce23aa3e78cc1a8014cc068a924"
+      }
+    }
+  ],
+  "generatedAt": "2026-07-14T03:42:17.719Z"
+}

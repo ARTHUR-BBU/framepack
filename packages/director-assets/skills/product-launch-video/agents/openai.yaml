@@ -1,0 +1,4 @@
+interface:
+  display_name: "产品发布视频工作流"
+  short_description: "把真实产品素材和卖点组织成高级克制的中文发布视频方向"
+  default_prompt: "使用 $product-launch-video 为我的产品规划一支中文发布视频。"

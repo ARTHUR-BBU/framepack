@@ -1,0 +1,15 @@
+{
+  "command": [
+    "npx",
+    "hyperframes",
+    "snapshot",
+    ".",
+    "--at",
+    "0.3,1.3,3.5",
+    "--json"
+  ],
+  "cwd": "docs/evidence/weapons/number-count-up/9x16",
+  "exitCode": 0,
+  "stdout": "◆  Capturing 3 frames at [0.3s, 1.3s, 3.5s] from 9x16\n\n   Fonts: 6 loaded, 7 unused\n   Note: added an end-of-timeline frame at 4.85s. Short beats between your --at times may still be skipped — pass them explicitly.\n\n◇  4 snapshots saved to snapshots/\n   snapshots\\frame-00-at-0.3s.png\n   snapshots\\frame-01-at-1.3s.png\n   snapshots\\frame-02-at-3.5s.png\n   snapshots\\frame-03-at-4.8s.png\n   contact-sheet.jpg (grid view for AI review)\n   --describe: GEMINI_API_KEY not set, skipping\n",
+  "stderr": ""
+}

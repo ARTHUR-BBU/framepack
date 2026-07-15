@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "weaponId": "elastic-scale-enter",
+  "reviewer": { "source": "codex", "id": "codex:gpt-5" },
+  "reviewedAt": "2026-07-14T13:00:00.000Z",
+  "buildHashes": [
+    "874e9e1e160814ebfb8c9904d22e480920981a54a0f087b83531b01592697dcb",
+    "8ae8cf97b1dfbd3a187fcc37c85d9b3b85acc37688321659886a39a4d1aacf48"
+  ],
+  "citedFrames": [
+    "docs/evidence/weapons/elastic-scale-enter/16x9/snapshots/frame-00-at-0.3s.png",
+    "docs/evidence/weapons/elastic-scale-enter/16x9/snapshots/frame-01-at-1.3s.png",
+    "docs/evidence/weapons/elastic-scale-enter/9x16/snapshots/frame-00-at-0.3s.png",
+    "docs/evidence/weapons/elastic-scale-enter/9x16/snapshots/frame-01-at-1.3s.png"
+  ],
+  "dimensions": [
+    { "id": "clarity", "score": 5, "reason": "主视觉从空场到聚焦状态清晰可辨" },
+    {
+      "id": "composition",
+      "score": 5,
+      "reason": "横竖画幅均保持稳定居中和充分留白"
+    },
+    {
+      "id": "motion",
+      "score": 4,
+      "reason": "弹性缩放有明确重音且没有过度晃动"
+    },
+    {
+      "id": "rhythm",
+      "score": 4,
+      "reason": "一秒左右完成入场适合开场与行动召唤"
+    },
+    { "id": "craft", "score": 4, "reason": "缩放与可见度同步避免突兀闪现" },
+    {
+      "id": "adaptability",
+      "score": 5,
+      "reason": "横版竖版和不同尺寸主视觉均可复用"
+    },
+    {
+      "id": "commercialValue",
+      "score": 5,
+      "reason": "适合产品主视觉按钮与品牌口号聚焦"
+    }
+  ],
+  "verdict": "proven"
+}

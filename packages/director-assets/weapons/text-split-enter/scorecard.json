@@ -1,0 +1,16 @@
+{
+  "version": "1.0", "weaponId": "text-split-enter",
+  "reviewer": { "source": "codex", "id": "codex:gpt-5" }, "reviewedAt": "2026-07-14T03:25:00.000Z",
+  "buildHashes": ["cbfa28d5b5e581442db3d9eea79064f0a2d6fa329fa0041911ef56e58c92dd62", "7dd89ad747fae1cb2da66c78970e30da655b0f3eb9319898f6830ae78227eb88"],
+  "citedFrames": ["docs/evidence/weapons/text-split-enter/16x9/snapshots/contact-sheet.jpg", "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-01-at-1.3s.png", "docs/evidence/weapons/text-split-enter/9x16/snapshots/contact-sheet.jpg", "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-01-at-1.3s.png"],
+  "dimensions": [
+    { "id": "clarity", "score": 4, "reason": "标题在合拢后清晰稳定，动作目的容易理解" },
+    { "id": "composition", "score": 4, "reason": "横竖画幅都保持中心主视觉和充足安全边距" },
+    { "id": "motion", "score": 4, "reason": "左右分裂合拢具有明确动因，停帧状态稳定" },
+    { "id": "rhythm", "score": 4, "reason": "前置留白后快速合拢，适合作为开场重音" },
+    { "id": "craft", "score": 4, "reason": "裁切边界干净，无闪烁、溢出或字体回退" },
+    { "id": "adaptability", "score": 4, "reason": "横版与竖版均通过检查，短标题适配性良好" },
+    { "id": "commercialValue", "score": 4, "reason": "能把核心承诺做成明确品牌开场，但需控制标题长度" }
+  ],
+  "verdict": "proven"
+}

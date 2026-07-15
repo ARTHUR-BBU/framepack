@@ -1,303 +1,48 @@
 # Framepack
 
-> **HyperFrames 导演工作台 — v0.20.0**
->
-> Framepack 把模糊的视频想法，变成可以交给 HyperFrames 正式制作的商业视频生产简报：先分诊、问素材、定创意方向、选择 workflow 和武器、清晰交接，再在渲染前做口味审片。
+Framepack 是一个**面向 Codex 的编程式视频 Build Studio（导演构建台）**。
 
-Framepack 是 Hermes Agent 插件，服务于 HyperFrames。它不是另一个渲染器，也不是另一个 HTML 生成器。它是夹在“人的模糊创意”和“HyperFrames 制作机器”之间的 **导演层**。
-
-厨房比喻：**HyperFrames 是专业厨房，Framepack 是主厨。** 厨房有炉灶、刀具、工位和出餐系统；主厨定菜单、看食材、选菜谱、检查摆盘，并决定这道菜是否值得端出去。
-
-## 产品定位
-
-Framepack 的目标，是让 AI 生成的商业视频更像一条真正的品牌片，而不是“会动的 PPT”。
-
-它优化的是：
-
-- **先导演，后制作** — 先决定这条片子的气质、结构和重点，再碰摄影机。
-- **真实素材压过通用装饰** — 产品图、截图、logo、证明点、参考片 DNA、品牌质感要当主角。
-- **武器优先执行** — 有成熟动画武器和 preset，就不要裸写一坨 GSAP 冒充高级。
-- **把审美变成生产门槛** — 渲染前报告模板味、旧素材残留、素材缺口、节奏漂移、证据不足。
-- **关键节点让用户决策** — Framepack 给专业建议；用户决定修改、补素材，还是继续 render anyway。
-
-## 设计哲学
-
-Framepack 遵守五条产品规则：
-
-1. **导演，不是摄影机操作员** — Framepack 管意图、故事、素材意识、创意约束、武器建议和口味审片；HyperFrames 管 HTML、Studio、lint、render、publish、catalog、media、cloud。
-2. **审美相关的事必须共创** — 视觉风格、素材、旁白、比例、节奏、渲染决策，都不能让 Agent 擅自签字。
-3. **不欠 AI 债** — 不允许用裸 GSAP、泛泛动画、缺素材硬编、无记录捷径，制造“看起来做完了”的假高级。
-4. **凭小票，不凭感觉** — 每次交接都要留下证据：`frame.md`、`expanded-prompt.md`、weapon load plan、arsenal registry、scorecard、lint/audit findings。
-5. **把好东西产品化** — 好模板、好 preset、好武器、好 scorecard、好 audit，都要沉淀成稳定生产资产，不做一次性魔法。
-
-## 最新架构一览
+它先把需求与本地素材变成可播放、可审片的 HTML/CSS/GSAP 动画样片；每次构建都会冻结成可追溯版本，后续修改不会悄悄覆盖你已看过的样片。你在 Codex 内置浏览器中确认动态效果后，再把**这一版**已确认样片交给 HyperFrames 做最终渲染、音频、配音、字幕与媒体质检。
 
 ```text
-用户想法 / URL / 参考片 / 产品 brief
-  ↓
-Framepack Intent Router
-  ├── product-launch-video
-  ├── website-to-video
-  ├── faceless-explainer
-  ├── pr-to-video
-  ├── embedded-captions
-  ├── motion-graphics / graphic-overlays
-  ├── template reuse
-  └── reference/template extraction
-  ↓
-素材收集 + 共创确认
-  ↓
-frame.md
-  └── 视觉身份 + control profile
-  ↓
-.hyperframes/expanded-prompt.md
-  └── Director Story Bible：场景、节奏、时间窗、视觉母题、negative prompt
-  ↓
-Weapon Matching Pass
-  ├── source search：官方 catalog → Framepack arsenal → specialist skills → 项目本地武器
-  ├── weapon-load-plan.json / .md
-  ├── preset metadata：preset_id、params_hint、score_class、studio_editable
-  └── 只有没有合适武器时，才允许 HANDWRITE waiver
-  ↓
-Handoff Manifest
-  └── workflow、素材、约束、QA 红线、武器义务
-  ↓
-HyperFrames 官方 workflow + Studio preview
-  ↓
-Framepack Pre-render Taste Audit
-  ├── quality issues：旧 props、素材缺口、模板味、timeline/proof 漂移
-  ├── upstream limits：HyperFrames 已知上游限制单独分类
-  └── advisory output：修改 / 补素材 / render anyway
-  ↓
-HyperFrames render / publish / cloud
+需求 + 素材 → 导演方向 + 分镜 → 不可变 Build → 快照 + 品味审片
+→ 明确批准 / 明确豁免 → HyperFrames lint、check、render、音频、字幕、最终 QA
 ```
 
-## 事业部化架构
+## 当前支持范围
 
-Framepack 不是一堆 hook、detector、weapon、audit 的杂货铺，而是一组协作的产品事业部。每个事业部只管一类事，有自己的边界、产物和验收小票。
+第一版**只支持 Codex**。在 Codex 真实项目闭环被验证稳定前，Hermes 与 Claude Code 不做适配。旧 Hermes 插件只留在 Git 历史中，不再进入新工作树。
 
-| 事业部 | 通俗角色 | 负责 | 不负责 |
-|---|---|---|---|
-| Intent & Intake | 前厅经理：先听懂需求，再让厨房开火 | 分诊、素材问题、用户决策点 | 分镜编排、taste 判断、weapon 选择 |
-| Director Bible | 导演组：把想法变成可拍分镜圣经 | `frame.md`、`.hyperframes/expanded-prompt.md`、时间窗、motif、execution manifest | HTML、render、最终 proof |
-| Taste Intelligence | 主厨舌头：判断方向商业上够不够强 | `taste_read`、`taste_dials`、taste rules、prompt/pixel 口味债、action cards | 具体 weapon 选择、实现层强制执行 |
-| Weapon Production | 厨房设备 + 标准菜谱：选择成熟做法 | weapon matching、arsenal、presets、scorecards、load plans | 整片审美判断 |
-| Production Audit | 出餐验货：承诺和实物对账 | quality audit、proof/timeline 漂移、旧素材、上游 warning 分类 | 重写创意方向 |
-| Intervention & Railguard | 店长 / 铁路调度员：Agent 偏航时拉回轨道 | gates、corrective injection、required next action、waiver、小票 | 具体 Taste / Weapon / Audit 业务规则 |
-| Knowledge Assets | 菜谱档案馆：把好经验沉淀成资产 | templates、reference DNA、visual styles、research PRD、case learnings | 未验证的一次性魔法 |
-| Platform Integration | 外联和运维：保证 Hermes / HyperFrames / Framepack 对齐 | hooks、compatibility、guardrails、部署同步、release docs | 创意审美或 weapon 语义 |
+## 快速开始
 
-最重要的生产治理链路是：
-
-```text
-Taste → Weapon → Audit → Intervention
+```powershell
+npm install
+npm run director -- init C:\work\my-preview --aspect 16:9 --duration 30 --title "产品发布"
+npm run director -- build C:\work\my-preview
+npm run director -- snapshot C:\work\my-preview
+npm run director -- audit C:\work\my-preview
+npm run director -- approve C:\work\my-preview --reason "已确认样片"
+npm run director -- handoff C:\work\my-preview
+npm run director:serve -- C:\work\my-preview
 ```
 
-- **Taste** 判断方向商业上强不强。
-- **Weapon** 判断应该用哪种成熟制作手段。
-- **Audit** 检查承诺有没有真实兑现。
-- **Intervention** 是可复用的强硬介入 / 轨道层：Agent 跳步骤、假调用、忽略 proof、需要 waiver 时，把它拉回流程。
+把最后打印出的本地地址放进 Codex 内置浏览器。Build Studio 只保留三块核心区域：**Builds（版本与证据）**、**Preview（动态样片）**、**Judgment（审片决定）**；创意工作继续留在 Codex 对话中完成。
 
-这个边界让系统互补而不抢活：Taste 不变成代码检查器，Weapon 不变成艺术评论家，Audit 不变成导演，Gate 也不再散落在各个模块里。
+## 0.2.0 有什么变化
 
-## 功能模块逻辑关系
+- **不可变 Build**：每次 `build` 都写入 `.framepack/builds/<build-id>/`；`.framepack/current-build.json` 指向 Studio 正在展示的版本。项目根目录的 `index.html` 不再是唯一事实来源。
+- **Skill 分类有证据**：Framepack 会记录技能在本次任务中担任导演、制片或技术支持的角色，以及它影响的产物路径与哈希。
+- **武器编排不再是一锤子特效**：一个场景可在入场、强调、退场安排多段已验证动作；运动覆盖率报告会在批准前提示“太静”或动作不足的场景。
+- **页面更少，但决定更强**：Studio 不重复 Codex 的创意能力，只把版本、预览、证据与人的最终判断做得清楚好用。
 
-| 模块 | 作用 | 产物 / 契约 |
-|---|---|---|
-| Intent Router | 把模糊需求分诊到正确视频路线 | 产品发布、网站巡游、解释视频、PR 视频、字幕、叠加图形、模板、参考片挖掘 |
-| Asset Intake | 制作前先问真实素材 | logo、截图、产品页、源视频、BGM、证明点、品牌色、参考片 |
-| `frame.md` | 锁定视觉身份和控制权重 | 配色、字体、氛围、动效能量、创意自主度、克制力、武器依赖 |
-| Director Story Bible | 把想法扩成可制作分镜 | `.hyperframes/expanded-prompt.md`：beats、层次、动画编排、时间窗、execution manifest |
-| Weapon Matching Pass | 把场景意图翻译成必须加载的动画资源 | `.framepack/weapon-load-plan.json` 和 `.md` |
-| Arsenal Registry | 管理内置 / 下载 / 项目本地武器 | `.framepack/arsenal.json`、路径、hash、来源、闲置告警 |
-| Preset Registry | 让武器有命名菜谱，而不是只有裸代码 | `weapon-presets/*.json`：适用场景、避免场景、参数、duration/ease |
-| Weapon Scorecards | 给武器的商业可用性和风险打分 | `weapon-scorecards/*.json`：score class、理由、可编辑性说明 |
-| Post-write Weapon Gate | HTML 写完后抓假调用 | 拒绝空调用、fake shim、注释假调用、缺 preset 质量参数 |
-| Guardrail Hydrator | 保持项目 `AGENTS.md` 和 Framepack 铁律同步 | 只更新 managed block，不覆盖项目自己的规则 |
-| Pre-render Taste Audit | 渲染前审片，但不剥夺用户决策权 | report-first findings + 修改/补素材/render-anyway 建议 |
+## 职责分工
 
-## v0.20.0：事业部架构落地 + HyperFrames 0.7.54 兼容
+| Framepack | HyperFrames |
+| --- | --- |
+| 创意方向、分镜、武器编排、不可变 Build、预览证据、品味闸门、交接包 | 技术兼容、lint/check/render、音频、TTS、字幕、媒体 QA、导出与发布 |
 
-v0.20.0 完成了**事业部 Rollout 全流程**，并带来 **HyperFrames 0.7.54 支持**。
+技术问题不能豁免；审美问题必须返工，或由用户留下明确豁免理由。交接单始终指向已批准的不可变 Build，系统绝不擅自把“看起来差不多”当作批准。
 
-### 治理链路完整闭环
+详见 [Codex 工作台说明](codex-director-workbench.md) 与 [历史资产继承记录](migration/legacy-inheritance.md)。
 
-八个事业部全部拥有内部操作规则，治理链路 `Taste → Weapon → Audit → Intervention` 从检测到 hook 注入全链路通电：
-
-```text
-Phase 5：Audit → Intervention 桥接（之前缺失的环节）
-Phase 6：8/8 事业部内部操作规则文档完成
-Phase 7a：Pre-render hook 走 Intervention 统一通道
-Phase 7b：跨部门事件关联（同根因事件合并展示）
-Phase 7c：介入事件持久化（.framepack/intervention-ledger.json）
-```
-
-v0.20.0 之前：桥接函数建了但 hook 绕过它们——各部门各自直接注入消息。现在三个业务部门（Taste、Weapon、Audit）全部通过统一的 `InterventionEvent` 契约上报，按严重级别分组，跨部门去重。
-
-### HyperFrames 0.7.54 兼容
-
-- `supported_max_tested` 从 0.7.33 升级到 **0.7.54**
-- 新增命令注册：`grade-compare`、`compare`
-- 冒烟验证：`init` + `lint` 在 0.7.54 上全绿
-
-### 继承
-
-这个版本继承了 v0.19.0 Taste Layer 2.0 全部能力（9 个 prompt 检测器、8 个 HTML slop 检测器、proof-frame 证据系统、action cards）和 v0.18.0 武器质量引擎。
-
-## Taste 层：商业视频的审美神经系统
-
-Taste 层回答的是一个特别朴素、但特别产品的问题：**怎么阻止 AI 做出“技术上能跑、商业上很弱”的片子？**
-
-它不是一个更漂亮的 lint。lint 像洗碗机，检查盘子干不干净；Taste 层像主厨试菜，问的是：这盘菜该不该端出去？画面里有没有真实产品？开场有没有视觉钩子？动效是不是有表达任务？我们看到的是 proof frame，还是一堆自我感动的漂亮文字？
-
-通俗地说，Taste 层是 Framepack 的 **主厨味觉 + 厨房小票系统**：
-
-- **先尝味道** — 先读 brief，判断这到底是哪类片：品牌片、产品发布、website-to-video、解释视频、产品 UI demo、活动预告。
-- **把口味变成旋钮** — 把“高级一点 / 动一点 / 克制一点”翻译成可控参数：design variance、motion intensity、visual density，以及 Framepack 已有的五行 control profile。
-- **抓 AI 味** — 抓会动 PPT、文字扛全片、产品缺席、静态 mockup、泛泛 fade、假精确数字、AI 标点、假 UI、发光网格这些廉价套路。
-- **留下小票** — 写出 `taste-audit.json` 和 `taste-debt.md`，让审美问题变成 action card，而不是“我感觉不太行”。
-- **形成决策闭环** — preview/render 前给用户清楚选择：改、补 proof、明确 waiver，或者知道风险后继续 render anyway。
-
-### 现在已经能做什么
-
-当前 Taste Layer 2.0 能力：
-
-| 能力 | 为什么重要 | 当前产物 |
-|---|---|---|
-| Taste read | Agent 先说清"这是什么片"，再开始评判 | `frame.md` 里的 `taste_read` |
-| Taste dials | 审美不再玄学，变成可调旋钮 | `taste_dials` + `control_profile` |
-| Rule registry | taste 规则不再散落硬编码，而是可演进资产 | `core/taste_rules.py` |
-| 按片型调严重级别 | 奢侈品物件片 ≠ SaaS 发布 ≠ 活动预告 — 同一症状权重不同 | `taste_rules.py` register 映射 |
-| Prompt checks | HTML 还没写之前，就先抓方向上的廉价感 | `opening_visual_absence`、`scene_layout_repetition`、`product_presence_weak`、`copy_overcrowding`、`copy_punctuation_slop`、`fake_precision`、`ui_debris_copy`、`missing_taste_read`、`invalid_taste_dial` |
-| HTML slop checks | 在渲染代码里抓 AI 味的实现层症状 | `gradient_text_slop`、`bounce_or_elastic_easing`、`over_rounded_codex_cards`、`ghost_card_shadow_border`、`fake_product_ui_divs`、`raw_scroll_listener`、`missing_reduced_motion`、`decorative_generated_surface` |
-| Proof-frame 证据 | 动效声明必须有真实抽帧证据，不能只靠文字 | `core/taste_proof_detectors.py` + `ProofEvidence` 元数据 |
-| Action cards | open 口味债变成按行动类别分组的具体动作 | `.framepack/taste-audit.json` — Revise / Proof / Waiver 卡片 |
-| 决策闭环 | 渲染前给用户清楚选择 | 改、补证据、明确 waiver、或 render anyway |
-
-### 这次发版的位置
-
-Taste Layer 2.0 系统**已交付并验证**：
-
-```text
-brief/register/dials
-  → 规则注册表（按片型调严重级别）
-  → prompt 检测器（frame.md + expanded-prompt.md）
-  → HTML 实现层 AI 味检测器
-  → proof-frame 证据系统
-  → 按 Revise / Proof / Waiver 分组的 action cards
-  → pre-render 决策闭环
-```
-
-8 个实现阶段全部完成。两个真实渲染 dogfood 停靠点对完整管线做了实测：真实 MP4 输出 + 抽帧 + ffprobe 验证。slop 样本触发 6 种 taste 问题码；clean 样本 0 误报。
-
-### 规划和展望
-
-地基已经浇好。未来增长方向：
-
-1. **商业 case 库扩展** — 每个真实 case 反哺规则注册表、preset、scorecard、template。
-2. **小数精度检测覆盖** — 当前处理整数 px 圆角；扩展到小数 CSS 值。
-3. **规则包生命周期自动化** — 每个有用的商业 case 应该自动建议新规则或规则微调。
-4. **视觉 AI 评分集成** — 把 taste 检测器接入像素级分析，做更深的 AI 味识别。
-
-长期看，Taste 层会成为 Framepack 的 **商业视频智能层**：它帮 Agent 不只是"把视频做完"，而是做出有用、能用、好用，并且偶尔能让用户惊一下的东西。
-
-## Framepack 做什么
-
-- 写东西前先分诊，不盲写。
-- 主动问素材和参考，不靠通用 filler 硬凑。
-- 产出 `frame.md` 和 `.hyperframes/expanded-prompt.md` 作为创意源头。
-- 产出 weapon load plan，让写 HTML 的 Agent 知道必须加载什么、怎么用。
-- 管理 arsenal 生命周期：查找 → 获取 → 注册 → 去重 → 使用审计 → 垃圾清理 → 归档。
-- 把 HyperFrames warning 分成可修质量问题和已知上游限制，避免乱修。
-- 做 lint 看不见的口味检查：模板味、素材缺口、旧域名残留、节奏和证据漂移。
-
-## Framepack 不做什么
-
-- 不写、不修、不接管 HyperFrames HTML。
-- 不替代 `hyperframes lint`、Studio preview、render、publish、media、catalog、cloud。
-- 不把 Taste Audit 当硬拦门。Framepack advises; user decides。
-- 不奖励“有武器不用、裸写 GSAP”的坏习惯。
-
-## Plugin Hooks
-
-```text
-pre_tool_call:
-  ├── classify HyperFrames command intent
-  ├── handoff/production commands → Guardrail Hydrator + Arsenal preflight + Quality Audit context
-  ├── post-write / pre-render surfaces → weapon/taste advisory checks
-  └── discovery/catalog/media/scaffold commands → no false handoff warning
-
-post_tool_call:
-  ├── Framepack skill_view → Guardrail Hydrator sync + current-session injection
-  ├── frame.md write → 视觉 / control-profile 质量检查
-  ├── expanded-prompt.md write → Arsenal reconcile + Director Story Bible 质量检查
-  ├── weapon matching output → load-plan / preset / scorecard 小票
-  └── lint JSON output → upstream warning classification cache
-```
-
-## Skills
-
-| Skill | 作用 |
-|---|---|
-| `framepack` | 主入口：Director Workbench 总纲 |
-| `framepack-director` | Intent → `frame.md` + Director Story Bible |
-| `framepack-animation-library` | 动画武器目录和参考代码 |
-| `framepack-gsap` | HyperFrames-safe GSAP 菜谱 |
-| `framepack-arsenal` | 武器注册表生命周期 |
-| `framepack-reference-miner` | 参考视频 / 网页 → motion DNA / template extraction |
-| `framepack-production-quality` | timeline / proof / semantic quality checks |
-| `framepack-sprite-forge` | sprite sheet 和 chroma-key 工作台 |
-
-## 安装
-
-```bash
-# 1. 克隆
-git clone https://github.com/ARTHUR-BBU/framepack --depth 1
-
-# 2. 复制到 Hermes 插件目录
-# Linux/macOS:
-cp -r framepack/framepack-plugin ~/.hermes/plugins/framepack
-# Windows:
-xcopy /E /I framepack\framepack-plugin %HERMES_HOME%\plugins\framepack
-
-# 3. 启用
-hermes plugins enable framepack
-
-# 4. 验证
-hermes plugins list
-# 你应该看到 `framepack` 状态为 enabled，版本为 **0.20.0**。
-```
-
-## 兼容性
-
-Framepack v0.20.0 面向 HyperFrames 0.7 生产线。
-
-- baseline production target：`HyperFrames 0.7.3+`
-- current workbench target：插件 manifest 声明的 `HyperFrames 0.7.21`
-- supported band：`0.7.x`，更新版本必须先 probe 再信任
-- 低于 `0.7.3` 的版本应先升级，再进入 Framepack handoff
-
-## 试一下
-
-在任意项目目录的 Hermes chat 里输入：
-
-```text
-帮我做一个 30 秒的科技品牌发布视频。你自己判断路线，但先问我要不要提供素材。
-```
-
-预期行为：Framepack 先分诊，问素材，建立创意方向，写 Story Bible 和交接小票，指导武器 / preset 使用，交给 HyperFrames 制作，并在最终 render 前给出 Pre-render Taste Audit。
-
-## 更新
-
-```bash
-cd framepack
-git pull
-cp -r framepack-plugin <hermes-home>/plugins/framepack
-# 重启 Hermes
-```
-
-项目里的 `AGENTS.md` 会在下一次 Framepack 调用时由 Guardrail Hydrator 自动修复。Hydrator 只更新 `FRAMEPACK MANAGED BLOCK`，不会覆盖项目自己的规则。
-
-## 许可
-
-MIT
+部署到其他 Codex 环境请看 [Codex 部署说明](codex-deployment.zh-CN.md)。

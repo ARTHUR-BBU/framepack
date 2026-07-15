@@ -25,11 +25,7 @@ tmp_frame_*.jpg
 test-team-reports/
 
 # Local/generated Framepack workbench artifacts (kept on disk, not committed)
-.hermes/backups/
-.hermes/reports/
 assets/
-!framepack-plugin/templates/bundles/*/assets/
-!framepack-plugin/templates/bundles/*/assets/**
 
 # Environment
 .env

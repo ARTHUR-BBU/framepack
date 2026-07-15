@@ -1,0 +1,95 @@
+{
+  "version": "1.0",
+  "entries": [
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/SKILL.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/SKILL.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/references/asset-intake.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/asset-intake-checklist.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/references/visual-styles.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/visual-styles.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/references/kinetic-grammar.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/kinetic-grammar.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-director/references/taste-moves.md",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/taste-moves.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/product-launch-video/SKILL.md",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/templates/saas-product-launch.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-arsenal/SKILL.md",
+      "legacySource": "framepack-plugin/skills/framepack-arsenal/SKILL.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/skills/framepack-reference-miner/SKILL.md",
+      "legacySource": "framepack-plugin/skills/framepack-reference-miner/SKILL.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/styles/catalog.json",
+      "legacySource": "framepack-plugin/skills/framepack-director/references/visual-styles.md",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/text-split-enter/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/text-split-enter.js",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/caption-clip-wipe/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/caption-clip-wipe.js",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/number-count-up/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/number-count-up.js",
+      "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/elastic-scale-enter/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/elastic-scale-enter.js",
+      "sourceCommit": "dfafc6c0af3f58d838c4bc4590278989ab00cf4e",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/gradient-shift/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/gradient-shift.js",
+      "sourceCommit": "01a6fe8ac5d6dcef061bf41ae5f9aeb35aa66e82",
+      "license": "MIT"
+    },
+    {
+      "currentPath": "packages/director-assets/weapons/stagger-grid-reveal/index.js",
+      "legacySource": "framepack-plugin/skills/framepack-animation-library/parts/references/stagger-grid-reveal.js",
+      "sourceCommit": "01a6fe8ac5d6dcef061bf41ae5f9aeb35aa66e82",
+      "license": "MIT"
+    }
+  ]
+}

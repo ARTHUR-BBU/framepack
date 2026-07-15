@@ -1,0 +1,26 @@
+{
+  "aspect": "9:16",
+  "firstBuildId": "2ae48fb9bc78751c0edb336001f0f25c190306f3cb0dc067c3a7e3514845cf79",
+  "revisedBuildId": "29270871162f84e39eebb0a450bf84c40d82ffcd8a27433ef69fd786cc07e3e8",
+  "beforeFrames": [
+    "4bb0543db48a6420fbda5a527b3f2a7e8f1d234b89642ce3f44853469cbb1569",
+    "088e9022750e8c4d39e40072bf47f07d7451c171f3d8aa98d9ffde7ccc33cfeb",
+    "088e9022750e8c4d39e40072bf47f07d7451c171f3d8aa98d9ffde7ccc33cfeb",
+    "088e9022750e8c4d39e40072bf47f07d7451c171f3d8aa98d9ffde7ccc33cfeb",
+    "dabd9f70fcacbc54e4f55b73adf38502937b28fe21d4d802dc4c504e0b5294e8",
+    "dabd9f70fcacbc54e4f55b73adf38502937b28fe21d4d802dc4c504e0b5294e8"
+  ],
+  "afterFrames": [
+    "5ec26bc143d46c38755a56541623d89b947271af96fa6e738326756c58cd52a3",
+    "88da88fed633d2845c4f716aaf61c6cfd2408a5644ee397a251ee59311a43315",
+    "88da88fed633d2845c4f716aaf61c6cfd2408a5644ee397a251ee59311a43315",
+    "88da88fed633d2845c4f716aaf61c6cfd2408a5644ee397a251ee59311a43315",
+    "c808482695ccf14cea7eb66fb6856096abf98dfb85fc43c3547f98bedadf08ff",
+    "c808482695ccf14cea7eb66fb6856096abf98dfb85fc43c3547f98bedadf08ff"
+  ],
+  "lint": "pass",
+  "check": "pass",
+  "staleScorecard": "rejected",
+  "currentScorecard": "accepted",
+  "handoff": "pass"
+}

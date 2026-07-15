@@ -1,0 +1,17 @@
+{
+  "name": "framepack-director",
+  "version": "0.2.0",
+  "description": "中文编程式视频 Build Studio，为 HyperFrames 生成可追溯的审片样片与冻结交接包。",
+  "author": { "name": "Framepack Project" },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Framepack Build Studio",
+    "shortDescription": "把想法和素材变成可审片、可追溯的动态样片",
+    "longDescription": "在 Codex 中完成中文需求分诊、素材整理、导演方向、不可变 Build、审片证据与 HyperFrames 冻结生产交接。",
+    "developerName": "Framepack Project",
+    "category": "Productivity",
+    "capabilities": ["Interactive", "Write"],
+    "defaultPrompt": ["帮我做一支产品发布视频", "根据这些素材给我一版导演方案", "打开 Framepack 导演台继续审片"],
+    "brandColor": "#B4472D"
+  }
+}

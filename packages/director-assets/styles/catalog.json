@@ -1,0 +1,109 @@
+{
+  "version": "1.0",
+  "styles": [
+    {
+      "id": "swiss-pulse",
+      "chineseName": "瑞士脉冲",
+      "palette": { "background": "#F4F1EA", "surface": "#FFFFFF", "primary": "#171717", "accent": "#185ADB" },
+      "fontFamily": "Noto Sans SC Variable",
+      "fontAsset": "packages/director-assets/fonts/noto-sans-sc/wght.css",
+      "fontLicenseAsset": "packages/director-assets/fonts/noto-sans-sc/OFL.txt",
+      "motionEnergy": "high",
+      "atmosphere": ["严格网格", "大数字", "精确留白"],
+      "suitableIntents": ["SaaS", "开发工具", "数据产品"],
+      "avoid": ["floating-glass-cards", "decorative-particles"],
+      "provenance": { "sourceAsset": "legacy-visual-styles", "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+    },
+    {
+      "id": "velvet-standard",
+      "chineseName": "丝绒标准",
+      "palette": { "background": "#0A0A0A", "surface": "#171512", "primary": "#F5F0E8", "accent": "#C9A96E" },
+      "fontFamily": "Noto Sans SC Variable",
+      "fontAsset": "packages/director-assets/fonts/noto-sans-sc/wght.css",
+      "fontLicenseAsset": "packages/director-assets/fonts/noto-sans-sc/OFL.txt",
+      "motionEnergy": "calm",
+      "atmosphere": ["深色舞台", "克制金色", "雕塑式产品光"],
+      "suitableIntents": ["高端产品", "企业发布", "品牌宣言"],
+      "avoid": ["neon-interface-cliches", "rapid-card-stack"],
+      "provenance": { "sourceAsset": "legacy-visual-styles", "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+    },
+    {
+      "id": "deconstructed",
+      "chineseName": "解构工业",
+      "palette": { "background": "#D8D2C4", "surface": "#BEB7A8", "primary": "#141414", "accent": "#F0442E" },
+      "fontFamily": "Noto Sans SC Variable",
+      "fontAsset": "packages/director-assets/fonts/noto-sans-sc/wght.css",
+      "fontLicenseAsset": "packages/director-assets/fonts/noto-sans-sc/OFL.txt",
+      "motionEnergy": "high",
+      "atmosphere": ["工业标记", "切割构图", "原始纸张纹理"],
+      "suitableIntents": ["安全产品", "硬核科技", "青年品牌"],
+      "avoid": ["polished-corporate-card", "soft-gradient-wash"],
+      "provenance": { "sourceAsset": "legacy-visual-styles", "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+    },
+    {
+      "id": "maximalist-type",
+      "chineseName": "极繁字体",
+      "palette": { "background": "#F3E600", "surface": "#FF5C35", "primary": "#111111", "accent": "#4C2BFF" },
+      "fontFamily": "Noto Sans SC Variable",
+      "fontAsset": "packages/director-assets/fonts/noto-sans-sc/wght.css",
+      "fontLicenseAsset": "packages/director-assets/fonts/noto-sans-sc/OFL.txt",
+      "motionEnergy": "high",
+      "atmosphere": ["超大文字", "色块碰撞", "宣言式节奏"],
+      "suitableIntents": ["重大公告", "活动推广", "年轻消费品牌"],
+      "avoid": ["small-centered-copy", "quiet-luxury-spacing"],
+      "provenance": { "sourceAsset": "legacy-visual-styles", "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+    },
+    {
+      "id": "data-drift",
+      "chineseName": "数据漂移",
+      "palette": { "background": "#07111F", "surface": "#10243B", "primary": "#EAF7FF", "accent": "#54D6C6" },
+      "fontFamily": "Noto Sans SC Variable",
+      "fontAsset": "packages/director-assets/fonts/noto-sans-sc/wght.css",
+      "fontLicenseAsset": "packages/director-assets/fonts/noto-sans-sc/OFL.txt",
+      "motionEnergy": "moderate",
+      "atmosphere": ["数据空间", "柔性轨迹", "低亮度信号"],
+      "suitableIntents": ["AI", "机器学习", "研究工具"],
+      "avoid": ["neon-interface-cliches", "meaningless-code-rain"],
+      "provenance": { "sourceAsset": "legacy-visual-styles", "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+    },
+    {
+      "id": "soft-signal",
+      "chineseName": "柔和信号",
+      "palette": { "background": "#F3EDE4", "surface": "#FFF9F1", "primary": "#29231F", "accent": "#C66B4E" },
+      "fontFamily": "Noto Sans SC Variable",
+      "fontAsset": "packages/director-assets/fonts/noto-sans-sc/wght.css",
+      "fontLicenseAsset": "packages/director-assets/fonts/noto-sans-sc/OFL.txt",
+      "motionEnergy": "calm",
+      "atmosphere": ["自然纸感", "温暖呼吸", "柔和局部光"],
+      "suitableIntents": ["生活方式", "健康", "有人味的科技"],
+      "avoid": ["neon-interface-cliches", "cold-dashboard-grid"],
+      "provenance": { "sourceAsset": "legacy-visual-styles", "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+    },
+    {
+      "id": "folk-frequency",
+      "chineseName": "民俗频率",
+      "palette": { "background": "#F1C84B", "surface": "#E85A3F", "primary": "#173B35", "accent": "#F6F0D8" },
+      "fontFamily": "Noto Sans SC Variable",
+      "fontAsset": "packages/director-assets/fonts/noto-sans-sc/wght.css",
+      "fontLicenseAsset": "packages/director-assets/fonts/noto-sans-sc/OFL.txt",
+      "motionEnergy": "high",
+      "atmosphere": ["手作纹样", "鲜活色块", "社区节拍"],
+      "suitableIntents": ["食品", "社区", "文化消费"],
+      "avoid": ["sterile-enterprise-grid", "generic-tech-blue"],
+      "provenance": { "sourceAsset": "legacy-visual-styles", "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+    },
+    {
+      "id": "shadow-cut",
+      "chineseName": "暗影切面",
+      "palette": { "background": "#060606", "surface": "#161616", "primary": "#F4F1EA", "accent": "#B6202A" },
+      "fontFamily": "Noto Sans SC Variable",
+      "fontAsset": "packages/director-assets/fonts/noto-sans-sc/wght.css",
+      "fontLicenseAsset": "packages/director-assets/fonts/noto-sans-sc/OFL.txt",
+      "motionEnergy": "moderate",
+      "atmosphere": ["硬边阴影", "局部显形", "电影式悬念"],
+      "suitableIntents": ["揭秘", "安全", "戏剧化发布"],
+      "avoid": ["cheerful-bento-grid", "ambient-pastel-gradient"],
+      "provenance": { "sourceAsset": "legacy-visual-styles", "sourceCommit": "f7c7bae792a825eb68fb45112c7133070defa1f5", "license": "MIT" }
+    }
+  ]
+}

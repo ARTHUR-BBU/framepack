@@ -1,0 +1,16 @@
+{
+  "version": "1.0", "weaponId": "number-count-up",
+  "reviewer": { "source": "codex", "id": "codex:gpt-5" }, "reviewedAt": "2026-07-14T03:25:00.000Z",
+  "buildHashes": ["2b04b1197224a19fe11ff1b138fb56c400c46441b70dfd3aec20e21edd9f685c", "23b84725fc27e7d96fcf2ce524830fad44dd7feac0d83817cf6999b995eaf92b"],
+  "citedFrames": ["docs/evidence/weapons/number-count-up/16x9/snapshots/contact-sheet.jpg", "docs/evidence/weapons/number-count-up/16x9/snapshots/frame-01-at-1.3s.png", "docs/evidence/weapons/number-count-up/9x16/snapshots/contact-sheet.jpg", "docs/evidence/weapons/number-count-up/9x16/snapshots/frame-01-at-1.3s.png"],
+  "dimensions": [
+    { "id": "clarity", "score": 5, "reason": "数值从零到目标值的变化一眼可懂，终值突出" },
+    { "id": "composition", "score": 4, "reason": "超大数字在横竖画幅都保持稳定中心和安全边距" },
+    { "id": "motion", "score": 5, "reason": "连续递增流畅且可寻址，中间帧准确体现进度" },
+    { "id": "rhythm", "score": 4, "reason": "两秒递增形成清楚证据重音，结束留有阅读时间" },
+    { "id": "craft", "score": 4, "reason": "数字与后缀绑定稳定，没有跳宽、模糊或溢出" },
+    { "id": "adaptability", "score": 5, "reason": "目标值、前后缀、小数和时长均可参数化复用" },
+    { "id": "commercialValue", "score": 5, "reason": "直接强化指标证据，适合增长、效率与业绩表达" }
+  ],
+  "verdict": "proven"
+}

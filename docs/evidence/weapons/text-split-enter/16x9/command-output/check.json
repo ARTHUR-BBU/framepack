@@ -1,0 +1,13 @@
+{
+  "command": [
+    "npx",
+    "hyperframes",
+    "check",
+    ".",
+    "--json"
+  ],
+  "cwd": "docs/evidence/weapons/text-split-enter/16x9",
+  "exitCode": 0,
+  "stdout": "{\n  \"ok\": true,\n  \"strict\": false,\n  \"lint\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": [],\n    \"filesScanned\": 1\n  },\n  \"runtime\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": []\n  },\n  \"layout\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": [],\n    \"duration\": 5,\n    \"samples\": [\n      0.278,\n      0.833,\n      1.389,\n      1.944,\n      2.5,\n      3.056,\n      3.611,\n      4.167,\n      4.722\n    ],\n    \"transitionSamples\": [],\n    \"transitionSamplesDropped\": 0,\n    \"tolerance\": 2,\n    \"totalIssueCount\": 0,\n    \"truncated\": false\n  },\n  \"motion\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": [],\n    \"enabled\": false,\n    \"samples\": 0\n  },\n  \"contrast\": {\n    \"ok\": true,\n    \"errorCount\": 0,\n    \"warningCount\": 0,\n    \"infoCount\": 0,\n    \"findings\": [],\n    \"enabled\": true,\n    \"samples\": [\n      0.278,\n      1.389,\n      2.5,\n      3.611,\n      4.722\n    ],\n    \"checked\": 18,\n    \"passed\": 18\n  },\n  \"snapshots\": {\n    \"enabled\": false,\n    \"files\": [],\n    \"times\": [],\n    \"findingFiles\": []\n  },\n  \"_meta\": {\n    \"version\": \"0.7.56\",\n    \"latestVersion\": \"0.7.56\",\n    \"updateAvailable\": false\n  }\n}\n",
+  "stderr": ""
+}

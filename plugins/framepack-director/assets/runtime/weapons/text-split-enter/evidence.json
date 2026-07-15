@@ -1,0 +1,282 @@
+{
+  "version": "1.0",
+  "weaponId": "text-split-enter",
+  "entryHash": "f20c5c699d7ae709babee5e178d1e7f95dedcd07c67c8eec6e26b8422ea321b0",
+  "ratios": [
+    {
+      "ratio": "16:9",
+      "projectPath": "docs/evidence/weapons/text-split-enter/16x9",
+      "hyperframesVersion": "0.7.56",
+      "buildHash": "cbfa28d5b5e581442db3d9eea79064f0a2d6fa329fa0041911ef56e58c92dd62",
+      "buildFiles": [
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/command-output/check.json",
+          "hash": "6f509866eb23998d1ab58f711664c98758177dbce75c8dff646676f4df6e18f9"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/command-output/lint.json",
+          "hash": "280253b924c1da733140512ff21dd6e8d3ccb7c4f970dc59c13272f7c3a3d790"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/command-output/snapshot.json",
+          "hash": "76f276a4f1e0dd5962eb59c328df0bd99603c0923a40ca87477d01de67d2301c"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-102-wght-normal.woff2",
+          "hash": "941c0c2971fc1d6d1e36c3d40d74e6a133ad02f58f0bc3a9cb265d8a60f3eb31"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-110-wght-normal.woff2",
+          "hash": "bbca9081655c45233a25c4cca030c47ebcf2e156eeedd48110836658adb31fa0"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-111-wght-normal.woff2",
+          "hash": "372be010ac0e87cb12065a861da39821104a43d68345a62ca95d3d3e2fb2c269"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-112-wght-normal.woff2",
+          "hash": "34a4580239eae8dc54b726a1e1e9fec266e74225b112063ed93b412d54b97ccd"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-113-wght-normal.woff2",
+          "hash": "614ab8f616352583f92cc2130fe8812c5aaaa8560b3828de45eefb318be7b503"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-115-wght-normal.woff2",
+          "hash": "fb29957c7adccb9a89e34fb28d3d1c7d12bd7401f80c0dba6e1c9e5259cb3262"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-116-wght-normal.woff2",
+          "hash": "a98dc5a726f82141f74a827c443e120709a12fe737fabacf2530927a275fce0d"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-117-wght-normal.woff2",
+          "hash": "d94b5af0c14838af99bf9855f91e851878726558531ddef5bd2100b70dfbe90c"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-118-wght-normal.woff2",
+          "hash": "76c9ddb85ae4578cccd35ae4f6e6bbffaa2c8c2aec0fea17d3c17c84a3c6f7d1"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-119-wght-normal.woff2",
+          "hash": "b3b2374881f4cd93f239820dfd91f0fde8d52f8f92ba2888f7ab9cba21e4d7eb"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-4-wght-normal.woff2",
+          "hash": "9fafd93ac77b81ffdeeb30c31e7d5911eb5b6a0a976b54c6e418eec8701a97e2"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/files/noto-sans-sc-latin-wght-normal.woff2",
+          "hash": "c1d919c8701a86ed7f33a8044f7c4e5675db2fce8b754091e97b2c0792f9782c"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/fonts/wght.css",
+          "hash": "c4b729a2101d69c46a578590da7d0c39ec0b5017b6b1e557cf4390c6c4e2ce98"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/frame.md",
+          "hash": "4ed436ef831d1076b1a8bab9ed8212e43072ddbb511535e7f6916a63b585e7c8"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/index.html",
+          "hash": "07410aed7c603ddd1a144a6d4d91895fe0ecb6e0482c84526f971f1ce9532f7a"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/contact-sheet.jpg",
+          "hash": "051d6ef6dc9c775baaa3d46903d2948706bb8c54367f0596411168da5937839a"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-00-at-0.3s.png",
+          "hash": "8f7ff5cf8ea81bc172ea3459d81f897ab123357620aec0da424473e9ce15431a"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-01-at-1.3s.png",
+          "hash": "8d60aba8bc7a4a4b3fbd086e7a5e8bc1eb5185df29c286e2b86d89e52e625f4f"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-02-at-3.5s.png",
+          "hash": "8d60aba8bc7a4a4b3fbd086e7a5e8bc1eb5185df29c286e2b86d89e52e625f4f"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-03-at-4.8s.png",
+          "hash": "8d60aba8bc7a4a4b3fbd086e7a5e8bc1eb5185df29c286e2b86d89e52e625f4f"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/vendor/gsap.min.js",
+          "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/vendor/weapon.js",
+          "hash": "3503586b7bfa6cf734a14ca10eee0d8a57a0eda25c601b92e7777307f443b099"
+        }
+      ],
+      "lint": "pass",
+      "check": "pass",
+      "snapshots": [
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/contact-sheet.jpg",
+          "hash": "051d6ef6dc9c775baaa3d46903d2948706bb8c54367f0596411168da5937839a"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-00-at-0.3s.png",
+          "hash": "8f7ff5cf8ea81bc172ea3459d81f897ab123357620aec0da424473e9ce15431a"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-01-at-1.3s.png",
+          "hash": "8d60aba8bc7a4a4b3fbd086e7a5e8bc1eb5185df29c286e2b86d89e52e625f4f"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-02-at-3.5s.png",
+          "hash": "8d60aba8bc7a4a4b3fbd086e7a5e8bc1eb5185df29c286e2b86d89e52e625f4f"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/16x9/snapshots/frame-03-at-4.8s.png",
+          "hash": "8d60aba8bc7a4a4b3fbd086e7a5e8bc1eb5185df29c286e2b86d89e52e625f4f"
+        }
+      ],
+      "commandOutputHashes": {
+        "lint": "280253b924c1da733140512ff21dd6e8d3ccb7c4f970dc59c13272f7c3a3d790",
+        "check": "6f509866eb23998d1ab58f711664c98758177dbce75c8dff646676f4df6e18f9",
+        "snapshot": "76f276a4f1e0dd5962eb59c328df0bd99603c0923a40ca87477d01de67d2301c"
+      }
+    },
+    {
+      "ratio": "9:16",
+      "projectPath": "docs/evidence/weapons/text-split-enter/9x16",
+      "hyperframesVersion": "0.7.56",
+      "buildHash": "7dd89ad747fae1cb2da66c78970e30da655b0f3eb9319898f6830ae78227eb88",
+      "buildFiles": [
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/command-output/check.json",
+          "hash": "aaa97bb863b271132ea9fcbd359141b955ee12dec54b6883c0cd0e1453a6fb01"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/command-output/lint.json",
+          "hash": "a08888410adaab2b14ea89a51538c89951d393db72c2f07dd9bd10815ee40563"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/command-output/snapshot.json",
+          "hash": "0e7cd32d6fa053d3e214b55f1205773bab4b50fb17f0d1bab9676e1506f1bee4"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-102-wght-normal.woff2",
+          "hash": "941c0c2971fc1d6d1e36c3d40d74e6a133ad02f58f0bc3a9cb265d8a60f3eb31"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-110-wght-normal.woff2",
+          "hash": "bbca9081655c45233a25c4cca030c47ebcf2e156eeedd48110836658adb31fa0"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-111-wght-normal.woff2",
+          "hash": "372be010ac0e87cb12065a861da39821104a43d68345a62ca95d3d3e2fb2c269"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-112-wght-normal.woff2",
+          "hash": "34a4580239eae8dc54b726a1e1e9fec266e74225b112063ed93b412d54b97ccd"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-113-wght-normal.woff2",
+          "hash": "614ab8f616352583f92cc2130fe8812c5aaaa8560b3828de45eefb318be7b503"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-115-wght-normal.woff2",
+          "hash": "fb29957c7adccb9a89e34fb28d3d1c7d12bd7401f80c0dba6e1c9e5259cb3262"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-116-wght-normal.woff2",
+          "hash": "a98dc5a726f82141f74a827c443e120709a12fe737fabacf2530927a275fce0d"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-117-wght-normal.woff2",
+          "hash": "d94b5af0c14838af99bf9855f91e851878726558531ddef5bd2100b70dfbe90c"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-118-wght-normal.woff2",
+          "hash": "76c9ddb85ae4578cccd35ae4f6e6bbffaa2c8c2aec0fea17d3c17c84a3c6f7d1"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-119-wght-normal.woff2",
+          "hash": "b3b2374881f4cd93f239820dfd91f0fde8d52f8f92ba2888f7ab9cba21e4d7eb"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-4-wght-normal.woff2",
+          "hash": "9fafd93ac77b81ffdeeb30c31e7d5911eb5b6a0a976b54c6e418eec8701a97e2"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/files/noto-sans-sc-latin-wght-normal.woff2",
+          "hash": "c1d919c8701a86ed7f33a8044f7c4e5675db2fce8b754091e97b2c0792f9782c"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/fonts/wght.css",
+          "hash": "c4b729a2101d69c46a578590da7d0c39ec0b5017b6b1e557cf4390c6c4e2ce98"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/frame.md",
+          "hash": "a273f1224a6870bcf7be33016d93897c8d3d7c0ea71ac4f8e76389d5e39b8a33"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/index.html",
+          "hash": "bcc75ad007058c8a60e4021a40292657241d5c1e3524c579744e9c7d482d024a"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/contact-sheet.jpg",
+          "hash": "5705a1f005a10cb43e170113268ba347eda54b27ee1181c1624a34ad254f9c00"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-00-at-0.3s.png",
+          "hash": "0aac8bed7ec5c4cba4f7c83953958ba7bf4c16c55afb3a50f5dac65ae7c0952f"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-01-at-1.3s.png",
+          "hash": "b2c2898f49c3451d2ce041e3daad714aebd9d3a8d95ad5229fa86d64ce602a7d"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-02-at-3.5s.png",
+          "hash": "b2c2898f49c3451d2ce041e3daad714aebd9d3a8d95ad5229fa86d64ce602a7d"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-03-at-4.8s.png",
+          "hash": "b2c2898f49c3451d2ce041e3daad714aebd9d3a8d95ad5229fa86d64ce602a7d"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/vendor/gsap.min.js",
+          "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/vendor/weapon.js",
+          "hash": "3503586b7bfa6cf734a14ca10eee0d8a57a0eda25c601b92e7777307f443b099"
+        }
+      ],
+      "lint": "pass",
+      "check": "pass",
+      "snapshots": [
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/contact-sheet.jpg",
+          "hash": "5705a1f005a10cb43e170113268ba347eda54b27ee1181c1624a34ad254f9c00"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-00-at-0.3s.png",
+          "hash": "0aac8bed7ec5c4cba4f7c83953958ba7bf4c16c55afb3a50f5dac65ae7c0952f"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-01-at-1.3s.png",
+          "hash": "b2c2898f49c3451d2ce041e3daad714aebd9d3a8d95ad5229fa86d64ce602a7d"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-02-at-3.5s.png",
+          "hash": "b2c2898f49c3451d2ce041e3daad714aebd9d3a8d95ad5229fa86d64ce602a7d"
+        },
+        {
+          "path": "docs/evidence/weapons/text-split-enter/9x16/snapshots/frame-03-at-4.8s.png",
+          "hash": "b2c2898f49c3451d2ce041e3daad714aebd9d3a8d95ad5229fa86d64ce602a7d"
+        }
+      ],
+      "commandOutputHashes": {
+        "lint": "a08888410adaab2b14ea89a51538c89951d393db72c2f07dd9bd10815ee40563",
+        "check": "aaa97bb863b271132ea9fcbd359141b955ee12dec54b6883c0cd0e1453a6fb01",
+        "snapshot": "0e7cd32d6fa053d3e214b55f1205773bab4b50fb17f0d1bab9676e1506f1bee4"
+      }
+    }
+  ],
+  "generatedAt": "2026-07-14T03:41:27.487Z"
+}

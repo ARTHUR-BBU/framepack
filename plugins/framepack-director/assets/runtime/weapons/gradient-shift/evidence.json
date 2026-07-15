@@ -1,0 +1,218 @@
+{
+  "version": "1.0",
+  "weaponId": "gradient-shift",
+  "entryHash": "2066b659daefc19a397045c56f57865a9ca4c94b1e9b9643fa2cd1a8c16f497c",
+  "ratios": [
+    {
+      "ratio": "16:9",
+      "projectPath": "docs/evidence/weapons/gradient-shift/16x9",
+      "hyperframesVersion": "0.7.56",
+      "buildHash": "6cf4e4f8efadff4e803101ad5c9231209ff41fbb44cc5e239973f2237e6671ce",
+      "buildFiles": [
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-102-wght-normal.woff2",
+          "hash": "941c0c2971fc1d6d1e36c3d40d74e6a133ad02f58f0bc3a9cb265d8a60f3eb31"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-110-wght-normal.woff2",
+          "hash": "bbca9081655c45233a25c4cca030c47ebcf2e156eeedd48110836658adb31fa0"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-111-wght-normal.woff2",
+          "hash": "372be010ac0e87cb12065a861da39821104a43d68345a62ca95d3d3e2fb2c269"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-112-wght-normal.woff2",
+          "hash": "34a4580239eae8dc54b726a1e1e9fec266e74225b112063ed93b412d54b97ccd"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-113-wght-normal.woff2",
+          "hash": "614ab8f616352583f92cc2130fe8812c5aaaa8560b3828de45eefb318be7b503"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-115-wght-normal.woff2",
+          "hash": "fb29957c7adccb9a89e34fb28d3d1c7d12bd7401f80c0dba6e1c9e5259cb3262"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-116-wght-normal.woff2",
+          "hash": "a98dc5a726f82141f74a827c443e120709a12fe737fabacf2530927a275fce0d"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-117-wght-normal.woff2",
+          "hash": "d94b5af0c14838af99bf9855f91e851878726558531ddef5bd2100b70dfbe90c"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-118-wght-normal.woff2",
+          "hash": "76c9ddb85ae4578cccd35ae4f6e6bbffaa2c8c2aec0fea17d3c17c84a3c6f7d1"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-119-wght-normal.woff2",
+          "hash": "b3b2374881f4cd93f239820dfd91f0fde8d52f8f92ba2888f7ab9cba21e4d7eb"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-4-wght-normal.woff2",
+          "hash": "9fafd93ac77b81ffdeeb30c31e7d5911eb5b6a0a976b54c6e418eec8701a97e2"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/files/noto-sans-sc-latin-wght-normal.woff2",
+          "hash": "c1d919c8701a86ed7f33a8044f7c4e5675db2fce8b754091e97b2c0792f9782c"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/fonts/wght.css",
+          "hash": "c4b729a2101d69c46a578590da7d0c39ec0b5017b6b1e557cf4390c6c4e2ce98"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/frame.md",
+          "hash": "48cc3b4aa054c8780f95a7811daa33a8a6dabc3170af3c1e2a725b1d2df81834"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/index.html",
+          "hash": "4a5fc6ab513380f07eb12646933f6decc4aae06edb91695651fcc6252e5283fb"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/vendor/gsap.min.js",
+          "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/vendor/weapon.js",
+          "hash": "47b1775efbd274432c786a877067f4abd8264bfc8bc3cc96ee98a533ba740b4a"
+        }
+      ],
+      "lint": "pass",
+      "check": "pass",
+      "snapshots": [
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/snapshots/contact-sheet.jpg",
+          "hash": "b6d302e30eb0e58035ebf0e0d0d0d56cbd37df5c7c250bfb30c2a99ae1e6511e"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/snapshots/frame-00-at-0.3s.png",
+          "hash": "4aad7d43e17844bebf7de62eec57b3b1c612f7920c2711f783edbb20131e1a63"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/snapshots/frame-01-at-1.3s.png",
+          "hash": "e088d36f938fa18647c08c78e3e2c4af775d585451617fe136de85b7fb6187e2"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/snapshots/frame-02-at-3.5s.png",
+          "hash": "621e6834bec9894f750f3c399701be504e74ad26edaad7ae1e88e00e8c242eb0"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/16x9/snapshots/frame-03-at-4.8s.png",
+          "hash": "621e6834bec9894f750f3c399701be504e74ad26edaad7ae1e88e00e8c242eb0"
+        }
+      ],
+      "commandOutputHashes": {
+        "lint": "56e36657e635248be94600d2388adee6a712b81d0c836804393ebd3bc949730f",
+        "check": "1a824289fc2df7f5663b2c7ee8f0394d50f7f2461f71b8e92fcaea8945f8b551",
+        "snapshot": "4ca1365118d91cd8d8f7a9a72fa89e7b042f9a9ef3fbd64f49faface2df9f874"
+      }
+    },
+    {
+      "ratio": "9:16",
+      "projectPath": "docs/evidence/weapons/gradient-shift/9x16",
+      "hyperframesVersion": "0.7.56",
+      "buildHash": "ab0d846d436e6de9f28a8606f14df840fce981d79b667db5b972bc6ebdb334fb",
+      "buildFiles": [
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-102-wght-normal.woff2",
+          "hash": "941c0c2971fc1d6d1e36c3d40d74e6a133ad02f58f0bc3a9cb265d8a60f3eb31"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-110-wght-normal.woff2",
+          "hash": "bbca9081655c45233a25c4cca030c47ebcf2e156eeedd48110836658adb31fa0"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-111-wght-normal.woff2",
+          "hash": "372be010ac0e87cb12065a861da39821104a43d68345a62ca95d3d3e2fb2c269"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-112-wght-normal.woff2",
+          "hash": "34a4580239eae8dc54b726a1e1e9fec266e74225b112063ed93b412d54b97ccd"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-113-wght-normal.woff2",
+          "hash": "614ab8f616352583f92cc2130fe8812c5aaaa8560b3828de45eefb318be7b503"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-115-wght-normal.woff2",
+          "hash": "fb29957c7adccb9a89e34fb28d3d1c7d12bd7401f80c0dba6e1c9e5259cb3262"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-116-wght-normal.woff2",
+          "hash": "a98dc5a726f82141f74a827c443e120709a12fe737fabacf2530927a275fce0d"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-117-wght-normal.woff2",
+          "hash": "d94b5af0c14838af99bf9855f91e851878726558531ddef5bd2100b70dfbe90c"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-118-wght-normal.woff2",
+          "hash": "76c9ddb85ae4578cccd35ae4f6e6bbffaa2c8c2aec0fea17d3c17c84a3c6f7d1"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-119-wght-normal.woff2",
+          "hash": "b3b2374881f4cd93f239820dfd91f0fde8d52f8f92ba2888f7ab9cba21e4d7eb"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-4-wght-normal.woff2",
+          "hash": "9fafd93ac77b81ffdeeb30c31e7d5911eb5b6a0a976b54c6e418eec8701a97e2"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/files/noto-sans-sc-latin-wght-normal.woff2",
+          "hash": "c1d919c8701a86ed7f33a8044f7c4e5675db2fce8b754091e97b2c0792f9782c"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/fonts/wght.css",
+          "hash": "c4b729a2101d69c46a578590da7d0c39ec0b5017b6b1e557cf4390c6c4e2ce98"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/frame.md",
+          "hash": "5f8dd97a44a4a3f80a8366cf51405b13ba29efdb7ae2dfa8b7c14846035df994"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/index.html",
+          "hash": "9ffd2fbbaa62f7005d9c7353c05d5b829f2fa58d807b33f0206637d51f089a07"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/vendor/gsap.min.js",
+          "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/vendor/weapon.js",
+          "hash": "47b1775efbd274432c786a877067f4abd8264bfc8bc3cc96ee98a533ba740b4a"
+        }
+      ],
+      "lint": "pass",
+      "check": "pass",
+      "snapshots": [
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/snapshots/contact-sheet.jpg",
+          "hash": "1b2f3b3d974086a3b2cd8da1f9cd6fd5aa7b825375e9a420a9dd4f978c52ba2d"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/snapshots/frame-00-at-0.3s.png",
+          "hash": "830c3c845a0073c44848dc3e785832370f5a3c60f636b3d833e8b367569347c1"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/snapshots/frame-01-at-1.3s.png",
+          "hash": "a8b0c05335742eb17d371bfa555757fb2bf0de1e115af8f1d64ec55069f5f680"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/snapshots/frame-02-at-3.5s.png",
+          "hash": "3cd4a34b1c14663952acb31945ed9750e373fc0daefb79254a2b03561b3bdf05"
+        },
+        {
+          "path": "docs/evidence/weapons/gradient-shift/9x16/snapshots/frame-03-at-4.8s.png",
+          "hash": "3cd4a34b1c14663952acb31945ed9750e373fc0daefb79254a2b03561b3bdf05"
+        }
+      ],
+      "commandOutputHashes": {
+        "lint": "d5a6de49b259d109078119002f6cc7694b5136201e93bb784c38677de93eb646",
+        "check": "b6ec09b2d82e703c255e31ecf2ff4ff513e767e3490fc6603be168a1eed3e2c6",
+        "snapshot": "98ca25bd05560b90efb7ac1957f78858e184d46b02c5d4a365afd53cb10621b6"
+      }
+    }
+  ],
+  "generatedAt": "2026-07-14T13:18:41.690Z"
+}

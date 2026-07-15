@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "weaponId": "stagger-grid-reveal",
+  "reviewer": { "source": "codex", "id": "codex:gpt-5" },
+  "reviewedAt": "2026-07-14T13:00:00.000Z",
+  "buildHashes": [
+    "79409543f34ec371e5591680bdf1fc631e1057af6bd4ca45624a7fb4f36ed438",
+    "4d5f90bddddd8966f50b85cb38e75674fcebc29ac465fa3667d01bfb568d6b4a"
+  ],
+  "citedFrames": [
+    "docs/evidence/weapons/stagger-grid-reveal/16x9/snapshots/frame-00-at-0.3s.png",
+    "docs/evidence/weapons/stagger-grid-reveal/16x9/snapshots/frame-01-at-1.3s.png",
+    "docs/evidence/weapons/stagger-grid-reveal/9x16/snapshots/frame-00-at-0.3s.png",
+    "docs/evidence/weapons/stagger-grid-reveal/9x16/snapshots/frame-01-at-1.3s.png"
+  ],
+  "dimensions": [
+    {
+      "id": "clarity",
+      "score": 5,
+      "reason": "六项内容从空场到完整矩阵层次明确"
+    },
+    {
+      "id": "composition",
+      "score": 5,
+      "reason": "二乘三结构在横竖画幅均平衡稳定"
+    },
+    {
+      "id": "motion",
+      "score": 4,
+      "reason": "中心级联建立顺序且没有多余三维翻转"
+    },
+    { "id": "rhythm", "score": 4, "reason": "逐项间隔足以感知又不会拖慢信息" },
+    { "id": "craft", "score": 4, "reason": "变换与可见度遵循官方性能规范" },
+    {
+      "id": "adaptability",
+      "score": 5,
+      "reason": "行列起点动画类型均可安全参数化"
+    },
+    {
+      "id": "commercialValue",
+      "score": 5,
+      "reason": "适合功能矩阵客户证言与证据卡片"
+    }
+  ],
+  "verdict": "proven"
+}

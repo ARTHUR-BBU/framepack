@@ -1,0 +1,24 @@
+{
+  "version": "1.0",
+  "upstream": "https://github.com/greensock/gsap-skills",
+  "commit": "aed9cfd3277740755f6bfc1155c7aa645403b760",
+  "license": "MIT",
+  "installedFor": ["codex"],
+  "modules": [
+    { "id": "gsap-core", "scope": "production", "snapshotPath": "skills/greensock-official/gsap-core/SKILL.md", "sha256": "3887b47e050ab5afbe2a9a820f23d39fa02ab785e06a343be44c6f91d84d12b3", "framepackRole": "所有 GSAP 武器的基础写法、缓动、stagger 与 reduced-motion" },
+    { "id": "gsap-timeline", "scope": "production", "snapshotPath": "skills/greensock-official/gsap-timeline/SKILL.md", "sha256": "1a8b0f39cc4be3ed3d834b89672e4ae2f151b901dc3450bebf10bbc45379fe02", "framepackRole": "多段动画编排与可读的时间位置参数" },
+    { "id": "gsap-scrolltrigger", "scope": "capture-only", "snapshotPath": "skills/greensock-official/gsap-scrolltrigger/SKILL.md", "sha256": "9351b6666a4749c0740406ea363aaccb99a087ff45cc5e8b99a0f367facf3ef4", "framepackRole": "网页捕获和滚动 DNA；禁止进入离线视频主时间轴" },
+    { "id": "gsap-plugins", "scope": "conditional", "snapshotPath": "skills/greensock-official/gsap-plugins/SKILL.md", "sha256": "5838b856c74c07fbc9fa99b6dfd1eee34ea554c3e530c30e0d58014b707d70a4", "framepackRole": "SplitText、MorphSVG、Flip 等高级武器的官方用法" },
+    { "id": "gsap-utils", "scope": "production", "snapshotPath": "skills/greensock-official/gsap-utils/SKILL.md", "sha256": "1927bcc4ea95b38203404ad5ea1d060b15c4a886c65ae53e885ff1793aabe0ba", "framepackRole": "映射、约束、插值、随机与选择器工具" },
+    { "id": "gsap-react", "scope": "host-only", "snapshotPath": "skills/greensock-official/gsap-react/SKILL.md", "sha256": "88e2a5312b45e8cc7b3c496637ff5bc9af2ae9c925b555c8b235b34cbc989d74", "framepackRole": "React 宿主中的作用域与销毁规范" },
+    { "id": "gsap-performance", "scope": "production", "snapshotPath": "skills/greensock-official/gsap-performance/SKILL.md", "sha256": "cb5408d6fba707aabcbfe3320317a14c1f8fca6070074e5261047930f50d441e", "framepackRole": "transform 优先、避免布局抖动和资源清理" },
+    { "id": "gsap-frameworks", "scope": "host-only", "snapshotPath": "skills/greensock-official/gsap-frameworks/SKILL.md", "sha256": "842d9d3659ec3ddc8abbdc524708f8facf81f468ac25d0577f48c759c4fa31e6", "framepackRole": "Vue/Svelte 宿主生命周期适配" }
+  ],
+  "hyperframesOverrides": [
+    "视频武器必须创建 paused timeline 并注册到 window.__timelines",
+    "所有动画必须能被 HyperFrames 确定性 seek",
+    "不得动画化 clip 根节点，只动画 scene-inner 或内部元素",
+    "生产试片使用本地 vendored GSAP 与字体，不依赖 live CDN",
+    "ScrollTrigger 不用于离线视频主时间轴；滚动叙事必须先转换为确定性时间线"
+  ]
+}

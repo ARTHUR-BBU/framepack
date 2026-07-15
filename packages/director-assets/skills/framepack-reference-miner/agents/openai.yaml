@@ -1,0 +1,4 @@
+interface:
+  display_name: "Framepack 参考片 DNA"
+  short_description: "从参考视频提取节奏构图运动和母题并转成可复用导演约束"
+  default_prompt: "使用 $framepack-reference-miner 分析这支参考片的可复用导演 DNA。"
