@@ -40,6 +40,7 @@ describe('Codex skill runtime', () => {
     expect(receipt.loaded.every((item) => /^[a-f0-9]{64}$/.test(item.sha256))).toBe(true);
     expect(receipt.loaded.every((item) => item.portablePath.startsWith('skills/'))).toBe(true);
     expect(receipt.loaded.every((item) => item.resolvedSource.startsWith(bundledSkillRoot))).toBe(true);
+    expect(receipt.loaded.map((item) => item.role)).toEqual(['director', 'director', 'producer']);
   });
 
   test('the load plan exists even when a required playbook cannot be read', async () => {
@@ -74,6 +75,8 @@ describe('Codex skill runtime', () => {
     expect(result.storyboard.scenes.at(-1)?.purpose).toBe('cta');
     expect(result.direction.rhythm).toBe(result.storyboard.scenes.map((scene) => scene.purpose).join('-'));
     expect(result.direction.assetPolicy).toBe('confirm-before-use');
+    const ledger = JSON.parse(await readFile(join(projectDir, '.framepack', 'skill-decision-ledger.json'), 'utf8')) as { decisions: Array<{ role: string; outputPaths: string[] }> };
+    expect(ledger.decisions).toContainEqual(expect.objectContaining({ role: 'director', outputPaths: expect.arrayContaining(['storyboard.scenes']) }));
   });
 
   test('reference mining changes direction and storyboard with an application receipt', async () => {

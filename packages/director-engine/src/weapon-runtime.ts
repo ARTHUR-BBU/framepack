@@ -45,13 +45,13 @@ export async function loadWeaponRegistry(root = DEFAULT_WEAPON_ROOT, proofRoot =
     const manifest = WeaponManifestSchema.parse(raw);
     if (manifest.id !== id) throw new Error(`weapon directory and manifest id mismatch: ${id}`);
     const entryContent = await readFile(join(root, ...manifest.entry.split('/')), 'utf8');
-    if (manifest.maturity !== 'proven') return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: sha256(entryContent) };
+    if (manifest.maturity !== 'proven') return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: sha256Text(entryContent) };
     const evidence = WeaponBenchEvidenceSchema.parse(JSON.parse(await readFile(join(root, id, ...manifest.proof!.evidence.split('/')), 'utf8')));
     const scorecard = WeaponScorecardSchema.parse(JSON.parse(await readFile(join(root, id, ...manifest.proof!.scorecard.split('/')), 'utf8')));
     if (evidence.weaponId !== manifest.id || scorecard.weaponId !== manifest.id) throw new Error(`weapon proof id mismatch: ${id}`);
     await verifyWeaponProofFiles(proofRoot, evidence);
     promoteWeapon(evidence, scorecard);
-    if (evidence.entryHash !== sha256(entryContent)) throw new Error(`proven weapon entry hash mismatch: ${id}`);
+    if (evidence.entryHash !== sha256Text(entryContent)) throw new Error(`proven weapon entry hash mismatch: ${id}`);
     return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: evidence.entryHash, evidence, scorecard };
   }));
   return { version: '1.0', weapons };
@@ -68,8 +68,8 @@ export async function resolveWeapons(storyboard: Storyboard, registry: WeaponReg
       if (!matches(weapon, scene.purpose, text)) continue;
       const candidate = { sceneId: scene.id, weaponId: weapon.id, reason: matchReason(weapon.id), maturity: weapon.maturity };
       candidates.push(candidate);
-      if (weapon.maturity === 'proven' && !selected.some((selection) => selection.sceneId === scene.id)) {
-        selected.push(selectionFor(weapon, scene.id, text));
+      if (weapon.maturity === 'proven') {
+        selected.push(selectionFor(weapon, scene.id, text, selected.filter((selection) => selection.sceneId === scene.id).length));
       }
     }
   }
@@ -91,7 +91,7 @@ export function verifyWeaponCalls(planInput: WeaponLoadPlan, html: string): stri
   const plan = WeaponLoadPlanSchema.parse(planInput);
   const calls = extractWeaponCalls(html);
   return plan.selected.flatMap((selection) => {
-    const call = calls.find((item) => item.sceneId === selection.sceneId && item.weaponId === selection.weaponId);
+    const call = calls.find((item) => item.sceneId === selection.sceneId && item.weaponId === selection.weaponId && item.stage === selection.stage && item.atSeconds === selection.atSeconds);
     if (!call) return [`weapon_not_invoked:${selection.weaponId}`];
     const errors: string[] = [];
     if (call.functionName !== selection.functionName) errors.push(`weapon_function_missing:${selection.weaponId}`);
@@ -119,6 +119,9 @@ export function extractWeaponCalls(html: string): WeaponCall[] {
 export function renderWeaponInvocation(selection: WeaponLoadPlan['selected'][number], inputHash: string, position?: string): string {
   const call = WeaponCallSchema.parse({
     sceneId: selection.sceneId,
+    stage: selection.stage,
+    atSeconds: selection.atSeconds,
+    durationSeconds: selection.durationSeconds,
     weaponId: selection.weaponId,
     functionName: selection.functionName,
     params: selection.params,
@@ -129,11 +132,11 @@ export function renderWeaponInvocation(selection: WeaponLoadPlan['selected'][num
   return `/*framepack-weapon-call:${JSON.stringify(call)}*/${selection.functionName}(window.__framepackTimeline,document.querySelector(${JSON.stringify(selector)}),${paramExpression}${position === undefined ? '' : `,${position}`});`;
 }
 
-export async function persistWeaponEvidence(projectDir: string, planInput: WeaponLoadPlan, html: string): Promise<void> {
+export async function persistWeaponEvidence(projectDir: string, planInput: WeaponLoadPlan, html: string, outputDir = join(projectDir, '.framepack')): Promise<void> {
   const plan = WeaponLoadPlanSchema.parse(planInput);
   const calls = extractWeaponCalls(html);
   const verificationErrors = verifyWeaponCalls(plan, html);
-  const framepackDir = join(projectDir, '.framepack');
+  const framepackDir = outputDir;
   await mkdir(framepackDir, { recursive: true });
   await Promise.all([
     writeFile(join(framepackDir, 'weapon-load-plan.json'), `${JSON.stringify(plan, null, 2)}\n`, 'utf8'),
@@ -165,8 +168,9 @@ function defaultParams(id: WeaponManifest['id'], text: string): Record<string, u
   return TextSplitEnterParametersSchema.parse({});
 }
 
-function selectionFor(weapon: RuntimeWeapon, sceneId: string, text: string): WeaponLoadPlan['selected'][number] {
-  const evidence = { sceneId, entryHash: weapon.entryHash };
+function selectionFor(weapon: RuntimeWeapon, sceneId: string, text: string, index: number): WeaponLoadPlan['selected'][number] {
+  const stages = ['entrance', 'emphasis', 'exit'] as const;
+  const evidence = { sceneId, entryHash: weapon.entryHash, stage: stages[Math.min(index, stages.length - 1)], atSeconds: 0.18 + index * 1.4, durationSeconds: 0.8 };
   if (weapon.id === 'number-count-up') return { ...evidence, weaponId: weapon.id, functionName: 'numberCountUp', entry: 'number-count-up/index.js', params: NumberCountUpParametersSchema.parse(defaultParams(weapon.id, text)) };
   if (weapon.id === 'caption-clip-wipe') return { ...evidence, weaponId: weapon.id, functionName: 'captionClipWipe', entry: 'caption-clip-wipe/index.js', params: CaptionClipWipeParametersSchema.parse(defaultParams(weapon.id, text)) };
   if (weapon.id === 'elastic-scale-enter') return { ...evidence, weaponId: weapon.id, functionName:'elasticScaleEnter', entry:'elastic-scale-enter/index.js', params:ElasticScaleEnterParametersSchema.parse(defaultParams(weapon.id,text)) };
@@ -176,3 +180,4 @@ function selectionFor(weapon: RuntimeWeapon, sceneId: string, text: string): Wea
 }
 
 function sha256(value: string): string { return createHash('sha256').update(value).digest('hex'); }
+function sha256Text(value: string): string { return sha256(value.replace(/\r\n/g, '\n')); }

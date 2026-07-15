@@ -94,6 +94,8 @@ export async function buildProject(projectDir: string): Promise<{ inspection: Re
 
 export async function snapshotProject(projectDir: string, options: { runner?: (args: string[]) => Promise<void> } = {}): Promise<{ frames: Array<{ label: string; timeSeconds: number }> }> {
   const spec = await readProjectSpec(projectDir);
+  const { readCurrentBuildRoot } = await import('./approval.js');
+  const buildRoot = await readCurrentBuildRoot(projectDir);
   const third = spec.durationSeconds / 3;
   const frames = [
     { label: 'scene-1-settled', timeSeconds: third * 0.6 },
@@ -104,10 +106,11 @@ export async function snapshotProject(projectDir: string, options: { runner?: (a
     { label: 'final-hold', timeSeconds: Math.max(0, spec.durationSeconds - 0.25) },
   ];
   const rows = frames.map((frame) => `| ${frame.timeSeconds.toFixed(2)} | ${frame.label} | pending snapshot capture | pending |`).join('\n');
-  await writeFile(join(projectDir, PROJECT_FILES.previewReport), `${renderPreviewReportMarkdown()}\n${rows}\n`);
-  await writeFile(join(projectDir, '.framepack', 'preview-snapshots', 'snapshot-plan.json'), `${JSON.stringify({ frames }, null, 2)}\n`);
-  const snapshotArgs = ['--output', join(projectDir, '.framepack', 'preview-snapshots'), '--at', frames.map((frame) => frame.timeSeconds.toFixed(2)).join(','), '--no-end'];
-  await runHyperframes('snapshot', projectDir, { runner: options.runner, args: snapshotArgs });
+  await mkdir(join(buildRoot, 'preview-snapshots'), { recursive: true });
+  await writeFile(join(buildRoot, 'preview-report.md'), `${renderPreviewReportMarkdown()}\n${rows}\n`);
+  await writeFile(join(buildRoot, 'preview-snapshots', 'snapshot-plan.json'), `${JSON.stringify({ frames }, null, 2)}\n`);
+  const snapshotArgs = ['--output', join(buildRoot, 'preview-snapshots'), '--at', frames.map((frame) => frame.timeSeconds.toFixed(2)).join(','), '--no-end'];
+  await runHyperframes('snapshot', buildRoot, { runner: options.runner, args: snapshotArgs });
   return { frames };
 }
 
@@ -121,3 +124,4 @@ export { composePreview, type ComposePreviewInput, type PreviewBuild } from './p
 export { auditGsapSource, loadGsapCapabilities, persistGsapCapabilityReceipt, routeGsapCapabilities, type GsapCapabilityId, type GsapCapabilityRegistry, type GsapCapabilityRoute } from './gsap-capabilities.js';
 export { runDirectorTask, runProjectProposal, type DirectorServices, type DirectorTaskInput, type HostRunReceipt } from './orchestrator.js';
 export { doctor, renderDoctorChinese, type DoctorCheck, type DoctorReport } from './doctor.js';
+export { assessMotionCoverage } from './motion-coverage.js';

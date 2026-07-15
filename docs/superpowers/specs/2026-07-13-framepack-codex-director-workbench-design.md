@@ -54,6 +54,14 @@ No `adapters/hermes/` or `adapters/claude-code/` directories are created in this
 
 ## Project File Contract
 
+### July 2026 revision: immutable builds and a compact review desk
+
+Framepack never writes a working preview to a project's root `index.html`. Each build is an independent reviewable artifact under `.framepack/builds/<build-id>/`, containing its HTML, local public assets, storyboard, weapon receipt, motion coverage, snapshots, audit, approval, and manifest. `.framepack/current-build.json` is only a pointer; an approval never follows a changed pointer automatically.
+
+Skills have explicit roles: `director` for creative direction and storyboards, `producer` for assets and arsenal planning, `motion` for choreography, `review` for evidence and taste gates, and `adapter` for HyperFrames handoff. An applied skill must record its output paths and hashes, not merely a load receipt.
+
+The browser workbench is a compact Codex-continuous review desk with three areas: **Builds**, **Preview**, and **Judgment**. It is not a second editor: authoring remains in Codex, while the desk compares versions, shows evidence and motion coverage, and binds approval to one frozen build.
+
 For a director-preview project, Framepack produces and maintains:
 
 ```text

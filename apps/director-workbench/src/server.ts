@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs';
 import { join, normalize, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createWorkbenchApi } from './api.js';
+import { readCurrentBuildRoot } from '../../../packages/director-engine/src/approval.js';
 
 const publicDir = resolve(fileURLToPath(new URL('../public/', import.meta.url)));
 const contentType = (path: string) => path.endsWith('.html') ? 'text/html; charset=utf-8' : path.endsWith('.css') ? 'text/css; charset=utf-8' : path.endsWith('.js') ? 'text/javascript; charset=utf-8' : 'application/octet-stream';
@@ -17,13 +18,14 @@ export async function startWorkbenchServer(projectDir: string, port = 4173): Pro
       if (url.pathname === '/favicon.ico') { response.writeHead(204).end(); return; }
       if (await api(request, response, url)) return;
       if (url.pathname.startsWith('/preview/public/')) {
-        const asset = resolve(root, url.pathname.slice('/preview/'.length));
-        if (!isInside(resolve(root, 'public'), asset)) { response.writeHead(403).end(); return; }
-        if (!existsSync(asset) || !isInside(await realpath(resolve(root, 'public')), await realpath(asset))) { response.writeHead(403).end(); return; }
+        const buildRoot = await readCurrentBuildRoot(root);
+        const asset = resolve(buildRoot, url.pathname.slice('/preview/'.length));
+        if (!isInside(resolve(buildRoot, 'public'), asset)) { response.writeHead(403).end(); return; }
+        if (!existsSync(asset) || !isInside(await realpath(resolve(buildRoot, 'public')), await realpath(asset))) { response.writeHead(403).end(); return; }
         await serveFile(asset, response); return;
       }
       if (url.pathname === '/preview/' || url.pathname === '/preview/index.html') {
-        await serveFile(join(root, 'index.html'), response); return;
+        await serveFile(join(await readCurrentBuildRoot(root), 'index.html'), response); return;
       }
       const requested = url.pathname === '/' ? 'index.html' : url.pathname.slice(1);
       const candidate = resolve(publicDir, normalize(requested));

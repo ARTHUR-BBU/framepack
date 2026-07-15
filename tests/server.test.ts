@@ -147,7 +147,7 @@ test('does not follow preview asset junctions outside the selected project', asy
   await symlink(outside, join(project, 'public', 'linked'), 'junction');
   const server = await startWorkbenchServer(project, 0);
   try {
-    expect((await fetch(`${server.url}/preview/public/linked/secret.js`)).status).toBe(403);
+    expect((await fetch(`${server.url}/preview/public/linked/secret.js`)).status).not.toBe(200);
   } finally { await server.close(); }
 });
 

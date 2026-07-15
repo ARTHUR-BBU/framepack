@@ -4,6 +4,7 @@ export * from './markdown.js';
 export * from './approval.js';
 export * from './arsenal.js';
 export * from './assets.js';
+export * from './build.js';
 export * from './direction.js';
 export * from './events.js';
 export * from './project.js';
@@ -34,7 +35,7 @@ export const HandoffManifestSchema = z.object({
   width: z.number().int().positive(),
   height: z.number().int().positive(),
   durationSeconds: z.number().positive(),
-  htmlEntry: z.literal('index.html'),
+  htmlEntry: z.string().min(1),
   previewApproved: z.boolean(),
   tasteGate: TasteGateSchema,
   audioNeeded: z.boolean(),
@@ -56,6 +57,8 @@ export function dimensionsForAspect(aspectRatio: AspectRatio): { width: number; 
 }
 
 export const PROJECT_FILES = {
+  buildsRoot: '.framepack/builds',
+  currentBuild: '.framepack/current-build.json',
   assetIntake: '.framepack/asset-intake.md',
   storyboard: '.framepack/storyboard.md',
   buildReport: '.framepack/html-build-report.md',

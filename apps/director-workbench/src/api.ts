@@ -88,7 +88,7 @@ export function createWorkbenchApi(root: string, stream: EventStream = createEve
     try {
       if (request.method === 'GET' && url.pathname === '/api/project') {
         const spec = await readProjectSpec(root);
-        const built = existsSync(join(root, 'index.html'));
+        const built = existsSync(join(root, '.framepack', 'current-build.json'));
         const currentBuild = built ? await readCurrentBuildEvidence(root) : null;
         const [skills, weapons, decision] = await Promise.all([readArtifact(root, 'skill-load-receipt.json'), readArtifact(root, 'weapon-load-plan.json'), readArtifact(root, 'approval.json')]);
         json(response, 200, { version: '1.0', spec, currentBuild, decision, provenance: { skills, weapons }, files: { built, audited: existsSync(join(root, '.framepack', 'taste-audit.json')), handedOff: existsSync(join(root, '.framepack', 'handoff-manifest.json')) } }); return true;

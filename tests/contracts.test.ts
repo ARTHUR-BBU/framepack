@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import {
   ApprovalSchema,
+  BuildManifestSchema,
   HandoffManifestSchema,
   dimensionsForAspect,
   renderStoryboardMarkdown,
@@ -26,4 +27,24 @@ test('rejects a handoff whose dimensions contradict its aspect ratio', () => {
     previewApproved: true, tasteGate: 'pass', audioNeeded: false, subtitleNeeded: false,
     bgmNeeded: false, hyperframesActions: ['lint'], knownRisks: [], renderNotes: 'test',
   })).toThrow('dimensions');
+});
+
+test('binds every creative-review artifact to one immutable build directory', () => {
+  const root = '.framepack/builds/build-abc';
+  const build = BuildManifestSchema.parse({
+    version: '1.0',
+    buildId: 'build-abc',
+    contentHash: 'a'.repeat(64),
+    root,
+    htmlEntry: `${root}/index.html`,
+    storyboard: `${root}/storyboard.json`,
+    weaponReceipt: `${root}/weapon-call-receipt.json`,
+    snapshots: `${root}/preview-snapshots`,
+    audit: `${root}/taste-audit.json`,
+    approval: `${root}/approval.json`,
+    createdAt: '2026-07-15T00:00:00.000Z',
+  });
+
+  expect(build.htmlEntry).toBe(`${root}/index.html`);
+  expect(() => BuildManifestSchema.parse({ ...build, audit: '.framepack/taste-audit.json' })).toThrow('stay inside');
 });

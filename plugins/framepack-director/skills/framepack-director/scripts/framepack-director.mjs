@@ -15241,7 +15241,10 @@ var init_arsenal = __esm({
     HashSchema = external_exports.string().regex(/^[a-f0-9]{64}$/);
     SelectionEvidenceShape = {
       sceneId: external_exports.string().min(1),
-      entryHash: HashSchema
+      entryHash: HashSchema,
+      stage: external_exports.enum(["entrance", "emphasis", "exit"]).default("entrance"),
+      atSeconds: external_exports.number().nonnegative().default(0.18),
+      durationSeconds: external_exports.number().positive().default(0.8)
     };
     WeaponSelectionSchema = external_exports.discriminatedUnion("weaponId", [
       external_exports.object({ ...SelectionEvidenceShape, weaponId: external_exports.literal("text-split-enter"), functionName: external_exports.literal("textSplitEnter"), entry: external_exports.literal("text-split-enter/index.js"), params: TextSplitEnterParametersSchema }),
@@ -15266,6 +15269,9 @@ var init_arsenal = __esm({
     });
     WeaponCallSchema = external_exports.object({
       sceneId: external_exports.string().min(1),
+      stage: external_exports.enum(["entrance", "emphasis", "exit"]),
+      atSeconds: external_exports.number().nonnegative(),
+      durationSeconds: external_exports.number().positive(),
       weaponId: WeaponIdSchema,
       functionName: external_exports.string().min(1),
       params: external_exports.record(external_exports.string(), external_exports.unknown()),
@@ -15352,6 +15358,65 @@ var init_assets = __esm({
       summary: external_exports.enum(["missing", "available"]),
       assets: external_exports.array(AssetRecordSchema),
       inspectedAt: external_exports.string().datetime()
+    });
+  }
+});
+
+// packages/director-contracts/src/build.ts
+function buildPath(root, path, ctx, field) {
+  if (!path.startsWith(`${root}/`)) ctx.addIssue({ code: "custom", path: [field], message: `${field} must stay inside the immutable build root` });
+}
+var HashSchema2, BuildRootSchema, BuildManifestSchema, CurrentBuildPointerSchema, SkillRoleSchema, SkillDecisionLedgerSchema, MotionCoverageSchema;
+var init_build = __esm({
+  "packages/director-contracts/src/build.ts"() {
+    "use strict";
+    init_zod();
+    HashSchema2 = external_exports.string().regex(/^[a-f0-9]{64}$/i);
+    BuildRootSchema = external_exports.string().regex(/^\.framepack\/builds\/[A-Za-z0-9_-]+$/, "build root must be a canonical Framepack build directory");
+    BuildManifestSchema = external_exports.object({
+      version: external_exports.literal("1.0"),
+      buildId: external_exports.string().min(1),
+      contentHash: HashSchema2,
+      root: BuildRootSchema,
+      htmlEntry: external_exports.string().min(1),
+      storyboard: external_exports.string().min(1),
+      weaponReceipt: external_exports.string().min(1),
+      snapshots: external_exports.string().min(1),
+      audit: external_exports.string().min(1),
+      approval: external_exports.string().min(1),
+      createdAt: external_exports.string().datetime()
+    }).superRefine((build2, ctx) => {
+      for (const field of ["htmlEntry", "storyboard", "weaponReceipt", "snapshots", "audit", "approval"]) buildPath(build2.root, build2[field], ctx, field);
+    });
+    CurrentBuildPointerSchema = external_exports.object({
+      version: external_exports.literal("1.0"),
+      buildId: external_exports.string().min(1),
+      contentHash: HashSchema2,
+      manifest: external_exports.string().min(1),
+      updatedAt: external_exports.string().datetime()
+    });
+    SkillRoleSchema = external_exports.enum(["director", "producer", "motion", "review", "adapter"]);
+    SkillDecisionLedgerSchema = external_exports.object({
+      version: external_exports.literal("1.0"),
+      inputHash: HashSchema2,
+      decisions: external_exports.array(external_exports.object({
+        skillId: external_exports.string().min(1),
+        role: SkillRoleSchema,
+        outputPaths: external_exports.array(external_exports.string().min(1)).min(1),
+        outputHashes: external_exports.record(external_exports.string().min(1), HashSchema2)
+      })).min(1)
+    });
+    MotionCoverageSchema = external_exports.object({
+      version: external_exports.literal("1.0"),
+      buildId: external_exports.string().min(1),
+      scenes: external_exports.array(external_exports.object({
+        sceneId: external_exports.string().min(1),
+        activeSeconds: external_exports.number().nonnegative(),
+        coverageRatio: external_exports.number().min(0).max(1),
+        quietGaps: external_exports.array(external_exports.object({ startSeconds: external_exports.number().nonnegative(), durationSeconds: external_exports.number().positive() })),
+        status: external_exports.enum(["pass", "motion-density-low"])
+      })).min(1),
+      status: external_exports.enum(["pass", "needs_review"])
     });
   }
 });
@@ -15668,6 +15733,7 @@ var init_src = __esm({
     init_approval();
     init_arsenal();
     init_assets();
+    init_build();
     init_direction();
     init_events();
     init_project();
@@ -15692,7 +15758,7 @@ var init_src = __esm({
       width: external_exports.number().int().positive(),
       height: external_exports.number().int().positive(),
       durationSeconds: external_exports.number().positive(),
-      htmlEntry: external_exports.literal("index.html"),
+      htmlEntry: external_exports.string().min(1),
       previewApproved: external_exports.boolean(),
       tasteGate: TasteGateSchema,
       audioNeeded: external_exports.boolean(),
@@ -15708,6 +15774,8 @@ var init_src = __esm({
       }
     });
     PROJECT_FILES = {
+      buildsRoot: ".framepack/builds",
+      currentBuild: ".framepack/current-build.json",
       assetIntake: ".framepack/asset-intake.md",
       storyboard: ".framepack/storyboard.md",
       buildReport: ".framepack/html-build-report.md",
@@ -15903,16 +15971,16 @@ import { createHash as createHash2 } from "node:crypto";
 import { mkdir as mkdir2, readFile as readFile2, writeFile as writeFile2 } from "node:fs/promises";
 import { isAbsolute, join as join2, relative, resolve as resolve4 } from "node:path";
 function routeSkills(intent) {
-  const director = { id: "framepack-director", reason: "translate intent and enforce truthful director boundaries" };
-  const arsenal = { id: "framepack-arsenal", reason: "match storyboard purposes to evidenced motion weapons" };
+  const director = { id: "framepack-director", role: "director", reason: "translate intent and enforce truthful director boundaries" };
+  const arsenal = { id: "framepack-arsenal", role: "producer", reason: "match storyboard purposes to evidenced motion weapons" };
   if (intent === "product-launch-video") {
-    return [director, { id: "product-launch-video", reason: "apply the product-led launch rhythm" }, arsenal];
+    return [director, { id: "product-launch-video", role: "director", reason: "apply the product-led launch rhythm" }, arsenal];
   }
   if (intent === "reference-video") {
-    return [director, { id: "framepack-reference-miner", reason: "extract transferable reference DNA" }, arsenal];
+    return [director, { id: "framepack-reference-miner", role: "director", reason: "extract transferable reference DNA" }, arsenal];
   }
   if (intent === "faceless-explainer" || intent === "website-to-video") {
-    return [director, { id: intent, reason: `apply the ${intent} workflow` }, arsenal];
+    return [director, { id: intent, role: "director", reason: `apply the ${intent} workflow` }, arsenal];
   }
   return [director, arsenal];
 }
@@ -15966,6 +16034,7 @@ async function loadSkills(input) {
     parseRuntimeRules(markdown, request.id);
     loaded.push({
       id: request.id,
+      role: request.role,
       resolvedSource: source2,
       portablePath: `skills/${request.id}/SKILL.md`,
       sha256: hash2(markdown),
@@ -16068,10 +16137,17 @@ async function applySkillPlan(input) {
     applied,
     appliedAt: (/* @__PURE__ */ new Date()).toISOString()
   };
+  const loadedRoles = new Map(loadReceipt.loaded.map((item) => [item.id, item.role]));
+  const ledger = SkillDecisionLedgerSchema.parse({
+    version: "1.0",
+    inputHash: hash2({ brief: input.brief, assets: input.assets, loadReceiptHash: applicationReceipt.loadReceiptHash }),
+    decisions: applied.map((item) => ({ skillId: item.skillId, role: loadedRoles.get(item.skillId) ?? "director", outputPaths: item.outputPaths, outputHashes: item.valueHashes }))
+  });
   await Promise.all([
     writeProjectJson(input.projectDir, "direction.json", direction),
     writeProjectJson(input.projectDir, "storyboard.json", storyboard),
-    writeProjectJson(input.projectDir, "skill-application-receipt.json", applicationReceipt)
+    writeProjectJson(input.projectDir, "skill-application-receipt.json", applicationReceipt),
+    writeProjectJson(input.projectDir, "skill-decision-ledger.json", ledger)
   ]);
   return { direction, storyboard, loadReceipt, applicationReceipt };
 }
@@ -16080,12 +16156,14 @@ var init_skill_runtime = __esm({
   "packages/director-engine/src/skill-runtime.ts"() {
     "use strict";
     init_content_hash();
+    init_src();
     init_zod();
     SkillLoadReceiptSchema = external_exports.object({
       version: external_exports.literal("1.0"),
       intent: external_exports.enum(["product-launch-video", "faceless-explainer", "website-to-video", "reference-video", "general-video"]),
       loaded: external_exports.array(external_exports.object({
         id: external_exports.string().min(1),
+        role: SkillRoleSchema,
         resolvedSource: external_exports.string().min(1),
         portablePath: external_exports.string().min(1),
         sha256: external_exports.string().regex(/^[a-f0-9]{64}$/i),
@@ -16094,6 +16172,32 @@ var init_skill_runtime = __esm({
       })).min(1),
       completedAt: external_exports.string().datetime()
     });
+  }
+});
+
+// packages/director-engine/src/motion-coverage.ts
+function assessMotionCoverage(buildId, storyboard, actions) {
+  const scenes = storyboard.scenes.map((scene) => {
+    const intervals = actions.filter((action) => action.sceneId === scene.id).map((action) => ({ start: action.atSeconds, end: Math.min(scene.durationSeconds, action.atSeconds + action.durationSeconds) })).sort((left, right) => left.start - right.start);
+    if (!intervals.length) return { sceneId: scene.id, activeSeconds: 0, coverageRatio: 1, quietGaps: [], status: "pass" };
+    const merged = [];
+    for (const interval of intervals) {
+      const previous = merged.at(-1);
+      if (previous && interval.start <= previous.end) previous.end = Math.max(previous.end, interval.end);
+      else merged.push(interval);
+    }
+    const activeSeconds = merged.reduce((total, interval) => total + Math.max(0, interval.end - interval.start), 0);
+    const quietGaps = [{ start: 0, end: merged[0]?.start ?? scene.durationSeconds }, ...merged.map((interval, index) => ({ start: interval.end, end: merged[index + 1]?.start ?? scene.durationSeconds }))].filter((gap) => gap.end - gap.start > 1.5).map((gap) => ({ startSeconds: gap.start, durationSeconds: gap.end - gap.start }));
+    const coverageRatio = activeSeconds / scene.durationSeconds;
+    const status = coverageRatio >= 0.55 && quietGaps.length === 0 ? "pass" : "motion-density-low";
+    return { sceneId: scene.id, activeSeconds, coverageRatio, quietGaps, status };
+  });
+  return MotionCoverageSchema.parse({ version: "1.0", buildId, scenes, status: scenes.every((scene) => scene.status === "pass") ? "pass" : "needs_review" });
+}
+var init_motion_coverage = __esm({
+  "packages/director-engine/src/motion-coverage.ts"() {
+    "use strict";
+    init_src();
   }
 });
 
@@ -16398,7 +16502,8 @@ async function verifyFileHash(repoRoot, portablePath2, expected) {
   } catch {
     throw new Error(`proof file missing: ${portablePath2}`);
   }
-  if (sha256(content) !== expected) throw new Error(`proof file hash mismatch: ${portablePath2}`);
+  const canonical = /\.(?:json|md|html|css|js)$/i.test(portablePath2) ? Buffer.from(content.toString("utf8").replace(/\r\n/g, "\n"), "utf8") : content;
+  if (sha256(canonical) !== expected) throw new Error(`proof file hash mismatch: ${portablePath2}`);
 }
 function runCommand(command, args, cwd) {
   return new Promise((resolveResult, reject) => {
@@ -16443,13 +16548,13 @@ async function loadWeaponRegistry(root = DEFAULT_WEAPON_ROOT, proofRoot = resolv
     const manifest = WeaponManifestSchema.parse(raw);
     if (manifest.id !== id) throw new Error(`weapon directory and manifest id mismatch: ${id}`);
     const entryContent = await readFile4(join5(root, ...manifest.entry.split("/")), "utf8");
-    if (manifest.maturity !== "proven") return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: sha2562(entryContent) };
+    if (manifest.maturity !== "proven") return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: sha256Text(entryContent) };
     const evidence = WeaponBenchEvidenceSchema.parse(JSON.parse(await readFile4(join5(root, id, ...manifest.proof.evidence.split("/")), "utf8")));
     const scorecard = WeaponScorecardSchema.parse(JSON.parse(await readFile4(join5(root, id, ...manifest.proof.scorecard.split("/")), "utf8")));
     if (evidence.weaponId !== manifest.id || scorecard.weaponId !== manifest.id) throw new Error(`weapon proof id mismatch: ${id}`);
     await verifyWeaponProofFiles(proofRoot, evidence);
     promoteWeapon(evidence, scorecard);
-    if (evidence.entryHash !== sha2562(entryContent)) throw new Error(`proven weapon entry hash mismatch: ${id}`);
+    if (evidence.entryHash !== sha256Text(entryContent)) throw new Error(`proven weapon entry hash mismatch: ${id}`);
     return { ...manifest, parameters: PARAMETER_SCHEMAS[id], entryHash: evidence.entryHash, evidence, scorecard };
   }));
   return { version: "1.0", weapons };
@@ -16465,8 +16570,8 @@ async function resolveWeapons(storyboard, registry2) {
       if (!matches(weapon, scene.purpose, text)) continue;
       const candidate = { sceneId: scene.id, weaponId: weapon.id, reason: matchReason(weapon.id), maturity: weapon.maturity };
       candidates.push(candidate);
-      if (weapon.maturity === "proven" && !selected.some((selection) => selection.sceneId === scene.id)) {
-        selected.push(selectionFor(weapon, scene.id, text));
+      if (weapon.maturity === "proven") {
+        selected.push(selectionFor(weapon, scene.id, text, selected.filter((selection) => selection.sceneId === scene.id).length));
       }
     }
   }
@@ -16492,7 +16597,7 @@ function verifyWeaponCalls(planInput, html) {
   const plan = WeaponLoadPlanSchema.parse(planInput);
   const calls = extractWeaponCalls(html);
   return plan.selected.flatMap((selection) => {
-    const call = calls.find((item) => item.sceneId === selection.sceneId && item.weaponId === selection.weaponId);
+    const call = calls.find((item) => item.sceneId === selection.sceneId && item.weaponId === selection.weaponId && item.stage === selection.stage && item.atSeconds === selection.atSeconds);
     if (!call) return [`weapon_not_invoked:${selection.weaponId}`];
     const errors = [];
     if (call.functionName !== selection.functionName) errors.push(`weapon_function_missing:${selection.weaponId}`);
@@ -16521,6 +16626,9 @@ function extractWeaponCalls(html) {
 function renderWeaponInvocation(selection, inputHash, position) {
   const call = WeaponCallSchema.parse({
     sceneId: selection.sceneId,
+    stage: selection.stage,
+    atSeconds: selection.atSeconds,
+    durationSeconds: selection.durationSeconds,
     weaponId: selection.weaponId,
     functionName: selection.functionName,
     params: selection.params,
@@ -16530,11 +16638,11 @@ function renderWeaponInvocation(selection, inputHash, position) {
   const paramExpression = `JSON.parse(${JSON.stringify(JSON.stringify(selection.params))})`;
   return `/*framepack-weapon-call:${JSON.stringify(call)}*/${selection.functionName}(window.__framepackTimeline,document.querySelector(${JSON.stringify(selector)}),${paramExpression}${position === void 0 ? "" : `,${position}`});`;
 }
-async function persistWeaponEvidence(projectDir, planInput, html) {
+async function persistWeaponEvidence(projectDir, planInput, html, outputDir = join5(projectDir, ".framepack")) {
   const plan = WeaponLoadPlanSchema.parse(planInput);
   const calls = extractWeaponCalls(html);
   const verificationErrors = verifyWeaponCalls(plan, html);
-  const framepackDir = join5(projectDir, ".framepack");
+  const framepackDir = outputDir;
   await mkdir4(framepackDir, { recursive: true });
   await Promise.all([
     writeFile4(join5(framepackDir, "weapon-load-plan.json"), `${JSON.stringify(plan, null, 2)}
@@ -16564,8 +16672,9 @@ function defaultParams(id, text) {
   if (id === "stagger-grid-reveal") return StaggerGridRevealParametersSchema.parse({});
   return TextSplitEnterParametersSchema.parse({});
 }
-function selectionFor(weapon, sceneId, text) {
-  const evidence = { sceneId, entryHash: weapon.entryHash };
+function selectionFor(weapon, sceneId, text, index) {
+  const stages = ["entrance", "emphasis", "exit"];
+  const evidence = { sceneId, entryHash: weapon.entryHash, stage: stages[Math.min(index, stages.length - 1)], atSeconds: 0.18 + index * 1.4, durationSeconds: 0.8 };
   if (weapon.id === "number-count-up") return { ...evidence, weaponId: weapon.id, functionName: "numberCountUp", entry: "number-count-up/index.js", params: NumberCountUpParametersSchema.parse(defaultParams(weapon.id, text)) };
   if (weapon.id === "caption-clip-wipe") return { ...evidence, weaponId: weapon.id, functionName: "captionClipWipe", entry: "caption-clip-wipe/index.js", params: CaptionClipWipeParametersSchema.parse(defaultParams(weapon.id, text)) };
   if (weapon.id === "elastic-scale-enter") return { ...evidence, weaponId: weapon.id, functionName: "elasticScaleEnter", entry: "elastic-scale-enter/index.js", params: ElasticScaleEnterParametersSchema.parse(defaultParams(weapon.id, text)) };
@@ -16575,6 +16684,9 @@ function selectionFor(weapon, sceneId, text) {
 }
 function sha2562(value) {
   return createHash4("sha256").update(value).digest("hex");
+}
+function sha256Text(value) {
+  return sha2562(value.replace(/\r\n/g, "\n"));
 }
 var DEFAULT_WEAPON_ROOT, WEAPON_IDS, PARAMETER_SCHEMAS;
 var init_weapon_runtime = __esm({
@@ -16609,11 +16721,14 @@ async function loadGsapCapabilities(root = runtimeAssetRoot) {
     const resolvedPath = await realpath(resolve7(root, ...item.snapshotPath.split("/")));
     const within = relative3(allowedRoot, resolvedPath);
     if (within.startsWith("..") || isAbsolute2(within)) throw new Error(`official GSAP skill path escapes snapshot root: ${item.id}`);
-    const actual = createHash5("sha256").update(await readFile5(resolvedPath)).digest("hex");
+    const actual = canonicalSkillHash(await readFile5(resolvedPath));
     if (actual !== item.sha256) throw new Error(`official GSAP skill hash mismatch: ${item.id}`);
     return { ...item, verified: true, resolvedPath };
   }));
   return { ...raw, modules };
+}
+function canonicalSkillHash(content) {
+  return createHash5("sha256").update(content.toString("utf8").replace(/\r\n/g, "\n"), "utf8").digest("hex");
 }
 function gsapCapabilityFingerprintInput(registry2, route) {
   return {
@@ -16637,15 +16752,15 @@ function routeGsapCapabilities(registry2, input) {
   const excluded = registry2.modules.map((item) => item.id).filter((id) => !required2.includes(id));
   return { target: input.target, required: required2, excluded, modules: registry2.modules.filter((item) => required2.includes(item.id)) };
 }
-async function persistGsapCapabilityReceipt(projectDir, route) {
+async function persistGsapCapabilityReceipt(projectDir, route, outputDir = join6(projectDir, ".framepack")) {
   const receipt2 = {
     version: "1.0",
     target: route.target,
     loaded: route.modules.map(({ id, sha256: sha2564, snapshotPath }) => ({ id, sha256: sha2564, snapshotPath })),
     excluded: route.excluded
   };
-  await mkdir5(join6(projectDir, ".framepack"), { recursive: true });
-  await writeFile5(join6(projectDir, ".framepack", "gsap-capability-receipt.json"), `${JSON.stringify(receipt2, null, 2)}
+  await mkdir5(outputDir, { recursive: true });
+  await writeFile5(join6(outputDir, "gsap-capability-receipt.json"), `${JSON.stringify(receipt2, null, 2)}
 `, "utf8");
   return receipt2;
 }
@@ -16712,7 +16827,11 @@ async function composePreview(input) {
     if (stableStringify(actual) !== stableStringify(recorded)) throw new Error(`asset assignment is stale: ${asset.id}`);
   }
   const storyboardSceneIds = new Set(storyboard.scenes.map((scene) => scene.id));
-  for (const selection of weaponPlan.selected) if (!storyboardSceneIds.has(selection.sceneId)) throw new Error(`weapon plan targets missing scene: ${selection.sceneId}`);
+  for (const selection of weaponPlan.selected) {
+    if (!storyboardSceneIds.has(selection.sceneId)) throw new Error(`weapon plan targets missing scene: ${selection.sceneId}`);
+    const scene = storyboard.scenes.find((item) => item.id === selection.sceneId);
+    if (selection.atSeconds + selection.durationSeconds > scene.durationSeconds) throw new Error(`weapon action exceeds its scene window: ${selection.weaponId}`);
+  }
   for (const scene of storyboard.scenes) {
     for (const assetId of scene.assetIds) {
       const asset = assetById.get(assetId);
@@ -16735,7 +16854,7 @@ async function composePreview(input) {
     } catch {
       throw new Error(`planned weapon unavailable: ${selection.weaponId}`);
     }
-    if (sha2563(content) !== selection.entryHash) throw new Error(`planned weapon hash mismatch: ${selection.weaponId}`);
+    if (sha2563(content.toString("utf8").replace(/\r\n/g, "\n")) !== selection.entryHash) throw new Error(`planned weapon hash mismatch: ${selection.weaponId}`);
     const source2 = content.toString("utf8");
     const gsapIssues = auditGsapSource(source2);
     if (gsapIssues.length) throw new Error(`planned weapon violates official GSAP production rules: ${selection.weaponId}:${gsapIssues.join(",")}`);
@@ -16752,20 +16871,6 @@ async function composePreview(input) {
   if (weaponErrors.length) throw new Error(`planned weapon verification failed: ${weaponErrors.join(", ")}`);
   const inspection = inspectPreviewHtml(html, css);
   if (inspection.codes.length) throw new Error(`preview HTML violates HyperFrames contract: ${inspection.codes.join(", ")}`);
-  await Promise.all([
-    mkdir6(join7(projectDir, "public", "vendor"), { recursive: true }),
-    mkdir6(join7(projectDir, "public", "fonts", "noto-sans-sc"), { recursive: true }),
-    mkdir6(join7(projectDir, ".framepack"), { recursive: true })
-  ]);
-  await Promise.all([
-    cp3(existsSync2(BUNDLED_GSAP) ? BUNDLED_GSAP : require3.resolve("gsap/dist/gsap.min.js"), join7(projectDir, "public", "vendor", "gsap.min.js")),
-    vendorNotoSansSc(join7(projectDir, "public", "fonts", "noto-sans-sc"), `${spec.title} ${sceneText} ${style2.chineseName} ${input.feedback.join(" ")}`),
-    ...weaponPlan.selected.map(async (selection) => {
-      const target = join7(projectDir, ...selection.entry.split("/"));
-      await mkdir6(dirname6(target), { recursive: true });
-      await cp3(resolve8(weaponRoot, ...selection.entry.split("/")), target);
-    })
-  ]);
   const { createdAt: _createdAt, ...semanticStoryboard } = storyboard;
   const buildId = sha2563(stableStringify({
     spec,
@@ -16779,10 +16884,49 @@ async function composePreview(input) {
     html,
     css
   }));
+  const buildRelativeRoot = `.framepack/builds/${buildId}`;
+  const buildRoot = join7(projectDir, ".framepack", "builds", buildId);
+  const motionCoverage = assessMotionCoverage(buildId, storyboard, weaponPlan.selected);
   await Promise.all([
-    writeFile6(join7(projectDir, "index.html"), html, "utf8"),
-    writeFile6(join7(projectDir, "public", "preview.css"), css, "utf8"),
-    writeFile6(join7(projectDir, ".framepack", "html-build-report.md"), `# HTML Build Report
+    mkdir6(join7(buildRoot, "public", "vendor"), { recursive: true }),
+    mkdir6(join7(buildRoot, "public", "fonts", "noto-sans-sc"), { recursive: true }),
+    mkdir6(join7(buildRoot, "public", "assets"), { recursive: true })
+  ]);
+  const assignedAssets = assets.assets.filter((asset) => asset.confirmed && asset.status === "available" && [...referencedScenes.keys()].includes(asset.id));
+  await Promise.all([
+    cp3(existsSync2(BUNDLED_GSAP) ? BUNDLED_GSAP : require3.resolve("gsap/dist/gsap.min.js"), join7(buildRoot, "public", "vendor", "gsap.min.js")),
+    vendorNotoSansSc(join7(buildRoot, "public", "fonts", "noto-sans-sc"), `${spec.title} ${sceneText} ${style2.chineseName} ${input.feedback.join(" ")}`),
+    ...assignedAssets.map(async (asset) => {
+      const target = join7(buildRoot, ...asset.sourcePath.split("/"));
+      await mkdir6(dirname6(target), { recursive: true });
+      await cp3(resolve8(projectDir, ...asset.sourcePath.split("/")), target);
+    }),
+    ...weaponPlan.selected.map(async (selection) => {
+      const target = join7(buildRoot, ...selection.entry.split("/"));
+      await mkdir6(dirname6(target), { recursive: true });
+      await cp3(resolve8(weaponRoot, ...selection.entry.split("/")), target);
+    })
+  ]);
+  const manifest = BuildManifestSchema.parse({
+    version: "1.0",
+    buildId,
+    contentHash: sha2563(html),
+    root: buildRelativeRoot,
+    htmlEntry: `${buildRelativeRoot}/index.html`,
+    storyboard: `${buildRelativeRoot}/storyboard.json`,
+    weaponReceipt: `${buildRelativeRoot}/weapon-call-receipt.json`,
+    snapshots: `${buildRelativeRoot}/preview-snapshots`,
+    audit: `${buildRelativeRoot}/taste-audit.json`,
+    approval: `${buildRelativeRoot}/approval.json`,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+  });
+  const pointer = CurrentBuildPointerSchema.parse({ version: "1.0", buildId, contentHash: manifest.contentHash, manifest: `${buildRelativeRoot}/manifest.json`, updatedAt: (/* @__PURE__ */ new Date()).toISOString() });
+  await Promise.all([
+    writeFile6(join7(buildRoot, "index.html"), html, "utf8"),
+    writeFile6(join7(buildRoot, "public", "preview.css"), css, "utf8"),
+    writeFile6(join7(buildRoot, "storyboard.json"), `${JSON.stringify(storyboard, null, 2)}
+`, "utf8"),
+    writeFile6(join7(buildRoot, "html-build-report.md"), `# HTML Build Report
 
 - build_id: ${buildId}
 - content_source: validated_storyboard
@@ -16790,17 +16934,29 @@ async function composePreview(input) {
 - scenes: ${storyboard.scenes.length}
 - weapons: ${weaponPlan.selected.map((item) => item.weaponId).join(", ") || "HANDWRITE"}
 - structural_contract: pass
+`, "utf8"),
+    writeFile6(join7(projectDir, ".framepack", "html-build-report.md"), `# Current Build Pointer
+
+- build_id: ${buildId}
+- build_root: ${buildRelativeRoot}
+- content_hash: ${manifest.contentHash}
+`, "utf8"),
+    writeFile6(join7(buildRoot, "manifest.json"), `${JSON.stringify(manifest, null, 2)}
+`, "utf8"),
+    writeFile6(join7(buildRoot, "motion-coverage.json"), `${JSON.stringify(motionCoverage, null, 2)}
+`, "utf8"),
+    writeFile6(join7(projectDir, ".framepack", "current-build.json"), `${JSON.stringify(pointer, null, 2)}
 `, "utf8")
   ]);
-  await persistWeaponEvidence(projectDir, weaponPlan, html);
-  await persistGsapCapabilityReceipt(projectDir, gsapRoute);
+  await persistWeaponEvidence(projectDir, weaponPlan, html, buildRoot);
+  await persistGsapCapabilityReceipt(projectDir, gsapRoute, buildRoot);
   return { buildId, html, inspection };
 }
 function previewHtml(input) {
   const assetById = new Map(input.assets.assets.map((asset) => [asset.id, asset]));
-  const selectedByScene = new Map(input.weaponPlan.selected.map((selection) => [selection.sceneId, selection]));
+  const selectedByScene = new Map(input.storyboard.scenes.map((scene) => [scene.id, input.weaponPlan.selected.filter((selection) => selection.sceneId === scene.id)]));
   const scenes = input.storyboard.scenes.map((scene, index) => {
-    const selection = selectedByScene.get(scene.id);
+    const selection = selectedByScene.get(scene.id)?.[0];
     const media = scene.assetIds.map((id) => assetById.get(id)).filter((asset) => asset?.kind === "image").map((asset) => `<img class="product-asset" src="${escapeAttribute(asset.sourcePath)}" alt="${escapeAttribute(scene.visualFocus)}">`).join("");
     return `<div id="${escapeAttribute(scene.id)}" class="clip" data-start="${number4(scene.startSeconds)}" data-duration="${number4(scene.durationSeconds)}" data-track-index="0"><div class="scene-inner scene-${index + 1}"><div class="signal signal-a"></div><div class="signal signal-b"></div><p class="purpose">${purposeLabel(scene.purpose)} · ${escapeHtml(input.styleName)}</p><div class="scene-copy" data-framepack-weapon-target="${escapeAttribute(scene.id)}">${weaponMarkup(selection?.weaponId, scene.title)}</div><p class="narrative">${escapeHtml(scene.narrativeBeat)}</p>${media}<p class="direction-note">${escapeHtml(input.feedback.length ? `导演反馈 · ${input.feedback.join(" · ")}` : input.direction.rationale)}</p></div></div>`;
   }).join("");
@@ -16813,8 +16969,8 @@ function previewHtml(input) {
     return embedWeaponSource(source2, selection.functionName, selection.weaponId);
   }).join("\n");
   const animations = input.storyboard.scenes.map((scene) => {
-    const selection = selectedByScene.get(scene.id);
-    if (selection) return renderWeaponInvocation(selection, input.weaponPlan.inputHash, number4(scene.startSeconds + 0.18));
+    const selections = selectedByScene.get(scene.id) ?? [];
+    if (selections.length) return selections.map((selection) => renderWeaponInvocation(selection, input.weaponPlan.inputHash, number4(scene.startSeconds + selection.atSeconds))).join("");
     return `tl.fromTo('#${cssEscape(scene.id)} .scene-copy',{autoAlpha:0,y:54},{autoAlpha:1,y:0,duration:.75,ease:'power3.out'},${number4(scene.startSeconds + 0.18)});tl.fromTo('#${cssEscape(scene.id)} .narrative',{autoAlpha:0,y:24},{autoAlpha:1,y:0,duration:.55,ease:'power2.out'},${number4(scene.startSeconds + 0.42)});`;
   }).join("");
   const assignedIds = new Set(input.storyboard.scenes.flatMap((scene) => scene.assetIds));
@@ -16884,6 +17040,7 @@ var init_preview_composer = __esm({
     init_font_vendor();
     init_skill_runtime();
     init_runtime_assets();
+    init_motion_coverage();
     init_style_catalog();
     init_weapon_runtime();
     init_gsap_capabilities();
@@ -17037,17 +17194,25 @@ var init_storyboard2 = __esm({
 });
 
 // packages/director-engine/src/approval.ts
+var approval_exports = {};
+__export(approval_exports, {
+  assertApprovalCurrent: () => assertApprovalCurrent,
+  readCurrentBuildEvidence: () => readCurrentBuildEvidence,
+  readCurrentBuildRoot: () => readCurrentBuildRoot
+});
 import { createHash as createHash8 } from "node:crypto";
 import { readFile as readFile7 } from "node:fs/promises";
 import { join as join9 } from "node:path";
+async function readCurrentBuildRoot(projectDir) {
+  const pointer = CurrentBuildPointerSchema.parse(JSON.parse(await readFile7(join9(projectDir, PROJECT_FILES.currentBuild), "utf8")));
+  return join9(projectDir, ".framepack", "builds", pointer.buildId);
+}
 async function readCurrentBuildEvidence(projectDir) {
-  const [report, html] = await Promise.all([
-    readFile7(join9(projectDir, PROJECT_FILES.buildReport), "utf8"),
-    readFile7(join9(projectDir, "index.html"))
-  ]);
-  const buildId = report.match(/^- build_id:\s*(\S+)\s*$/m)?.[1];
-  if (!buildId) throw new Error("current build report has no build_id");
-  return { buildId, contentHash: createHash8("sha256").update(html).digest("hex") };
+  const pointer = CurrentBuildPointerSchema.parse(JSON.parse(await readFile7(join9(projectDir, PROJECT_FILES.currentBuild), "utf8")));
+  const html = await readFile7(join9(await readCurrentBuildRoot(projectDir), "index.html"));
+  const contentHash2 = createHash8("sha256").update(html).digest("hex");
+  if (contentHash2 !== pointer.contentHash) throw new Error("current build pointer content hash does not match its HTML");
+  return { buildId: pointer.buildId, contentHash: contentHash2 };
 }
 async function assertApprovalCurrent(projectDir, input) {
   const approval = ApprovalSchema.parse(input);
@@ -17094,9 +17259,10 @@ import { existsSync as existsSync3 } from "node:fs";
 import { readFile as readFile8, writeFile as writeFile8 } from "node:fs/promises";
 import { join as join10, resolve as resolve9, sep } from "node:path";
 async function auditProject(projectDir, options = {}) {
-  const htmlPath = join10(projectDir, "index.html");
-  const cssPath = join10(projectDir, "public", "preview.css");
-  const previewPlanPath = join10(projectDir, ".framepack", "preview-snapshots", "snapshot-plan.json");
+  const buildRoot = await readCurrentBuildRoot(projectDir);
+  const htmlPath = join10(buildRoot, "index.html");
+  const cssPath = join10(buildRoot, "public", "preview.css");
+  const previewPlanPath = join10(buildRoot, "preview-snapshots", "snapshot-plan.json");
   const assetLedgerPath = join10(projectDir, ".framepack", "asset-ledger.json");
   const issues = [];
   if (!existsSync3(htmlPath)) issues.push("index.html is missing");
@@ -17112,6 +17278,7 @@ async function auditProject(projectDir, options = {}) {
   const snapshotPlan = existsSync3(previewPlanPath) ? JSON.parse(await readFile8(previewPlanPath, "utf8")) : { frames: [] };
   const frameTimes = (snapshotPlan.frames ?? []).map((frame) => frame.timeSeconds).filter((time3) => typeof time3 === "number");
   const css = existsSync3(cssPath) ? await readFile8(cssPath, "utf8") : "";
+  const motionCoverage = MotionCoverageSchema.parse(JSON.parse(await readFile8(join10(buildRoot, "motion-coverage.json"), "utf8")));
   const deterministic = DeterministicReviewEvidenceSchema.parse({
     material: { status: materialUsage, files: [".framepack/asset-ledger.json"] },
     contrast: { status: deterministicContrastStatus(css), files: ["public/preview.css"] },
@@ -17148,11 +17315,16 @@ async function auditProject(projectDir, options = {}) {
   if (subjective.status === "reviewed" && subjective.scorecard) {
     taste.gate = subjective.scorecard.verdict;
   }
+  if (motionCoverage.status === "needs_review") {
+    taste.gate = "fail";
+    taste.motionQuality = "poor";
+    taste.revisionNotes = [...taste.revisionNotes, "Motion coverage is too sparse; add beats or explicitly waive this taste risk."];
+  }
   taste.recommendation = technical.status === "pass" && subjective.status === "reviewed" && taste.gate !== "fail";
-  const result = { technical, materialUsage, deterministic, subjective, taste };
-  await writeFile8(join10(projectDir, AUDIT_FILE), `${JSON.stringify(result, null, 2)}
+  const result = { technical, materialUsage, deterministic, subjective, motionCoverage, taste };
+  await writeFile8(join10(buildRoot, "taste-audit.json"), `${JSON.stringify(result, null, 2)}
 `);
-  await writeFile8(join10(projectDir, PROJECT_FILES.tasteAudit), `${renderTasteAuditMarkdown()}
+  await writeFile8(join10(buildRoot, "taste-audit.md"), `${renderTasteAuditMarkdown()}
 
 - commercial_quality: ${taste.gate}
 - ppt_feel: ${taste.pptFeel}
@@ -17168,22 +17340,25 @@ ${taste.revisionNotes.map((note) => `- ${note}`).join("\n")}
   return result;
 }
 async function approveProject(projectDir, reason) {
+  if (!existsSync3(join10(projectDir, PROJECT_FILES.currentBuild))) throw new Error("technical audit must pass before approval");
   const audit = await loadAudit(projectDir);
   if (audit.technical.status !== "pass") throw new Error("technical audit must pass before approval");
   if (audit.taste.gate === "fail") throw new Error("taste failure requires an explicit waiver");
   return writeApproval(projectDir, "approved", reason);
 }
 async function waiveProject(projectDir, reason) {
+  if (!existsSync3(join10(projectDir, PROJECT_FILES.currentBuild))) throw new Error("technical audit must pass before a waiver");
   const audit = await loadAudit(projectDir);
   if (audit.technical.status !== "pass") throw new Error("technical audit must pass before a waiver");
   return writeApproval(projectDir, "waived", reason);
 }
 async function handoffProject(projectDir) {
-  const audit = await loadAudit(projectDir);
-  if (audit.technical.status !== "pass") throw new Error("technical audit must pass before handoff");
-  const approvalPath = join10(projectDir, PROJECT_FILES.approval);
+  const buildRoot = await readCurrentBuildRoot(projectDir);
+  const approvalPath = join10(buildRoot, "approval.json");
   if (!existsSync3(approvalPath)) throw new Error("approval required before handoff");
   const approval = await assertApprovalCurrent(projectDir, JSON.parse(await readFile8(approvalPath, "utf8")));
+  const audit = await loadAudit(projectDir);
+  if (audit.technical.status !== "pass") throw new Error("technical audit must pass before handoff");
   const spec = await readProjectSpec(projectDir);
   const manifest = HandoffManifestSchema.parse({
     handoffVersion: "1.0",
@@ -17192,7 +17367,7 @@ async function handoffProject(projectDir) {
     width: spec.width,
     height: spec.height,
     durationSeconds: spec.durationSeconds,
-    htmlEntry: "index.html",
+    htmlEntry: `.framepack/builds/${approval.previewBuildId}/index.html`,
     previewApproved: true,
     tasteGate: audit.taste.gate,
     audioNeeded: spec.audioNeeded,
@@ -17209,14 +17384,14 @@ async function handoffProject(projectDir) {
   return manifest;
 }
 async function loadAudit(projectDir) {
-  const path = join10(projectDir, AUDIT_FILE);
+  const path = join10(await readCurrentBuildRoot(projectDir), "taste-audit.json");
   if (!existsSync3(path)) return auditProject(projectDir);
   return JSON.parse(await readFile8(path, "utf8"));
 }
 async function writeApproval(projectDir, state, reason) {
   const current = await readCurrentBuildEvidence(projectDir);
   const approval = ApprovalSchema.parse({ state, reason, previewBuildId: current.buildId, contentHash: current.contentHash, decidedAt: (/* @__PURE__ */ new Date()).toISOString() });
-  await writeFile8(join10(projectDir, PROJECT_FILES.approval), `${JSON.stringify(approval, null, 2)}
+  await writeFile8(join10(await readCurrentBuildRoot(projectDir), "approval.json"), `${JSON.stringify(approval, null, 2)}
 `);
   return approval;
 }
@@ -17240,7 +17415,6 @@ function contrastRatio2(left, right) {
   const [bright, dark] = [luminance(left), luminance(right)].sort((a, b) => b - a);
   return (bright + 0.05) / (dark + 0.05);
 }
-var AUDIT_FILE;
 var init_audit = __esm({
   "packages/director-engine/src/audit.ts"() {
     "use strict";
@@ -17249,7 +17423,6 @@ var init_audit = __esm({
     init_approval2();
     init_index();
     init_taste_evaluator();
-    AUDIT_FILE = ".framepack/taste-audit.json";
   }
 });
 
@@ -56099,6 +56272,7 @@ var index_exports = {};
 __export(index_exports, {
   applySkillPlan: () => applySkillPlan,
   approveProject: () => approveProject,
+  assessMotionCoverage: () => assessMotionCoverage,
   auditGsapSource: () => auditGsapSource,
   auditProject: () => auditProject,
   buildProject: () => buildProject,
@@ -56193,6 +56367,8 @@ async function buildProject(projectDir) {
 }
 async function snapshotProject(projectDir, options = {}) {
   const spec = await readProjectSpec(projectDir);
+  const { readCurrentBuildRoot: readCurrentBuildRoot2 } = await Promise.resolve().then(() => (init_approval2(), approval_exports));
+  const buildRoot = await readCurrentBuildRoot2(projectDir);
   const third = spec.durationSeconds / 3;
   const frames = [
     { label: "scene-1-settled", timeSeconds: third * 0.6 },
@@ -56203,13 +56379,14 @@ async function snapshotProject(projectDir, options = {}) {
     { label: "final-hold", timeSeconds: Math.max(0, spec.durationSeconds - 0.25) }
   ];
   const rows = frames.map((frame) => `| ${frame.timeSeconds.toFixed(2)} | ${frame.label} | pending snapshot capture | pending |`).join("\n");
-  await writeFile12(join15(projectDir, PROJECT_FILES.previewReport), `${renderPreviewReportMarkdown()}
+  await mkdir11(join15(buildRoot, "preview-snapshots"), { recursive: true });
+  await writeFile12(join15(buildRoot, "preview-report.md"), `${renderPreviewReportMarkdown()}
 ${rows}
 `);
-  await writeFile12(join15(projectDir, ".framepack", "preview-snapshots", "snapshot-plan.json"), `${JSON.stringify({ frames }, null, 2)}
+  await writeFile12(join15(buildRoot, "preview-snapshots", "snapshot-plan.json"), `${JSON.stringify({ frames }, null, 2)}
 `);
-  const snapshotArgs = ["--output", join15(projectDir, ".framepack", "preview-snapshots"), "--at", frames.map((frame) => frame.timeSeconds.toFixed(2)).join(","), "--no-end"];
-  await runHyperframes("snapshot", projectDir, { runner: options.runner, args: snapshotArgs });
+  const snapshotArgs = ["--output", join15(buildRoot, "preview-snapshots"), "--at", frames.map((frame) => frame.timeSeconds.toFixed(2)).join(","), "--no-end"];
+  await runHyperframes("snapshot", buildRoot, { runner: options.runner, args: snapshotArgs });
   return { frames };
 }
 async function readProjectSpec(projectDir) {
@@ -56242,6 +56419,7 @@ var init_index = __esm({
     init_gsap_capabilities();
     init_orchestrator();
     init_doctor();
+    init_motion_coverage();
     PROJECT_SPEC_FILE = ".framepack/project.json";
     DEFAULT_SKILL_ROOT = resolve12(runtimeAssetRoot, "skills");
   }
@@ -56370,7 +56548,7 @@ function createWorkbenchApi(root, stream = createEventStream()) {
     try {
       if (request.method === "GET" && url2.pathname === "/api/project") {
         const spec = await readProjectSpec(root);
-        const built = existsSync8(join16(root, "index.html"));
+        const built = existsSync8(join16(root, ".framepack", "current-build.json"));
         const currentBuild = built ? await readCurrentBuildEvidence(root) : null;
         const [skills, weapons, decision] = await Promise.all([readArtifact(root, "skill-load-receipt.json"), readArtifact(root, "weapon-load-plan.json"), readArtifact(root, "approval.json")]);
         json2(response, 200, { version: "1.0", spec, currentBuild, decision, provenance: { skills, weapons }, files: { built, audited: existsSync8(join16(root, ".framepack", "taste-audit.json")), handedOff: existsSync8(join16(root, ".framepack", "handoff-manifest.json")) } });
@@ -56468,12 +56646,13 @@ async function startWorkbenchServer(projectDir, port = 4173) {
       }
       if (await api(request, response, url2)) return;
       if (url2.pathname.startsWith("/preview/public/")) {
-        const asset = resolve13(root, url2.pathname.slice("/preview/".length));
-        if (!isInside(resolve13(root, "public"), asset)) {
+        const buildRoot = await readCurrentBuildRoot(root);
+        const asset = resolve13(buildRoot, url2.pathname.slice("/preview/".length));
+        if (!isInside(resolve13(buildRoot, "public"), asset)) {
           response.writeHead(403).end();
           return;
         }
-        if (!existsSync9(asset) || !isInside(await realpath2(resolve13(root, "public")), await realpath2(asset))) {
+        if (!existsSync9(asset) || !isInside(await realpath2(resolve13(buildRoot, "public")), await realpath2(asset))) {
           response.writeHead(403).end();
           return;
         }
@@ -56481,7 +56660,7 @@ async function startWorkbenchServer(projectDir, port = 4173) {
         return;
       }
       if (url2.pathname === "/preview/" || url2.pathname === "/preview/index.html") {
-        await serveFile(join17(root, "index.html"), response);
+        await serveFile(join17(await readCurrentBuildRoot(root), "index.html"), response);
         return;
       }
       const requested = url2.pathname === "/" ? "index.html" : url2.pathname.slice(1);
@@ -56518,6 +56697,7 @@ var init_server = __esm({
   "apps/director-workbench/src/server.ts"() {
     "use strict";
     init_api2();
+    init_approval2();
     publicDir = resolve13(fileURLToPath2(new URL("../public/", import.meta.url)));
     contentType = (path) => path.endsWith(".html") ? "text/html; charset=utf-8" : path.endsWith(".css") ? "text/css; charset=utf-8" : path.endsWith(".js") ? "text/javascript; charset=utf-8" : "application/octet-stream";
     if (process.argv[1]?.endsWith("server.ts")) {

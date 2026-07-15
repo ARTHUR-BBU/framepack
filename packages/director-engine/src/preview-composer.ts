@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  AssetLedgerSchema, DirectionSelectionSchema, ProjectSpecSchema, StoryboardSchema, WeaponLoadPlanSchema,
+  AssetLedgerSchema, BuildManifestSchema, CurrentBuildPointerSchema, DirectionSelectionSchema, ProjectSpecSchema, StoryboardSchema, WeaponLoadPlanSchema,
   dimensionsForAspect,
   type AssetLedger, type DirectionSelection, type ProjectSpec, type Storyboard, type WeaponLoadPlan,
 } from '@framepack/director-contracts';
@@ -14,6 +14,7 @@ import { stableStringify } from './content-hash.js';
 import { vendorNotoSansSc } from './font-vendor.js';
 import { SkillLoadReceiptSchema, type SkillLoadReceipt } from './skill-runtime.js';
 import { runtimeAssetRoot } from './runtime-assets.js';
+import { assessMotionCoverage } from './motion-coverage.js';
 import { loadStyleCatalog } from './style-catalog.js';
 import { persistWeaponEvidence, renderWeaponInvocation, verifyWeaponCalls } from './weapon-runtime.js';
 import { auditGsapSource, gsapCapabilityFingerprintInput, loadGsapCapabilities, persistGsapCapabilityReceipt, routeGsapCapabilities } from './gsap-capabilities.js';
@@ -67,7 +68,11 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
     if (stableStringify(actual) !== stableStringify(recorded)) throw new Error(`asset assignment is stale: ${asset.id}`);
   }
   const storyboardSceneIds = new Set(storyboard.scenes.map((scene) => scene.id));
-  for (const selection of weaponPlan.selected) if (!storyboardSceneIds.has(selection.sceneId)) throw new Error(`weapon plan targets missing scene: ${selection.sceneId}`);
+  for (const selection of weaponPlan.selected) {
+    if (!storyboardSceneIds.has(selection.sceneId)) throw new Error(`weapon plan targets missing scene: ${selection.sceneId}`);
+    const scene = storyboard.scenes.find((item) => item.id === selection.sceneId)!;
+    if (selection.atSeconds + selection.durationSeconds > scene.durationSeconds) throw new Error(`weapon action exceeds its scene window: ${selection.weaponId}`);
+  }
   for (const scene of storyboard.scenes) {
     for (const assetId of scene.assetIds) {
       const asset = assetById.get(assetId);
@@ -85,7 +90,7 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
     let content: Buffer;
     try { content = await readFile(resolve(weaponRoot, ...selection.entry.split('/'))); }
     catch { throw new Error(`planned weapon unavailable: ${selection.weaponId}`); }
-    if (sha256(content) !== selection.entryHash) throw new Error(`planned weapon hash mismatch: ${selection.weaponId}`);
+    if (sha256(content.toString('utf8').replace(/\r\n/g, '\n')) !== selection.entryHash) throw new Error(`planned weapon hash mismatch: ${selection.weaponId}`);
     const source = content.toString('utf8');
     const gsapIssues = auditGsapSource(source);
     if (gsapIssues.length) throw new Error(`planned weapon violates official GSAP production rules: ${selection.weaponId}:${gsapIssues.join(',')}`);
@@ -104,40 +109,61 @@ export async function composePreview(input: ComposePreviewInput): Promise<Previe
   const inspection = inspectPreviewHtml(html, css);
   if (inspection.codes.length) throw new Error(`preview HTML violates HyperFrames contract: ${inspection.codes.join(', ')}`);
 
-  await Promise.all([
-    mkdir(join(projectDir, 'public', 'vendor'), { recursive: true }),
-    mkdir(join(projectDir, 'public', 'fonts', 'noto-sans-sc'), { recursive: true }),
-    mkdir(join(projectDir, '.framepack'), { recursive: true }),
-  ]);
-  await Promise.all([
-    cp(existsSync(BUNDLED_GSAP) ? BUNDLED_GSAP : require.resolve('gsap/dist/gsap.min.js'), join(projectDir, 'public', 'vendor', 'gsap.min.js')),
-    vendorNotoSansSc(join(projectDir, 'public', 'fonts', 'noto-sans-sc'), `${spec.title} ${sceneText} ${style.chineseName} ${input.feedback.join(' ')}`),
-    ...weaponPlan.selected.map(async (selection) => {
-      const target = join(projectDir, ...selection.entry.split('/'));
-      await mkdir(dirname(target), { recursive: true });
-      await cp(resolve(weaponRoot, ...selection.entry.split('/')), target);
-    }),
-  ]);
   const { createdAt: _createdAt, ...semanticStoryboard } = storyboard;
   const buildId = sha256(stableStringify({
     spec, assets: assets.assets.map(({ id, sha256: hash, sourcePath }) => ({ id, hash, sourcePath })), direction,
     storyboard: semanticStoryboard, skills: skillReceipt.loaded.map(({ id, sha256: hash }) => ({ id, hash })), gsapSkills: gsapCapabilityFingerprintInput(gsapRegistry, gsapRoute), weaponPlan, feedback: input.feedback, html, css,
   }));
+  const buildRelativeRoot = `.framepack/builds/${buildId}`;
+  const buildRoot = join(projectDir, '.framepack', 'builds', buildId);
+  const motionCoverage = assessMotionCoverage(buildId, storyboard, weaponPlan.selected);
   await Promise.all([
-    writeFile(join(projectDir, 'index.html'), html, 'utf8'),
-    writeFile(join(projectDir, 'public', 'preview.css'), css, 'utf8'),
-    writeFile(join(projectDir, '.framepack', 'html-build-report.md'), `# HTML Build Report\n\n- build_id: ${buildId}\n- content_source: validated_storyboard\n- style: ${style.chineseName}\n- scenes: ${storyboard.scenes.length}\n- weapons: ${weaponPlan.selected.map((item) => item.weaponId).join(', ') || 'HANDWRITE'}\n- structural_contract: pass\n`, 'utf8'),
+    mkdir(join(buildRoot, 'public', 'vendor'), { recursive: true }),
+    mkdir(join(buildRoot, 'public', 'fonts', 'noto-sans-sc'), { recursive: true }),
+    mkdir(join(buildRoot, 'public', 'assets'), { recursive: true }),
   ]);
-  await persistWeaponEvidence(projectDir, weaponPlan, html);
-  await persistGsapCapabilityReceipt(projectDir, gsapRoute);
+  const assignedAssets = assets.assets.filter((asset) => asset.confirmed && asset.status === 'available' && [...referencedScenes.keys()].includes(asset.id));
+  await Promise.all([
+    cp(existsSync(BUNDLED_GSAP) ? BUNDLED_GSAP : require.resolve('gsap/dist/gsap.min.js'), join(buildRoot, 'public', 'vendor', 'gsap.min.js')),
+    vendorNotoSansSc(join(buildRoot, 'public', 'fonts', 'noto-sans-sc'), `${spec.title} ${sceneText} ${style.chineseName} ${input.feedback.join(' ')}`),
+    ...assignedAssets.map(async (asset) => {
+      const target = join(buildRoot, ...asset.sourcePath.split('/'));
+      await mkdir(dirname(target), { recursive: true });
+      await cp(resolve(projectDir, ...asset.sourcePath.split('/')), target);
+    }),
+    ...weaponPlan.selected.map(async (selection) => {
+      const target = join(buildRoot, ...selection.entry.split('/'));
+      await mkdir(dirname(target), { recursive: true });
+      await cp(resolve(weaponRoot, ...selection.entry.split('/')), target);
+    }),
+  ]);
+  const manifest = BuildManifestSchema.parse({
+    version: '1.0', buildId, contentHash: sha256(html), root: buildRelativeRoot,
+    htmlEntry: `${buildRelativeRoot}/index.html`, storyboard: `${buildRelativeRoot}/storyboard.json`,
+    weaponReceipt: `${buildRelativeRoot}/weapon-call-receipt.json`, snapshots: `${buildRelativeRoot}/preview-snapshots`,
+    audit: `${buildRelativeRoot}/taste-audit.json`, approval: `${buildRelativeRoot}/approval.json`, createdAt: new Date().toISOString(),
+  });
+  const pointer = CurrentBuildPointerSchema.parse({ version: '1.0', buildId, contentHash: manifest.contentHash, manifest: `${buildRelativeRoot}/manifest.json`, updatedAt: new Date().toISOString() });
+  await Promise.all([
+    writeFile(join(buildRoot, 'index.html'), html, 'utf8'),
+    writeFile(join(buildRoot, 'public', 'preview.css'), css, 'utf8'),
+    writeFile(join(buildRoot, 'storyboard.json'), `${JSON.stringify(storyboard, null, 2)}\n`, 'utf8'),
+    writeFile(join(buildRoot, 'html-build-report.md'), `# HTML Build Report\n\n- build_id: ${buildId}\n- content_source: validated_storyboard\n- style: ${style.chineseName}\n- scenes: ${storyboard.scenes.length}\n- weapons: ${weaponPlan.selected.map((item) => item.weaponId).join(', ') || 'HANDWRITE'}\n- structural_contract: pass\n`, 'utf8'),
+    writeFile(join(projectDir, '.framepack', 'html-build-report.md'), `# Current Build Pointer\n\n- build_id: ${buildId}\n- build_root: ${buildRelativeRoot}\n- content_hash: ${manifest.contentHash}\n`, 'utf8'),
+    writeFile(join(buildRoot, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8'),
+    writeFile(join(buildRoot, 'motion-coverage.json'), `${JSON.stringify(motionCoverage, null, 2)}\n`, 'utf8'),
+    writeFile(join(projectDir, '.framepack', 'current-build.json'), `${JSON.stringify(pointer, null, 2)}\n`, 'utf8'),
+  ]);
+  await persistWeaponEvidence(projectDir, weaponPlan, html, buildRoot);
+  await persistGsapCapabilityReceipt(projectDir, gsapRoute, buildRoot);
   return { buildId, html, inspection };
 }
 
 function previewHtml(input: { spec: ProjectSpec; assets: AssetLedger; direction: DirectionSelection; storyboard: Storyboard; weaponPlan: WeaponLoadPlan; weaponSources: Map<string, string>; feedback: string[]; styleName: string }): string {
   const assetById = new Map(input.assets.assets.map((asset) => [asset.id, asset]));
-  const selectedByScene = new Map(input.weaponPlan.selected.map((selection) => [selection.sceneId, selection]));
+  const selectedByScene = new Map(input.storyboard.scenes.map((scene) => [scene.id, input.weaponPlan.selected.filter((selection) => selection.sceneId === scene.id)]));
   const scenes = input.storyboard.scenes.map((scene, index) => {
-    const selection = selectedByScene.get(scene.id);
+    const selection = selectedByScene.get(scene.id)?.[0];
     const media = scene.assetIds.map((id) => assetById.get(id)).filter((asset) => asset?.kind === 'image')
       .map((asset) => `<img class="product-asset" src="${escapeAttribute(asset!.sourcePath)}" alt="${escapeAttribute(scene.visualFocus)}">`).join('');
     return `<div id="${escapeAttribute(scene.id)}" class="clip" data-start="${number(scene.startSeconds)}" data-duration="${number(scene.durationSeconds)}" data-track-index="0"><div class="scene-inner scene-${index + 1}"><div class="signal signal-a"></div><div class="signal signal-b"></div><p class="purpose">${purposeLabel(scene.purpose)} · ${escapeHtml(input.styleName)}</p><div class="scene-copy" data-framepack-weapon-target="${escapeAttribute(scene.id)}">${weaponMarkup(selection?.weaponId, scene.title)}</div><p class="narrative">${escapeHtml(scene.narrativeBeat)}</p>${media}<p class="direction-note">${escapeHtml(input.feedback.length ? `导演反馈 · ${input.feedback.join(' · ')}` : input.direction.rationale)}</p></div></div>`;
@@ -151,8 +177,8 @@ function previewHtml(input: { spec: ProjectSpec; assets: AssetLedger; direction:
     return embedWeaponSource(source, selection.functionName, selection.weaponId);
   }).join('\n');
   const animations = input.storyboard.scenes.map((scene) => {
-    const selection = selectedByScene.get(scene.id);
-    if (selection) return renderWeaponInvocation(selection, input.weaponPlan.inputHash, number(scene.startSeconds + 0.18));
+    const selections = selectedByScene.get(scene.id) ?? [];
+    if (selections.length) return selections.map((selection) => renderWeaponInvocation(selection, input.weaponPlan.inputHash, number(scene.startSeconds + selection.atSeconds))).join('');
     return `tl.fromTo('#${cssEscape(scene.id)} .scene-copy',{autoAlpha:0,y:54},{autoAlpha:1,y:0,duration:.75,ease:'power3.out'},${number(scene.startSeconds + 0.18)});tl.fromTo('#${cssEscape(scene.id)} .narrative',{autoAlpha:0,y:24},{autoAlpha:1,y:0,duration:.55,ease:'power2.out'},${number(scene.startSeconds + 0.42)});`;
   }).join('');
   const assignedIds = new Set(input.storyboard.scenes.flatMap((scene) => scene.assetIds));

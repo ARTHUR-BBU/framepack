@@ -15,9 +15,9 @@ test('faceless explainer completes a truthful revision loop without invented foo
   const revised = await runProjectProposal({ projectDir:project, brief:{ goal:'解释一个复杂概念', audience:'新手', constraints:[] }, feedback:'减少段落感，让证据关系更明显', proposal:{ ...proposal, id:'faceless-2', summary:'用证据关系和空间路径解释复杂概念' } });
   const storyboard = JSON.parse(readFileSync(join(project,'.framepack','storyboard.json'),'utf8'));
   const receipt = JSON.parse(readFileSync(join(project,'.framepack','feedback.json'),'utf8'));
-  const html = readFileSync(join(project,'index.html'),'utf8');
-  const lint = runGate('lint', project);
-  const check = runGate('check', project);
+  const html = readFileSync(join(currentBuildRoot(project),'index.html'),'utf8');
+  const lint = runGate('lint', currentBuildRoot(project));
+  const check = runGate('check', currentBuildRoot(project));
   expect(revised.buildId).not.toBe(first.buildId);
   expect(storyboard.revisionOf).toBeTruthy();
   expect(storyboard.revisionReason).toBe('减少段落感，让证据关系更明显');
@@ -32,4 +32,9 @@ function runGate(command:'lint'|'check', project:string) {
   const result = spawnSync(invocation.executable, invocation.args, { encoding:'utf8', shell:invocation.shell });
   expect(result.status, result.stderr).toBe(0);
   return JSON.parse(result.stdout);
+}
+
+function currentBuildRoot(project:string) {
+  const pointer = JSON.parse(readFileSync(join(project,'.framepack','current-build.json'),'utf8')) as { buildId:string };
+  return join(project,'.framepack','builds',pointer.buildId);
 }

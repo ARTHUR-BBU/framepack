@@ -54,6 +54,29 @@ framepack director handoff <project>
 
 ## 项目文件契约
 
+### 2026-07 修订：不可变 Build 与简约审片台
+
+Framepack 不再直接写项目根目录的 `index.html`。每次 build 都是独立、可复核的导演样片：
+
+```text
+.framepack/builds/<build-id>/
+  index.html
+  public/
+  storyboard.json
+  weapon-call-receipt.json
+  motion-coverage.json
+  preview-snapshots/
+  taste-audit.json
+  approval.json
+  manifest.json
+```
+
+`.framepack/current-build.json` 只是当前版本指针。它发生变化时，旧审批不会自动迁移到新版本；HyperFrames 只能从 handoff manifest 指向的已批准 build 读取样片。
+
+Skill 采用五类职责：`director`（创意与分镜）、`producer`（素材和武器编排）、`motion`（动作与时间轴）、`review`（证据与审片）、`adapter`（HyperFrames 交接）。每个实际应用的 skill 必须留下 output path 和 output hash，不能只留下“加载过”的回执。
+
+浏览器工作台收敛为三个区域：**Builds**（版本、来源、素材缺口）、**Preview**（样片、时间线、证据）、**Judgment**（技术结果、动态覆盖率、批准/豁免）。它是 Codex 的审片桌，不是第二个剪辑器；创意修改仍在 Codex 对话完成。
+
 每个导演样片项目由 Framepack 生成并维护：
 
 ```text

@@ -48,7 +48,7 @@ describe('Codex weapon runtime', () => {
     expect(result.selected.every((selection) => selection.entryHash.length === 64)).toBe(true);
     expect(result.candidates.map((candidate) => candidate.weaponId)).toContain('text-split-enter');
     expect(result.candidates.map((candidate) => candidate.weaponId)).toContain('number-count-up');
-    expect(new Set(result.selected.map((selection) => selection.sceneId)).size).toBe(result.selected.length);
+    expect(result.selected.every((selection) => selection.stage && selection.durationSeconds > 0)).toBe(true);
   });
 
   test('a load plan without an HTML invocation receipt fails', () => {
@@ -67,6 +67,20 @@ describe('Codex weapon runtime', () => {
     expect(verifyWeaponCalls(plan, html.replace('b'.repeat(64), 'c'.repeat(64)))).toContain('weapon_entry_hash_mismatch:text-split-enter');
     const bait = `JSON.parse(${JSON.stringify(JSON.stringify(params))});`;
     expect(verifyWeaponCalls(plan, html.replace(invocation, `${bait}${invocation.replace('0.6', '9')}`))).toContain('weapon_invocation_mismatch:text-split-enter');
+  });
+
+  test('one scene can carry an entrance, emphasis, and exit action package', () => {
+    const inputHash = 'a'.repeat(64);
+    const plan = WeaponLoadPlanSchema.parse({
+      version: '1.0', storyboardId: 'storyboard-1', inputHash, candidates: [], fallbacks: [],
+      selected: [
+        { sceneId: 'scene-1', weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: 'b'.repeat(64), stage: 'entrance', atSeconds: 0.2, durationSeconds: 0.6, params: {} },
+        { sceneId: 'scene-1', weaponId: 'gradient-shift', functionName: 'gradientShift', entry: 'gradient-shift/index.js', entryHash: 'c'.repeat(64), stage: 'emphasis', atSeconds: 2.1, durationSeconds: 1.3, params: {} },
+        { sceneId: 'scene-1', weaponId: 'caption-clip-wipe', functionName: 'captionClipWipe', entry: 'caption-clip-wipe/index.js', entryHash: 'd'.repeat(64), stage: 'exit', atSeconds: 5.4, durationSeconds: 0.5, params: {} },
+      ],
+    });
+    expect(plan.selected.map((selection) => selection.stage)).toEqual(['entrance', 'emphasis', 'exit']);
+    expect(plan.selected.map((selection) => selection.atSeconds)).toEqual([0.2, 2.1, 5.4]);
   });
 
   test('parameter contracts reject unsafe or meaningless values', async () => {

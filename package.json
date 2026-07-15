@@ -18,6 +18,7 @@
     "vitest": "^4.1.10"
   },
   "name": "framepack-director-workbench",
+  "version": "0.2.0",
   "private": "true",
   "type": "module",
   "scripts": {

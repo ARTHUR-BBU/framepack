@@ -27,7 +27,7 @@ for (const aspect of ['16:9', '9:16'] as const) {
       rhythm: 'hook-punch-proof-cta', assetIds: [product.id],
     } });
     const beforeStoryboard = JSON.parse(readFileSync(join(project, '.framepack', 'storyboard.json'), 'utf8'));
-    const beforeHtml = readFileSync(join(project, 'index.html'), 'utf8');
+    const beforeHtml = readFileSync(join(currentBuildRoot(project), 'index.html'), 'utf8');
     await snapshotProject(project);
     const beforeFrames = snapshotHashes(project);
     const acceptedScorecard = reviewScorecard(revisedScorecardId(aspect));
@@ -38,11 +38,11 @@ for (const aspect of ['16:9', '9:16'] as const) {
       rhythm: 'hook-breathe-proof-cta', assetIds: [product.id],
     } });
     const afterStoryboard = JSON.parse(readFileSync(join(project, '.framepack', 'storyboard.json'), 'utf8'));
-    const afterHtml = readFileSync(join(project, 'index.html'), 'utf8');
+    const afterHtml = readFileSync(join(currentBuildRoot(project), 'index.html'), 'utf8');
     await snapshotProject(project);
     const afterFrames = snapshotHashes(project);
-    const lint = runHyperframesJson('lint', project);
-    const check = runHyperframesJson('check', project);
+    const lint = runHyperframesJson('lint', currentBuildRoot(project));
+    const check = runHyperframesJson('check', currentBuildRoot(project));
     expect(lint).toMatchObject({ ok: true, errorCount: 0, warningCount: 0 });
     expect(check).toMatchObject({ ok: true, runtime: { ok: true }, layout: { ok: true }, contrast: { ok: true } });
     writeFileSync(join(project, '.framepack', 'hyperframes-lint.json'), JSON.stringify(lint, null, 2));
@@ -73,7 +73,7 @@ for (const aspect of ['16:9', '9:16'] as const) {
 }
 
 function contentHash(project: string): string {
-  return createHash('sha256').update(readFileSync(join(project, 'index.html'))).digest('hex');
+  return createHash('sha256').update(readFileSync(join(currentBuildRoot(project), 'index.html'))).digest('hex');
 }
 
 function runHyperframesJson(command: 'lint' | 'check', project: string): Record<string, any> {
@@ -96,7 +96,12 @@ function revisedScorecardId(aspect: '16:9' | '9:16'): string {
 }
 
 function snapshotHashes(project: string): string[] {
-  const directory = join(project, '.framepack', 'preview-snapshots');
+  const directory = join(currentBuildRoot(project), 'preview-snapshots');
   return readdirSync(directory).filter((name) => name.endsWith('.png')).sort()
     .map((name) => createHash('sha256').update(readFileSync(join(directory, name))).digest('hex'));
+}
+
+function currentBuildRoot(project: string): string {
+  const pointer = JSON.parse(readFileSync(join(project, '.framepack', 'current-build.json'), 'utf8')) as { buildId: string };
+  return join(project, '.framepack', 'builds', pointer.buildId);
 }

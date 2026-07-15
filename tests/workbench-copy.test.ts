@@ -6,21 +6,21 @@ const script = readFileSync('apps/director-workbench/public/main.js', 'utf8');
 const css = readFileSync('apps/director-workbench/public/style.css', 'utf8');
 
 test('the workbench primary interface is Chinese and has no developer action copy', () => {
-  expect(html).toContain('今天想做一支什么样的片子？');
-  expect(html).toContain('请在当前 Codex 对话中告诉我');
+  expect(html).toContain('当前可审版本');
+  expect(html).toContain('创意修改留在 Codex 对话');
   expect(html).not.toMatch(/Build preview|Extract proof|Run taste audit|Handoff|Approve|Waive/);
 });
 
 test('the browser is a director cockpit instead of a fake Codex chat', () => {
   expect(html).not.toContain('id="director-chat-input"');
-  expect(html).toContain('导演上下文');
-  expect(html).toContain('主预览舞台');
-  expect(html).toContain('导演判断');
+  expect(html).toContain('BUILDS');
+  expect(html).toContain('PREVIEW');
+  expect(html).toContain('JUDGMENT');
   expect(html).toContain('分镜时间线');
 });
 
-test('all nine Chinese production phases are represented', () => {
-  for (const label of ['素材待补', '方向共创', '分镜编排', '武器匹配', '预览生成', '证据抽取', '导演审片', '决策确认', '已交接']) {
+test('the studio compresses production progress into three review areas', () => {
+  for (const label of ['BUILDS', 'PREVIEW', 'JUDGMENT']) {
     expect(`${html}\n${script}`).toContain(label);
   }
 });

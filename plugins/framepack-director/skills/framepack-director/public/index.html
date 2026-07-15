@@ -9,19 +9,17 @@
 </head>
 <body>
   <header class="masthead">
-    <div class="wordmark">FRAMEPACK <span>导演工作台</span></div>
-    <nav class="phase-nav" aria-label="制作阶段">
-      <span>素材待补</span><span>方向共创</span><span>分镜编排</span><span>武器匹配</span><span>预览生成</span><span>证据抽取</span><span>导演审片</span><span>决策确认</span><span>已交接</span>
-    </nav>
+    <div class="wordmark">FRAMEPACK <span>Build Studio</span></div>
+    <nav class="phase-nav" aria-label="审片区域"><span>BUILDS</span><span>PREVIEW</span><span>JUDGMENT</span></nav>
     <div id="connection" class="connection"><i></i><span>正在连接</span></div>
   </header>
 
   <main class="cockpit">
     <section class="director-context" aria-labelledby="context-title">
       <div>
-        <p class="eyebrow">导演上下文</p>
-        <h1 id="context-title">今天想做一支什么样的片子？</h1>
-        <p class="codex-hint">请在当前 Codex 对话中告诉我，创意修改会由 Codex 与你共同完成。</p>
+        <p class="eyebrow">BUILDS</p>
+        <h1 id="context-title">当前可审版本</h1>
+        <p class="codex-hint">创意修改留在 Codex 对话；这里只看版本、证据和决定。</p>
       </div>
       <div class="brief-facts">
         <h2 id="title">正在读取项目</h2>
@@ -36,12 +34,12 @@
         <summary>技能与武器依据 <span>展开</span></summary>
         <div id="provenance-copy">等待导演引擎回传依据。</div>
       </details>
-      <button class="codex-action" type="button" data-codex>回到 Codex 调整创意 <span>↗</span></button>
+      <button class="codex-action" type="button" data-codex>在 Codex 中修改创意 <span>↗</span></button>
     </section>
 
     <section class="preview-stage" aria-labelledby="stage-title">
       <div class="section-head">
-        <div><p class="eyebrow">主预览舞台</p><h2 id="stage-title">导演监视器</h2></div>
+        <div><p class="eyebrow">PREVIEW</p><h2 id="stage-title">样片与证据</h2></div>
         <div class="stage-tools"><button id="compare" type="button">与上一版比较</button><a href="/preview/" target="_blank" rel="noreferrer">全屏查看 ↗</a></div>
       </div>
       <div class="monitor">
@@ -59,7 +57,7 @@
     </section>
 
     <aside class="judgment" aria-labelledby="judgment-title">
-      <div class="section-head"><div><p class="eyebrow">导演判断</p><h2 id="judgment-title">这一版，值不值得继续？</h2></div><span id="phase" class="phase">方向共创</span></div>
+      <div class="section-head"><div><p class="eyebrow">JUDGMENT</p><h2 id="judgment-title">这一版可以交接吗？</h2></div><span id="phase" class="phase">等待样片</span></div>
       <div id="stale" class="stale" hidden>证据已过期，请重新抽帧审片。</div>
       <div class="verdict" id="review-copy"><strong>等待第一版画面</strong><p>有了预览后，这里会说明技术质量、视觉口味和风险。</p></div>
       <div id="scorecard" class="scorecard" aria-label="审片评分"></div>

@@ -224,7 +224,8 @@ async function verifyFileHash(repoRoot: string, portablePath: string, expected: 
   let content: Buffer;
   try { content = await readFile(resolve(repoRoot, ...portablePath.split('/'))); }
   catch { throw new Error(`proof file missing: ${portablePath}`); }
-  if (sha256(content) !== expected) throw new Error(`proof file hash mismatch: ${portablePath}`);
+  const canonical = /\.(?:json|md|html|css|js)$/i.test(portablePath) ? Buffer.from(content.toString('utf8').replace(/\r\n/g, '\n'), 'utf8') : content;
+  if (sha256(canonical) !== expected) throw new Error(`proof file hash mismatch: ${portablePath}`);
 }
 
 function runCommand(command: string, args: string[], cwd: string): Promise<CommandResult> {

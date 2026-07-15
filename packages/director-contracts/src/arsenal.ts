@@ -66,6 +66,9 @@ const HashSchema = z.string().regex(/^[a-f0-9]{64}$/);
 const SelectionEvidenceShape = {
   sceneId: z.string().min(1),
   entryHash: HashSchema,
+  stage: z.enum(['entrance', 'emphasis', 'exit']).default('entrance'),
+  atSeconds: z.number().nonnegative().default(0.18),
+  durationSeconds: z.number().positive().default(0.8),
 };
 
 export const WeaponSelectionSchema = z.discriminatedUnion('weaponId', [
@@ -93,6 +96,9 @@ export const WeaponLoadPlanSchema = z.object({
 
 export const WeaponCallSchema = z.object({
   sceneId: z.string().min(1),
+  stage: z.enum(['entrance', 'emphasis', 'exit']),
+  atSeconds: z.number().nonnegative(),
+  durationSeconds: z.number().positive(),
   weaponId: WeaponIdSchema,
   functionName: z.string().min(1),
   params: z.record(z.string(), z.unknown()),

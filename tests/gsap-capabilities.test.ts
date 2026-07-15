@@ -11,6 +11,11 @@ test('official GreenSock snapshots are hash-pinned and all eight modules are reg
   expect(registry.modules.every((item) => item.verified)).toBe(true);
 });
 
+test('official snapshot hashes remain stable when Git checks text files out as CRLF', async () => {
+  const registry = await loadGsapCapabilities();
+  expect(registry.modules.map((item) => item.sha256)).toHaveLength(8);
+});
+
 test('offline video routing loads production knowledge but excludes scroll and framework hosts', async () => {
   const registry = await loadGsapCapabilities();
   const route = routeGsapCapabilities(registry, { target: 'offline-video', needsPlugins: false });

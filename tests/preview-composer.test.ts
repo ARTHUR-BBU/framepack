@@ -40,7 +40,7 @@ async function fixture(overrides: { title?: string; feedback?: string[]; missing
     }),
     direction,
     storyboard,
-    skillReceipt: { version: '1.0' as const, intent: 'product-launch-video' as const, loaded: [{ id: 'product-launch-video', resolvedSource: skillPath, portablePath: 'skills/product-launch-video/SKILL.md', sha256: skillHash, loadedAt: new Date().toISOString(), reason: '产品发布工作流' }], completedAt: new Date().toISOString() },
+    skillReceipt: { version: '1.0' as const, intent: 'product-launch-video' as const, loaded: [{ id: 'product-launch-video', role: 'director' as const, resolvedSource: skillPath, portablePath: 'skills/product-launch-video/SKILL.md', sha256: skillHash, loadedAt: new Date().toISOString(), reason: '产品发布工作流' }], completedAt: new Date().toISOString() },
     weaponPlan: WeaponLoadPlanSchema.parse({ version: '1.0', storyboardId: storyboard.id, inputHash: overrides.staleWeaponPlan ? 'f'.repeat(64) : inputHash, selected: [], candidates: [], fallbacks: [] }),
     feedback,
   };
@@ -53,15 +53,30 @@ describe('project-specific preview composer', () => {
     expect(build.html).toContain('让每一次协作更轻松');
     expect(build.html).toContain('public/assets/product.png');
     expect(build.html).not.toContain('Make it felt.');
-    expect(await readFile(join(input.projectDir, 'index.html'), 'utf8')).toBe(build.html);
-    expect(await readFile(join(input.projectDir, 'public', 'preview.css'), 'utf8')).toContain('Noto Sans SC');
-    const css = await readFile(join(input.projectDir, 'public', 'preview.css'), 'utf8');
+    const buildRoot = join(input.projectDir, '.framepack', 'builds', build.buildId);
+    expect(await readFile(join(buildRoot, 'index.html'), 'utf8')).toBe(build.html);
+    expect(await readFile(join(buildRoot, 'public', 'preview.css'), 'utf8')).toContain('Noto Sans SC');
+    const css = await readFile(join(buildRoot, 'public', 'preview.css'), 'utf8');
     expect(css).toContain('#root{position:relative;width:100vw;height:100vh;overflow:hidden}');
     expect(css).toMatch(/\.purpose\{[^}]+\}\.scene-copy\{/);
     expect(css).toMatch(/\.direction-note\{[^}]+\}\.product-asset\{/);
-    expect(await readFile(join(input.projectDir, '.framepack', 'html-build-report.md'), 'utf8')).toContain('structural_contract: pass');
-    expect(JSON.parse(await readFile(join(input.projectDir, '.framepack', 'weapon-call-receipt.json'), 'utf8'))).toMatchObject({ verificationErrors: [] });
+    expect(await readFile(join(buildRoot, 'html-build-report.md'), 'utf8')).toContain('structural_contract: pass');
+    expect(JSON.parse(await readFile(join(buildRoot, 'weapon-call-receipt.json'), 'utf8'))).toMatchObject({ verificationErrors: [] });
     expect(inspectPreviewHtml(build.html).codes).toEqual([]);
+  });
+
+  test('writes each preview into its own immutable build without replacing a root draft', async () => {
+    const input = await fixture();
+    await writeFile(join(input.projectDir, 'index.html'), '<main>user draft</main>', 'utf8');
+    const first = await composePreview(input);
+    input.feedback = ['第二版需要更克制'];
+    const second = await composePreview(input);
+
+    expect(first.buildId).not.toBe(second.buildId);
+    expect(await readFile(join(input.projectDir, 'index.html'), 'utf8')).toBe('<main>user draft</main>');
+    expect(await readFile(join(input.projectDir, '.framepack', 'builds', first.buildId, 'index.html'), 'utf8')).toBe(first.html);
+    expect(await readFile(join(input.projectDir, '.framepack', 'builds', second.buildId, 'index.html'), 'utf8')).toBe(second.html);
+    expect(JSON.parse(await readFile(join(input.projectDir, '.framepack', 'current-build.json'), 'utf8'))).toMatchObject({ buildId: second.buildId });
   });
 
   test('feedback changes build hash and visible direction', async () => {
@@ -81,12 +96,12 @@ describe('project-specific preview composer', () => {
   test('selected ESM weapons are embedded into the seek-safe production timeline', async () => {
     const input = await fixture();
     const entry = await readFile(join(process.cwd(), 'packages', 'director-assets', 'weapons', 'text-split-enter', 'index.js'));
-    input.weaponPlan = WeaponLoadPlanSchema.parse({ ...input.weaponPlan, selected: [{ sceneId: input.storyboard.scenes[0].id, weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: createHash('sha256').update(entry).digest('hex'), params: {} }] });
+    input.weaponPlan = WeaponLoadPlanSchema.parse({ ...input.weaponPlan, selected: [{ sceneId: input.storyboard.scenes[0].id, weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: createHash('sha256').update(entry.toString('utf8').replace(/\r\n/g, '\n')).digest('hex'), params: {} }] });
     const build = await composePreview(input);
     expect(build.html).toContain('framepack-weapon-module:{"entry":"text-split-enter/index.js"');
     expect(build.html).toContain('function textSplitEnter(');
     expect(build.html).not.toContain(`import { textSplitEnter } from './text-split-enter/index.js'`);
-    const gsapReceipt = JSON.parse(await readFile(join(input.projectDir, '.framepack', 'gsap-capability-receipt.json'), 'utf8'));
+    const gsapReceipt = JSON.parse(await readFile(join(input.projectDir, '.framepack', 'builds', build.buildId, 'gsap-capability-receipt.json'), 'utf8'));
     expect(gsapReceipt.loaded.map((item: { id: string }) => item.id)).toEqual(['gsap-core', 'gsap-timeline', 'gsap-utils', 'gsap-performance']);
     expect(gsapReceipt.excluded).toContain('gsap-scrolltrigger');
   });
@@ -112,7 +127,7 @@ describe('project-specific preview composer', () => {
   test('weapon invocation is pinned to the owning scene absolute time', async () => {
     const input = await fixture();
     const entry = await readFile(join(process.cwd(), 'packages', 'director-assets', 'weapons', 'text-split-enter', 'index.js'));
-    input.weaponPlan = WeaponLoadPlanSchema.parse({ ...input.weaponPlan, selected: [{ sceneId: input.storyboard.scenes[0].id, weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: createHash('sha256').update(entry).digest('hex'), params: {} }] });
+    input.weaponPlan = WeaponLoadPlanSchema.parse({ ...input.weaponPlan, selected: [{ sceneId: input.storyboard.scenes[0].id, weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: createHash('sha256').update(entry.toString('utf8').replace(/\r\n/g, '\n')).digest('hex'), params: {} }] });
     const build = await composePreview(input);
     expect(build.html).toContain(`,${input.storyboard.scenes[0].startSeconds + 0.18});`);
   });
@@ -125,7 +140,7 @@ describe('project-specific preview composer', () => {
   test('a planned weapon targeting a missing scene stops composition', async () => {
     const input = await fixture();
     const entry = await readFile(join(process.cwd(), 'packages', 'director-assets', 'weapons', 'text-split-enter', 'index.js'));
-    input.weaponPlan = WeaponLoadPlanSchema.parse({ ...input.weaponPlan, selected: [{ sceneId: 'missing-scene', weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: createHash('sha256').update(entry).digest('hex'), params: {} }] });
+    input.weaponPlan = WeaponLoadPlanSchema.parse({ ...input.weaponPlan, selected: [{ sceneId: 'missing-scene', weaponId: 'text-split-enter', functionName: 'textSplitEnter', entry: 'text-split-enter/index.js', entryHash: createHash('sha256').update(entry.toString('utf8').replace(/\r\n/g, '\n')).digest('hex'), params: {} }] });
     await expect(composePreview(input)).rejects.toThrow(/weapon plan.*scene/i);
   });
   test('unavailable planned weapons stop composition', async () => {

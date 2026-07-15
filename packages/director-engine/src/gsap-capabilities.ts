@@ -26,11 +26,17 @@ export async function loadGsapCapabilities(root = runtimeAssetRoot): Promise<Gsa
     const resolvedPath = await realpath(resolve(root, ...item.snapshotPath.split('/')));
     const within = relative(allowedRoot, resolvedPath);
     if (within.startsWith('..') || isAbsolute(within)) throw new Error(`official GSAP skill path escapes snapshot root: ${item.id}`);
-    const actual = createHash('sha256').update(await readFile(resolvedPath)).digest('hex');
+    const actual = canonicalSkillHash(await readFile(resolvedPath));
     if (actual !== item.sha256) throw new Error(`official GSAP skill hash mismatch: ${item.id}`);
     return { ...item, verified: true, resolvedPath };
   }));
   return { ...raw, modules };
+}
+
+function canonicalSkillHash(content: Buffer): string {
+  // The registry pins Git blob content. Git may check Markdown out as CRLF on
+  // Windows, so verify the canonical text bytes rather than platform line endings.
+  return createHash('sha256').update(content.toString('utf8').replace(/\r\n/g, '\n'), 'utf8').digest('hex');
 }
 
 export function gsapCapabilityFingerprintInput(registry: GsapCapabilityRegistry, route: GsapCapabilityRoute) {
@@ -53,14 +59,14 @@ export function routeGsapCapabilities(registry: GsapCapabilityRegistry, input: {
   return { target: input.target, required, excluded, modules: registry.modules.filter((item) => required.includes(item.id)) };
 }
 
-export async function persistGsapCapabilityReceipt(projectDir: string, route: GsapCapabilityRoute) {
+export async function persistGsapCapabilityReceipt(projectDir: string, route: GsapCapabilityRoute, outputDir = join(projectDir, '.framepack')) {
   const receipt = {
     version: '1.0' as const, target: route.target,
     loaded: route.modules.map(({ id, sha256, snapshotPath }) => ({ id, sha256, snapshotPath })),
     excluded: route.excluded,
   };
-  await mkdir(join(projectDir, '.framepack'), { recursive: true });
-  await writeFile(join(projectDir, '.framepack', 'gsap-capability-receipt.json'), `${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
+  await mkdir(outputDir, { recursive: true });
+  await writeFile(join(outputDir, 'gsap-capability-receipt.json'), `${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
   return receipt;
 }
 

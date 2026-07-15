@@ -1,7 +1,7 @@
 import { hasStaleEvidence, resolvePhase } from './phase-state.js';
 
 const $ = (selector) => document.querySelector(selector);
-const phaseLabels = ['素材待补','方向共创','分镜编排','武器匹配','预览生成','证据抽取','导演审片','决策确认','已交接'];
+const phaseLabels = ['准备 Build','样片与证据','审片决定'];
 const state = { project: null, assets: null, direction: null, storyboard: null, review: null, activeJob: null, activeJobName: null, previousBuild: null, events: null };
 
 function write(value) { $('#log').textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2); }
@@ -15,11 +15,13 @@ function render() {
   $('#meta').textContent = `${spec.durationSeconds} 秒 · ${spec.aspectRatio} · ${spec.width}×${spec.height}`;
   $('#direction-copy').textContent = state.direction ? `${styleName(state.direction.primaryStyle)} × ${styleName(state.direction.supportingStyle)}。${state.direction.rationale}` : '方向仍在共创，请在当前 Codex 对话继续说明。';
   const index = resolvePhase(state);
-  $('#phase').textContent = phaseLabels[index];
-  document.querySelectorAll('.phase-nav span').forEach((node, i) => node.classList.toggle('active', i === index));
+  const area = index < 4 ? 0 : index < 7 ? 1 : 2;
+  $('#phase').textContent = phaseLabels[area];
+  document.querySelectorAll('.phase-nav span').forEach((node, i) => node.classList.toggle('active', i === area));
   setPrimaryAction(index);
   if (project.files.built) { $('#preview').src = '/preview/'; $('#empty-stage').hidden = true; }
   $('#stale').hidden = !hasStaleEvidence(project.currentBuild, project.decision, state.review?.subjective?.scorecard);
+  $('#handoff-action').disabled = !project.decision || !$('#stale').hidden;
   renderAssets(); renderProvenance(); renderScenes(); renderReview();
 }
 
@@ -56,7 +58,8 @@ function renderReview() {
   const passed = audit.technical.status === 'pass';
   $('#review-copy').innerHTML = `<strong>${passed ? '技术骨架通过' : '技术问题需要处理'}</strong><p>${audit.taste.revisionNotes.map(escapeHtml).join('；')}</p>`;
   const score = audit.subjective?.scorecard?.scores;
-  $('#scorecard').innerHTML = score ? Object.entries(score).map(([key,value]) => `<div class="score-row"><span>${scoreName(key)}</span><b>${value}/5</b></div>`).join('') : '<div class="score-row"><span>主观口味审片</span><b>待确认</b></div>';
+  const coverage = audit.motionCoverage?.scenes?.map((scene) => `<div class="score-row"><span>${escapeHtml(scene.sceneId)} 动态覆盖</span><b>${Math.round(scene.coverageRatio * 100)}%</b></div>`).join('') ?? '';
+  $('#scorecard').innerHTML = (score ? Object.entries(score).map(([key,value]) => `<div class="score-row"><span>${scoreName(key)}</span><b>${value}/5</b></div>`).join('') : '<div class="score-row"><span>主观口味审片</span><b>待确认</b></div>') + coverage;
 }
 
 async function refresh() {

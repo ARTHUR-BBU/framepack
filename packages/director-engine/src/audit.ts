@@ -5,6 +5,7 @@ import {
   ApprovalSchema,
   DeterministicReviewEvidenceSchema,
   HandoffManifestSchema,
+  MotionCoverageSchema,
   PROJECT_FILES,
   ReviewScorecardSchema,
   SubjectiveReviewEvidenceSchema,
@@ -17,7 +18,7 @@ import {
   type SubjectiveReviewEvidence,
 } from '@framepack/director-contracts';
 import { inspectPreviewHtml } from '../../hyperframes-bridge/src/index.js';
-import { assertApprovalCurrent, readCurrentBuildEvidence } from './approval.js';
+import { assertApprovalCurrent, readCurrentBuildEvidence, readCurrentBuildRoot } from './approval.js';
 import { readProjectSpec } from './index.js';
 import { createResponsesTasteEvaluator } from './taste-evaluator.js';
 
@@ -28,15 +29,17 @@ export type AuditResult = {
   materialUsage: 'missing' | 'available';
   deterministic: DeterministicReviewEvidence;
   subjective: SubjectiveReviewEvidence;
+  motionCoverage: ReturnType<typeof MotionCoverageSchema.parse>;
   taste: { gate: 'pass' | 'fail' | 'needs_review'; pptFeel: 'low' | 'medium' | 'high'; motionQuality: 'poor' | 'acceptable' | 'strong'; visualDensity: 'sparse' | 'balanced' | 'cluttered'; materialUsage: 'weak' | 'acceptable' | 'strong'; recommendation: boolean; revisionNotes: string[] };
 };
 
 export type TasteEvaluator = { evaluate(projectDir: string): Promise<{ gate: 'pass' | 'fail' | 'needs_review'; motionQuality: 'poor' | 'acceptable' | 'strong'; note: string }> };
 
 export async function auditProject(projectDir: string, options: { evaluator?: TasteEvaluator; scorecard?: ReviewScorecard } = {}): Promise<AuditResult> {
-  const htmlPath = join(projectDir, 'index.html');
-  const cssPath = join(projectDir, 'public', 'preview.css');
-  const previewPlanPath = join(projectDir, '.framepack', 'preview-snapshots', 'snapshot-plan.json');
+  const buildRoot = await readCurrentBuildRoot(projectDir);
+  const htmlPath = join(buildRoot, 'index.html');
+  const cssPath = join(buildRoot, 'public', 'preview.css');
+  const previewPlanPath = join(buildRoot, 'preview-snapshots', 'snapshot-plan.json');
   const assetLedgerPath = join(projectDir, '.framepack', 'asset-ledger.json');
   const issues: string[] = [];
   if (!existsSync(htmlPath)) issues.push('index.html is missing');
@@ -52,6 +55,7 @@ export async function auditProject(projectDir: string, options: { evaluator?: Ta
   const snapshotPlan = existsSync(previewPlanPath) ? JSON.parse(await readFile(previewPlanPath, 'utf8')) as { frames?: Array<{ timeSeconds?: number }> } : { frames: [] };
   const frameTimes = (snapshotPlan.frames ?? []).map((frame) => frame.timeSeconds).filter((time): time is number => typeof time === 'number');
   const css = existsSync(cssPath) ? await readFile(cssPath, 'utf8') : '';
+  const motionCoverage = MotionCoverageSchema.parse(JSON.parse(await readFile(join(buildRoot, 'motion-coverage.json'), 'utf8')));
   const deterministic = DeterministicReviewEvidenceSchema.parse({
     material: { status: materialUsage, files: ['.framepack/asset-ledger.json'] },
     contrast: { status: deterministicContrastStatus(css), files: ['public/preview.css'] },
@@ -88,14 +92,20 @@ export async function auditProject(projectDir: string, options: { evaluator?: Ta
   if (subjective.status === 'reviewed' && subjective.scorecard) {
     taste.gate = subjective.scorecard.verdict;
   }
+  if (motionCoverage.status === 'needs_review') {
+    taste.gate = 'fail';
+    taste.motionQuality = 'poor';
+    taste.revisionNotes = [...taste.revisionNotes, 'Motion coverage is too sparse; add beats or explicitly waive this taste risk.'];
+  }
   taste.recommendation = technical.status === 'pass' && subjective.status === 'reviewed' && taste.gate !== 'fail';
-  const result: AuditResult = { technical, materialUsage, deterministic, subjective, taste };
-  await writeFile(join(projectDir, AUDIT_FILE), `${JSON.stringify(result, null, 2)}\n`);
-  await writeFile(join(projectDir, PROJECT_FILES.tasteAudit), `${renderTasteAuditMarkdown()}\n\n- commercial_quality: ${taste.gate}\n- ppt_feel: ${taste.pptFeel}\n- motion_quality: ${taste.motionQuality}\n- visual_density: ${taste.visualDensity}\n- material_usage: ${materialUsage}\n- subjective_review: ${subjective.status}\n- recommend_handoff_to_hyperframes: ${taste.recommendation}\n\n## Revision notes\n${taste.revisionNotes.map((note) => `- ${note}`).join('\n')}\n`);
+  const result: AuditResult = { technical, materialUsage, deterministic, subjective, motionCoverage, taste };
+  await writeFile(join(buildRoot, 'taste-audit.json'), `${JSON.stringify(result, null, 2)}\n`);
+  await writeFile(join(buildRoot, 'taste-audit.md'), `${renderTasteAuditMarkdown()}\n\n- commercial_quality: ${taste.gate}\n- ppt_feel: ${taste.pptFeel}\n- motion_quality: ${taste.motionQuality}\n- visual_density: ${taste.visualDensity}\n- material_usage: ${materialUsage}\n- subjective_review: ${subjective.status}\n- recommend_handoff_to_hyperframes: ${taste.recommendation}\n\n## Revision notes\n${taste.revisionNotes.map((note) => `- ${note}`).join('\n')}\n`);
   return result;
 }
 
 export async function approveProject(projectDir: string, reason: string): Promise<Approval> {
+  if (!existsSync(join(projectDir, PROJECT_FILES.currentBuild))) throw new Error('technical audit must pass before approval');
   const audit = await loadAudit(projectDir);
   if (audit.technical.status !== 'pass') throw new Error('technical audit must pass before approval');
   if (audit.taste.gate === 'fail') throw new Error('taste failure requires an explicit waiver');
@@ -103,21 +113,23 @@ export async function approveProject(projectDir: string, reason: string): Promis
 }
 
 export async function waiveProject(projectDir: string, reason: string): Promise<Approval> {
+  if (!existsSync(join(projectDir, PROJECT_FILES.currentBuild))) throw new Error('technical audit must pass before a waiver');
   const audit = await loadAudit(projectDir);
   if (audit.technical.status !== 'pass') throw new Error('technical audit must pass before a waiver');
   return writeApproval(projectDir, 'waived', reason);
 }
 
 export async function handoffProject(projectDir: string): Promise<HandoffManifest> {
-  const audit = await loadAudit(projectDir);
-  if (audit.technical.status !== 'pass') throw new Error('technical audit must pass before handoff');
-  const approvalPath = join(projectDir, PROJECT_FILES.approval);
+  const buildRoot = await readCurrentBuildRoot(projectDir);
+  const approvalPath = join(buildRoot, 'approval.json');
   if (!existsSync(approvalPath)) throw new Error('approval required before handoff');
   const approval = await assertApprovalCurrent(projectDir, JSON.parse(await readFile(approvalPath, 'utf8')));
+  const audit = await loadAudit(projectDir);
+  if (audit.technical.status !== 'pass') throw new Error('technical audit must pass before handoff');
   const spec = await readProjectSpec(projectDir);
   const manifest = HandoffManifestSchema.parse({
     handoffVersion: '1.0', source: 'framepack-director-preview', aspectRatio: spec.aspectRatio,
-    width: spec.width, height: spec.height, durationSeconds: spec.durationSeconds, htmlEntry: 'index.html',
+    width: spec.width, height: spec.height, durationSeconds: spec.durationSeconds, htmlEntry: `.framepack/builds/${approval.previewBuildId}/index.html`,
     previewApproved: true, tasteGate: audit.taste.gate, audioNeeded: spec.audioNeeded,
     subtitleNeeded: spec.subtitleNeeded, bgmNeeded: spec.bgmNeeded,
     hyperframesActions: ['lint', 'check', 'render', 'ffprobe', 'snapshot-review'],
@@ -130,7 +142,7 @@ export async function handoffProject(projectDir: string): Promise<HandoffManifes
 }
 
 async function loadAudit(projectDir: string): Promise<AuditResult> {
-  const path = join(projectDir, AUDIT_FILE);
+  const path = join(await readCurrentBuildRoot(projectDir), 'taste-audit.json');
   if (!existsSync(path)) return auditProject(projectDir);
   return JSON.parse(await readFile(path, 'utf8')) as AuditResult;
 }
@@ -138,7 +150,7 @@ async function loadAudit(projectDir: string): Promise<AuditResult> {
 async function writeApproval(projectDir: string, state: Approval['state'], reason: string): Promise<Approval> {
   const current = await readCurrentBuildEvidence(projectDir);
   const approval = ApprovalSchema.parse({ state, reason, previewBuildId: current.buildId, contentHash: current.contentHash, decidedAt: new Date().toISOString() });
-  await writeFile(join(projectDir, PROJECT_FILES.approval), `${JSON.stringify(approval, null, 2)}\n`);
+  await writeFile(join(await readCurrentBuildRoot(projectDir), 'approval.json'), `${JSON.stringify(approval, null, 2)}\n`);
   return approval;
 }
 function deterministicContrastStatus(css: string): 'pass' | 'fail' | 'needs_review' {

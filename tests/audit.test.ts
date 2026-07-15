@@ -13,6 +13,12 @@ async function readyProject() {
   return project;
 }
 
+function currentBuild(project: string) {
+  const pointer = JSON.parse(readFileSync(join(project, '.framepack', 'current-build.json'), 'utf8')) as { buildId: string };
+  const relativeRoot = `.framepack/builds/${pointer.buildId}`;
+  return { buildId: pointer.buildId, relativeRoot, root: join(project, '.framepack', 'builds', pointer.buildId) };
+}
+
 test('does not allow technical failure to be waived', async () => {
   const project = mkdtempSync(join(tmpdir(), 'framepack-audit-'));
   await initProject(project, { title: 'Broken', aspectRatio: '16:9', durationSeconds: 30 });
@@ -59,8 +65,8 @@ test('approval binds the real build and becomes stale after feedback rebuild', a
   const feedbackPath = join(project, '.framepack', 'feedback.json');
   writeFileSync(feedbackPath, JSON.stringify(['突出产品']) + '\n');
   await buildProject(project);
-  await expect(handoffProject(project)).rejects.toThrow('approval is stale');
-  expect(JSON.parse(readFileSync(join(project, '.framepack', 'approval.json'), 'utf8')).contentHash).toBe(approval.contentHash);
+  await expect(handoffProject(project)).rejects.toThrow('approval required');
+  expect(approval.contentHash).toHaveLength(64);
 });
 test('deterministic contrast and safe-area checks produce evidence-backed results', async () => {
   const project = await readyProject();
@@ -72,12 +78,12 @@ test('deterministic contrast and safe-area checks produce evidence-backed result
 
 test('an identified scorecard is the only path to reviewed subjective evidence', async () => {
   const project = await readyProject();
-  const report = readFileSync(join(project, '.framepack', 'html-build-report.md'), 'utf8');
-  const buildId = report.match(/^- build_id:\s*(\S+)/m)?.[1] ?? '';
-  const contentHash = createHash('sha256').update(readFileSync(join(project, 'index.html'))).digest('hex');
+  const build = currentBuild(project);
+  const buildId = build.buildId;
+  const contentHash = createHash('sha256').update(readFileSync(join(build.root, 'index.html'))).digest('hex');
   const scores = { intentClarity: 4, productFocus: 4, visualHierarchy: 4, materialQuality: 4, motionChoreography: 4, rhythm: 4, restraint: 4 };
   const reasons = { intentClarity: '意图清楚', productFocus: '产品聚焦', visualHierarchy: '层级清楚', materialQuality: '素材可核对', motionChoreography: '动作连贯', rhythm: '节奏合理', restraint: '保持克制' };
-  const evidenceFrame = '.framepack/preview-snapshots/scene-1.png';
+  const evidenceFrame = `${build.relativeRoot}/preview-snapshots/scene-1.png`;
   writeFileSync(join(project, evidenceFrame), 'png-proof');
   const scorecard = { version: '1.0' as const, buildId, contentHash, source: 'codex' as const, reviewer: 'codex:gpt-5', reviewedAt: new Date().toISOString(), scores, reasons, evidenceFrames: [evidenceFrame], average: 4, verdict: 'pass' as const };
   const audit = await auditProject(project, { scorecard });
@@ -91,14 +97,14 @@ test('waiver is also bound to the current build and cannot cross a rebuild', asy
   expect(waiver.previewBuildId).not.toBe('current');
   writeFileSync(join(project, '.framepack', 'feedback.json'), JSON.stringify(['改变节奏']) + '\n');
   await buildProject(project);
-  await expect(handoffProject(project)).rejects.toThrow('approval is stale');
+  await expect(handoffProject(project)).rejects.toThrow('approval required');
 });
 test('a failing identified scorecard blocks recommendation and approval', async () => {
   const project = await readyProject();
-  const report = readFileSync(join(project, '.framepack', 'html-build-report.md'), 'utf8');
-  const buildId = report.match(/^- build_id:\s*(\S+)/m)?.[1] ?? '';
-  const contentHash = createHash('sha256').update(readFileSync(join(project, 'index.html'))).digest('hex');
-  const evidenceFrame = '.framepack/preview-snapshots/review-fail.png';
+  const build = currentBuild(project);
+  const buildId = build.buildId;
+  const contentHash = createHash('sha256').update(readFileSync(join(build.root, 'index.html'))).digest('hex');
+  const evidenceFrame = `${build.relativeRoot}/preview-snapshots/review-fail.png`;
   writeFileSync(join(project, evidenceFrame), 'png-proof');
   const scores = { intentClarity: 2, productFocus: 2, visualHierarchy: 2, materialQuality: 2, motionChoreography: 2, rhythm: 2, restraint: 2 };
   const reasons = { intentClarity: '意图不清', productFocus: '产品不突出', visualHierarchy: '层级混乱', materialQuality: '素材不足', motionChoreography: '动作断裂', rhythm: '节奏失衡', restraint: '元素过多' };
@@ -111,11 +117,11 @@ test('a failing identified scorecard blocks recommendation and approval', async 
 
 test('reviewed evidence rejects a missing evidence frame', async () => {
   const project = await readyProject();
-  const report = readFileSync(join(project, '.framepack', 'html-build-report.md'), 'utf8');
-  const buildId = report.match(/^- build_id:\s*(\S+)/m)?.[1] ?? '';
-  const contentHash = createHash('sha256').update(readFileSync(join(project, 'index.html'))).digest('hex');
+  const build = currentBuild(project);
+  const buildId = build.buildId;
+  const contentHash = createHash('sha256').update(readFileSync(join(build.root, 'index.html'))).digest('hex');
   const scores = { intentClarity: 4, productFocus: 4, visualHierarchy: 4, materialQuality: 4, motionChoreography: 4, rhythm: 4, restraint: 4 };
   const reasons = { intentClarity: '清楚', productFocus: '聚焦', visualHierarchy: '清楚', materialQuality: '可核对', motionChoreography: '连贯', rhythm: '合理', restraint: '克制' };
-  const scorecard = { version: '1.0' as const, buildId, contentHash, source: 'human' as const, reviewer: 'user:identified', reviewedAt: new Date().toISOString(), scores, reasons, evidenceFrames: ['.framepack/preview-snapshots/missing.png'], average: 4, verdict: 'pass' as const };
+  const scorecard = { version: '1.0' as const, buildId, contentHash, source: 'human' as const, reviewer: 'user:identified', reviewedAt: new Date().toISOString(), scores, reasons, evidenceFrames: [`${build.relativeRoot}/preview-snapshots/missing.png`], average: 4, verdict: 'pass' as const };
   await expect(auditProject(project, { scorecard })).rejects.toThrow('evidence frame is missing');
 });

@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.0 — Immutable Build Studio (2026-07-15)
+
+Framepack now owns the creative build, evidence, and human decision loop before HyperFrames receives a frozen production handoff.
+
+### Build Studio
+
+- **Immutable build packages** — every build is written to `.framepack/builds/<build-id>/` with its HTML, assets, storyboard, manifests, receipts, snapshots, and audit evidence. `.framepack/current-build.json` makes the reviewed version explicit; root `index.html` is no longer the authoritative preview artifact.
+- **Codex-continuous review desk** — the browser Studio is simplified into Builds, Preview, and Judgment. Codex remains the creative surface; Studio concentrates on version inspection, moving preview, evidence, and explicit human decisions.
+- **Frozen handoff** — approval and handoff bind to the selected build entry, preventing a later revision from changing the sample that was approved.
+
+### Creative Production Controls
+
+- **Skill classification ledger** — routed skills are recorded as director, producer, or technical-support roles together with their affected artifacts and hashes.
+- **Multi-action weapon choreography** — scenes can schedule several proven motion actions across entrance, emphasis, and exit instead of relying on a single effect.
+- **Motion coverage evidence** — each build reports active motion ratio and quiet gaps; insufficient coverage becomes a taste-review issue before approval.
+
+### Compatibility and verification
+
+- **HyperFrames handoff** — HyperFrames remains responsible for technical compatibility, lint/check/render, audio, captions, media QA, export, and publish.
+- **Line-ending-stable evidence hashes** — textual receipt validation normalizes Windows and Unix line endings before verifying registered source hashes.
+- Added contract, engine, runtime, audit, server, workbench-copy, and motion-coverage regression coverage for the Build Studio flow.
+
 ## 0.15.0 — HyperFrames 0.7.3 Director Workbench (2026-06-23)
 
 Framepack fully pivots to HyperFrames 0.7.3 as the supported production target.

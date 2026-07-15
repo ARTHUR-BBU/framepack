@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { stableStringify } from './content-hash.js';
+import { SkillDecisionLedgerSchema, SkillRoleSchema, type SkillRole } from '@framepack/director-contracts';
 import { z } from 'zod';
 
 type SkillIntent = 'product-launch-video' | 'faceless-explainer' | 'website-to-video' | 'reference-video' | 'general-video';
@@ -15,6 +16,7 @@ export type SkillLoadInput = {
 
 export type LoadedSkill = {
   id: string;
+  role: SkillRole;
   resolvedSource: string;
   portablePath: string;
   sha256: string;
@@ -27,6 +29,7 @@ export const SkillLoadReceiptSchema = z.object({
   intent: z.enum(['product-launch-video', 'faceless-explainer', 'website-to-video', 'reference-video', 'general-video']),
   loaded: z.array(z.object({
     id: z.string().min(1),
+    role: SkillRoleSchema,
     resolvedSource: z.string().min(1),
     portablePath: z.string().min(1),
     sha256: z.string().regex(/^[a-f0-9]{64}$/i),
@@ -53,7 +56,7 @@ type RuntimeRules = {
   requiredLayers?: string[];
 };
 
-type SkillRequest = { id: string; reason: string };
+type SkillRequest = { id: string; role: SkillRole; reason: string };
 
 export type ApplySkillInput = SkillLoadInput & {
   brief: { goal: string; audience: string };
@@ -72,16 +75,16 @@ export type SkillApplicationReceipt = {
 };
 
 function routeSkills(intent: SkillIntent): SkillRequest[] {
-  const director = { id: 'framepack-director', reason: 'translate intent and enforce truthful director boundaries' };
-  const arsenal = { id: 'framepack-arsenal', reason: 'match storyboard purposes to evidenced motion weapons' };
+  const director = { id: 'framepack-director', role: 'director' as const, reason: 'translate intent and enforce truthful director boundaries' };
+  const arsenal = { id: 'framepack-arsenal', role: 'producer' as const, reason: 'match storyboard purposes to evidenced motion weapons' };
   if (intent === 'product-launch-video') {
-    return [director, { id: 'product-launch-video', reason: 'apply the product-led launch rhythm' }, arsenal];
+    return [director, { id: 'product-launch-video', role: 'director', reason: 'apply the product-led launch rhythm' }, arsenal];
   }
   if (intent === 'reference-video') {
-    return [director, { id: 'framepack-reference-miner', reason: 'extract transferable reference DNA' }, arsenal];
+    return [director, { id: 'framepack-reference-miner', role: 'director', reason: 'extract transferable reference DNA' }, arsenal];
   }
   if (intent === 'faceless-explainer' || intent === 'website-to-video') {
-    return [director, { id: intent, reason: `apply the ${intent} workflow` }, arsenal];
+    return [director, { id: intent, role: 'director', reason: `apply the ${intent} workflow` }, arsenal];
   }
   return [director, arsenal];
 }
@@ -140,6 +143,7 @@ export async function loadSkills(input: SkillLoadInput): Promise<SkillLoadReceip
     parseRuntimeRules(markdown, request.id);
     loaded.push({
       id: request.id,
+      role: request.role,
       resolvedSource: source,
       portablePath: `skills/${request.id}/SKILL.md`,
       sha256: hash(markdown),
@@ -252,10 +256,16 @@ export async function applySkillPlan(input: ApplySkillInput): Promise<{
     applied,
     appliedAt: new Date().toISOString(),
   };
+  const loadedRoles = new Map(loadReceipt.loaded.map((item) => [item.id, item.role]));
+  const ledger = SkillDecisionLedgerSchema.parse({
+    version: '1.0', inputHash: hash({ brief: input.brief, assets: input.assets, loadReceiptHash: applicationReceipt.loadReceiptHash }),
+    decisions: applied.map((item) => ({ skillId: item.skillId, role: loadedRoles.get(item.skillId) ?? 'director', outputPaths: item.outputPaths, outputHashes: item.valueHashes })),
+  });
   await Promise.all([
     writeProjectJson(input.projectDir, 'direction.json', direction),
     writeProjectJson(input.projectDir, 'storyboard.json', storyboard),
     writeProjectJson(input.projectDir, 'skill-application-receipt.json', applicationReceipt),
+    writeProjectJson(input.projectDir, 'skill-decision-ledger.json', ledger),
   ]);
   return { direction, storyboard, loadReceipt, applicationReceipt };
 }

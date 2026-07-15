@@ -21,9 +21,9 @@ test('website-to-video keeps URL provenance and completes one tour revision', as
   const revised = await runProjectProposal({ projectDir:project, brief:{ goal:'展示 https://example.com 的真实页面', audience:'新用户', constraints:[] }, feedback:'先展示首页，再进入核心功能', proposal:{ ...proposal, id:'website-2', summary:'先首页定位，再进入核心功能导览', assetIds:[captured.id] } });
   const saved = JSON.parse(await readFile(join(project,'.framepack','asset-ledger.json'),'utf8'));
   const storyboard = JSON.parse(readFileSync(join(project,'.framepack','storyboard.json'),'utf8'));
-  const html = readFileSync(join(project,'index.html'),'utf8');
-  const lint = runGate('lint', project);
-  const check = runGate('check', project);
+  const html = readFileSync(join(currentBuildRoot(project),'index.html'),'utf8');
+  const lint = runGate('lint', currentBuildRoot(project));
+  const check = runGate('check', currentBuildRoot(project));
   expect(revised.buildId).not.toBe(first.buildId);
   expect(saved.assets.find((asset:{id:string}) => asset.id === captured.id)).toMatchObject({ source:'captured', sourceUrl:'https://example.com', confirmed:true });
   expect(storyboard.scenes.some((scene:{assetIds:string[]}) => scene.assetIds.includes(captured.id))).toBe(true);
@@ -37,4 +37,9 @@ function runGate(command:'lint'|'check', project:string) {
   const result = spawnSync(invocation.executable, invocation.args, { encoding:'utf8', shell:invocation.shell });
   expect(result.status, result.stderr).toBe(0);
   return JSON.parse(result.stdout);
+}
+
+function currentBuildRoot(project:string) {
+  const pointer = JSON.parse(readFileSync(join(project,'.framepack','current-build.json'),'utf8')) as { buildId:string };
+  return join(project,'.framepack','builds',pointer.buildId);
 }

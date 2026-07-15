@@ -1,11 +1,11 @@
 # Framepack
 
-Framepack is a **Codex-first director workbench for programmatic video**.
+Framepack is a **Codex-first Build Studio for programmatic video**.
 
-It turns a brief and local assets into a reviewable HTML/CSS/GSAP animation sample before HyperFrames renders the final video. You review the moving sample in Codex's built-in browser, then explicitly approve it—or record a conscious taste waiver—before handing it to HyperFrames.
+It turns a brief and local assets into a reviewable HTML/CSS/GSAP animation sample before HyperFrames renders the final video. Each build is frozen as a traceable version, so a later revision cannot silently overwrite the sample you reviewed. You review the moving sample in Codex's built-in browser, then explicitly approve it—or record a conscious taste waiver—before handing that exact build to HyperFrames.
 
 ```text
-Brief + assets → direction + storyboard → HTML preview → snapshots + taste audit
+Brief + assets → direction + storyboard → immutable Build → snapshots + taste audit
 → explicit approval / waiver → HyperFrames lint, check, render, audio, captions and final QA
 ```
 
@@ -26,15 +26,22 @@ npm run director -- handoff C:\work\my-preview
 npm run director:serve -- C:\work\my-preview
 ```
 
-Open the printed local URL in Codex's in-app browser. The workbench provides a director desk, sample preview, proof frames, audit result, and approval controls.
+Open the printed local URL in Codex's in-app browser. The Build Studio keeps three focused surfaces: **Builds** for version and evidence, **Preview** for the moving sample, and **Judgment** for approval, waiver, and handoff decisions.
+
+## What changed in 0.2.0
+
+- **Immutable builds** — every `build` writes to `.framepack/builds/<build-id>/`; `.framepack/current-build.json` points to the version currently shown in Studio. Root `index.html` is no longer the source of truth.
+- **Skill roles with evidence** — Framepack records whether a skill acted as director, producer, or technical support, including the artifact paths and hashes it influenced.
+- **Weapon choreography, not one-off effects** — a scene can use several proven motion actions across entrance, emphasis, and exit; the motion coverage report makes quiet or under-animated scenes visible before approval.
+- **A smaller, stronger review desk** — the Studio does not duplicate Codex creative work. It only makes build, preview, evidence, and human judgment easy to inspect and decide.
 
 ## Responsibilities
 
 | Framepack | HyperFrames |
 | --- | --- |
-| direction, storyboard, HTML sample, preview snapshots, taste gate, handoff | lint/check/render, audio, TTS, subtitles, media QA, export and publish |
+| creative direction, storyboard, weapon choreography, immutable build, preview evidence, taste gate, handoff package | technical compatibility, lint/check/render, audio, TTS, subtitles, media QA, export and publish |
 
-Technical problems cannot be waived. Taste failures require revision or a persisted user waiver. A handoff is never silently inferred.
+Technical problems cannot be waived. Taste failures require revision or a persisted user waiver. A handoff always names the approved immutable build; it is never silently inferred.
 
 See [the Codex workbench guide](docs/codex-director-workbench.md) and [legacy inheritance record](docs/migration/legacy-inheritance.md).
 
